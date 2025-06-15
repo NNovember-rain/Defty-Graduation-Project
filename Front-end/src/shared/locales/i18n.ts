@@ -8,6 +8,12 @@ i18n
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
+        detection: {
+            order: ['localStorage', 'navigator'],
+            lookupLocalStorage: 'language',
+            caches: ['localStorage'],
+            excludeCacheFor: ['cimode'],
+        },
         resources: {
             en: { translation: en },
             vi: { translation: vi },
@@ -18,4 +24,8 @@ i18n
         interpolation: {
             escapeValue: false,
         },
+        load: 'languageOnly',
+        cleanCode: true,
     });
+
+export default i18n;

@@ -1,9 +1,21 @@
 {
-  "admin": {
-
+  "unauthorized": {
+    "title": "403 - Access Denied",
+    "message": "You do not have permission to view this page.",
+    "goHome": "Go to Home"
   },
-
-  "client": {
-
+  "protectedRoute": {
+    "loading": "Checking access permissions..."
+  },
+  "routesConfig": {
+    "loadingUserData": "Loading user data...",
+    "authError": "Authentication error: {{status}} - {{statusText}}",
+    "sessionRestoreError": "Failed to restore session. Please log in again."
+  },
+  "apiMessages": {
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "networkErrorInitialFetch": "Network error. Please try again.",
+    "requestFailedAfterRefresh": "Request failed after session refresh.",
+    "networkErrorRetryFetch": "Network error during retry."
   }
 }

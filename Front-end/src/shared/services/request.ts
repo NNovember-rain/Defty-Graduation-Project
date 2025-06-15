@@ -1,4 +1,6 @@
 import { getLocalStorageItem, setLocalStorageItem, removeLocalStorageItem } from '../utils/localStorage';
+import { message } from 'antd';
+import i18n from '../locales/i18n';
 
 const DOMAIN: string = import.meta.env.VITE_DOMAIN as string;
 const PREFIX_API: string = import.meta.env.VITE_PREFIX_API as string;
@@ -48,7 +50,7 @@ const refreshToken = async (): Promise<boolean> => {
 };
 
 const handleRefreshTokenFailure = (): void => {
-    alert('Your session has expired. Please log in again.');
+    message.error(i18n.t('apiMessages.sessionExpired'), 3);
     removeAccessToken();
 };
 
@@ -71,6 +73,7 @@ const requestWithRefresh = async (path: string, options: RequestInit): Promise<R
         });
     } catch (error) {
         console.error('Network error during initial fetch:', error);
+        message.error(i18n.t('apiMessages.networkErrorInitialFetch'), 3);
         throw error;
     }
 
@@ -95,10 +98,12 @@ const requestWithRefresh = async (path: string, options: RequestInit): Promise<R
                 });
                 if (!response.ok) {
                     console.error('Request failed after token refresh:', response.status, response.statusText);
+                    message.error(i18n.t('apiMessages.requestFailedAfterRefresh'), 3);
                     throw new Error(`Request failed after token refresh with status ${response.status}`);
                 }
             } catch (error) {
                 console.error('Network error during retried fetch:', error);
+                message.error(i18n.t('apiMessages.networkErrorRetryFetch'), 3);
                 throw error;
             }
         } else {
@@ -108,8 +113,6 @@ const requestWithRefresh = async (path: string, options: RequestInit): Promise<R
 
     return response;
 };
-
-// --- Exported API Functions ---
 
 export const get = async (path: string): Promise<Response> => {
     return requestWithRefresh(path, {

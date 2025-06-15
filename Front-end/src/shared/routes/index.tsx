@@ -5,9 +5,11 @@ import getAdminRoutes from '../../admin/routes';
 import getClientRoutes from '../../client/routes';
 import UnauthorizedPage from './UnauthorizedPage';
 import { getCurrentAccount } from '../services/authService';
+import { useTranslation } from 'react-i18next';
 
 const RoutesConfig: React.FC = () => {
     const { setUser, clearUser, setLoading, setError, isAuthenticated, isLoading } = useUserStore();
+    const { t } = useTranslation();
 
     useEffect(() => {
         const initializeSession = async () => {
@@ -33,12 +35,12 @@ const RoutesConfig: React.FC = () => {
                     }
                 } else {
                     console.error("API error during session initialization:", response.status, response.statusText);
-                    setError(`Lỗi xác thực: ${response.status} - ${response.statusText}`);
+                    setError(t('routesConfig.authError', { status: response.status, statusText: response.statusText }));
                     clearUser();
                 }
             } catch (err: any) {
                 console.error("Failed to initialize session (network/refresh error):", err);
-                setError("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
+                setError(t('routesConfig.sessionRestoreError'));
                 clearUser();
             } finally {
                 setLoading(false);
@@ -46,12 +48,12 @@ const RoutesConfig: React.FC = () => {
         };
 
         initializeSession();
-    }, [setUser, clearUser, setLoading, setError]);
+    }, []);
 
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '24px' }}>
-                Đang tải dữ liệu người dùng...
+                {t('routesConfig.loadingUserData')}
             </div>
         );
     }

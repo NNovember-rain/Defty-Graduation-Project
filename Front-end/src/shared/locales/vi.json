@@ -1,9 +1,21 @@
 {
-  "admin": {
-
+  "unauthorized": {
+    "title": "403 - Truy cập Bị Từ Chối",
+    "message": "Bạn không có quyền để xem trang này.",
+    "goHome": "Về trang chủ"
   },
-
-  "client": {
-
+  "protectedRoute": {
+    "loading": "Đang kiểm tra quyền truy cập..."
+  },
+  "routesConfig": {
+    "loadingUserData": "Đang tải dữ liệu người dùng...",
+    "authError": "Lỗi xác thực: {{status}} - {{statusText}}",
+    "sessionRestoreError": "Không thể khôi phục phiên. Vui lòng đăng nhập lại."
+  },
+  "apiMessages": {
+    "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng đăng nhập lại.",
+    "networkErrorInitialFetch": "Lỗi kết nối mạng. Vui lòng thử lại.",
+    "requestFailedAfterRefresh": "Yêu cầu thất bại sau khi làm mới phiên.",
+    "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu."
   }
 }

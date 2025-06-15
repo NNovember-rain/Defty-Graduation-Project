@@ -1,12 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const UnauthorizedPage: React.FC = () => {
+    const { t } = useTranslation();
+
     return (
         <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <h1>403 - Truy cập Bị Từ Chối</h1>
-            <p>Bạn không có quyền để xem trang này.</p>
-            <Link to={``}>Về trang chủ</Link>
+            <h1>{t('unauthorized.title')}</h1>
+            <p>{t('unauthorized.message')}</p>
+            <Link to={``}>{t('unauthorized.goHome')}</Link>
         </div>
     );
 };

@@ -1,13 +1,7 @@
 import RoutesConfig from "./shared/routes";
 
 function App() {
-  return (
-    <>
-      <div>
-          <RoutesConfig />
-      </div>
-    </>
-  )
+  return <RoutesConfig />;
 }
 
 export default App;

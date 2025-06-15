@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserStore } from '../authentication/useUserStore';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface ProtectedRouteProps {
     component: React.ComponentType<any>;
@@ -17,12 +18,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
                                                            requiredPermission,
                                                            redirectTo = '/unauthorized',
                                                        }) => {
-    debugger;
     const { user, isAuthenticated, isLoading, hasRole, hasAnyRole, hasPermission } = useUserStore();
-    const PREFIX_URL_ADMIN: string = import.meta.env.VITE_PREFIX_URL_ADMIN || '/admin';
+    const { t } = useTranslation();
+    const PREFIX_URL_ADMIN: string = import.meta.env.VITE_PREFIX_URL_ADMIN;
 
     if (isLoading) {
-        return <div>Đang kiểm tra quyền truy cập...</div>;
+        return <div>{t('protectedRoute.loading')}</div>;
     }
 
     if (!isAuthenticated || !user) {

@@ -1,5 +1,5 @@
 import { get, postJsonData } from "./request";
-import handleRequest from "./handleRequest.tsx";
+import handleRequest from "./handleRequest";
 
 const PREFIX_AUTH = import.meta.env.VITE_PREFIX_AUTH as string;
 
