@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { useRoutes, Navigate } from 'react-router-dom';
 import { useUserStore } from '../authentication/useUserStore';
 import getAdminRoutes from '../../admin/routes';
-import UnauthorizedPage from "./UnauthorizedPage.tsx";
-import getClientRoutes from "../../client/routes";
+import getClientRoutes from '../../client/routes';
+import UnauthorizedPage from './UnauthorizedPage';
+import { getCurrentAccount } from '../services/authService';
 
 const RoutesConfig: React.FC = () => {
     const { setUser, clearUser, setLoading, setError, isAuthenticated, isLoading } = useUserStore();
@@ -13,26 +14,30 @@ const RoutesConfig: React.FC = () => {
             setLoading(true);
             setError(null);
             try {
-                const storedAuthData = localStorage.getItem('myAuthData');
-                if (storedAuthData) {
-                    const authData = JSON.parse(storedAuthData);
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                const response = await getCurrentAccount();
 
-                    // Dữ liệu người dùng mẫu (vai trò và quyền hạn sẽ đến từ Backend)
-                    const demoUser = {
-                        id: authData.user.id,
-                        username: authData.user.username,
-                        email: authData.user.email,
-                        firstName: authData.user.firstName,
-                        lastName: authData.user.lastName,
-                        roles: authData.user.roles || [] // Cần đảm bảo cấu trúc này khớp với ProfileUser trong userStore
-                    };
-                    setUser(demoUser);
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result && result.user) {
+                        const userData = {
+                            id: result.user.id,
+                            username: result.user.username,
+                            email: result.user.email,
+                            firstName: result.user.firstName,
+                            lastName: result.user.lastName,
+                            roles: result.user.roles || []
+                        };
+                        setUser(userData);
+                    } else {
+                        clearUser();
+                    }
                 } else {
+                    console.error("API error during session initialization:", response.status, response.statusText);
+                    setError(`Lỗi xác thực: ${response.status} - ${response.statusText}`);
                     clearUser();
                 }
             } catch (err: any) {
-                console.error("Failed to initialize session:", err);
+                console.error("Failed to initialize session (network/refresh error):", err);
                 setError("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
                 clearUser();
             } finally {
@@ -43,7 +48,6 @@ const RoutesConfig: React.FC = () => {
         initializeSession();
     }, [setUser, clearUser, setLoading, setError]);
 
-    // Hiển thị trạng thái loading toàn cục trong khi xác thực phiên
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '24px' }}>
@@ -52,13 +56,12 @@ const RoutesConfig: React.FC = () => {
         );
     }
 
-    // Kết hợp các routes từ Admin và Client
     const routes = [
-        getAdminRoutes(isAuthenticated), // Truyền isAuthenticated cho AdminRoutes
-        getClientRoutes(isAuthenticated), // Truyền isAuthenticated cho ClientRoutes
-        { path: '/unauthorized', element: <UnauthorizedPage /> }, // Trang lỗi 403 chung
-        { path: '*', element: <Navigate to="/" replace /> } // Catch-all cho các route không khớp
-];
+        getAdminRoutes(isAuthenticated),
+        getClientRoutes(isAuthenticated),
+        { path: '/unauthorized', element: <UnauthorizedPage /> },
+        { path: '*', element: <Navigate to="/" replace /> }
+    ];
 
     return useRoutes(routes);
 };
