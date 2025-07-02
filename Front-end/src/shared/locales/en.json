@@ -17,5 +17,24 @@
     "networkErrorInitialFetch": "Network error. Please try again.",
     "requestFailedAfterRefresh": "Request failed after session refresh.",
     "networkErrorRetryFetch": "Network error during retry."
+  },
+  "login": {
+    "adminLTE": "Admin",
+    "defty": "DEFTY",
+    "signInMessage": "Sign in to start your session",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "signInButton": "Sign In",
+    "forgotPassword": "I forgot my password",
+    "emailRequired": "Email is required!",
+    "invalidEmailFormat": "Invalid email format!",
+    "passwordRequired": "Password is required!",
+    "passwordMinLength": "Password must be at least 8 characters long.",
+    "passwordLowercase": "Password must contain at least one lowercase letter.",
+    "passwordUppercase": "Password must contain at least one uppercase letter.",
+    "passwordNumber": "Password must contain at least one number.",
+    "passwordSpecialChar": "Password must contain at least one special character.",
+    "loginSuccessful": "Login successful!",
+    "loginFailed": "Login failed! Please check your credentials."
   }
 }

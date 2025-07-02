@@ -17,5 +17,24 @@
     "networkErrorInitialFetch": "Lỗi kết nối mạng. Vui lòng thử lại.",
     "requestFailedAfterRefresh": "Yêu cầu thất bại sau khi làm mới phiên.",
     "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu."
+  },
+  "login": {
+    "adminLTE": "Admin",
+    "defty": "DEFTY",
+    "signInMessage": "Đăng nhập để bắt đầu phiên của bạn",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Mật khẩu",
+    "signInButton": "Đăng nhập",
+    "forgotPassword": "Tôi quên mật khẩu",
+    "emailRequired": "Email là bắt buộc!",
+    "invalidEmailFormat": "Định dạng email không hợp lệ!",
+    "passwordRequired": "Mật khẩu là bắt buộc!",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự.",
+    "passwordLowercase": "Mật khẩu phải chứa ít nhất một chữ cái thường.",
+    "passwordUppercase": "Mật khẩu phải chứa ít nhất một chữ cái hoa.",
+    "passwordNumber": "Mật khẩu phải chứa ít nhất một số.",
+    "passwordSpecialChar": "Mật khẩu phải chứa ít nhất một ký tự đặc biệt.",
+    "loginSuccessful": "Đăng nhập thành công!",
+    "loginFailed": "Đăng nhập thất bại! Vui lòng kiểm tra thông tin đăng nhập của bạn."
   }
 }
