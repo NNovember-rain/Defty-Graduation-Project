@@ -43,7 +43,7 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'dashboard',
         component: DashboardPage,
-        requiredAnyOfRoles: ['admin', 'manager'],
+        requiredAnyOfRoles: ['admin', 'teacher'],
     },
 ];
 

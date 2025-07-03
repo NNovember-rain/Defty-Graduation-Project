@@ -1,0 +1,242 @@
+/* AdminLayoutDefault.scss */
+.admin-layout-default {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  font-family: Arial, sans-serif; // Or your preferred font
+
+  .sidebar {
+    background-color: #343a40;
+    width: 240px;
+    padding: 0 8px;
+    color: #c2c7d0;
+    flex-shrink: 0;
+
+    &__logo {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      height: 57px;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #fff;
+
+      &-image {
+        height: 33px;
+        margin-right: 8px;
+      }
+    }
+
+    &__profile {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #4f5962;
+      margin-bottom: 8px;
+
+      &-avatar {
+        width: 33px;
+        height: 33px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      &-name {
+        font-size: 0.9rem;
+      }
+    }
+
+    &__search {
+      display: flex;
+      padding: 8px;
+      margin-bottom: 8px;
+
+      &-input {
+        flex-grow: 1;
+        padding: 6px 12px;
+        border: 1px solid #6c757d;
+        background-color: #3f474e;
+        color: #fff;
+        border-radius: 4px 0 0 4px;
+        &:focus {
+          outline: none;
+          border-color: #007bff;
+        }
+      }
+
+      &-button {
+        background-color: #6c757d;
+        border: 1px solid #6c757d;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        &:hover {
+          background-color: #5a6268;
+        }
+      }
+    }
+
+    &__content {
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .sidebar__item {
+        margin-bottom: 4px;
+
+        &-header {
+          display: flex;
+          align-items: center;
+          padding: 8px 16px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          border-radius: 4px;
+
+          &:hover {
+            background-color: #494f55;
+          }
+        }
+
+        &.active > &-header {
+          background-color: #007bff; // Active background color
+          color: #fff; // Active text color
+        }
+
+        &-icon {
+          margin-right: 10px;
+          font-size: 1rem;
+        }
+
+        &-label {
+          flex-grow: 1;
+          font-size: 0.9rem;
+        }
+
+        &-toggle {
+          font-size: 0.7rem;
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+        }
+
+        &-badge {
+          padding: 2px 6px;
+          border-radius: 0.25rem;
+          font-size: 0.75em;
+          margin-left: 5px;
+
+          &--new {
+            background-color: #dc3545; // Red
+            color: #fff;
+          }
+          &--info {
+            background-color: #17a2b8; // Blue
+            color: #fff;
+          }
+        }
+      }
+
+      .sidebar__submenu {
+        list-style: none;
+        padding-left: 20px;
+        margin-top: 4px;
+
+        &-item {
+          display: flex;
+          align-items: center;
+          padding: 6px 16px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          border-radius: 4px;
+
+          &:hover {
+            background-color: #494f55;
+          }
+
+          &.active {
+            background-color: #007bff; // Active background color for submenu items
+            color: #fff; // Active text color for submenu items
+          }
+        }
+
+        &-label {
+          font-size: 0.85rem;
+        }
+      }
+    }
+  }
+
+  .right-block {
+    width: calc(100% - 240px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    height: 57px;
+    padding: 8px 16px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #fff;
+    flex-shrink: 0;
+
+    &__left, &__right {
+      display: flex;
+      align-items: center;
+    }
+
+    &__icon-button {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #6c757d;
+      margin-right: 15px;
+      position: relative; // For badge positioning
+
+      &:hover {
+        color: #000;
+      }
+    }
+
+    &__nav-item {
+      padding: 0 10px;
+      font-size: 0.9rem;
+      color: #6c757d;
+      cursor: pointer;
+
+      &:hover {
+        color: #000;
+      }
+    }
+
+    &__badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: #dc3545; // Red
+      color: #fff;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      min-width: 18px;
+      text-align: center;
+      line-height: 1;
+    }
+  }
+
+  .main-content {
+    background-color: #f4f6f9;
+    flex-grow: 1;
+    padding: 0 0.5rem;
+    overflow-y: auto; // Allows scrolling within main content if it overflows
+  }
+}

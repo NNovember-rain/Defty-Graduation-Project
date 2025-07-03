@@ -4,14 +4,20 @@ import { FaEnvelope, FaLock } from "react-icons/fa";
 import { postLogin } from "../../../shared/services/authService.ts";
 import { Spin, message } from 'antd';
 import 'antd/dist/reset.css';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
+import {useNavigate} from "react-router-dom";
+import {useUserStore} from "../../../shared/authentication/useUserStore.ts"; // Import useTranslation
+
+const PREFIX_URL_ADMIN: string = import.meta.env.VITE_PREFIX_URL_ADMIN;
 
 const Login: React.FC = () => {
     const { t } = useTranslation(); // Khởi tạo hook useTranslation
+    const navigate = useNavigate();
+    const { setUser, clearUser, setLoading, setError, isAuthenticated, isLoading } = useUserStore();
 
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
-    const [loading, setLoading] = useState<boolean>(false);
+    const [loginLoading, setLoginLoading] = useState<boolean>(false);
     const [emailError, setEmailError] = useState<string | null>(null);
     const [passwordError, setPasswordError] = useState<string | null>(null);
 
@@ -96,19 +102,33 @@ const Login: React.FC = () => {
             return;
         }
 
-        setLoading(true);
+        setLoginLoading(true);
         try {
-            const response = await postLogin({ email: email, password: password });
             //TODO: SOLVE LOGIN, ZUSTAND STATE
+            // const response = await postLogin({ email: email, password: password });
+            // console.log("Login successful:", response);
 
-            console.log("Login successful:", response);
+            // FIXME: NOW IS MOCK DATA
+            const isLogin = true;
+            if (isLogin) {
+                setUser({
+                    id: "1",
+                    username: "username",
+                    email: "email",
+                    firstName: "firstName",
+                    lastName: "lastName",
+                    roles: [{name: "admin", permissions: []}]
+                })
+                navigate(`${PREFIX_URL_ADMIN}/dashboard`);
+            }
+
             message.success(t("login.loginSuccessful"));
         } catch (error: any) {
             console.error("Login failed:", error);
             const errorMessage = error.response?.data?.message || t("login.loginFailed");
             message.error(errorMessage);
         } finally {
-            setLoading(false);
+            setLoginLoading(false);
         }
     }
 
@@ -131,7 +151,7 @@ const Login: React.FC = () => {
                                     value={email}
                                     onChange={handleEmailChange}
                                     onBlur={handleEmailBlur}
-                                    disabled={loading}
+                                    disabled={loginLoading}
                                 />
                                 <div className="input-group-append">
                                     <div className="input-group-text">
@@ -148,7 +168,7 @@ const Login: React.FC = () => {
                                     value={password}
                                     onChange={handlePasswordChange}
                                     onBlur={handlePasswordBlur}
-                                    disabled={loading}
+                                    disabled={loginLoading}
                                 />
                                 <div className="input-group-append">
                                     <div className="input-group-text">
@@ -162,9 +182,9 @@ const Login: React.FC = () => {
                                     <button
                                         onClick={handleLogin}
                                         className="btn btn-primary btn-block"
-                                        disabled={loading}
+                                        disabled={loginLoading}
                                     >
-                                        {loading ? <Spin size="small" /> : t("login.signInButton")} {/* Sử dụng t() */}
+                                        {loginLoading ? <Spin size="small" /> : t("login.signInButton")} {/* Sử dụng t() */}
                                     </button>
                                 </div>
                             </div>
