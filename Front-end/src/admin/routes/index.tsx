@@ -34,6 +34,10 @@ const AuthRoutesConfig: AppRoute[] = [
         component: LoginPage,
     },
     {
+        path: '',
+        component: LoginPage,
+    },
+    {
         path: '*',
         component: LoginPage,
     },
@@ -42,6 +46,16 @@ const AuthRoutesConfig: AppRoute[] = [
 const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'dashboard',
+        component: DashboardPage,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: '',
+        component: DashboardPage,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: '*',
         component: DashboardPage,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
