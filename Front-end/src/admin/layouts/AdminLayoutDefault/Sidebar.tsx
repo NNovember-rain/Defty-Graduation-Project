@@ -1,5 +1,5 @@
 // Sidebar.tsx
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -127,7 +127,7 @@ const sidebarContentConfig: SidebarItem[] = [
 
 interface SidebarProps {
     isCollapsed: boolean;
-    className?: string; // Thêm prop className để nhận class từ parent
+    className?: string;
 }
 
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, className }, ref) => {
@@ -136,19 +136,23 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
     const navigate = useNavigate();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
     const [isHovered, setIsHovered] = useState<boolean>(false);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
+    // Reset open menus when sidebar is collapsed
     React.useEffect(() => {
         if (isCollapsed) {
             setOpenMenus([]);
         }
     }, [isCollapsed]);
 
-    const isPathActive = (itemPath: string | undefined): boolean => {
+    // Check if a path is active
+    const isPathActive = useCallback((itemPath: string | undefined): boolean => {
         if (!itemPath) return false;
         return location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
-    };
+    }, [location.pathname]);
 
-    const shouldItemBeActive = (item: SidebarItem): boolean => {
+    // Check if an item should be active (including children)
+    const shouldItemBeActive = useCallback((item: SidebarItem): boolean => {
         if (item.path && isPathActive(item.path)) {
             return true;
         }
@@ -156,20 +160,12 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
             return item.children.some(child => shouldItemBeActive(child));
         }
         return false;
-    };
+    }, [isPathActive]);
 
-    const handleMenuClick = (item: SidebarItem) => {
+    // Handle menu click with proper navigation
+    const handleMenuClick = useCallback((item: SidebarItem) => {
         const id = item.id;
         const hasChildren = item.children && item.children.length > 0;
-
-        if (isCollapsed && hasChildren) {
-            setOpenMenus(prevOpenMenus =>
-                prevOpenMenus.includes(id)
-                    ? prevOpenMenus.filter(menuId => menuId !== id)
-                    : [...prevOpenMenus, id]
-            );
-            return;
-        }
 
         if (hasChildren) {
             setOpenMenus(prevOpenMenus =>
@@ -180,14 +176,76 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
         } else if (item.path) {
             navigate(item.path);
         }
-    };
+    }, [navigate]);
 
-    const renderSidebarItems = (items: SidebarItem[]) => {
+    // Handle keyboard navigation
+    const handleKeyDown = useCallback((event: React.KeyboardEvent, item: SidebarItem) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleMenuClick(item);
+        }
+    }, [handleMenuClick]);
+
+    // Normalize string for search (remove diacritics)
+    const normalizeString = useCallback((str: string): string => {
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+    }, []);
+
+    // Filter sidebar items based on search term
+    const filteredSidebarItems = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return sidebarContentConfig;
+        }
+
+        const normalizedSearchTerm = normalizeString(searchTerm.trim());
+
+        const filterItems = (items: SidebarItem[]): SidebarItem[] => {
+            return items.reduce((acc: SidebarItem[], item) => {
+                const translatedLabel = t(item.labelKey);
+                const normalizedTranslatedLabel = normalizeString(translatedLabel);
+
+                // Check if current item matches
+                if (normalizedTranslatedLabel.includes(normalizedSearchTerm)) {
+                    acc.push(item);
+                } else if (item.children) {
+                    // Check children
+                    const filteredChildren = filterItems(item.children);
+                    if (filteredChildren.length > 0) {
+                        acc.push({ ...item, children: filteredChildren });
+                    }
+                }
+                return acc;
+            }, []);
+        };
+
+        return filterItems(sidebarContentConfig);
+    }, [searchTerm, t, normalizeString]);
+
+    // Handle search input change
+    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+    }, []);
+
+    // Handle logo click
+    const handleLogoClick = useCallback(() => {
+        navigate('/admin/dashboard');
+    }, [navigate]);
+
+    // Handle profile click
+    const handleProfileClick = useCallback(() => {
+        navigate('/admin/profile');
+    }, [navigate]);
+
+    // Render sidebar items recursively
+    const renderSidebarItems = useCallback((items: SidebarItem[]) => {
         return (
             <ul>
                 {items.map(item => {
                     const hasChildren = item.children && item.children.length > 0;
-                    const isOpen = openMenus.includes(item.id);
+                    const isOpen = openMenus.includes(item.id) || (searchTerm.trim() && hasChildren);
                     const isActive = shouldItemBeActive(item);
 
                     return (
@@ -195,14 +253,15 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                             <div
                                 className='sidebar__item-header'
                                 onClick={() => handleMenuClick(item)}
-                                aria-expanded={hasChildren ? isOpen : undefined}
+                                onKeyDown={(e) => handleKeyDown(e, item)}
+                                {...(hasChildren && { 'aria-expanded': isOpen })}
                                 role="button"
                                 tabIndex={0}
                             >
                                 {item.icon && <span className='sidebar__item-icon'>{item.icon}</span>}
                                 <span className='sidebar__item-label'>{t(item.labelKey)}</span>
                                 {item.badge && (
-                                    <span className={`sidebar__item-badge sidebar__item-badge--${item.type}`}>
+                                    <span className={`sidebar__item-badge sidebar__item-badge--${item.type || 'info'}`}>
                                         {item.badge}
                                     </span>
                                 )}
@@ -217,19 +276,20 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                     {item.children!.map(child => {
                                         const hasGrandChildren = child.children && child.children.length > 0;
                                         const isChildActive = shouldItemBeActive(child);
+                                        const isChildOpen = openMenus.includes(child.id) || (searchTerm.trim() && hasGrandChildren);
 
                                         const content = (
                                             <>
                                                 {child.icon && <span className='sidebar__item-icon'>{child.icon}</span>}
                                                 <span className='sidebar__submenu-label'>{t(child.labelKey)}</span>
                                                 {child.badge && (
-                                                    <span className={`sidebar__item-badge sidebar__item-badge--${child.type}`}>
+                                                    <span className={`sidebar__item-badge sidebar__item-badge--${child.type || 'info'}`}>
                                                         {child.badge}
                                                     </span>
                                                 )}
                                                 {hasGrandChildren && (
                                                     <span className='sidebar__item-toggle'>
-                                                        {openMenus.includes(child.id) ? <IoIosArrowUp /> : <IoIosArrowDown />}
+                                                        {isChildOpen ? <IoIosArrowUp /> : <IoIosArrowDown />}
                                                     </span>
                                                 )}
                                             </>
@@ -237,17 +297,10 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
 
                                         return (
                                             <li key={child.id} className={`sidebar__submenu-item ${isChildActive ? 'active' : ''}`}>
-                                                {child.path ? (
+                                                {child.path && !hasGrandChildren ? (
                                                     <Link
                                                         to={child.path}
                                                         className='sidebar__submenu-link'
-                                                        onClick={(e) => {
-                                                            if (hasGrandChildren) {
-                                                                e.preventDefault();
-                                                                handleMenuClick(child);
-                                                            }
-                                                        }}
-                                                        aria-expanded={hasGrandChildren ? openMenus.includes(child.id) : undefined}
                                                         role="link"
                                                         tabIndex={0}
                                                     >
@@ -257,7 +310,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                                     <div
                                                         className='sidebar__submenu-link'
                                                         onClick={() => handleMenuClick(child)}
-                                                        aria-expanded={hasGrandChildren ? openMenus.includes(child.id) : undefined}
+                                                        onKeyDown={(e) => handleKeyDown(e, child)}
+                                                        {...(hasGrandChildren && { 'aria-expanded': isChildOpen })}
                                                         role="button"
                                                         tabIndex={0}
                                                     >
@@ -265,22 +319,29 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                                     </div>
                                                 )}
 
-                                                {hasGrandChildren && openMenus.includes(child.id) && (
+                                                {hasGrandChildren && isChildOpen && (
                                                     <ul className='sidebar__sub-submenu'>
                                                         {child.children!.map(grandchild => {
                                                             const isGrandChildActive = isPathActive(grandchild.path);
 
                                                             return (
                                                                 <li key={grandchild.id} className={`sidebar__sub-submenu-item ${isGrandChildActive ? 'active' : ''}`}>
-                                                                    <Link
-                                                                        to={grandchild.path || '#'}
-                                                                        className='sidebar__submenu-link'
-                                                                        role="link"
-                                                                        tabIndex={0}
-                                                                    >
-                                                                        {grandchild.icon && <span className='sidebar__item-icon'>{grandchild.icon}</span>}
-                                                                        <span className='sidebar__submenu-label'>{t(grandchild.labelKey)}</span>
-                                                                    </Link>
+                                                                    {grandchild.path ? (
+                                                                        <Link
+                                                                            to={grandchild.path}
+                                                                            className='sidebar__submenu-link'
+                                                                            role="link"
+                                                                            tabIndex={0}
+                                                                        >
+                                                                            {grandchild.icon && <span className='sidebar__item-icon'>{grandchild.icon}</span>}
+                                                                            <span className='sidebar__submenu-label'>{t(grandchild.labelKey)}</span>
+                                                                        </Link>
+                                                                    ) : (
+                                                                        <div className='sidebar__submenu-link'>
+                                                                            {grandchild.icon && <span className='sidebar__item-icon'>{grandchild.icon}</span>}
+                                                                            <span className='sidebar__submenu-label'>{t(grandchild.labelKey)}</span>
+                                                                        </div>
+                                                                    )}
                                                                 </li>
                                                             );
                                                         })}
@@ -296,7 +357,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                 })}
             </ul>
         );
-    };
+    }, [openMenus, searchTerm, shouldItemBeActive, t, handleMenuClick, handleKeyDown, isPathActive]);
 
     return (
         <div
@@ -305,28 +366,61 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            <div className='sidebar__logo'>
+            <div
+                className='sidebar__logo'
+                onClick={handleLogoClick}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogoClick()}
+                role="button"
+                tabIndex={0}
+            >
                 <img src="/assets/images/defty.png" alt={t('sidebar.deftyLogoAlt')} className="sidebar__logo-image" />
                 <span className="sidebar__logo-text">{t('login.defty')}</span>
             </div>
 
-            <div className='sidebar__profile'>
+            <div
+                className='sidebar__profile'
+                onClick={handleProfileClick}
+                onKeyDown={(e) => e.key === 'Enter' && handleProfileClick()}
+                role="button"
+                tabIndex={0}
+            >
                 <img src="/assets/images/avatar.jpg" alt={t('sidebar.userAvatarAlt')} className="sidebar__profile-avatar" />
                 <span className="sidebar__profile-name">{t('sidebar.userName')}</span>
             </div>
 
             <div className='sidebar__search'>
                 <div className='sidebar__search--content'>
-                    <input type='text' placeholder={t('sidebar.searchPlaceholder')} className='sidebar__search--content-input' />
-                    <button className='sidebar__search--content-button'><FaSearch /></button>
+                    <input
+                        type='text'
+                        placeholder={t('sidebar.searchPlaceholder')}
+                        className='sidebar__search--content-input'
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        aria-label={t('sidebar.searchPlaceholder')}
+                    />
+                    <button
+                        className='sidebar__search--content-button'
+                        type="button"
+                        aria-label="Search"
+                    >
+                        <FaSearch />
+                    </button>
                 </div>
             </div>
 
             <div className='sidebar__content'>
-                {renderSidebarItems(sidebarContentConfig)}
+                {filteredSidebarItems.length > 0 ? (
+                    renderSidebarItems(filteredSidebarItems)
+                ) : (
+                    <div className="sidebar__no-results">
+                        <p>{t('sidebar.noResults')}</p>
+                    </div>
+                )}
             </div>
         </div>
     );
 });
+
+Sidebar.displayName = 'Sidebar';
 
 export default Sidebar;

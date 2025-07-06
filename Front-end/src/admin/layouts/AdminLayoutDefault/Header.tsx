@@ -61,7 +61,7 @@ const Header = forwardRef<HTMLDivElement, HeaderProps>(({ onToggleSidebar }, ref
         <div className="header" ref={ref}> {/* Attach the ref here */}
             <div className="header__left">
                 <button
-                    className="header__icon-button"
+                    className="header__icon-button header__icon-button-bar"
                     onClick={(e) => {
                         e.stopPropagation(); // GIỮ NGUYÊN dòng này
                         onToggleSidebar();
