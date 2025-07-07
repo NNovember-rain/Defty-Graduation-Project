@@ -37,10 +37,8 @@
   "sidebar": {
     "overview": "Tổng quan",
     "userManagement": "Quản lý Người dùng",
-    "userList": "Danh sách Người dùng",
-    "profileManagement": "Quản lý Profile",
-    "accountSettings": "Cài đặt Tài khoản",
-    "resetPassword": "Đặt lại Mật khẩu",
+    "roleManagement": "Quản lý nhóm quyền",
+    "permissionManagement": "Quản lý quyền",
     "contentManagement": "Quản lý Nội dung",
     "assignments": "Đề bài & Bài tập",
     "assignmentList": "Danh sách Đề bài",
@@ -91,5 +89,62 @@
     "englishFlagAlt": "Cờ Mỹ",
     "vietnamese": "Tiếng Việt",
     "english": "English"
+  },
+  "common": {
+    "clear": "Xóa",
+    "search": "Tìm kiếm"
+  },
+  "managementTemplate": {
+    "hideFilters": "Ẩn bộ lọc",
+    "showFilters": "Hiện bộ lọc"
+  },
+  "dataTable": {
+    "showingEntries": "Hiển thị {{start}} đến {{end}} trong tổng số {{total}} mục",
+    "previous": "Trước",
+    "next": "Tiếp"
+  },
+  "userPage": {
+    "title": "Quản lý Người dùng",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "adminDashboard": "Bảng điều khiển Admin",
+      "userManagement": "Quản lý Người dùng"
+    },
+    "dataTableColumns": {
+      "renderingEngine": "Công cụ hiển thị",
+      "browser": "Trình duyệt",
+      "platform": "Nền tảng",
+      "engineVersion": "Phiên bản công cụ",
+      "cssGrade": "Hạng CSS",
+      "creationDate": "Ngày tạo"
+    },
+    "searchFields": {
+      "renderingEngineLabel": "Công cụ hiển thị",
+      "renderingEnginePlaceholder": "Nhập tên công cụ",
+      "browserNameLabel": "Tên trình duyệt",
+      "browserNamePlaceholder": "Nhập tên trình duyệt",
+      "platformLabel": "Nền tảng",
+      "platformPlaceholder": "Nhập nền tảng",
+      "cssGradeLabel": "Hạng CSS",
+      "cssGradeAny": "Bất kỳ",
+      "cssGradeA": "Hạng A",
+      "cssGradeB": "Hạng B",
+      "cssGradeC": "Hạng C",
+      "cssGradeX": "Hạng X",
+      "startDate": "Từ Ngày tạo",
+      "endDate": "Đến Ngày tạo",
+      "generalSearchLabel": "Tìm kiếm chung",
+      "generalSearchPlaceholder": "Tìm kiếm tất cả các trường..."
+    },
+    "sortFields": {
+      "sortOrderLabel": "Thứ tự Sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "orderByLabel": "Sắp xếp theo",
+      "renderingEngine": "Công cụ hiển thị",
+      "browser": "Trình duyệt",
+      "id": "ID",
+      "creationDate": "Ngày tạo"
+    }
   }
 }

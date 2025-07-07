@@ -37,10 +37,8 @@
   "sidebar": {
     "overview": "Overview",
     "userManagement": "User Management",
-    "userList": "User List",
-    "profileManagement": "Profile Management",
-    "accountSettings": "Account Settings",
-    "resetPassword": "Reset Password",
+    "roleManagement": "Role Management",
+    "permissionManagement": "Permission Management",
     "contentManagement": "Content Management",
     "assignments": "Assignments & Exercises",
     "assignmentList": "Assignment List",
@@ -91,5 +89,62 @@
     "englishFlagAlt": "US Flag",
     "vietnamese": "Tiếng Việt",
     "english": "English"
+  },
+  "common": {
+    "clear": "Clear",
+    "search": "Search"
+  },
+  "managementTemplate": {
+    "hideFilters": "Hide Filters",
+    "showFilters": "Show Filters"
+  },
+  "dataTable": {
+    "showingEntries": "Showing {{start}} to {{end}} of {{total}} entries",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "userPage": {
+    "title": "User Management",
+    "breadcrumb": {
+      "home": "Home",
+      "adminDashboard": "Admin Dashboard",
+      "userManagement": "User Management"
+    },
+    "dataTableColumns": {
+      "renderingEngine": "Rendering engine",
+      "browser": "Browser",
+      "platform": "Platform(s)",
+      "engineVersion": "Engine version",
+      "cssGrade": "CSS grade",
+      "creationDate": "Creation Date"
+    },
+    "searchFields": {
+      "renderingEngineLabel": "Rendering Engine",
+      "renderingEnginePlaceholder": "Enter engine name",
+      "browserNameLabel": "Browser Name",
+      "browserNamePlaceholder": "Enter browser name",
+      "platformLabel": "Platform",
+      "platformPlaceholder": "Enter platform",
+      "cssGradeLabel": "CSS Grade",
+      "cssGradeAny": "Any",
+      "cssGradeA": "Grade A",
+      "cssGradeB": "Grade B",
+      "cssGradeC": "Grade C",
+      "cssGradeX": "Grade X",
+      "startDate": "From Creation Date",
+      "endDate": "To Creation Date",
+      "generalSearchLabel": "General Search",
+      "generalSearchPlaceholder": "Search all fields..."
+    },
+    "sortFields": {
+      "sortOrderLabel": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "orderByLabel": "Order By",
+      "renderingEngine": "Rendering Engine",
+      "browser": "Browser",
+      "id": "ID",
+      "creationDate": "Creation Date"
+    }
   }
 }

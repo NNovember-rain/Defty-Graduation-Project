@@ -6,6 +6,9 @@ import ProtectedRoute from "../../shared/routes/ProtectedRoute";
 import UnauthorizedPage from "../../shared/routes/UnauthorizedPage";
 import LoginPage from "../pages/Login";
 import DashboardPage from "../pages/Dashboard";
+import User from "../pages/User";
+import Role from "../pages/Role";
+import Permission from "../pages/Permission";
 
 interface AppRoute {
     path: string;
@@ -47,6 +50,21 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'dashboard',
         component: DashboardPage,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'users',
+        component: User,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'roles',
+        component: Role,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'permissions',
+        component: Permission,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {

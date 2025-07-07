@@ -356,6 +356,13 @@
         }
       }
     }
+
+    &__highlight {
+      background-color: #ffffff; /* Màu nền highlight */
+      color: black;            /* Màu chữ highlight */
+      padding: 1px 1px;
+      border-radius: 3px;
+    }
   }
 
   .right-block {

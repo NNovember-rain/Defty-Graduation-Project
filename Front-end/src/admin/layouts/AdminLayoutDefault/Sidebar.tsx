@@ -21,7 +21,7 @@ import {
     FaTools,
     FaRegListAlt,
     FaQuestionCircle,
-    FaEnvelope,
+    FaEnvelope
 } from 'react-icons/fa';
 import { MdDashboard, MdOutlineSettings } from 'react-icons/md';
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
@@ -53,17 +53,16 @@ const sidebarContentConfig: SidebarItem[] = [
         icon: <FaUsers />,
         requiredAnyOfRoles: ['admin'],
         children: [
-            { id: 'userList', labelKey: 'sidebar.userList', icon: <FaUsers />, path: '/admin/users', requiredAnyOfRoles: ['admin'] },
-            { id: 'profileManagement', labelKey: 'sidebar.profileManagement', icon: <FaUserCog />, path: '/admin/profile', requiredAnyOfRoles: ['admin', 'teacher'] },
-            { id: 'accountSettings', labelKey: 'sidebar.accountSettings', icon: <MdOutlineSettings />, path: '/admin/account-settings', requiredAnyOfRoles: ['admin', 'teacher'] },
-            { id: 'resetPassword', labelKey: 'sidebar.resetPassword', icon: <FaKey />, path: '/admin/forgot-password', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'userList', labelKey: 'sidebar.userManagement', icon: <FaUsers />, path: '/admin/users', requiredAnyOfRoles: ['admin'] },
+            { id: 'roleManagement', labelKey: 'sidebar.roleManagement', icon: <FaUserCog />, path: '/admin/roles', requiredAnyOfRoles: ['admin'] },
+            { id: 'permissionManagement', labelKey: 'sidebar.permissionManagement', icon: <FaKey />, path: '/admin/permissions', requiredAnyOfRoles: ['admin'] },
         ],
     },
     {
         id: 'contentManagement',
         labelKey: 'sidebar.contentManagement',
         icon: <FaFileAlt />,
-        requiredAnyOfRoles: ['admin', 'teacher'], // Chỉ admin và teacher mới thấy mục này
+        requiredAnyOfRoles: ['admin', 'teacher'],
         children: [
             {
                 id: 'assignments',
@@ -153,23 +152,19 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
     const [isHovered, setIsHovered] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>('');
 
-    // Lấy thông tin người dùng từ useUserStore
     const { isAuthenticated, isLoading, hasRole, hasAnyRole, hasPermission } = useUserStore();
 
-    // Reset open menus when sidebar is collapsed
     React.useEffect(() => {
         if (isCollapsed) {
             setOpenMenus([]);
         }
     }, [isCollapsed]);
 
-    // Check if a path is active
     const isPathActive = useCallback((itemPath: string | undefined): boolean => {
         if (!itemPath) return false;
         return location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
     }, [location.pathname]);
 
-    // Check if an item should be active (including children)
     const shouldItemBeActive = useCallback((item: SidebarItem): boolean => {
         if (item.path && isPathActive(item.path)) {
             return true;
@@ -180,19 +175,15 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
         return false;
     }, [isPathActive]);
 
-    // Hàm kiểm tra quyền truy cập cho một mục sidebar
     const hasAccess = useCallback((item: SidebarItem): boolean => {
-        // Nếu đang tải hoặc chưa xác thực, không cho phép truy cập
         if (isLoading || !isAuthenticated) {
             return false;
         }
 
-        // Nếu không yêu cầu quyền gì, thì có quyền truy cập
         if (!item.requiredRoles && !item.requiredAnyOfRoles && !item.requiredPermission) {
             return true;
         }
 
-        // Kiểm tra requiredRoles (tất cả các vai trò phải có)
         if (item.requiredRoles && item.requiredRoles.length > 0) {
             const userHasAllRequiredRoles = item.requiredRoles.every(role => hasRole(role));
             if (!userHasAllRequiredRoles) {
@@ -200,7 +191,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
             }
         }
 
-        // Kiểm tra requiredAnyOfRoles (chỉ cần có ít nhất một trong các vai trò)
         if (item.requiredAnyOfRoles && item.requiredAnyOfRoles.length > 0) {
             const userHasAnyOfRoles = hasAnyRole(item.requiredAnyOfRoles);
             if (!userHasAnyOfRoles) {
@@ -208,7 +198,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
             }
         }
 
-        // Kiểm tra requiredPermission (nếu có)
         if (item.requiredPermission) {
             const userHasSpecificPermission = hasPermission(item.requiredPermission);
             if (!userHasSpecificPermission) {
@@ -217,9 +206,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
         }
 
         return true;
-    }, [isAuthenticated, isLoading, hasRole, hasAnyRole, hasPermission]); // Thêm dependencies cho useCallback
+    }, [isAuthenticated, isLoading, hasRole, hasAnyRole, hasPermission]);
 
-    // Handle menu click with proper navigation
     const handleMenuClick = useCallback((item: SidebarItem) => {
         const id = item.id;
         const hasChildren = item.children && item.children.length > 0;
@@ -235,7 +223,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
         }
     }, [navigate]);
 
-    // Handle keyboard navigation
     const handleKeyDown = useCallback((event: React.KeyboardEvent, item: SidebarItem) => {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -243,7 +230,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
         }
     }, [handleMenuClick]);
 
-    // Normalize string for search (remove diacritics)
     const normalizeString = useCallback((str: string): string => {
         return str
             .normalize("NFD")
@@ -251,13 +237,46 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
             .toLowerCase();
     }, []);
 
-    // Filter sidebar items based on search term AND user roles
+    // Hàm tiện ích để highlight văn bản
+    const highlightText = useCallback((text: string, searchTerm: string): React.ReactNode => {
+        if (!searchTerm.trim()) {
+            return text;
+        }
+
+        const normalizedText = normalizeString(text);
+        const normalizedSearchTerm = normalizeString(searchTerm.trim());
+        const parts: React.ReactNode[] = [];
+        let startIndex = 0;
+
+        let match;
+        // Sử dụng regex với 'g' (global) để tìm tất cả các lần xuất hiện
+        const regex = new RegExp(normalizedSearchTerm, 'gi');
+
+        while ((match = regex.exec(normalizedText)) !== null) {
+            const preMatchText = text.substring(startIndex, match.index);
+            const matchedText = text.substring(match.index, match.index + normalizedSearchTerm.length);
+
+            if (preMatchText) {
+                parts.push(<React.Fragment key={`pre-${startIndex}`}>{preMatchText}</React.Fragment>);
+            }
+            parts.push(<span key={`match-${match.index}`} className="sidebar__highlight">{matchedText}</span>);
+            startIndex = match.index + normalizedSearchTerm.length;
+        }
+
+        const postMatchText = text.substring(startIndex);
+        if (postMatchText) {
+            parts.push(<React.Fragment key={`post-${startIndex}`}>{postMatchText}</React.Fragment>);
+        }
+
+        return <>{parts}</>;
+    }, [normalizeString]);
+
+
     const filteredSidebarItems = useMemo(() => {
         const normalizedSearchTerm = searchTerm.trim() ? normalizeString(searchTerm.trim()) : '';
 
         const filterItems = (items: SidebarItem[]): SidebarItem[] => {
             return items.reduce((acc: SidebarItem[], item) => {
-                // Chỉ hiển thị mục nếu người dùng có quyền truy cập
                 if (!hasAccess(item)) {
                     return acc;
                 }
@@ -268,26 +287,16 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                 const itemMatchesSearch = normalizedSearchTerm ? normalizedTranslatedLabel.includes(normalizedSearchTerm) : true;
 
                 if (item.children) {
-                    const filteredChildren = filterItems(item.children); // Đệ quy lọc con
+                    const filteredChildren = filterItems(item.children);
                     if (filteredChildren.length > 0) {
-                        // Nếu item cha khớp với tìm kiếm HOẶC có con khớp, thì thêm item cha vào
-                        if (itemMatchesSearch) {
-                            acc.push({ ...item, children: filteredChildren });
-                        } else {
-                            // Nếu item cha không khớp tìm kiếm nhưng có con khớp, chỉ thêm con
-                            // Nếu muốn hiển thị item cha, hãy bỏ comment dòng dưới và đảm bảo item cha có children là filteredChildren
+                        // Nếu item cha khớp hoặc có con khớp, thêm item cha và các con đã lọc
+                        if (itemMatchesSearch || filteredChildren.length > 0) { // Đảm bảo item cha được thêm nếu có con khớp
                             acc.push({ ...item, children: filteredChildren });
                         }
-                    } else if (itemMatchesSearch && !normalizedSearchTerm) {
-                        // Nếu không có con nào khớp, nhưng item cha khớp với tìm kiếm VÀ không có searchTerm
-                        // Hoặc item cha khớp tìm kiếm và không có con
-                        acc.push(item);
-                    } else if (itemMatchesSearch && normalizedSearchTerm && !filteredChildren.length) {
-                        // Nếu có searchTerm, item cha khớp tìm kiếm và không có con nào khớp
+                    } else if (itemMatchesSearch) { // Nếu không có con nhưng item cha khớp
                         acc.push(item);
                     }
-                } else if (itemMatchesSearch) {
-                    // Nếu là mục không có con và khớp với tìm kiếm
+                } else if (itemMatchesSearch) { // Nếu là item lá và khớp
                     acc.push(item);
                 }
                 return acc;
@@ -295,24 +304,20 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
         };
 
         return filterItems(sidebarContentConfig);
-    }, [searchTerm, t, normalizeString, hasAccess]); // Thêm hasAccess vào dependencies
+    }, [searchTerm, t, normalizeString, hasAccess]);
 
-    // Handle search input change
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
     }, []);
 
-    // Handle logo click
     const handleLogoClick = useCallback(() => {
         navigate('/admin/dashboard');
     }, [navigate]);
 
-    // Handle profile click
     const handleProfileClick = useCallback(() => {
         navigate('/admin/profile');
     }, [navigate]);
 
-    // Render sidebar items recursively
     const renderSidebarItems = useCallback((items: SidebarItem[]) => {
         return (
             <ul>
@@ -331,7 +336,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                 tabIndex={0}
                             >
                                 {item.icon && <span className='sidebar__item-icon'>{item.icon}</span>}
-                                <span className='sidebar__item-label'>{t(item.labelKey)}</span>
+                                {/* Sử dụng highlightText cho label */}
+                                <span className='sidebar__item-label'>{highlightText(t(item.labelKey), searchTerm)}</span>
                                 {item.badge && (
                                     <span className={`sidebar__item-badge sidebar__item-badge--${item.type || 'info'}`}>
                                         {item.badge}
@@ -353,7 +359,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                         const content = (
                                             <>
                                                 {child.icon && <span className='sidebar__item-icon'>{child.icon}</span>}
-                                                <span className='sidebar__submenu-label'>{t(child.labelKey)}</span>
+                                                {/* Sử dụng highlightText cho submenu label */}
+                                                <span className='sidebar__submenu-label'>{highlightText(t(child.labelKey), searchTerm)}</span>
                                                 {child.badge && (
                                                     <span className={`sidebar__item-badge sidebar__item-badge--${child.type || 'info'}`}>
                                                         {child.badge}
@@ -405,12 +412,14 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                                                             tabIndex={0}
                                                                         >
                                                                             {grandchild.icon && <span className='sidebar__item-icon'>{grandchild.icon}</span>}
-                                                                            <span className='sidebar__submenu-label'>{t(grandchild.labelKey)}</span>
+                                                                            {/* Sử dụng highlightText cho sub-submenu label */}
+                                                                            <span className='sidebar__submenu-label'>{highlightText(t(grandchild.labelKey), searchTerm)}</span>
                                                                         </Link>
                                                                     ) : (
                                                                         <div className='sidebar__submenu-link'>
                                                                             {grandchild.icon && <span className='sidebar__item-icon'>{grandchild.icon}</span>}
-                                                                            <span className='sidebar__submenu-label'>{t(grandchild.labelKey)}</span>
+                                                                            {/* Sử dụng highlightText cho sub-submenu label */}
+                                                                            <span className='sidebar__submenu-label'>{highlightText(t(grandchild.labelKey), searchTerm)}</span>
                                                                         </div>
                                                                     )}
                                                                 </li>
@@ -428,7 +437,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                 })}
             </ul>
         );
-    }, [openMenus, searchTerm, shouldItemBeActive, t, handleMenuClick, handleKeyDown, isPathActive]);
+    }, [openMenus, searchTerm, shouldItemBeActive, t, handleMenuClick, handleKeyDown, isPathActive, highlightText]); // Thêm highlightText vào dependencies
 
     return (
         <div
