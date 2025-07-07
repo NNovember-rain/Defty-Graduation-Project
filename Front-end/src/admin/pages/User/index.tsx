@@ -78,6 +78,51 @@ const User: React.FC = () => {
         { id: 55, renderingEngine: 'Misc', browser: 'NetFront 3.1', platform: 'Win CE', engineVersion: '-', cssGrade: 'A', creationDate: '2024-03-05 12:00:00' },
         { id: 56, renderingEngine: 'Misc', browser: 'iPod Touch / iPhone', platform: 'iPod', engineVersion: '420.1', cssGrade: 'A', creationDate: '2024-03-10 13:00:00' },
         { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
+        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
     ], []);
 
     const dataTableColumns = React.useMemo(() => [
@@ -139,7 +184,7 @@ const User: React.FC = () => {
     const [currentFilters, setCurrentFilters] = React.useState<Record<string, string>>({});
     const [filteredData, setFilteredData] = React.useState<UserData[]>(allUsers);
     const [currentPage, setCurrentPage] = React.useState(1);
-    const [entriesPerPage] = React.useState(10);
+    const [entriesPerPage, setEntriesPerPage] = React.useState(10); // NEW: Thêm state cho số bản ghi trên mỗi trang
     const [currentSortColumn, setCurrentSortColumn] = React.useState<string | null>(null);
     const [currentSortOrder, setCurrentSortOrder] = React.useState<'asc' | 'desc' | null>(null);
 
@@ -242,6 +287,7 @@ const User: React.FC = () => {
         setCurrentPage(1);
         setCurrentSortColumn(null);
         setCurrentSortOrder(null);
+        setEntriesPerPage(10); // Reset entries per page on clear
     }, []);
 
     const handlePageChange = React.useCallback((page: number) => {
@@ -257,6 +303,22 @@ const User: React.FC = () => {
             sortOrder: sortOrder
         }));
     }, []);
+
+    // NEW: Function to handle changes in entries per page
+    const handleEntriesPerPageChange = React.useCallback((entries: number) => {
+        setEntriesPerPage(entries);
+        setCurrentPage(1); // Reset to first page when entries per page changes
+    }, []);
+
+    // NEW: Function to handle the "Create New" button click
+    const handleCreateNew = React.useCallback(() => {
+        alert(t('userPage.createNewAction')); // Placeholder action: show an alert
+        // In a real application, you might navigate to a new route:
+        // navigate('/users/new');
+        // Or open a modal for creating a new user:
+        // setIsCreateModalOpen(true);
+    }, [t]);
+
 
     const paginatedData = React.useMemo(() => {
         const startIndex = (currentPage - 1) * entriesPerPage;
@@ -285,6 +347,8 @@ const User: React.FC = () => {
             onSort={handleTableSort}
             currentSortColumn={currentSortColumn}
             currentSortOrder={currentSortOrder}
+            onCreateNew={handleCreateNew}
+            onEntriesPerPageChange={handleEntriesPerPageChange} // NEW: Truyền prop này
         />
     );
 }

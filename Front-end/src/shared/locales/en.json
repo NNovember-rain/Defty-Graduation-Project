@@ -96,15 +96,23 @@
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
-    "showFilters": "Show Filters"
+    "showFilters": "Show Filters",
+    "createNew": "Add New"
   },
   "dataTable": {
     "showingEntries": "Showing {{start}} to {{end}} of {{total}} entries",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "noDataAvailable": "No data available in table",
+    "showing": "Showing",
+    "to": "to",
+    "of": "of",
+    "entries": "entries",
+    "show": "Show",
+    "entriesPerPage": "entries per page"
   },
   "userPage": {
-    "title": "User Management",
+    "title": "Users",
     "breadcrumb": {
       "home": "Home",
       "adminDashboard": "Admin Dashboard",

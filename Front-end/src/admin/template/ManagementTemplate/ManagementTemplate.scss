@@ -16,7 +16,6 @@ $button-text-color: #fff;
 .management-template {
   font-family: Arial, sans-serif;
   color: $text-color;
-  min-height: 100vh; // Ensure it takes full viewport height
 }
 
 // Styles for the header section (title, toggle, breadcrumb)
@@ -24,7 +23,7 @@ $button-text-color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   flex-wrap: wrap; // Allow wrapping on smaller screens
 }
 
@@ -35,28 +34,56 @@ $button-text-color: #fff;
   flex-grow: 1; // Allows title to take available space
 }
 
+.management-template__left, .management-template__right {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.management-template__create-button { // NEW: Styles for the create button
+  background-color: white;
+  color: $primary-color;
+  border: 1px solid $primary-color;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+
+  svg {
+    font-size: 15px;
+  }
+
+  &:hover {
+    background-color: $primary-color;
+    color: $button-text-color;
+  }
+}
+
 .management-template__filter-toggle {
-  background-color: $primary-color;
+  background-color: $button-color; // Changed to $button-color
   color: $button-text-color;
   border: none;
-  padding: 5px 10px;
+  padding: 9px 15px;
   border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 5px;
   transition: background-color 0.2s;
-  margin-right: 20px;
   font-size: 14px;
 
   &:hover {
-    background-color: darken($primary-color, 10%);
+    background-color: darken($button-color, 10%); // Darken $button-color on hover
   }
 
-  // Styles for the React Icons eye
   .react-icon {
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
+    fill: $button-text-color; // Ensure eye icon is white
   }
 }
 
@@ -109,8 +136,8 @@ $button-text-color: #fff;
 .filter-options {
   background-color: $background-light;
   border: 1px solid $border-color;
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 15px;
+  margin-bottom: 15px;
   border-radius: 5px;
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
   overflow: hidden; // Hide overflow during collapse
@@ -118,7 +145,7 @@ $button-text-color: #fff;
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); // Responsive grid, min 200px wide columns
-    gap: 20px; // Space between grid items
+    gap: 15px; // Space between grid items
     align-items: end; // Align items to the bottom of their grid area for consistent input alignment
   }
 
@@ -180,31 +207,35 @@ $button-text-color: #fff;
       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
       display: flex;
       align-items: center;
+      justify-content: center; // Căn giữa nội dung trong nút
 
       &--primary {
         background-color: $primary-color;
         border-color: $primary-color;
         color: white;
+
         &:hover {
           background-color: darken($primary-color, 10%);
           border-color: darken($primary-color, 10%);
+        }
+
+        svg {
+          fill: white; // Search icon color
+          width: 18px;
+          height: 18px;
+          margin-right: 5px; // Space between icon and text
         }
       }
 
       &--secondary {
         background-color: transparent;
-        border-color: $button-color; // Grey border
+        border-color: $button-color;
         color: $button-color;
+
         &:hover {
-          background-color: lighten($button-color, 40%); // Lighter grey on hover
+          background-color: lighten($button-color, 40%);
           color: darken($button-color, 10%);
         }
-      }
-
-      svg {
-        fill: white; // For primary button search icon
-        width: 18px;
-        height: 18px;
       }
     }
   }
@@ -218,7 +249,7 @@ $button-text-color: #fff;
   border: 1px solid $border-color;
   border-radius: 5px;
   overflow-x: auto;
-  padding: 20px;
+  padding: 15px;
 
   &__title {
     font-size: 1.2em;
@@ -231,7 +262,7 @@ $button-text-color: #fff;
   .data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     border: 1px solid $border-color;
 
     &__header {
@@ -240,7 +271,7 @@ $button-text-color: #fff;
 
     &__row {
       &:nth-child(even) {
-        // No specific background for even rows based on image, just borders
+        //background-color: $header-bg;
       }
       &:hover {
         background-color: $table-hover-bg;
@@ -262,7 +293,6 @@ $button-text-color: #fff;
       cursor: pointer; // Indicate sortable
 
       &--sortable {
-        // Styles for sortable columns, if needed. The icon handles it primarily.
         padding-right: 30px; // Make space for arrow
       }
       .sort-icon {
@@ -276,16 +306,21 @@ $button-text-color: #fff;
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
-        // Using SVG for arrows for better scalability, but simple background could work too.
-        // For a more robust solution, you'd embed SVGs directly or use an icon library.
-      }
-      .sort-icon--asc {
-        // Up arrow
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 14l5-5 5 5z'/%3E%3C/svg%3E");
-      }
-      .sort-icon--desc {
-        // Down arrow
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        transition: transform 0.2s; // Smooth transition for icon rotation
+
+        &--asc {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 14l5-5 5 5z'/%3E%3C/svg%3E");
+          transform: translateY(-50%) rotate(0deg); // Up arrow
+        }
+        &--desc {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+          transform: translateY(-50%) rotate(0deg); // Down arrow
+        }
+        &--neutral {
+          // Both up and down arrow, or a double arrow
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ccc' d='M12 5.83L15.17 9 17 7.17 12 2.17 7 7.17 8.83 9 12 5.83zm0 12.34L8.83 15 7 16.83 12 21.83 17 16.83 15.17 15 12 18.17z'/%3E%3C/svg%3E");
+          opacity: 0.6; // Make it slightly transparent
+        }
       }
     }
   }
@@ -295,7 +330,30 @@ $button-text-color: #fff;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap; // For smaller screens
-    padding-top: 15px; // Space from table
+    padding-top: 10px; // Add some padding above footer
+  }
+
+  &__entries-per-page { // NEW: Styles for the entries per page select
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    color: $text-color;
+  }
+
+  &__entries-select { // NEW: Styles for the select input
+    padding: 6px 8px;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    font-size: 0.9em;
+    outline: none;
+    cursor: pointer;
+    background-color: #fff;
+
+    &:focus {
+      border-color: $primary-color;
+      box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+    }
   }
 
   &__entry-info {
@@ -309,6 +367,7 @@ $button-text-color: #fff;
     list-style: none;
     padding: 0;
     margin: 0;
+    flex-wrap: wrap; // Allow pagination items to wrap
 
     &__item {
       margin: 0 4px;
@@ -317,10 +376,21 @@ $button-text-color: #fff;
       &--disabled {
         opacity: 0.6;
         cursor: not-allowed;
+
+        .pagination__link {
+          background-color: #f2f2f2;
+          color: #999;
+          border-color: #e0e0e0;
+          cursor: not-allowed;
+          &:hover {
+            background-color: #f2f2f2; // Prevent hover effect on disabled
+          }
+        }
       }
     }
 
-    &__link {
+    &__link,
+    &__dots { // Apply similar styling to dots
       display: block;
       padding: 8px 12px;
       border: 1px solid $border-color;
@@ -328,6 +398,9 @@ $button-text-color: #fff;
       text-decoration: none;
       color: $text-color;
       background-color: #fff;
+      min-width: 30px; // Ensure consistent width for page numbers
+      text-align: center;
+      box-sizing: border-box; // Include padding in width
 
       &:hover:not(.pagination__item--disabled) {
         background-color: $table-hover-bg;
@@ -337,11 +410,18 @@ $button-text-color: #fff;
         background-color: $pagination-active-bg;
         color: $pagination-active-color;
         border-color: $pagination-active-bg;
+        font-weight: bold; // Make active page number bold
 
         &:hover {
           background-color: darken($pagination-active-bg, 10%);
+          color: $pagination-active-color; // Keep active color on hover
         }
       }
+    }
+    &__dots {
+      border: none; // No border for dots
+      background-color: transparent; // No background for dots
+      cursor: default;
     }
   }
 }

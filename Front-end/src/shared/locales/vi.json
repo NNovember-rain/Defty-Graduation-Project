@@ -96,15 +96,23 @@
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
-    "showFilters": "Hiện bộ lọc"
+    "showFilters": "Hiện bộ lọc",
+    "createNew": "Tạo mới"
   },
   "dataTable": {
     "showingEntries": "Hiển thị {{start}} đến {{end}} trong tổng số {{total}} mục",
     "previous": "Trước",
-    "next": "Tiếp"
+    "next": "Tiếp",
+    "noDataAvailable": "Không có dữ liệu trong bảng",
+    "showing": "Hiển thị",
+    "to": "đến",
+    "of": "của",
+    "entries": "mục",
+    "show": "Hiển thị",
+    "entriesPerPage": "mục trên trang"
   },
   "userPage": {
-    "title": "Quản lý Người dùng",
+    "title": "Người dùng",
     "breadcrumb": {
       "home": "Trang chủ",
       "adminDashboard": "Bảng điều khiển Admin",

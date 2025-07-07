@@ -6,6 +6,7 @@ import Breadcrumb from './Breadcrumb'; // Import Breadcrumb component
 import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import eye icons
 import './ManagementTemplate.scss';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { IoMdAddCircle } from "react-icons/io";
 
 interface Column {
     key: string;
@@ -43,11 +44,13 @@ interface ManagementTemplateProps {
     onSort: (columnKey: string, sortOrder: 'asc' | 'desc') => void;
     currentSortColumn: string | null;
     currentSortOrder: 'asc' | 'desc' | null;
+    onCreateNew?: () => void; // Optional prop for the "Create New" button
+    onEntriesPerPageChange: (entries: number) => void; // NEW: Thêm prop này
 }
 
 const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    pageTitle,
-                                                                   breadcrumbItems = [], // Default to an empty array if not provided
+                                                                   breadcrumbItems = [], // Default to empty array
                                                                    searchFields,
                                                                    sortFields,
                                                                    onSearch,
@@ -62,27 +65,40 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    onSort,
                                                                    currentSortColumn,
                                                                    currentSortOrder,
+                                                                   onCreateNew, // Destructure onCreateNew
+                                                                   onEntriesPerPageChange, // NEW: Destructure prop này
                                                                }) => {
-    const { t } = useTranslation(); // Initialize useTranslation
     const [isFilterVisible, setIsFilterVisible] = useState(true);
+    const { t } = useTranslation(); // Initialize useTranslation
 
     const toggleFilterVisibility = () => {
-        setIsFilterVisible(prevState => !prevState);
+        setIsFilterVisible(!isFilterVisible);
     };
 
     return (
         <div className="management-template">
-            {/* Header Section: Title, Filter Toggle, Breadcrumb */}
+            {/* Header Section */}
             <div className="management-template__header-container">
-                <h1 className="management-template__page-title">{pageTitle}</h1>
-                <button
-                    className="management-template__filter-toggle"
-                    onClick={toggleFilterVisibility}
-                >
-                    {isFilterVisible ? <FaEyeSlash className="react-icon" /> : <FaEye className="react-icon" />}
-                    {isFilterVisible ? t('managementTemplate.hideFilters') : t('managementTemplate.showFilters')}
-                </button>
-                <div className="management-template__header-right">
+                <div className="management-template__left">
+                    <h1 className="management-template__page-title">{pageTitle}</h1>
+                    {onCreateNew && ( // Render button only if onCreateNew prop is provided
+                        <button
+                            className="management-template__create-button"
+                            onClick={onCreateNew}
+                        >
+                            <IoMdAddCircle className="react-icon" />
+                            {t('managementTemplate.createNew')}
+                        </button>
+                    )}
+                </div>
+                <div className="management-template__right">
+                    <button
+                        className="management-template__filter-toggle"
+                        onClick={toggleFilterVisibility}
+                    >
+                        {isFilterVisible ? <FaEyeSlash className="react-icon" /> : <FaEye className="react-icon" />}
+                        {isFilterVisible ? t('managementTemplate.hideFilters') : t('managementTemplate.showFilters')}
+                    </button>
                     <Breadcrumb items={breadcrumbItems} />
                 </div>
             </div>
@@ -110,6 +126,7 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                 onSort={onSort}
                 currentSortColumn={currentSortColumn}
                 currentSortOrder={currentSortOrder}
+                onEntriesPerPageChange={onEntriesPerPageChange} // NEW: Truyền prop này
             />
         </div>
     );
