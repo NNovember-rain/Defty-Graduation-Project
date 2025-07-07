@@ -2,6 +2,7 @@
 import React, { useState, forwardRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useUserStore } from '../../../shared/authentication/useUserStore'; // Import useUserStore
 
 import {
     FaSearch,
@@ -33,6 +34,9 @@ interface SidebarItem {
     children?: SidebarItem[];
     badge?: string;
     type?: 'new' | 'info';
+    requiredRoles?: string[]; // Thêm thuộc tính này để kiểm tra tất cả các vai trò
+    requiredAnyOfRoles?: string[]; // Thêm thuộc tính này để kiểm tra bất kỳ vai trò nào
+    requiredPermission?: string; // Thêm thuộc tính này để kiểm tra quyền cụ thể
 }
 
 const sidebarContentConfig: SidebarItem[] = [
@@ -40,41 +44,47 @@ const sidebarContentConfig: SidebarItem[] = [
         id: 'overview',
         labelKey: 'sidebar.overview',
         icon: <MdDashboard />,
-        path: '/admin/dashboard'
+        path: '/admin/dashboard',
+        requiredAnyOfRoles: ['admin', 'teacher']
     },
     {
         id: 'userManagement',
         labelKey: 'sidebar.userManagement',
         icon: <FaUsers />,
+        requiredAnyOfRoles: ['admin'],
         children: [
-            { id: 'userList', labelKey: 'sidebar.userList', icon: <FaUsers />, path: '/admin/users' },
-            { id: 'profileManagement', labelKey: 'sidebar.profileManagement', icon: <FaUserCog />, path: '/admin/profile' },
-            { id: 'accountSettings', labelKey: 'sidebar.accountSettings', icon: <MdOutlineSettings />, path: '/admin/account-settings' },
-            { id: 'resetPassword', labelKey: 'sidebar.resetPassword', icon: <FaKey />, path: '/admin/forgot-password' },
+            { id: 'userList', labelKey: 'sidebar.userList', icon: <FaUsers />, path: '/admin/users', requiredAnyOfRoles: ['admin'] },
+            { id: 'profileManagement', labelKey: 'sidebar.profileManagement', icon: <FaUserCog />, path: '/admin/profile', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'accountSettings', labelKey: 'sidebar.accountSettings', icon: <MdOutlineSettings />, path: '/admin/account-settings', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'resetPassword', labelKey: 'sidebar.resetPassword', icon: <FaKey />, path: '/admin/forgot-password', requiredAnyOfRoles: ['admin', 'teacher'] },
         ],
     },
     {
         id: 'contentManagement',
         labelKey: 'sidebar.contentManagement',
         icon: <FaFileAlt />,
+        requiredAnyOfRoles: ['admin', 'teacher'], // Chỉ admin và teacher mới thấy mục này
         children: [
             {
                 id: 'assignments',
                 labelKey: 'sidebar.assignments',
                 icon: <FaTasks />,
-                path: '/admin/content/assignments'
+                path: '/admin/content/assignments',
+                requiredAnyOfRoles: ['admin', 'teacher']
             },
             {
                 id: 'quizzesAndTests',
                 labelKey: 'sidebar.quizzesAndTests',
                 icon: <FaQuestionCircle />,
-                path: '/admin/content/quizzes'
+                path: '/admin/content/quizzes',
+                requiredAnyOfRoles: ['admin', 'teacher']
             },
             {
                 id: 'lecturesAndMaterials',
                 labelKey: 'sidebar.lecturesAndMaterials',
                 icon: <FaBookOpen />,
-                path: '/admin/content/materials'
+                path: '/admin/content/materials',
+                requiredAnyOfRoles: ['admin', 'teacher']
             },
         ],
     },
@@ -82,45 +92,50 @@ const sidebarContentConfig: SidebarItem[] = [
         id: 'classManagement',
         labelKey: 'sidebar.classManagement',
         icon: <FaGraduationCap />,
-        path: '/admin/classes'
+        path: '/admin/classes',
+        requiredAnyOfRoles: ['admin', 'teacher']
     },
     {
         id: 'submissionManagement',
         labelKey: 'sidebar.submissionManagement',
         icon: <FaClipboardList />,
+        requiredAnyOfRoles: ['admin', 'teacher'],
         children: [
-            { id: 'submissionList', labelKey: 'sidebar.submissionList', icon: <FaClipboardList />, path: '/admin/submissions' },
-            { id: 'manualGrading', labelKey: 'sidebar.manualGrading', icon: <FaFileAlt />, path: '/admin/submissions/manual-grading' },
+            { id: 'submissionList', labelKey: 'sidebar.submissionList', icon: <FaClipboardList />, path: '/admin/submissions', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'manualGrading', labelKey: 'sidebar.manualGrading', icon: <FaFileAlt />, path: '/admin/submission /manual-grading', requiredAnyOfRoles: ['admin', 'teacher'] },
         ]
     },
     {
         id: 'feedbackAndComments',
         labelKey: 'sidebar.feedbackAndComments',
         icon: <FaComments />,
+        requiredAnyOfRoles: ['admin', 'teacher'],
         children: [
-            { id: 'manageAIFeedback', labelKey: 'sidebar.manageAIFeedback', icon: <FaComments />, path: '/admin/feedback/ai-feedback' },
-            { id: 'studentFeedbackOnAI', labelKey: 'sidebar.studentFeedbackOnAI', icon: <FaComments />, path: '/admin/feedback/student-ai-feedback' },
-            { id: 'editComments', labelKey: 'sidebar.editComments', icon: <FaEdit />, path: '/admin/feedback/edit' },
-            { id: 'systemFeedback', labelKey: 'sidebar.systemFeedback', icon: <FaEnvelope />, path: '/admin/system-feedback' },
+            { id: 'manageAIFeedback', labelKey: 'sidebar.manageAIFeedback', icon: <FaComments />, path: '/admin/feedback/ai-feedback', requiredAnyOfRoles: ['admin'] },
+            { id: 'studentFeedbackOnAI', labelKey: 'sidebar.studentFeedbackOnAI', icon: <FaComments />, path: '/admin/feedback/student-ai-feedback', requiredAnyOfRoles: ['admin'] },
+            { id: 'editComments', labelKey: 'sidebar.editComments', icon: <FaEdit />, path: '/admin/feedback/edit', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'systemFeedback', labelKey: 'sidebar.systemFeedback', icon: <FaEnvelope />, path: '/admin/system-feedback', requiredAnyOfRoles: ['admin'] },
         ]
     },
     {
         id: 'reportsAndStatistics',
         labelKey: 'sidebar.reportsAndStatistics',
         icon: <FaChartBar />,
+        requiredAnyOfRoles: ['admin', 'teacher'],
         children: [
-            { id: 'overviewStatistics', labelKey: 'sidebar.overviewStatistics', icon: <FaChartBar />, path: '/admin/reports/overview' },
-            { id: 'assignmentResultsStatistics', labelKey: 'sidebar.assignmentResultsStatistics', icon: <FaPollH />, path: '/admin/reports/assignment-results' },
-            { id: 'studentProgress', labelKey: 'sidebar.studentProgress', icon: <FaRegListAlt />, path: '/admin/reports/student-progress' },
+            { id: 'overviewStatistics', labelKey: 'sidebar.overviewStatistics', icon: <FaChartBar />, path: '/admin/reports/overview', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'assignmentResultsStatistics', labelKey: 'sidebar.assignmentResultsStatistics', icon: <FaPollH />, path: '/admin/reports/assignment-results', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'studentProgress', labelKey: 'sidebar.studentProgress', icon: <FaRegListAlt />, path: '/admin/reports/student-progress', requiredAnyOfRoles: ['admin', 'teacher'] },
         ]
     },
     {
         id: 'systemConfiguration',
         labelKey: 'sidebar.systemConfiguration',
         icon: <MdOutlineSettings />,
+        requiredAnyOfRoles: ['admin'],
         children: [
-            { id: 'plantUMLConfiguration', labelKey: 'sidebar.plantUMLConfiguration', icon: <FaTools />, path: '/admin/settings/plantuml' },
-            { id: 'aiAPIConfiguration', labelKey: 'sidebar.aiAPIConfiguration', icon: <FaTools />, path: '/admin/settings/ai-api' },
+            { id: 'plantUMLConfiguration', labelKey: 'sidebar.plantUMLConfiguration', icon: <FaTools />, path: '/admin/settings/plantuml', requiredAnyOfRoles: ['admin'] },
+            { id: 'aiAPIConfiguration', labelKey: 'sidebar.aiAPIConfiguration', icon: <FaTools />, path: '/admin/settings/ai-api', requiredAnyOfRoles: ['admin'] },
         ],
     },
 ];
@@ -137,6 +152,9 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
     const [openMenus, setOpenMenus] = useState<string[]>([]);
     const [isHovered, setIsHovered] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>('');
+
+    // Lấy thông tin người dùng từ useUserStore
+    const { isAuthenticated, isLoading, hasRole, hasAnyRole, hasPermission } = useUserStore();
 
     // Reset open menus when sidebar is collapsed
     React.useEffect(() => {
@@ -161,6 +179,45 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
         }
         return false;
     }, [isPathActive]);
+
+    // Hàm kiểm tra quyền truy cập cho một mục sidebar
+    const hasAccess = useCallback((item: SidebarItem): boolean => {
+        // Nếu đang tải hoặc chưa xác thực, không cho phép truy cập
+        if (isLoading || !isAuthenticated) {
+            return false;
+        }
+
+        // Nếu không yêu cầu quyền gì, thì có quyền truy cập
+        if (!item.requiredRoles && !item.requiredAnyOfRoles && !item.requiredPermission) {
+            return true;
+        }
+
+        // Kiểm tra requiredRoles (tất cả các vai trò phải có)
+        if (item.requiredRoles && item.requiredRoles.length > 0) {
+            const userHasAllRequiredRoles = item.requiredRoles.every(role => hasRole(role));
+            if (!userHasAllRequiredRoles) {
+                return false;
+            }
+        }
+
+        // Kiểm tra requiredAnyOfRoles (chỉ cần có ít nhất một trong các vai trò)
+        if (item.requiredAnyOfRoles && item.requiredAnyOfRoles.length > 0) {
+            const userHasAnyOfRoles = hasAnyRole(item.requiredAnyOfRoles);
+            if (!userHasAnyOfRoles) {
+                return false;
+            }
+        }
+
+        // Kiểm tra requiredPermission (nếu có)
+        if (item.requiredPermission) {
+            const userHasSpecificPermission = hasPermission(item.requiredPermission);
+            if (!userHasSpecificPermission) {
+                return false;
+            }
+        }
+
+        return true;
+    }, [isAuthenticated, isLoading, hasRole, hasAnyRole, hasPermission]); // Thêm dependencies cho useCallback
 
     // Handle menu click with proper navigation
     const handleMenuClick = useCallback((item: SidebarItem) => {
@@ -194,35 +251,51 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
             .toLowerCase();
     }, []);
 
-    // Filter sidebar items based on search term
+    // Filter sidebar items based on search term AND user roles
     const filteredSidebarItems = useMemo(() => {
-        if (!searchTerm.trim()) {
-            return sidebarContentConfig;
-        }
-
-        const normalizedSearchTerm = normalizeString(searchTerm.trim());
+        const normalizedSearchTerm = searchTerm.trim() ? normalizeString(searchTerm.trim()) : '';
 
         const filterItems = (items: SidebarItem[]): SidebarItem[] => {
             return items.reduce((acc: SidebarItem[], item) => {
+                // Chỉ hiển thị mục nếu người dùng có quyền truy cập
+                if (!hasAccess(item)) {
+                    return acc;
+                }
+
                 const translatedLabel = t(item.labelKey);
                 const normalizedTranslatedLabel = normalizeString(translatedLabel);
 
-                // Check if current item matches
-                if (normalizedTranslatedLabel.includes(normalizedSearchTerm)) {
-                    acc.push(item);
-                } else if (item.children) {
-                    // Check children
-                    const filteredChildren = filterItems(item.children);
+                const itemMatchesSearch = normalizedSearchTerm ? normalizedTranslatedLabel.includes(normalizedSearchTerm) : true;
+
+                if (item.children) {
+                    const filteredChildren = filterItems(item.children); // Đệ quy lọc con
                     if (filteredChildren.length > 0) {
-                        acc.push({ ...item, children: filteredChildren });
+                        // Nếu item cha khớp với tìm kiếm HOẶC có con khớp, thì thêm item cha vào
+                        if (itemMatchesSearch) {
+                            acc.push({ ...item, children: filteredChildren });
+                        } else {
+                            // Nếu item cha không khớp tìm kiếm nhưng có con khớp, chỉ thêm con
+                            // Nếu muốn hiển thị item cha, hãy bỏ comment dòng dưới và đảm bảo item cha có children là filteredChildren
+                            acc.push({ ...item, children: filteredChildren });
+                        }
+                    } else if (itemMatchesSearch && !normalizedSearchTerm) {
+                        // Nếu không có con nào khớp, nhưng item cha khớp với tìm kiếm VÀ không có searchTerm
+                        // Hoặc item cha khớp tìm kiếm và không có con
+                        acc.push(item);
+                    } else if (itemMatchesSearch && normalizedSearchTerm && !filteredChildren.length) {
+                        // Nếu có searchTerm, item cha khớp tìm kiếm và không có con nào khớp
+                        acc.push(item);
                     }
+                } else if (itemMatchesSearch) {
+                    // Nếu là mục không có con và khớp với tìm kiếm
+                    acc.push(item);
                 }
                 return acc;
             }, []);
         };
 
         return filterItems(sidebarContentConfig);
-    }, [searchTerm, t, normalizeString]);
+    }, [searchTerm, t, normalizeString, hasAccess]); // Thêm hasAccess vào dependencies
 
     // Handle search input change
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,7 +327,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                 className='sidebar__item-header'
                                 onClick={() => handleMenuClick(item)}
                                 onKeyDown={(e) => handleKeyDown(e, item)}
-                                {...(hasChildren && { 'aria-expanded': isOpen })}
                                 role="button"
                                 tabIndex={0}
                             >
@@ -311,7 +383,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                                                         className='sidebar__submenu-link'
                                                         onClick={() => handleMenuClick(child)}
                                                         onKeyDown={(e) => handleKeyDown(e, child)}
-                                                        {...(hasGrandChildren && { 'aria-expanded': isChildOpen })}
                                                         role="button"
                                                         tabIndex={0}
                                                     >
