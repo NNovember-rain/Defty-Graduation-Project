@@ -109,10 +109,13 @@
     "of": "of",
     "entries": "entries",
     "show": "Show",
-    "entriesPerPage": "entries per page"
+    "entriesPerPage": "entries per page",
+    "actions": "Action"
   },
   "userPage": {
     "title": "Users",
+    "editTooltip": "Edit user",
+    "deleteTooltip": "Delete user",
     "breadcrumb": {
       "home": "Home",
       "adminDashboard": "Admin Dashboard",

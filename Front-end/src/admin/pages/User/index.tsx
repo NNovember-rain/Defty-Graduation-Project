@@ -1,9 +1,10 @@
 // pages/User.tsx
 import React from "react";
-import ManagementTemplate from "../../template/ManagementTemplate";
+import ManagementTemplate, {type ActionButton} from "../../template/ManagementTemplate";
 import type {SearchField, SortField} from "../../template/ManagementTemplate/FilterOption.tsx";
 import moment from "moment"; // Import moment để xử lý ngày giờ
 import { useTranslation } from "react-i18next"; // Import useTranslation
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 interface UserData {
     id: number;
@@ -77,10 +78,6 @@ const User: React.FC = () => {
         { id: 54, renderingEngine: 'Presto', browser: 'Opera 9.0', platform: 'Win 95+ / OSX.1+', engineVersion: '-', cssGrade: 'A', creationDate: '2024-03-01 11:00:00' },
         { id: 55, renderingEngine: 'Misc', browser: 'NetFront 3.1', platform: 'Win CE', engineVersion: '-', cssGrade: 'A', creationDate: '2024-03-05 12:00:00' },
         { id: 56, renderingEngine: 'Misc', browser: 'iPod Touch / iPhone', platform: 'iPod', engineVersion: '420.1', cssGrade: 'A', creationDate: '2024-03-10 13:00:00' },
-        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
-        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
-        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
-        { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
         { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
         { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
         { id: 57, renderingEngine: 'Misc', browser: 'IE Mobile', platform: 'Windows Mobile', engineVersion: '-', cssGrade: 'C', creationDate: '2024-03-15 14:00:00' },
@@ -319,6 +316,37 @@ const User: React.FC = () => {
         // setIsCreateModalOpen(true);
     }, [t]);
 
+    // Action handlers for DataTable buttons
+    const handleEditUser = React.useCallback((rowData: UserData) => {
+        alert(`${t('userPage.editAction')} User ID: ${rowData.id}`);
+        // Implement actual edit logic here, e.g., navigate to edit page or open a modal
+    }, [t]);
+
+    const handleDeleteUser = React.useCallback((rowData: UserData) => {
+        if (window.confirm(`${t('userPage.confirmDelete')} ${rowData.id}?`)) {
+            alert(`${t('userPage.deleteAction')} User ID: ${rowData.id}`);
+            // Implement actual delete logic here, e.g., call an API to delete the user
+        }
+    }, [t]);
+
+    // Define the actions for the DataTable
+    const userActions = React.useMemo(() => [
+        {
+            icon: <FaEdit />,
+            onClick: handleEditUser,
+            className: 'text-blue-500 hover:text-blue-700',
+            tooltip: t('userPage.editTooltip'),
+            color: '#7600ff'
+        },
+        {
+            icon: <FaTrash />,
+            onClick: handleDeleteUser,
+            className: 'text-red-500 hover:text-red-700 ml-2', // Added margin-left for spacing
+            tooltip: t('userPage.deleteTooltip'),
+            color: 'red'
+        },
+    ], [handleEditUser, handleDeleteUser, t]);
+
 
     const paginatedData = React.useMemo(() => {
         const startIndex = (currentPage - 1) * entriesPerPage;
@@ -349,6 +377,7 @@ const User: React.FC = () => {
             currentSortOrder={currentSortOrder}
             onCreateNew={handleCreateNew}
             onEntriesPerPageChange={handleEntriesPerPageChange} // NEW: Truyền prop này
+            actions={userActions as ActionButton[]} // Pass the defined actions to the ManagementTemplate
         />
     );
 }

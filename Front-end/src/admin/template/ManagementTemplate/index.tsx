@@ -7,6 +7,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import eye icons
 import './ManagementTemplate.scss';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { IoMdAddCircle } from "react-icons/io";
+import type {ReactNode} from 'react';
 
 interface Column {
     key: string;
@@ -21,6 +22,15 @@ interface DataRow {
 interface BreadcrumbItem {
     label: string;
     path?: string; // Optional path if it's a link
+}
+
+// NEW: Define ActionButton interface (same as in DataTable)
+export interface ActionButton {
+    icon: ReactNode; // ReactNode to allow any React element (like an icon component)
+    onClick: (rowData: DataRow) => void;
+    className?: string;
+    tooltip?: string; // Optional tooltip for the button,
+    color: string
 }
 
 interface ManagementTemplateProps {
@@ -46,6 +56,9 @@ interface ManagementTemplateProps {
     currentSortOrder: 'asc' | 'desc' | null;
     onCreateNew?: () => void; // Optional prop for the "Create New" button
     onEntriesPerPageChange: (entries: number) => void; // NEW: Thêm prop này
+
+    // NEW: Add actions prop
+    actions?: ActionButton[]; // Optional array of action buttons
 }
 
 const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
@@ -67,6 +80,7 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    currentSortOrder,
                                                                    onCreateNew, // Destructure onCreateNew
                                                                    onEntriesPerPageChange, // NEW: Destructure prop này
+                                                                   actions, // NEW: Destructure actions prop
                                                                }) => {
     const [isFilterVisible, setIsFilterVisible] = useState(true);
     const { t } = useTranslation(); // Initialize useTranslation
@@ -113,7 +127,6 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                 />
             </div>
 
-
             {/* Data Table Section */}
             <DataTable
                 title={dataTableTitle}
@@ -127,6 +140,7 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                 currentSortColumn={currentSortColumn}
                 currentSortOrder={currentSortOrder}
                 onEntriesPerPageChange={onEntriesPerPageChange} // NEW: Truyền prop này
+                actions={actions} // NEW: Pass actions to DataTable
             />
         </div>
     );

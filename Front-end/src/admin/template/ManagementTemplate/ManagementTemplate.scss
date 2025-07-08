@@ -323,6 +323,11 @@ $button-text-color: #fff;
         }
       }
     }
+
+    &__action-button {
+      background-color: #fff;
+      border: none;
+    }
   }
 
   &__footer {

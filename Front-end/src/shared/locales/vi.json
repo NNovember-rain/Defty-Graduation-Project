@@ -109,10 +109,13 @@
     "of": "của",
     "entries": "mục",
     "show": "Hiển thị",
-    "entriesPerPage": "mục trên trang"
+    "entriesPerPage": "mục trên trang",
+    "actions": "Hành động"
   },
   "userPage": {
     "title": "Người dùng",
+    "editTooltip": "Cập nhật người dùng",
+    "deleteTooltip": "Xóa người dùng",
     "breadcrumb": {
       "home": "Trang chủ",
       "adminDashboard": "Bảng điều khiển Admin",

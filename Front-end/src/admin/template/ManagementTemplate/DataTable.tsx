@@ -19,9 +19,10 @@ interface DataRow {
 // NEW: Define ActionButton interface
 interface ActionButton {
     icon: ReactNode; // ReactNode to allow any React element (like an icon component)
-    onClick: (rowData: DataRow) => void;
+    onClick: (rowData: any) => void;
     className?: string;
-    tooltip?: string; // Optional tooltip for the button
+    tooltip?: string; // Optional tooltip for the button,
+    color?: string;
 }
 
 interface DataTableProps {
@@ -189,6 +190,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                             className={`data-table__action-button ${action.className || ''}`}
                                             onClick={() => action.onClick(row)}
                                             title={action.tooltip || ''}
+                                            style={{color: action.color, cursor: "pointer"}}
                                         >
                                             {action.icon}
                                         </button>
