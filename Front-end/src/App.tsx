@@ -1,11 +1,7 @@
+import RoutesConfig from "./shared/routes";
+
 function App() {
-  return (
-    <>
-      <div>
-          Defty graduation project
-      </div>
-    </>
-  )
+  return <RoutesConfig />;
 }
 
 export default App;

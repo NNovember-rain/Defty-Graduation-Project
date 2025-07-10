@@ -1,0 +1,161 @@
+{
+  "unauthorized": {
+    "title": "403 - Access Denied",
+    "message": "You do not have permission to view this page.",
+    "goHome": "Go to Home"
+  },
+  "protectedRoute": {
+    "loading": "Checking access permissions..."
+  },
+  "routesConfig": {
+    "loadingUserData": "Loading user data...",
+    "authError": "Authentication error: {{status}} - {{statusText}}",
+    "sessionRestoreError": "Failed to restore session. Please log in again."
+  },
+  "apiMessages": {
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "networkErrorInitialFetch": "Network error. Please try again.",
+    "requestFailedAfterRefresh": "Request failed after session refresh.",
+    "networkErrorRetryFetch": "Network error during retry."
+  },
+  "login": {
+    "adminLTE": "Admin",
+    "defty": "DEFTY",
+    "signInMessage": "Sign in to start your session",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "signInButton": "Sign In",
+    "forgotPassword": "I forgot my password",
+    "emailRequired": "Email is required!",
+    "invalidEmailFormat": "Invalid email format!",
+    "passwordRequired": "Password is required!",
+    "passwordMinLength": "Password must be at least 8 characters long.",
+    "passwordLowercase": "Password must contain at least one lowercase letter.",
+    "passwordUppercase": "Password must contain at least one uppercase letter.",
+    "passwordNumber": "Password must contain at least one number."
+  },
+  "sidebar": {
+    "overview": "Overview",
+    "userManagement": "User Management",
+    "roleManagement": "Role Management",
+    "permissionManagement": "Permission Management",
+    "contentManagement": "Content Management",
+    "assignments": "Assignments & Exercises",
+    "assignmentList": "Assignment List",
+    "createUMLAssignment": "Create UML Assignment",
+    "quizzesAndTests": "Quizzes & Tests",
+    "quizList": "Quiz List",
+    "createQuiz": "Create Quiz / Test",
+    "lecturesAndMaterials": "Lectures & Materials",
+    "classManagement": "Class Management",
+    "submissionManagement": "Submission Management",
+    "submissionList": "Submission List",
+    "manualGrading": "Manual Grading",
+    "feedbackAndComments": "Feedback & Comments",
+    "manageAIFeedback": "Manage AI Feedback",
+    "studentFeedbackOnAI": "Student Feedback on AI",
+    "editComments": "Edit Comments",
+    "systemFeedback": "System Feedback",
+    "reportsAndStatistics": "Reports & Statistics",
+    "overviewStatistics": "Overview Statistics",
+    "assignmentResultsStatistics": "Assignment Results Statistics",
+    "studentProgress": "Student Progress",
+    "systemConfiguration": "System Configuration",
+    "plantUMLConfiguration": "PlantUML Configuration",
+    "aiAPIConfiguration": "AI API Configuration",
+    "searchPlaceholder": "Search",
+    "deftyLogoAlt": "Defty Logo",
+    "userAvatarAlt": "User Avatar",
+    "userName": "Alexander Pierce",
+    "posts": "Posts",
+    "pages": "Pages",
+    "taskList": "Task List",
+    "taskReports": "Task Reports",
+    "communication": "Communication",
+    "messages": "Messages",
+    "announcements": "Announcements",
+    "education": "Education",
+    "courses": "Courses"
+  },
+  "header": {
+    "home": "Home",
+    "contact": "Contact",
+    "messagesTooltip": "Messages",
+    "notificationsTooltip": "Notifications",
+    "logoutTooltip": "Logout",
+    "userLoggedOut": "User logged out",
+    "logoutSuccess": "Logged out successfully!",
+    "vietnameseFlagAlt": "Vietnamese Flag",
+    "englishFlagAlt": "US Flag",
+    "vietnamese": "Tiếng Việt",
+    "english": "English"
+  },
+  "common": {
+    "clear": "Clear",
+    "search": "Search"
+  },
+  "managementTemplate": {
+    "hideFilters": "Hide Filters",
+    "showFilters": "Show Filters",
+    "createNew": "Add New"
+  },
+  "dataTable": {
+    "showingEntries": "Showing {{start}} to {{end}} of {{total}} entries",
+    "previous": "Previous",
+    "next": "Next",
+    "noDataAvailable": "No data available in table",
+    "showing": "Showing",
+    "to": "to",
+    "of": "of",
+    "entries": "entries",
+    "show": "Show",
+    "entriesPerPage": "entries per page",
+    "actions": "Action"
+  },
+  "userPage": {
+    "title": "Users",
+    "editTooltip": "Edit user",
+    "deleteTooltip": "Delete user",
+    "breadcrumb": {
+      "home": "Home",
+      "adminDashboard": "Admin Dashboard",
+      "userManagement": "User Management"
+    },
+    "dataTableColumns": {
+      "renderingEngine": "Rendering engine",
+      "browser": "Browser",
+      "platform": "Platform(s)",
+      "engineVersion": "Engine version",
+      "cssGrade": "CSS grade",
+      "creationDate": "Creation Date"
+    },
+    "searchFields": {
+      "renderingEngineLabel": "Rendering Engine",
+      "renderingEnginePlaceholder": "Enter engine name",
+      "browserNameLabel": "Browser Name",
+      "browserNamePlaceholder": "Enter browser name",
+      "platformLabel": "Platform",
+      "platformPlaceholder": "Enter platform",
+      "cssGradeLabel": "CSS Grade",
+      "cssGradeAny": "Any",
+      "cssGradeA": "Grade A",
+      "cssGradeB": "Grade B",
+      "cssGradeC": "Grade C",
+      "cssGradeX": "Grade X",
+      "startDate": "From Creation Date",
+      "endDate": "To Creation Date",
+      "generalSearchLabel": "General Search",
+      "generalSearchPlaceholder": "Search all fields..."
+    },
+    "sortFields": {
+      "sortOrderLabel": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "orderByLabel": "Order By",
+      "renderingEngine": "Rendering Engine",
+      "browser": "Browser",
+      "id": "ID",
+      "creationDate": "Creation Date"
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "unauthorized": {
+    "title": "403 - Truy cập Bị Từ Chối",
+    "message": "Bạn không có quyền để xem trang này.",
+    "goHome": "Về trang chủ"
+  },
+  "protectedRoute": {
+    "loading": "Đang kiểm tra quyền truy cập..."
+  },
+  "routesConfig": {
+    "loadingUserData": "Đang tải dữ liệu người dùng...",
+    "authError": "Lỗi xác thực: {{status}} - {{statusText}}",
+    "sessionRestoreError": "Không thể khôi phục phiên. Vui lòng đăng nhập lại."
+  },
+  "apiMessages": {
+    "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng đăng nhập lại.",
+    "networkErrorInitialFetch": "Lỗi kết nối mạng. Vui lòng thử lại.",
+    "requestFailedAfterRefresh": "Yêu cầu thất bại sau khi làm mới phiên.",
+    "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu."
+  },
+  "login": {
+    "adminLTE": "Admin",
+    "defty": "DEFTY",
+    "signInMessage": "Đăng nhập để bắt đầu phiên của bạn",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Mật khẩu",
+    "signInButton": "Đăng nhập",
+    "forgotPassword": "Tôi quên mật khẩu",
+    "emailRequired": "Email là bắt buộc!",
+    "invalidEmailFormat": "Định dạng email không hợp lệ!",
+    "passwordRequired": "Mật khẩu là bắt buộc!",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự.",
+    "passwordLowercase": "Mật khẩu phải chứa ít nhất một chữ cái thường.",
+    "passwordUppercase": "Mật khẩu phải chứa ít nhất một chữ cái hoa.",
+    "passwordNumber": "Mật khẩu phải chứa ít nhất một số."
+  },
+  "sidebar": {
+    "overview": "Tổng quan",
+    "userManagement": "Quản lý Người dùng",
+    "roleManagement": "Quản lý nhóm quyền",
+    "permissionManagement": "Quản lý quyền",
+    "contentManagement": "Quản lý Nội dung",
+    "assignments": "Đề bài & Bài tập",
+    "assignmentList": "Danh sách Đề bài",
+    "createUMLAssignment": "Tạo Đề bài UML",
+    "quizzesAndTests": "Quiz & Bài kiểm tra",
+    "quizList": "Danh sách Quiz",
+    "createQuiz": "Tạo Quiz / Bài kiểm tra",
+    "lecturesAndMaterials": "Bài giảng & Tài liệu",
+    "classManagement": "Quản lý Lớp học",
+    "submissionManagement": "Quản lý Bài nộp",
+    "submissionList": "Danh sách Bài nộp",
+    "manualGrading": "Chấm điểm thủ công",
+    "feedbackAndComments": "Phản hồi & Nhận xét",
+    "manageAIFeedback": "Quản lý Nhận xét AI",
+    "studentFeedbackOnAI": "Phản hồi SV về AI",
+    "editComments": "Chỉnh sửa Nhận xét",
+    "systemFeedback": "Phản hồi Hệ thống",
+    "reportsAndStatistics": "Báo cáo & Thống kê",
+    "overviewStatistics": "Thống kê Tổng quan",
+    "assignmentResultsStatistics": "Thống kê Kết quả Đề bài",
+    "studentProgress": "Tiến độ Sinh viên",
+    "systemConfiguration": "Cấu hình Hệ thống",
+    "plantUMLConfiguration": "Cấu hình PlantUML",
+    "aiAPIConfiguration": "Cấu hình AI API",
+    "searchPlaceholder": "Tìm kiếm",
+    "deftyLogoAlt": "Logo Defty",
+    "userAvatarAlt": "Ảnh đại diện người dùng",
+    "userName": "Alexander Pierce",
+    "posts": "Bài viết",
+    "pages": "Trang",
+    "taskList": "Danh sách tác vụ",
+    "taskReports": "Báo cáo tác vụ",
+    "communication": "Giao tiếp",
+    "messages": "Tin nhắn",
+    "announcements": "Thông báo",
+    "education": "Giáo dục",
+    "courses": "Khóa học"
+  },
+  "header": {
+    "home": "Trang chủ",
+    "contact": "Liên hệ",
+    "messagesTooltip": "Tin nhắn",
+    "notificationsTooltip": "Thông báo",
+    "logoutTooltip": "Đăng xuất",
+    "userLoggedOut": "Người dùng đã đăng xuất",
+    "logoutSuccess": "Đăng xuất thành công!",
+    "vietnameseFlagAlt": "Cờ Việt Nam",
+    "englishFlagAlt": "Cờ Mỹ",
+    "vietnamese": "Tiếng Việt",
+    "english": "English"
+  },
+  "common": {
+    "clear": "Xóa",
+    "search": "Tìm kiếm"
+  },
+  "managementTemplate": {
+    "hideFilters": "Ẩn bộ lọc",
+    "showFilters": "Hiện bộ lọc",
+    "createNew": "Tạo mới"
+  },
+  "dataTable": {
+    "showingEntries": "Hiển thị {{start}} đến {{end}} trong tổng số {{total}} mục",
+    "previous": "Trước",
+    "next": "Tiếp",
+    "noDataAvailable": "Không có dữ liệu trong bảng",
+    "showing": "Hiển thị",
+    "to": "đến",
+    "of": "của",
+    "entries": "mục",
+    "show": "Hiển thị",
+    "entriesPerPage": "mục trên trang",
+    "actions": "Hành động"
+  },
+  "userPage": {
+    "title": "Người dùng",
+    "editTooltip": "Cập nhật người dùng",
+    "deleteTooltip": "Xóa người dùng",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "adminDashboard": "Bảng điều khiển Admin",
+      "userManagement": "Quản lý Người dùng"
+    },
+    "dataTableColumns": {
+      "renderingEngine": "Công cụ hiển thị",
+      "browser": "Trình duyệt",
+      "platform": "Nền tảng",
+      "engineVersion": "Phiên bản công cụ",
+      "cssGrade": "Hạng CSS",
+      "creationDate": "Ngày tạo"
+    },
+    "searchFields": {
+      "renderingEngineLabel": "Công cụ hiển thị",
+      "renderingEnginePlaceholder": "Nhập tên công cụ",
+      "browserNameLabel": "Tên trình duyệt",
+      "browserNamePlaceholder": "Nhập tên trình duyệt",
+      "platformLabel": "Nền tảng",
+      "platformPlaceholder": "Nhập nền tảng",
+      "cssGradeLabel": "Hạng CSS",
+      "cssGradeAny": "Bất kỳ",
+      "cssGradeA": "Hạng A",
+      "cssGradeB": "Hạng B",
+      "cssGradeC": "Hạng C",
+      "cssGradeX": "Hạng X",
+      "startDate": "Từ Ngày tạo",
+      "endDate": "Đến Ngày tạo",
+      "generalSearchLabel": "Tìm kiếm chung",
+      "generalSearchPlaceholder": "Tìm kiếm tất cả các trường..."
+    },
+    "sortFields": {
+      "sortOrderLabel": "Thứ tự Sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "orderByLabel": "Sắp xếp theo",
+      "renderingEngine": "Công cụ hiển thị",
+      "browser": "Trình duyệt",
+      "id": "ID",
+      "creationDate": "Ngày tạo"
+    }
+  }
+}
