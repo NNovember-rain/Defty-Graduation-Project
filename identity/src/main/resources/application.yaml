@@ -1,0 +1,26 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /identity
+
+spring:
+  application:
+    name: identity-service
+
+  datasource:
+    url: jdbc:mysql://45.117.171.17:3306/identity_service?createDatabaseIfNotExist=true
+    username: deftyuser
+    password: 123456
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
+jwt:
+  expiration: 600  # 10m
+  expiration-refresh-token: 86400  # 1 day
+  secret: 5d52QxETMTxUyZ2VjgrTMLymN7fLp/++mWpSdfzPrdrPTussUSzOtsotKyl8wEoo
