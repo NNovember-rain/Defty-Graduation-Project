@@ -8,6 +8,12 @@
         <option value="$PROJECT_DIR$/common-library/pom.xml" />
         <option value="$PROJECT_DIR$/identity/pom.xml" />
         <option value="$PROJECT_DIR$/discovery-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/ai-feedback-service/ai-feedback-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/grading-service/grading-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/submission-service/submission-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/ai-feedback-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/grading-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/submission-service/pom.xml" />
       </list>
     </option>
   </component>
