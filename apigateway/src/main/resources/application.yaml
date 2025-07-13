@@ -16,3 +16,13 @@ spring:
             - Path=${app.api-prefix}/identity/**
           filters:
             - StripPrefix=2
+
+eureka:
+#  instance:
+#    prefer-ip-address: true
+#    ip-address: ${HOST_IP_ADDRESS}
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
