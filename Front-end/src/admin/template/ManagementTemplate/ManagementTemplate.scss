@@ -1,0 +1,432 @@
+/* admin-dashboard/styles/admin-dashboard.scss */
+
+// Variables
+$primary-color: #007bff;
+$text-color: #333;
+$border-color: #e0e0e0;
+$background-light: #f8f9fa;
+$header-bg: #f2f2f2;
+$table-hover-bg: #f5f5f5;
+$pagination-active-bg: #007bff;
+$pagination-active-color: #fff;
+$button-color: #6c757d; // Grey button color from image
+$button-text-color: #fff;
+
+// Base styles for the entire template
+.management-template {
+  font-family: Arial, sans-serif;
+  color: $text-color;
+}
+
+// Styles for the header section (title, toggle, breadcrumb)
+.management-template__header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap; // Allow wrapping on smaller screens
+}
+
+.management-template__page-title {
+  font-size: 1.8em;
+  color: $text-color;
+  margin: 0;
+  flex-grow: 1; // Allows title to take available space
+}
+
+.management-template__left, .management-template__right {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.management-template__create-button { // NEW: Styles for the create button
+  background-color: white;
+  color: $primary-color;
+  border: 1px solid $primary-color;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+
+  svg {
+    font-size: 15px;
+  }
+
+  &:hover {
+    background-color: $primary-color;
+    color: $button-text-color;
+  }
+}
+
+.management-template__filter-toggle {
+  background-color: $button-color; // Changed to $button-color
+  color: $button-text-color;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s;
+  font-size: 14px;
+
+  &:hover {
+    background-color: darken($button-color, 10%); // Darken $button-color on hover
+  }
+
+  .react-icon {
+    width: 15px;
+    height: 15px;
+    fill: $button-text-color; // Ensure eye icon is white
+  }
+}
+
+// Styles for breadcrumb
+.breadcrumb {
+  display: flex;
+  padding: 10px 0;
+  margin-bottom: 0; // Handled by header-container margin
+  list-style: none;
+  background-color: transparent;
+  border-radius: 0; // No border radius as per image
+
+  &__item {
+    font-size: 0.9em;
+    color: $text-color;
+    display: flex;
+    align-items: center; // Align chevron with text
+
+    &:not(:last-child)::after {
+      content: '/';
+      margin: 0 8px;
+      color: #807f7f;
+    }
+
+    &--link {
+      color: $primary-color;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+
+// ----------------------------------------------------
+// FilterOption styles (Based on image_edfe5c.png)
+// ----------------------------------------------------
+
+.filter-options--hidden {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border: none; // Remove border when hidden
+}
+
+.filter-options {
+  background-color: $background-light;
+  border: 1px solid $border-color;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  overflow: hidden; // Hide overflow during collapse
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); // Responsive grid, min 200px wide columns
+    gap: 15px; // Space between grid items
+    align-items: end; // Align items to the bottom of their grid area for consistent input alignment
+  }
+
+  &__form-group {
+    display: flex;
+    flex-direction: column;
+    // flex: 1; // Removed as grid handles sizing
+
+    &__label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 0.9em;
+      color: lighten($text-color, 15%);
+    }
+
+    &__input,
+    &__select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+      font-size: 1em;
+      outline: none;
+      box-sizing: border-box; // Ensure padding is included in width
+
+      &:focus {
+        border-color: $primary-color;
+        box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+      }
+    }
+
+    input[type="date"] {
+      // Đảm bảo nó kế thừa hoặc có style tương tự input text
+      @extend .filter-options__form-group__input;
+      // Bạn có thể thêm các tùy chỉnh riêng nếu cần cho date picker
+    }
+  }
+
+  // Grid Column Span Modifiers (Example)
+  // These classes can be passed as props to control column width
+  &__col-span-1 { grid-column: span 1; }
+  &__col-span-2 { grid-column: span 2; }
+  &__col-span-3 { grid-column: span 3; }
+  &__col-span-full { grid-column: 1 / -1; } // Span full width of the grid
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 0; // Space above buttons
+    align-items: center;
+
+    .filter-options__button {
+      padding: 8px 15px;
+      height: 40px;
+      border: 1px solid;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center; // Căn giữa nội dung trong nút
+
+      &--primary {
+        background-color: $primary-color;
+        border-color: $primary-color;
+        color: white;
+
+        &:hover {
+          background-color: darken($primary-color, 10%);
+          border-color: darken($primary-color, 10%);
+        }
+
+        svg {
+          fill: white; // Search icon color
+          width: 18px;
+          height: 18px;
+          margin-right: 5px; // Space between icon and text
+        }
+      }
+
+      &--secondary {
+        background-color: transparent;
+        border-color: $button-color;
+        color: $button-color;
+
+        &:hover {
+          background-color: lighten($button-color, 40%);
+          color: darken($button-color, 10%);
+        }
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------
+// DataTable styles (Based on image_edfda3.png)
+// ----------------------------------------------------
+.data-table-section {
+  background-color: #fff;
+  border: 1px solid $border-color;
+  border-radius: 5px;
+  overflow-x: auto;
+  padding: 15px;
+
+  &__title {
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: $text-color;
+    font-weight: normal; // As per image
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    border: 1px solid $border-color;
+
+    &__header {
+      background-color: $header-bg;
+    }
+
+    &__row {
+      &:nth-child(even) {
+        //background-color: $header-bg;
+      }
+      &:hover {
+        background-color: $table-hover-bg;
+      }
+    }
+
+    &__cell,
+    &__header-cell {
+      text-align: left;
+      padding: 12px 15px;
+      border: 1px solid $border-color;
+      font-size: 0.95em;
+    }
+
+    &__header-cell {
+      font-weight: bold;
+      color: $text-color;
+      position: relative;
+      cursor: pointer; // Indicate sortable
+
+      &--sortable {
+        padding-right: 30px; // Make space for arrow
+      }
+      .sort-icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        transition: transform 0.2s; // Smooth transition for icon rotation
+
+        &--asc {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 14l5-5 5 5z'/%3E%3C/svg%3E");
+          transform: translateY(-50%) rotate(0deg); // Up arrow
+        }
+        &--desc {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+          transform: translateY(-50%) rotate(0deg); // Down arrow
+        }
+        &--neutral {
+          // Both up and down arrow, or a double arrow
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ccc' d='M12 5.83L15.17 9 17 7.17 12 2.17 7 7.17 8.83 9 12 5.83zm0 12.34L8.83 15 7 16.83 12 21.83 17 16.83 15.17 15 12 18.17z'/%3E%3C/svg%3E");
+          opacity: 0.6; // Make it slightly transparent
+        }
+      }
+    }
+
+    &__action-button {
+      background-color: #fff;
+      border: none;
+    }
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; // For smaller screens
+    padding-top: 10px; // Add some padding above footer
+  }
+
+  &__entries-per-page { // NEW: Styles for the entries per page select
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    color: $text-color;
+  }
+
+  &__entries-select { // NEW: Styles for the select input
+    padding: 6px 8px;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    font-size: 0.9em;
+    outline: none;
+    cursor: pointer;
+    background-color: #fff;
+
+    &:focus {
+      border-color: $primary-color;
+      box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+    }
+  }
+
+  &__entry-info {
+    font-size: 0.9em;
+    color: $text-color;
+    margin-bottom: 10px; // For wrap
+  }
+
+  .pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap; // Allow pagination items to wrap
+
+    &__item {
+      margin: 0 4px;
+      cursor: pointer;
+
+      &--disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+
+        .pagination__link {
+          background-color: #f2f2f2;
+          color: #999;
+          border-color: #e0e0e0;
+          cursor: not-allowed;
+          &:hover {
+            background-color: #f2f2f2; // Prevent hover effect on disabled
+          }
+        }
+      }
+    }
+
+    &__link,
+    &__dots { // Apply similar styling to dots
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+      text-decoration: none;
+      color: $text-color;
+      background-color: #fff;
+      min-width: 30px; // Ensure consistent width for page numbers
+      text-align: center;
+      box-sizing: border-box; // Include padding in width
+
+      &:hover:not(.pagination__item--disabled) {
+        background-color: $table-hover-bg;
+      }
+
+      &--active {
+        background-color: $pagination-active-bg;
+        color: $pagination-active-color;
+        border-color: $pagination-active-bg;
+        font-weight: bold; // Make active page number bold
+
+        &:hover {
+          background-color: darken($pagination-active-bg, 10%);
+          color: $pagination-active-color; // Keep active color on hover
+        }
+      }
+    }
+    &__dots {
+      border: none; // No border for dots
+      background-color: transparent; // No background for dots
+      cursor: default;
+    }
+  }
+}
