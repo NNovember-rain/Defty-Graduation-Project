@@ -1,0 +1,22 @@
+server:
+  port: 8086
+#  servlet:
+#    context-path: /submission
+
+spring:
+  application:
+    name: submission-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/submission-service?createDatabaseIfNotExist=true
+    username: root
+    password: 1234
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
