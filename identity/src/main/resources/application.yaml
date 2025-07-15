@@ -24,3 +24,13 @@ jwt:
   expiration: 600  # 10m
   expiration-refresh-token: 86400  # 1 day
   secret: 5d52QxETMTxUyZ2VjgrTMLymN7fLp/++mWpSdfzPrdrPTussUSzOtsotKyl8wEoo
+
+eureka:
+  #  instance:
+  #    prefer-ip-address: true
+  #    ip-address: ${HOST_IP_ADDRESS}
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
