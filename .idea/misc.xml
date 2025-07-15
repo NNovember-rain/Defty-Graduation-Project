@@ -14,6 +14,8 @@
         <option value="$PROJECT_DIR$/services/ai-feedback-service/pom.xml" />
         <option value="$PROJECT_DIR$/services/grading-service/pom.xml" />
         <option value="$PROJECT_DIR$/services/submission-service/pom.xml" />
+        <option value="$PROJECT_DIR$/class-management-service/pom.xml" />
+        <option value="$PROJECT_DIR$/content-service/pom.xml" />
       </list>
     </option>
   </component>

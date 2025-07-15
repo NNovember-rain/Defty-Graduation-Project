@@ -9,7 +9,9 @@
         <outputRelativeToContentRoot value="true" />
         <module name="apigateway" />
         <module name="common-library" />
+        <module name="content-service" />
         <module name="discovery" />
+        <module name="class-management-service" />
       </profile>
       <profile name="Annotation profile for identity-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -38,7 +40,6 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="common-library" target="17" />
       <module name="demo" target="17" />
     </bytecodeTargetLevel>
   </component>
@@ -46,7 +47,9 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="ai-feedback-service" options="-parameters" />
       <module name="apigateway" options="-parameters" />
+      <module name="class-management-service" options="-parameters" />
       <module name="common-library" options="-parameters" />
+      <module name="content-service" options="-parameters" />
       <module name="discovery" options="-parameters" />
       <module name="grading-service" options="-parameters" />
       <module name="identity" options="-parameters" />
