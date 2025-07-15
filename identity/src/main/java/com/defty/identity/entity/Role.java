@@ -13,10 +13,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Role {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+public class Role extends  BaseEntity {
+    @Column(nullable = false, length = 255, unique = true)
     String name;
     String description;
 

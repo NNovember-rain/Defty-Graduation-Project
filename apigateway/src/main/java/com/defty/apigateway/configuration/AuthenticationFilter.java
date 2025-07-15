@@ -56,7 +56,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             return unauthenticatedResponse(exchange.getResponse());
 
         String token = authHeader.get(0).replace("Bearer ", "");
-        log.info("Token: {}", token);
+//        log.info("Token: {}", token);
 
         return identityService.verifyToken(token).flatMap(verifyResponse -> {
             if (verifyResponse.getResult().isValid())

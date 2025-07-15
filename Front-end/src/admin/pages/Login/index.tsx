@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import "./Login.scss";
-import { FaEnvelope, FaLock } from "react-icons/fa";
-import { postLogin } from "../../../shared/services/authService.ts";
-import { Spin, message } from 'antd';
+import {FaEnvelope, FaEye, FaEyeSlash} from "react-icons/fa";
+import {getCurrentAccount, postLogin} from "../../../shared/services/authService.ts";
+import {message, Spin} from 'antd';
 import 'antd/dist/reset.css';
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
 import {useNavigate} from "react-router-dom";
-import {useUserStore} from "../../../shared/authentication/useUserStore.ts"; // Import useTranslation
+import {useUserStore} from "../../../shared/authentication/useUserStore.ts";
+import {setLocalStorageItem} from "../../../shared/utils/localStorage.ts"; // Import useTranslation
 
 const PREFIX_URL_ADMIN: string = import.meta.env.VITE_PREFIX_URL_ADMIN;
 
@@ -14,12 +15,16 @@ const Login: React.FC = () => {
     const { t } = useTranslation(); // Khởi tạo hook useTranslation
     const navigate = useNavigate();
     const { setUser, clearUser, setLoading, setError, isAuthenticated, isLoading } = useUserStore();
-
+    const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [loginLoading, setLoginLoading] = useState<boolean>(false);
     const [emailError, setEmailError] = useState<string | null>(null);
     const [passwordError, setPasswordError] = useState<string | null>(null);
+
+    const toggleShowPassword = () => {
+        setShowPassword(prev => !prev);
+    };
 
     // Basic email validation function
     const validateEmail = (email: string): string | null => {
@@ -104,11 +109,21 @@ const Login: React.FC = () => {
 
         setLoginLoading(true);
         try {
-            //TODO: SOLVE LOGIN, ZUSTAND STATE
-            // const response = await postLogin({ email: email, password: password });
-            // console.log("Login successful:", response);
+            // TODO: SOLVE LOGIN, ZUSTAND STATE
+            const response = await postLogin({ email: email, password: password });
+            if (!response.ok) {
+                setPasswordError(t("login.invalidCredentials"));
+                return;
+            }
+            const data = await response.json();
+            console.log('Parsed response data:', data);
 
-            // FIXME: NOW IS MOCK DATA
+            const token = data.result.token;
+            setLocalStorageItem("token", token);
+
+            const myInfo = await getCurrentAccount();
+            const userData = await myInfo.json();
+            console.log('Current account info:', userData);
             const isLogin = true;
             if (isLogin) {
                 setUser({
@@ -162,7 +177,7 @@ const Login: React.FC = () => {
                             </div>
                             <div className="input-group mb-3">
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     className={`form-control ${passwordError ? 'is-invalid' : ''}`}
                                     placeholder={t("login.passwordPlaceholder")}
                                     value={password}
@@ -171,8 +186,9 @@ const Login: React.FC = () => {
                                     disabled={loginLoading}
                                 />
                                 <div className="input-group-append">
-                                    <div className="input-group-text">
-                                        <FaLock />
+                                    <div className="input-group-text" style={{cursor: 'pointer'}}
+                                         onClick={toggleShowPassword}>
+                                        {showPassword ? <FaEyeSlash/> : <FaEye/>}
                                     </div>
                                 </div>
                                 {passwordError && <div className="invalid-feedback">{passwordError}</div>}
@@ -184,7 +200,8 @@ const Login: React.FC = () => {
                                         className="btn btn-primary btn-block"
                                         disabled={loginLoading}
                                     >
-                                        {loginLoading ? <Spin size="small" /> : t("login.signInButton")} {/* Sử dụng t() */}
+                                        {loginLoading ?
+                                            <Spin size="small"/> : t("login.signInButton")} {/* Sử dụng t() */}
                                     </button>
                                 </div>
                             </div>

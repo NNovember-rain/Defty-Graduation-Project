@@ -8,6 +8,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,9 +27,12 @@ public class RoleController {
 
 //    @PreAuthorize("hasAuthority('GET_ROLES')")
     @GetMapping
-    ApiResponse<List<RoleResponse>> getAllRoles() {
-        List<RoleResponse> roleResponses = roleService.findAllRoles();
-        return ApiResponse.<List<RoleResponse>>builder()
+    ApiResponse<Page<RoleResponse>> getAllRoles(@RequestParam(value = "page", defaultValue = "0") int page,
+                                                @RequestParam(value = "size", defaultValue = "10") int size,
+                                                @RequestParam(value = "name", required = false) String name) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<RoleResponse> roleResponses = roleService.findAllRoles(name, pageable);
+        return ApiResponse.<Page<RoleResponse>>builder()
                 .result(roleResponses)
                 .build();
     }

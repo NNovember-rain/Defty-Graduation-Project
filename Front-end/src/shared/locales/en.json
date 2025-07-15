@@ -32,7 +32,8 @@
     "passwordMinLength": "Password must be at least 8 characters long.",
     "passwordLowercase": "Password must contain at least one lowercase letter.",
     "passwordUppercase": "Password must contain at least one uppercase letter.",
-    "passwordNumber": "Password must contain at least one number."
+    "passwordNumber": "Password must contain at least one number.",
+    "invalidCredentials": "Invalid login credentials. Please try again."
   },
   "sidebar": {
     "overview": "Overview",
@@ -157,5 +158,36 @@
       "id": "ID",
       "creationDate": "Creation Date"
     }
+  },
+  "rolePage":{
+    "title": "Role Management",
+    "breadcrumb": "Role Management",
+    "columns": {
+      "name": "Role Name",
+      "description": "Description",
+      "creationDate": "Creation Date"
+    },
+    "search": {
+      "name": "Role Name",
+      "namePlaceholder": "Enter role name...",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "global": "Global Search",
+      "globalPlaceholder": "Search by any field..."
+    },
+    "sort": {
+      "order": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "by": "Order By",
+      "name": "Role Name",
+      "creationDate": "Creation Date"
+    },
+    "createNew": "Create new role (not yet implemented)",
+    "edit": "Edit",
+    "delete": "Deleted",
+    "editTooltip": "Edit role",
+    "deleteTooltip": "Delete role",
+    "confirmDelete": "Are you sure you want to delete role"
   }
 }

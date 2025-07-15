@@ -10,6 +10,8 @@ import com.defty.identity.service.RoleService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -33,11 +35,16 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<RoleResponse> findAllRoles() {
-        List<Role> roles = roleRepository.findAll();
-        return roles.stream()
-                .map(roleMapper::toRoleResponse)
-                .toList();
+    public Page<RoleResponse> findAllRoles(String name, Pageable pageable) {
+        Page<Role> rolesPage;
+
+        if (name == null || name.trim().isEmpty()) {
+            rolesPage = roleRepository.findAll(pageable);
+        } else {
+            rolesPage = roleRepository.findByNameContainingIgnoreCase(name.trim(), pageable);
+        }
+
+        return rolesPage.map(roleMapper::toRoleResponse);
     }
 
 }

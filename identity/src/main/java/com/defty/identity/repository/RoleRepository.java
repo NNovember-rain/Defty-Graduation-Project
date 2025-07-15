@@ -1,6 +1,8 @@
 package com.defty.identity.repository;
 
 import com.defty.identity.entity.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,4 +12,5 @@ import java.util.Optional;
 public interface RoleRepository extends JpaRepository<Role, Long> {
     Optional<Role> findByName(String name);
     boolean existsRoleByName(String name);
+    Page<Role> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }

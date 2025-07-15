@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface RoleMapper {
     @Mapping(target = "permissions", ignore = true)
     Role toRole(RoleRequest request);
+    @Mapping(source = "createdDate", target = "createdDate")
     RoleResponse toRoleResponse(Role role);
 }
 
