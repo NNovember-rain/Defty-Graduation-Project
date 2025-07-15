@@ -5,8 +5,9 @@ import i18n from '../locales/i18n';
 const DOMAIN: string = import.meta.env.VITE_DOMAIN as string;
 const PREFIX_API: string = import.meta.env.VITE_PREFIX_API as string;
 const PREFIX_AUTH: string = import.meta.env.VITE_PREFIX_AUTH as string;
+const PREFIX_IDENTITY: string = import.meta.env.VITE_PREFIX_IDENTITY as string;
 
-const ACCESS_TOKEN_KEY: string = 'accessToken';
+const ACCESS_TOKEN_KEY: string = 'token';
 
 const getAccessToken = (): string | null => {
     return getLocalStorageItem<string>(ACCESS_TOKEN_KEY);
@@ -22,28 +23,42 @@ const removeAccessToken = (): void => {
 
 const refreshToken = async (): Promise<boolean> => {
     try {
-        const response = await fetch(`${DOMAIN}/${PREFIX_API}/${PREFIX_AUTH}/refresh-token`, {
-            method: 'POST',
-            credentials: 'include',
-        });
-
-        if (!response.ok) {
-            console.error('Failed to refresh token (HTTP error):', response.status, response.statusText);
+        const token = getAccessToken();
+        if (!token) {
+            console.error("Không tìm thấy token cho yêu cầu làm mới. Không thể làm mới.");
             handleRefreshTokenFailure();
             return false;
         }
 
-        const result: { status: number; accessToken?: string } = await response.json();
-        if (result.status === 200 && result.accessToken) {
-            setAccessToken(result.accessToken);
+        const requestBody = {
+            token: token,
+        };
+
+        const response = await fetch(`${DOMAIN}/${PREFIX_API}/${PREFIX_IDENTITY}/${PREFIX_AUTH}/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            console.error('Không thể làm mới token (lỗi HTTP):', response.status, response.statusText);
+            handleRefreshTokenFailure();
+            return false;
+        }
+        const apiResponse: { code: number; result?: { authenticated: boolean; token: string } } = await response.json();
+        if (apiResponse.code === 200 && apiResponse.result && apiResponse.result.authenticated && apiResponse.result.token) {
+            setAccessToken(apiResponse.result.token);
             return true;
         } else {
-            console.error('Refresh token API returned non-200 status or missing new accessToken:', result.status);
+            console.error('API làm mới token trả về trạng thái không phải 200, hoặc thiếu token mới:', apiResponse);
             handleRefreshTokenFailure();
             return false;
         }
     } catch (error) {
-        console.error('Error refreshing access token (network/parsing error):', error);
+        console.error('Lỗi khi làm mới access token (lỗi mạng/phân tích cú pháp):', error);
         handleRefreshTokenFailure();
         return false;
     }
@@ -114,11 +129,16 @@ const requestWithRefresh = async (path: string, options: RequestInit): Promise<R
     return response;
 };
 
-export const get = async (path: string): Promise<Response> => {
-    return requestWithRefresh(path, {
+
+export const get = async (path: string, options?: RequestInit): Promise<Response> => {
+    const finalOptions: RequestInit = {
         method: 'GET',
-    });
+        ...options,
+    };
+
+    return requestWithRefresh(path, finalOptions);
 };
+
 
 export const postJsonData = async (path: string, data: Record<string, any>): Promise<Response> => {
     return requestWithRefresh(path, {

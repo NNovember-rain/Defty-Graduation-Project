@@ -3,6 +3,7 @@ package com.defty.identity.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.Set;
 
 @Data
@@ -13,5 +14,6 @@ import java.util.Set;
 public class RoleResponse {
     String name;
     String description;
+    Date createdDate;
     Set<PermissionResponse> permissions;
 }

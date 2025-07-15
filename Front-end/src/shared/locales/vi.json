@@ -32,7 +32,8 @@
     "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự.",
     "passwordLowercase": "Mật khẩu phải chứa ít nhất một chữ cái thường.",
     "passwordUppercase": "Mật khẩu phải chứa ít nhất một chữ cái hoa.",
-    "passwordNumber": "Mật khẩu phải chứa ít nhất một số."
+    "passwordNumber": "Mật khẩu phải chứa ít nhất một số.",
+    "invalidCredentials": "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại."
   },
   "sidebar": {
     "overview": "Tổng quan",
@@ -157,5 +158,37 @@
       "id": "ID",
       "creationDate": "Ngày tạo"
     }
+  },
+  "rolePage": {
+    "title": "Quản lý vai trò",
+    "breadcrumb": "Quản lý vai trò",
+    "columns": {
+      "name": "Tên vai trò",
+      "description": "Mô tả",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "name": "Tên vai trò",
+      "namePlaceholder": "Nhập tên vai trò...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm chung",
+      "globalPlaceholder": "Tìm theo bất kỳ trường nào..."
+    },
+    "sort": {
+      "order": "Thứ tự sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "name": "Tên vai trò",
+      "creationDate": "Ngày tạo"
+    },
+    "createNew": "Tạo vai trò mới (chưa hỗ trợ)",
+    "edit": "Chỉnh sửa",
+    "delete": "Đã xóa",
+    "editTooltip": "Chỉnh sửa vai trò",
+    "deleteTooltip": "Xóa vai trò",
+    "confirmDelete": "Bạn có chắc muốn xóa vai trò"
   }
+
 }

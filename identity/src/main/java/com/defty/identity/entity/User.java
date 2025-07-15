@@ -14,18 +14,18 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+public class User extends BaseEntity {
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     String username;
 
     String password;
     String firstName;
     String lastName;
     LocalDate dob;
+
+    @Column(unique = true, nullable = false)
+    String email;
 
     @ManyToMany
     Set<Role> roles;

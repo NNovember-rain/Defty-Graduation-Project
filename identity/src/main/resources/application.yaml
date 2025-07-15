@@ -8,20 +8,20 @@ spring:
     name: identity-service
 
   datasource:
-    url: jdbc:mysql://45.117.171.17:3306/identity_service?createDatabaseIfNotExist=true
-    username: deftyuser
+    url: jdbc:mysql://localhost:3306/identity_service?createDatabaseIfNotExist=true
+    username: root
     password: 123456
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
 jwt:
-  expiration: 600  # 10m
+  expiration: 60  # 1m
   expiration-refresh-token: 86400  # 1 day
   secret: 5d52QxETMTxUyZ2VjgrTMLymN7fLp/++mWpSdfzPrdrPTussUSzOtsotKyl8wEoo
 

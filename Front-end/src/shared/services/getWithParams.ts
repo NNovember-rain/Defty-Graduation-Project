@@ -1,4 +1,4 @@
-import { get } from "./request.tsx";
+import { get } from "./request";
 import type {Moment} from "moment";
 
 interface Params {

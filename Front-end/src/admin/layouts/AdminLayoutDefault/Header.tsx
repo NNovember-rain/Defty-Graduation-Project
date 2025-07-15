@@ -1,12 +1,15 @@
 // Header.tsx
 import { forwardRef } from 'react'; // Import forwardRef
 import { useTranslation } from 'react-i18next';
-import { Tooltip, Dropdown } from 'antd';
+import {Tooltip, Dropdown, message} from 'antd';
 import { FaBars } from 'react-icons/fa';
 import { FaRegComments } from "react-icons/fa6";
 import { PiSignOut } from "react-icons/pi";
 import { BsBell } from "react-icons/bs";
 import { IoLanguageOutline } from "react-icons/io5";
+import {useUserStore} from "../../../shared/authentication/useUserStore.ts";
+import {useNavigate} from "react-router-dom";
+import {postLogout} from "../../../shared/services/authService.ts";
 
 interface HeaderProps {
     onToggleSidebar: () => void;
@@ -14,15 +17,29 @@ interface HeaderProps {
 
 const Header = forwardRef<HTMLDivElement, HeaderProps>(({ onToggleSidebar }, ref) => { // Accept ref
     const { i18n, t } = useTranslation(); // Destructure t from useTranslation()
+    const { clearUser } = useUserStore();
+    const navigate = useNavigate();
 
     const changeLanguage = async (lng: 'en' | 'vi') => {
         await i18n.changeLanguage(lng);
         localStorage.setItem('language', lng);
     };
 
-    const handleLogout = () => {
-        console.log(t('header.userLoggedOut')); // Translated
-        alert(t('header.logoutSuccess')); // Translated
+    const handleLogout = async () => {
+        try {
+            const response = await postLogout();
+            console.log("Đăng xuất thành công:", response);
+
+            clearUser();
+            localStorage.removeItem("token");
+            message.success(t('header.logoutSuccess'));
+            navigate('/admin');
+
+        } catch (error: any) {
+            console.error("Đăng xuất thất bại:", error);
+            const errorMessage = error.message || t('header.logoutFailed');
+            message.error(errorMessage);
+        }
     };
 
     // Get the current language from i18n
