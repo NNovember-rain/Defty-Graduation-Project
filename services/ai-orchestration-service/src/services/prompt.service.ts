@@ -1,11 +1,13 @@
 import Prompt, { IPrompt } from '../models/prompt.model';
 import { HttpError } from '../utils/httpErrors';
-import { FilterQuery } from 'mongoose';
+import {FilterQuery, SortOrder} from 'mongoose';
 
 interface GetPromptsOptions {
     page?: number;
     limit?: number;
     name?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
 }
 
 interface GetPromptsResult {
@@ -45,7 +47,7 @@ export const getPromptById = async (id: string): Promise<IPrompt> => {
 };
 
 export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPromptsResult> => {
-    const { page = 1, limit = 10, name } = options;
+    const { page = 1, limit = 10, name, sortBy, sortOrder } = options;
     const skip = (page - 1) * limit;
 
     const query: FilterQuery<IPrompt> = {};
@@ -53,9 +55,14 @@ export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPr
         query.name = new RegExp(name, 'i');
     }
 
+    const sort: { [key: string]: SortOrder } = {};
+    if (sortBy) {
+        sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    }
+
     try {
         const [prompts, total] = await Promise.all([
-            Prompt.find(query).skip(skip).limit(limit),
+            Prompt.find(query).sort(sort).skip(skip).limit(limit),
             Prompt.countDocuments(query)
         ]);
 

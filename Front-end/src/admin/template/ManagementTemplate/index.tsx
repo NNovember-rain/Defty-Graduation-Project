@@ -43,6 +43,11 @@ interface ManagementTemplateProps {
     sortFields: SortField[];
     onSearch: (filters: Record<string, string>) => void;
     onClear: () => void;
+    // NEW: Thêm các props để truyền giá trị ban đầu cho FilterOption
+    initialFilters: Record<string, string>;
+    initialSortBy: string | null;
+    initialSortOrder: 'asc' | 'desc' | null;
+
 
     // Props for DataTable (giữ nguyên)
     dataTableTitle?: string;
@@ -69,6 +74,9 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    sortFields,
                                                                    onSearch,
                                                                    onClear,
+                                                                   initialFilters, // NEW: Destructure
+                                                                   initialSortBy, // NEW: Destructure
+                                                                   initialSortOrder, // NEW: Destructure
                                                                    dataTableTitle,
                                                                    columns,
                                                                    data,
@@ -125,6 +133,9 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                     sortFields={sortFields}
                     onSearch={onSearch}
                     onClear={onClear}
+                    initialFilters={initialFilters} // NEW: Truyền prop này
+                    initialSortBy={initialSortBy} // NEW: Truyền prop này
+                    initialSortOrder={initialSortOrder} // NEW: Truyền prop này
                 />
             </div>
 

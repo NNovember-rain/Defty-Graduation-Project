@@ -65,6 +65,7 @@
     "systemConfiguration": "System Configuration",
     "plantUMLConfiguration": "PlantUML Configuration",
     "aiAPIConfiguration": "AI API Configuration",
+    "promptConfiguration": "Prompt Configuration",
     "searchPlaceholder": "Search",
     "deftyLogoAlt": "Defty Logo",
     "userAvatarAlt": "User Avatar",
@@ -191,5 +192,48 @@
     "editTooltip": "Edit role",
     "deleteTooltip": "Delete role",
     "confirmDelete": "Are you sure you want to delete role"
+  },
+  "promptPage": {
+    "title": "Prompt Management",
+    "breadcrumb": {
+      "home": "Home",
+      "adminDashboard": "Admin Dashboard",
+      "promptManagement": "Prompt Management"
+    },
+    "dataTableColumns": {
+      "name": "Name",
+      "description": "Description",
+      "templateString": "Template",
+      "type": "Type",
+      "version": "Version",
+      "createdAt": "Creation Date",
+      "updatedAt": "Last Updated"
+    },
+    "searchFields": {
+      "nameLabel": "Prompt Name",
+      "namePlaceholder": "Enter prompt name"
+    },
+    "sortFields": {
+      "sortOrderLabel": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "sortByLabel": "Order By",
+      "name": "Name",
+      "createdAt": "Creation Date",
+      "updatedAt": "Last Updated"
+    },
+    "createNewAction": "Create new prompt (not yet implemented)",
+    "editAction": "Edit",
+    "deleteAction": "Delete",
+    "editTooltip": "Edit prompt",
+    "deleteTooltip": "Delete prompt",
+    "confirmDelete": "Are you sure you want to delete prompt:",
+    "deleteSuccess": "Prompt deleted successfully!",
+    "common": {
+      "errorFetchingData": "Failed to load data. Please try again.",
+      "errorNoIdToDelete": "Error: No ID provided for deletion.",
+      "errorDeletingData": "Failed to delete data. Please try again.",
+      "loadingData": "Loading data..."
+    }
   }
 }

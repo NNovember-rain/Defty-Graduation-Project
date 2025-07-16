@@ -50,8 +50,10 @@ export const getPromptsController = async (req: Request, res: Response, next: Ne
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const name = req.query.name as string;
+        const sortBy = req.query.sortBy as string; // Get sortBy from query
+        const sortOrder = req.query.sortOrder as 'asc' | 'desc'; // Get sortOrder from query
 
-        const result = await promptService.getPrompts({ page, limit, name });
+        const result = await promptService.getPrompts({ page, limit, name, sortBy, sortOrder });
         res.status(200).json({
             success: true,
             message: 'Prompts retrieved successfully',

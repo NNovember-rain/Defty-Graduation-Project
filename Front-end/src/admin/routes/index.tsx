@@ -9,6 +9,7 @@ import DashboardPage from "../pages/Dashboard";
 import User from "../pages/User";
 import Role from "../pages/Role";
 import Permission from "../pages/Permission";
+import Prompt from "../pages/Prompt";
 
 interface AppRoute {
     path: string;
@@ -65,6 +66,11 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'permissions',
         component: Permission,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'settings/prompts',
+        component: Prompt,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {

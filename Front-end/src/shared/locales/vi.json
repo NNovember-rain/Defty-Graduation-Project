@@ -65,6 +65,7 @@
     "systemConfiguration": "Cấu hình Hệ thống",
     "plantUMLConfiguration": "Cấu hình PlantUML",
     "aiAPIConfiguration": "Cấu hình AI API",
+    "promptConfiguration": "Cấu hình Prompt",
     "searchPlaceholder": "Tìm kiếm",
     "deftyLogoAlt": "Logo Defty",
     "userAvatarAlt": "Ảnh đại diện người dùng",
@@ -191,6 +192,48 @@
     "editTooltip": "Chỉnh sửa vai trò",
     "deleteTooltip": "Xóa vai trò",
     "confirmDelete": "Bạn có chắc muốn xóa vai trò"
+  },
+  "promptPage": {
+    "title": "Quản lý Prompt",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "adminDashboard": "Bảng điều khiển Admin",
+      "promptManagement": "Quản lý Prompt"
+    },
+    "dataTableColumns": {
+      "name": "Tên",
+      "description": "Mô tả",
+      "templateString": "Mẫu",
+      "type": "Loại",
+      "version": "Phiên bản",
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Cập nhật lần cuối"
+    },
+    "searchFields": {
+      "nameLabel": "Tên Prompt",
+      "namePlaceholder": "Nhập tên prompt"
+    },
+    "sortFields": {
+      "sortOrderLabel": "Thứ tự Sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "sortByLabel": "Sắp xếp theo",
+      "name": "Tên",
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Cập nhật lần cuối"
+    },
+    "createNewAction": "Tạo prompt mới (chưa hỗ trợ)",
+    "editAction": "Chỉnh sửa",
+    "deleteAction": "Xóa",
+    "editTooltip": "Chỉnh sửa prompt",
+    "deleteTooltip": "Xóa prompt",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa prompt:",
+    "deleteSuccess": "Xóa prompt thành công!",
+    "common": {
+      "errorFetchingData": "Tải dữ liệu thất bại. Vui lòng thử lại.",
+      "errorNoIdToDelete": "Lỗi: Không có ID được cung cấp để xóa.",
+      "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại.",
+      "loadingData": "Đang tải dữ liệu..."
+    }
   }
-
 }
