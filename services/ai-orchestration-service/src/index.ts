@@ -1,12 +1,16 @@
 import app from './app';
 import dotenv from 'dotenv';
+dotenv.config();
 import connectDB from './config/db';
 import runKafkaConsumer from './kafka/consumer';
+import {initModels} from "./models/initModels";
 
-dotenv.config();
+console.log('MONGO_URI:', process.env.MONGO_URI);
+console.log('NODE_ENV:', process.env.NODE_ENV);
 (async () => {
     try {
         await connectDB();
+        await initModels();
         await runKafkaConsumer();
 
         const PORT = process.env.PORT || 3000;

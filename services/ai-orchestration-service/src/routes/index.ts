@@ -3,6 +3,6 @@ import promptRoutes from "./prompt.routes";
 
 const router = Router();
 
-router.use("/prompt", promptRoutes);
+router.use("/prompts", promptRoutes);
 
 export default router;

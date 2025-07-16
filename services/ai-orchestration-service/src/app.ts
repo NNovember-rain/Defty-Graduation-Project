@@ -12,7 +12,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
-app.use('/api', routes);
+app.use('/api/v1', routes);
 
 app.get('/', (req: Request, res: Response) => {
     res.status(200).send('AI Orchestration Service is running!');

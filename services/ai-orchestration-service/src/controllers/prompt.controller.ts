@@ -5,7 +5,7 @@ import * as promptService from '../services/prompt.service';
 
 /**
  * @desc Create a new prompt
- * @route POST /api/prompts
+ * @route POST /api/v1/prompts
  * @access Private
  */
 export const createPromptController = async (req: Request, res: Response, next: NextFunction) => {
@@ -17,13 +17,13 @@ export const createPromptController = async (req: Request, res: Response, next: 
             data: newPrompt
         });
     } catch (error) {
-        next(error); // Chuyển lỗi cho middleware xử lý lỗi
+        next(error);
     }
 };
 
 /**
  * @desc Get a single prompt by ID
- * @route GET /api/prompts/:id
+ * @route GET /api/v1/prompts/:id
  * @access Private
  */
 export const getPromptByIdController = async (req: Request, res: Response, next: NextFunction) => {
@@ -42,7 +42,7 @@ export const getPromptByIdController = async (req: Request, res: Response, next:
 
 /**
  * @desc Get all prompts with pagination and optional name filter
- * @route GET /api/prompts
+ * @route GET /api/v1/prompts
  * @access Private
  */
 export const getPromptsController = async (req: Request, res: Response, next: NextFunction) => {
@@ -70,7 +70,7 @@ export const getPromptsController = async (req: Request, res: Response, next: Ne
 
 /**
  * @desc Update an existing prompt by ID
- * @route PATCH /api/prompts/:id
+ * @route PATCH /api/v1/prompts/:id
  * @access Private
  */
 export const updatePromptController = async (req: Request, res: Response, next: NextFunction) => {
@@ -89,7 +89,7 @@ export const updatePromptController = async (req: Request, res: Response, next: 
 
 /**
  * @desc Delete a prompt by ID
- * @route DELETE /api/prompts/:id
+ * @route DELETE /api/v1/prompts/:id
  * @access Private
  */
 export const deletePromptController = async (req: Request, res: Response, next: NextFunction) => {
