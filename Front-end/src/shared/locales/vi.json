@@ -16,7 +16,10 @@
     "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng đăng nhập lại.",
     "networkErrorInitialFetch": "Lỗi kết nối mạng. Vui lòng thử lại.",
     "requestFailedAfterRefresh": "Yêu cầu thất bại sau khi làm mới phiên.",
-    "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu."
+    "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu.",
+    "createSuccess": "Tạo mới thành công",
+    "updateSuccess": "Cập nhật thành công",
+    "fail": "Thao tác thất bại."
   },
   "login": {
     "adminLTE": "Admin",
@@ -96,7 +99,11 @@
   },
   "common": {
     "clear": "Xóa",
-    "search": "Tìm kiếm"
+    "search": "Tìm kiếm",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "error": "Lỗi"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -234,6 +241,32 @@
       "errorNoIdToDelete": "Lỗi: Không có ID được cung cấp để xóa.",
       "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại.",
       "loadingData": "Đang tải dữ liệu..."
+    }
+  },
+  "promptForm": {
+    "createTitle": "Tạo Prompt Mới",
+    "editTitle": "Chỉnh sửa Prompt",
+    "nameLabel": "Tên Prompt",
+    "namePlaceholder": "Nhập tên prompt",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả prompt",
+    "templateStringLabel": "Mẫu",
+    "templateStringPlaceholder": "Nhập chuỗi template prompt tại đây...",
+    "typeLabel": "Loại",
+    "typeOptions": {
+      "user": "Người dùng",
+      "system": "Hệ thống",
+      "template": "Template"
+    },
+    "versionLabel": "Phiên bản",
+    "versionPlaceholder": "Ví dụ: 1.0, 2.1",
+    "createdByLabel": "Tạo bởi (ID Người dùng)",
+    "createdByPlaceholder": "Nhập ID người dùng (tùy chọn)",
+    "validation": {
+      "nameRequired": "Tên prompt là bắt buộc!",
+      "templateStringRequired": "Chuỗi template là bắt buộc!",
+      "typeRequired": "Loại prompt là bắt buộc!",
+      "versionRequired": "Phiên bản là bắt buộc!"
     }
   }
 }

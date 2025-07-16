@@ -16,7 +16,10 @@
     "sessionExpired": "Your session has expired. Please log in again.",
     "networkErrorInitialFetch": "Network error. Please try again.",
     "requestFailedAfterRefresh": "Request failed after session refresh.",
-    "networkErrorRetryFetch": "Network error during retry."
+    "networkErrorRetryFetch": "Network error during retry.",
+    "createSuccess": "Created successfully.",
+    "updateSuccess": "Updated successfully.",
+    "fail": "Failed action."
   },
   "login": {
     "adminLTE": "Admin",
@@ -96,7 +99,11 @@
   },
   "common": {
     "clear": "Clear",
-    "search": "Search"
+    "search": "Search",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "error": "Error"
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -234,6 +241,32 @@
       "errorNoIdToDelete": "Error: No ID provided for deletion.",
       "errorDeletingData": "Failed to delete data. Please try again.",
       "loadingData": "Loading data..."
+    }
+  },
+  "promptForm": {
+    "createTitle": "Create New Prompt",
+    "editTitle": "Edit Prompt",
+    "nameLabel": "Prompt Name",
+    "namePlaceholder": "Enter prompt name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter prompt description",
+    "templateStringLabel": "Template",
+    "templateStringPlaceholder": "Enter the prompt template string here...",
+    "typeLabel": "Type",
+    "typeOptions": {
+      "user": "User",
+      "system": "System",
+      "template": "Template"
+    },
+    "versionLabel": "Version",
+    "versionPlaceholder": "e.g., 1.0, 2.1",
+    "createdByLabel": "Created By (User ID)",
+    "createdByPlaceholder": "Enter user ID (optional)",
+    "validation": {
+      "nameRequired": "Prompt name is required!",
+      "templateStringRequired": "Template string is required!",
+      "typeRequired": "Prompt type is required!",
+      "versionRequired": "Version is required!"
     }
   }
 }

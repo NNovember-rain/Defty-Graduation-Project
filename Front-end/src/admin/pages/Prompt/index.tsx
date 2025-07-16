@@ -9,10 +9,12 @@ import {
     type IPrompt,
     type GetPromptsOptions
 } from "../../../shared/services/promptService";
-import dayjs from "dayjs"; // NEW: Import dayjs
+import dayjs from "dayjs";
+import {useNavigate} from "react-router-dom"; // NEW: Import dayjs
 
 const Prompt: React.FC = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const [prompts, setPrompts] = React.useState<IPrompt[]>([]);
     const [totalPrompts, setTotalPrompts] = React.useState(0);
@@ -206,11 +208,11 @@ const Prompt: React.FC = () => {
     }, []);
 
     const handleCreateNew = useCallback(() => {
-        console.log(t('promptPage.createNewAction'));
+        navigate("/admin/settings/prompts/create");
     }, [t]);
 
     const handleEditPrompt = useCallback((rowData: IPrompt) => {
-        console.log(`${t('promptPage.editAction')} Prompt ID: ${rowData._id}`);
+        navigate(`/admin/settings/prompts/update/${rowData._id}`);
     }, [t]);
 
     const handleDeletePrompt = useCallback(async (rowData: IPrompt) => {
