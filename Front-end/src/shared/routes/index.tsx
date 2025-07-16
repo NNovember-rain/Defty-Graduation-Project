@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useRoutes, Navigate } from 'react-router-dom';
-import { useUserStore } from '../authentication/useUserStore';
+import {type UserProfile, useUserStore} from '../authentication/useUserStore';
 import getAdminRoutes from '../../admin/routes';
 import getClientRoutes from '../../client/routes';
 import UnauthorizedPage from './UnauthorizedPage';
@@ -20,14 +20,15 @@ const RoutesConfig: React.FC = () => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    if (result && result.user) {
-                        const userData = {
-                            id: result.user.id,
-                            username: result.user.username,
-                            email: result.user.email,
-                            firstName: result.user.firstName,
-                            lastName: result.user.lastName,
-                            roles: result.user.roles || []
+                    if (result.code === 200 && result.result) {
+                        const userData: UserProfile = {
+                            id: result.result.id,
+                            username: result.result.username,
+                            email: result.result.email,
+                            firstName: result.result.firstName,
+                            lastName: result.result.lastName,
+                            dob: result.result.dob,
+                            roles: result.result.roles || []
                         };
                         setUser(userData);
                     } else {

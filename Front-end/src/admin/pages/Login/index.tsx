@@ -6,7 +6,7 @@ import {message, Spin} from 'antd';
 import 'antd/dist/reset.css';
 import {useTranslation} from 'react-i18next';
 import {useNavigate} from "react-router-dom";
-import {useUserStore} from "../../../shared/authentication/useUserStore.ts";
+import {type UserProfile, useUserStore} from "../../../shared/authentication/useUserStore.ts";
 import {setLocalStorageItem} from "../../../shared/utils/localStorage.ts"; // Import useTranslation
 
 const PREFIX_URL_ADMIN: string = import.meta.env.VITE_PREFIX_URL_ADMIN;
@@ -14,7 +14,7 @@ const PREFIX_URL_ADMIN: string = import.meta.env.VITE_PREFIX_URL_ADMIN;
 const Login: React.FC = () => {
     const { t } = useTranslation(); // Khởi tạo hook useTranslation
     const navigate = useNavigate();
-    const { setUser, clearUser, setLoading, setError, isAuthenticated, isLoading } = useUserStore();
+    const { setUser } = useUserStore();
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
@@ -116,23 +116,23 @@ const Login: React.FC = () => {
                 return;
             }
             const data = await response.json();
-            console.log('Parsed response data:', data);
 
             const token = data.result.token;
             setLocalStorageItem("token", token);
 
             const myInfo = await getCurrentAccount();
-            const userData = await myInfo.json();
-            console.log('Current account info:', userData);
-            const isLogin = true;
+            const result = await myInfo.json();
+            const userData: UserProfile = result.result;
+            const isLogin = result.code === 200;
+
             if (isLogin) {
                 setUser({
-                    id: "1",
-                    username: "username",
-                    email: "email",
-                    firstName: "firstName",
-                    lastName: "lastName",
-                    roles: [{name: "admin", permissions: []}]
+                    id: userData.id,
+                    username: userData.username,
+                    email: userData.email,
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    roles: userData.roles
                 })
                 navigate(`${PREFIX_URL_ADMIN}/dashboard`);
             }
