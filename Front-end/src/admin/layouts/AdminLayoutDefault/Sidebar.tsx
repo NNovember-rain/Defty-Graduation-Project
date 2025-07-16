@@ -101,7 +101,7 @@ const sidebarContentConfig: SidebarItem[] = [
         requiredAnyOfRoles: ['admin', 'teacher'],
         children: [
             { id: 'submissionList', labelKey: 'sidebar.submissionList', icon: <FaClipboardList />, path: '/admin/submissions', requiredAnyOfRoles: ['admin', 'teacher'] },
-            { id: 'manualGrading', labelKey: 'sidebar.manualGrading', icon: <FaFileAlt />, path: '/admin/submission /manual-grading', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'manualGrading', labelKey: 'sidebar.manualGrading', icon: <FaFileAlt />, path: '/admin/submission/manual-grading', requiredAnyOfRoles: ['admin', 'teacher'] },
         ]
     },
     {
@@ -453,7 +453,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
                 role="button"
                 tabIndex={0}
             >
-                <img src="/assets/images/defty.png" alt={t('sidebar.deftyLogoAlt')} className="sidebar__logo-image" />
+                <img src="/assets/images/defty.jpg" alt={t('sidebar.deftyLogoAlt')} className="sidebar__logo-image" />
                 <span className="sidebar__logo-text">{t('login.defty')}</span>
             </div>
 

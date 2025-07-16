@@ -33,7 +33,8 @@
     "passwordLowercase": "Password must contain at least one lowercase letter.",
     "passwordUppercase": "Password must contain at least one uppercase letter.",
     "passwordNumber": "Password must contain at least one number.",
-    "invalidCredentials": "Invalid login credentials. Please try again."
+    "invalidCredentials": "Invalid login credentials. Please try again.",
+    "passwordSpecialChar": "Password must contain at least one special character."
   },
   "sidebar": {
     "overview": "Overview",
@@ -76,7 +77,8 @@
     "messages": "Messages",
     "announcements": "Announcements",
     "education": "Education",
-    "courses": "Courses"
+    "courses": "Courses",
+    "noResults": "No results"
   },
   "header": {
     "home": "Home",

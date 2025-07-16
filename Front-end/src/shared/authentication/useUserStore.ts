@@ -7,6 +7,7 @@ export interface Permission {
 
 export interface Role {
     name: string;
+    description?: string;
     permissions: Permission[];
 }
 
@@ -16,6 +17,7 @@ export interface UserProfile {
     email: string;
     firstName?: string;
     lastName?: string;
+    dob?: string;
     roles: Role[];
 }
 
