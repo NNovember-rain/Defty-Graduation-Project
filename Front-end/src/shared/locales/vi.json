@@ -33,7 +33,8 @@
     "passwordLowercase": "Mật khẩu phải chứa ít nhất một chữ cái thường.",
     "passwordUppercase": "Mật khẩu phải chứa ít nhất một chữ cái hoa.",
     "passwordNumber": "Mật khẩu phải chứa ít nhất một số.",
-    "invalidCredentials": "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại."
+    "invalidCredentials": "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.",
+    "passwordSpecialChar": "Mật khẩu phải chứa ít nhất một ký tự đặc biệt."
   },
   "sidebar": {
     "overview": "Tổng quan",
@@ -76,7 +77,8 @@
     "messages": "Tin nhắn",
     "announcements": "Thông báo",
     "education": "Giáo dục",
-    "courses": "Khóa học"
+    "courses": "Khóa học",
+    "noResults": "Không có kết quả"
   },
   "header": {
     "home": "Trang chủ",
