@@ -37,7 +37,10 @@
     "passwordUppercase": "Mật khẩu phải chứa ít nhất một chữ cái hoa.",
     "passwordNumber": "Mật khẩu phải chứa ít nhất một số.",
     "invalidCredentials": "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.",
-    "passwordSpecialChar": "Mật khẩu phải chứa ít nhất một ký tự đặc biệt."
+    "passwordSpecialChar": "Mật khẩu phải chứa ít nhất một ký tự đặc biệt.",
+    "loginSuccessful": "Đăng nhập thành công.",
+    "loginSuccessfulDescription": "Xin chào, {{name}}",
+    "loginFailed": "Đăng nhập thất bại"
   },
   "sidebar": {
     "overview": "Tổng quan",

@@ -37,7 +37,10 @@
     "passwordUppercase": "Password must contain at least one uppercase letter.",
     "passwordNumber": "Password must contain at least one number.",
     "invalidCredentials": "Invalid login credentials. Please try again.",
-    "passwordSpecialChar": "Password must contain at least one special character."
+    "passwordSpecialChar": "Password must contain at least one special character.",
+    "loginSuccessful": "Login successfully.",
+    "loginSuccessfulDescription": "Hello, {{name}}",
+    "loginFailed": "Login fail"
   },
   "sidebar": {
     "overview": "Overview",

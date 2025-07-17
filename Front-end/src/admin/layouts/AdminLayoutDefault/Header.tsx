@@ -1,7 +1,7 @@
 // Header.tsx
 import { forwardRef } from 'react'; // Import forwardRef
 import { useTranslation } from 'react-i18next';
-import {Tooltip, Dropdown, message} from 'antd';
+import {Tooltip, Dropdown} from 'antd';
 import { FaBars } from 'react-icons/fa';
 import { FaRegComments } from "react-icons/fa6";
 import { PiSignOut } from "react-icons/pi";
@@ -10,6 +10,7 @@ import { IoLanguageOutline } from "react-icons/io5";
 import {useUserStore} from "../../../shared/authentication/useUserStore.ts";
 import {useNavigate} from "react-router-dom";
 import {postLogout} from "../../../shared/services/authService.ts";
+import {useNotification} from "../../../shared/notification/useNotification.ts";
 
 interface HeaderProps {
     onToggleSidebar: () => void;
@@ -19,6 +20,7 @@ const Header = forwardRef<HTMLDivElement, HeaderProps>(({ onToggleSidebar }, ref
     const { i18n, t } = useTranslation(); // Destructure t from useTranslation()
     const { clearUser } = useUserStore();
     const navigate = useNavigate();
+    const { message, notification } = useNotification();
 
     const changeLanguage = async (lng: 'en' | 'vi') => {
         await i18n.changeLanguage(lng);
@@ -32,7 +34,11 @@ const Header = forwardRef<HTMLDivElement, HeaderProps>(({ onToggleSidebar }, ref
 
             clearUser();
             localStorage.removeItem("token");
-            message.success(t('header.logoutSuccess'));
+            notification.success(
+                t('header.logoutSuccess'),
+                t('header.logoutSuccess'),
+                { duration: 5, placement: 'topRight' }
+            );
             navigate('/admin');
 
         } catch (error: any) {
