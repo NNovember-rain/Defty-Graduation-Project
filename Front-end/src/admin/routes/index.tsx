@@ -11,6 +11,7 @@ import Role from "../pages/Role";
 import Permission from "../pages/Permission";
 import Prompt from "../pages/Prompt";
 import PromptForm from "../pages/Prompt/promptForm.tsx";
+import TestNotification from "../../shared/notification/TestNotification.tsx";
 
 interface AppRoute {
     path: string;
@@ -82,6 +83,11 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'settings/prompts/update/:id',
         component: PromptForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'test/notification',
+        component: TestNotification,
         requiredAnyOfRoles: ['admin'],
     },
     {

@@ -7,6 +7,7 @@ export interface IPrompt extends Document {
     type?: 'system' | 'user' | 'template';
     version: string;
     createdBy?: number;
+    isDeleted?: boolean;
 }
 
 const PromptSchema = new Schema<IPrompt>({
@@ -16,6 +17,7 @@ const PromptSchema = new Schema<IPrompt>({
     type: { type: String, enum: ['system', 'user', 'template'] },
     version: { type: String, required: true },
     createdBy: { type: Number },
+    isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const Prompt = model<IPrompt>('Prompt', PromptSchema);

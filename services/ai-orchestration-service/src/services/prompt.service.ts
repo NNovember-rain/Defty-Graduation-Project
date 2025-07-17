@@ -32,13 +32,12 @@ export const createPrompt = async (data: IPrompt): Promise<IPrompt> => {
 
 export const getPromptById = async (id: string): Promise<IPrompt> => {
     try {
-        const prompt = await Prompt.findById(id);
+        const prompt = await Prompt.findOne({ _id: id, isDeleted: false });
         if (!prompt) {
             throw new HttpError('Prompt not found', 404);
         }
         return prompt;
     } catch (error: any) {
-        // Nếu đã là HttpError thì throw lại
         if (error instanceof HttpError) {
             throw error;
         }
@@ -50,7 +49,9 @@ export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPr
     const { page = 1, limit = 10, name, sortBy, sortOrder } = options;
     const skip = (page - 1) * limit;
 
-    const query: FilterQuery<IPrompt> = {};
+    const query: FilterQuery<IPrompt> = {
+        isDeleted: false
+    };
     if (name) {
         query.name = new RegExp(name, 'i');
     }
@@ -90,32 +91,39 @@ export const updatePrompt = async (id: string, data: Partial<IPrompt>): Promise<
 
         return prompt;
     } catch (error: any) {
-        // Nếu đã là HttpError thì throw lại
         if (error instanceof HttpError) {
             throw error;
         }
-
         if (error.code === 11000) {
             throw new HttpError(`Prompt with name '${data.name}' already exists.`, 409);
         }
-
         throw new HttpError(`Failed to update prompt: ${error.message}`, 500);
     }
 };
 
 export const deletePrompt = async (id: string): Promise<IPrompt> => {
     try {
-        const prompt = await Prompt.findByIdAndDelete(id);
+        const prompt = await Prompt.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
         if (!prompt) {
             throw new HttpError('Prompt not found for deletion', 404);
         }
         return prompt;
     } catch (error: any) {
-        // Nếu đã là HttpError thì throw lại
         if (error instanceof HttpError) {
             throw error;
         }
         throw new HttpError(`Failed to delete prompt: ${error.message}`, 500);
+    }
+};
+
+export const deletePromptsByIds = async (ids: string[]): Promise<void> => {
+    try {
+        await Prompt.updateMany(
+            { _id: { $in: ids } },
+            { $set: { isDeleted: true } }
+        );
+    } catch (error: any) {
+        throw new HttpError(`Failed to bulk delete prompts: ${error.message}`, 500);
     }
 };
 

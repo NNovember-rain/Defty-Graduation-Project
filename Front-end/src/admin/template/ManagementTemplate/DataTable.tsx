@@ -1,6 +1,7 @@
+// admin-dashboard/components/DataTable.tsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
+import { MdDelete } from "react-icons/md";
 import type {ReactNode} from 'react';
 
 interface Column {
@@ -36,6 +37,10 @@ interface DataTableProps {
     currentSortOrder: 'asc' | 'desc' | null;
     onEntriesPerPageChange: (entries: number) => void;
     actions?: ActionButton[];
+    onBulkDelete?: (ids: string[]) => void;
+    selectedRows?: string[];
+    onSelectRow?: (id: string, isSelected: boolean) => void;
+    onSelectAll?: (isSelected: boolean) => void;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -51,9 +56,15 @@ const DataTable: React.FC<DataTableProps> = ({
                                                  currentSortOrder,
                                                  onEntriesPerPageChange,
                                                  actions,
+                                                 onBulkDelete,
+                                                 selectedRows = [],
+                                                 onSelectRow,
+                                                 onSelectAll
                                              }) => {
     const { t } = useTranslation();
     const totalPages = Math.ceil(totalEntries / entriesPerPage);
+    const startEntry = (currentPage - 1) * entriesPerPage;
+    const isAllSelected = onSelectAll && data.length > 0 && data.every(row => selectedRows.includes(row.id ? row.id : row._id));
 
     const getPaginationPages = () => {
         const pages: (number | string)[] = [];
@@ -126,12 +137,33 @@ const DataTable: React.FC<DataTableProps> = ({
 
     return (
         <div className="data-table-section">
-            {title && (
-                <h2 className="data-table-section__title">{title}</h2>
-            )}
+            <div className="data-table-section__toolbar">
+                {title && (
+                    <h2 className="data-table-section__title">{title}</h2>
+                )}
+                {onBulkDelete && selectedRows.length > 0 && (
+                    <button
+                        className="data-table-section__bulk-delete-button"
+                        onClick={() => onBulkDelete(selectedRows)}
+                    >
+                        <MdDelete />
+                        {t('dataTable.deleteSelected', { count: selectedRows.length })}
+                    </button>
+                )}
+            </div>
             <table className="data-table">
                 <thead className="data-table__header">
                 <tr>
+                    {onBulkDelete && (
+                        <th className="data-table__header-cell data-table__header-cell--checkbox">
+                            <input
+                                type="checkbox"
+                                checked={isAllSelected}
+                                onChange={e => onSelectAll?.(e.target.checked)}
+                            />
+                        </th>
+                    )}
+                    <th className="data-table__header-cell data-table__header-cell--serial-number">{t('dataTable.order')}</th>
                     {columns.map((col) => (
                         <th
                             key={col.key}
@@ -156,7 +188,19 @@ const DataTable: React.FC<DataTableProps> = ({
                 </thead>
                 <tbody>
                 {data.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="data-table__row">
+                    <tr key={row.id || row._id || rowIndex} className="data-table__row">
+                        {onBulkDelete && (
+                            <td className="data-table__cell data-table__cell--checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedRows.includes(row.id ? row.id : row._id)}
+                                    onChange={e => onSelectRow?.(row.id ? row.id : row._id, e.target.checked)}
+                                />
+                            </td>
+                        )}
+                        <td className="data-table__cell data-table__cell--serial-number">
+                            {startEntry + rowIndex + 1}
+                        </td>
                         {columns.map((col) => (
                             <td key={col.key} className="data-table__cell">
                                 {/* NEW: Sử dụng hàm render nếu có, ngược lại hiển thị giá trị trực tiếp */}

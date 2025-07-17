@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import FormTemplate from '../../template/ManagementTemplate/FormTemplate'; // Đảm bảo đường dẫn đúng
-import type { FormField } from '../../template/ManagementTemplate/FormTemplate'; // Đảm bảo đường dẫn đúng
+import FormTemplate from '../../template/ManagementTemplate/FormTemplate';
+import type { FormField } from '../../template/ManagementTemplate/FormTemplate';
 import {
     createPrompt,
     getPromptById,
@@ -9,11 +9,9 @@ import {
     type IPrompt
 } from '../../../shared/services/promptService';
 
-// PromptForm giờ đây chỉ còn là cấu hình cho FormTemplate
 const PromptForm: React.FC = () => {
     const { t } = useTranslation();
 
-    // Định nghĩa các trường form
     const promptFormFields: FormField[] = React.useMemo(() => [
         {
             key: 'name',
@@ -21,14 +19,14 @@ const PromptForm: React.FC = () => {
             type: 'text',
             placeholderKey: 'promptForm.namePlaceholder',
             required: true,
-            gridSpan: 24, // Chiếm 2 cột nếu layout là grid 2 cột
+            gridSpan: 24,
         },
         {
             key: 'description',
             labelKey: 'promptForm.descriptionLabel',
             type: 'textarea',
             placeholderKey: 'promptForm.descriptionPlaceholder',
-            gridSpan: 24, // Chiếm 2 cột
+            gridSpan: 24,
         },
         {
             key: 'templateString',
@@ -36,7 +34,7 @@ const PromptForm: React.FC = () => {
             type: 'textarea',
             placeholderKey: 'promptForm.templateStringPlaceholder',
             required: true,
-            gridSpan: 24, // Chiếm 2 cột
+            gridSpan: 24,
         },
         {
             key: 'version',
@@ -67,7 +65,6 @@ const PromptForm: React.FC = () => {
         },
     }), []);
 
-    // Breadcrumb items cho FormTemplate
     const breadcrumbItems = [
         { label: t('promptPage.breadcrumb.home'), path: '/' },
         { label: t('promptPage.breadcrumb.adminDashboard'), path: '/admin' },
@@ -76,7 +73,7 @@ const PromptForm: React.FC = () => {
 
     return (
         <FormTemplate<IPrompt>
-            pageTitleKey="promptForm.createTitle"
+            pageTitleKey="promptForm.title"
             breadcrumbItems={breadcrumbItems}
             formFields={promptFormFields}
             serviceGetById={getPromptById}

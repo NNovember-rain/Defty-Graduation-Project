@@ -1,11 +1,11 @@
-// admin-dashboard/components/form-template/FormTemplate.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Breadcrumb from './Breadcrumb';
 import AntdDatePicker from '../../components/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
-import { message, Spin } from 'antd';
+import { Spin } from 'antd';
+import { useNotification } from "../../../shared/notification/useNotification.ts";
 
 import './FormTemplate.scss';
 
@@ -54,6 +54,7 @@ const FormTemplate = <T extends Record<string, any>>({
     const { t } = useTranslation();
     const { id } = useParams<{ id?: string }>();
     const navigate = useNavigate();
+    const { message } = useNotification();
 
     const isEditMode = !!id;
 
@@ -75,8 +76,7 @@ const FormTemplate = <T extends Record<string, any>>({
                 initialFormState[field.key as keyof T] = field.options[0].value as T[keyof T];
             } else if (field.type === 'number') {
                 initialFormState[field.key as keyof T] = undefined as T[keyof T];
-            }
-            else {
+            } else {
                 initialFormState[field.key as keyof T] = '' as T[keyof T];
             }
         });
@@ -94,7 +94,7 @@ const FormTemplate = <T extends Record<string, any>>({
                 } catch (err: any) {
                     console.error("Failed to fetch data:", err);
                     message.error(t('apiMessages.fail'));
-                    setFetchError(t('formTemplate.fetchError') + (err.message || ''));
+                    setFetchError(t('formTemplate.fetchError', { message: err.message || '' }));
                 } finally {
                     setLoading(false);
                 }
@@ -133,7 +133,7 @@ const FormTemplate = <T extends Record<string, any>>({
 
         const errors: Record<string, string> = {};
         for (const field of formFields) {
-            if (field.required && !formData[field.key as keyof T]?.toString().trim()) {
+            if (field.required && (!formData[field.key as keyof T] || formData[field.key as keyof T]?.toString().trim() === '')) {
                 errors[field.key] = t(`${field.labelKey}Required`); // Sử dụng labelKey cho thông báo lỗi
             }
             // Áp dụng validation từ schema
@@ -151,6 +151,30 @@ const FormTemplate = <T extends Record<string, any>>({
         return Object.keys(errors).length === 0;
     };
 
+    const extractErrorMessage = async (error: any): Promise<string> => {
+        try {
+            if (error?.response?.data) {
+                const data = error.response.data;
+                return data.message || data.error || t('formTemplate.unknownError');
+            }
+            if (error?.data) {
+                const data = error.data;
+                return data.message || data.error || t('formTemplate.unknownError');
+            }
+            if (error?.json && typeof error.json === 'function') {
+                const errorData = await error.json();
+                return errorData.message || errorData.error || t('formTemplate.unknownError');
+            }
+            if (error?.message) {
+                return error.message;
+            }
+            return t('formTemplate.unknownError');
+        } catch (parseError) {
+            console.error('Error parsing error message:', parseError);
+            return t('formTemplate.parseError');
+        }
+    };
+
     // --- Hàm xử lý submit form (Tạo mới hoặc Cập nhật) ---
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -165,19 +189,18 @@ const FormTemplate = <T extends Record<string, any>>({
             if (isEditMode && serviceUpdate && id) {
                 await serviceUpdate(id, formData);
                 message.success(t('apiMessages.updateSuccess'));
-                console.log("Data updated successfully!");
             } else if (!isEditMode && serviceCreate) {
                 await serviceCreate(formData as Omit<T, '_id' | 'createdAt' | 'updatedAt'>);
                 message.success(t('apiMessages.createSuccess'));
-                console.log("Data created successfully!");
                 navigate(redirectPath);
             } else {
                 message.error(t('apiMessages.fail'));
                 throw new Error("Service functions not provided for this operation.");
             }
         } catch (err: any) {
-            console.error("Failed to save data:", err);
-            setSaveError(t('formTemplate.saveError') + (err.message || ''));
+            const errorMessage = await extractErrorMessage(err);
+            message.error(t('apiMessages.fail'));
+            setSaveError(t('formTemplate.saveError', { message: errorMessage }));
         } finally {
             setLoading(false);
         }
@@ -193,12 +216,13 @@ const FormTemplate = <T extends Record<string, any>>({
 
     // Tiêu đề trang
     const currentPageTitle = t(pageTitleKey);
+    const pageHeading = isEditMode ? t('formTemplate.editTitle', { title: currentPageTitle }) : t('formTemplate.createTitle', { title: currentPageTitle });
 
     if (loading && isEditMode && Object.keys(formData).length === 0) {
         return (
             <div className="form-template">
                 <div className="form-template__header-container">
-                    <h1 className="form-template__page-title">{currentPageTitle}</h1>
+                    <h1 className="form-template__page-title">{pageHeading}</h1>
                     <Breadcrumb items={breadcrumbItems} />
                 </div>
                 <div className="form-template__content text-center py-8">
@@ -213,7 +237,7 @@ const FormTemplate = <T extends Record<string, any>>({
         return (
             <div className="form-template">
                 <div className="form-template__header-container">
-                    <h1 className="form-template__page-title">{currentPageTitle}</h1>
+                    <h1 className="form-template__page-title">{pageHeading}</h1>
                     <Breadcrumb items={breadcrumbItems} />
                 </div>
                 <div className="form-template__content text-red-500 text-center py-8">
@@ -227,7 +251,7 @@ const FormTemplate = <T extends Record<string, any>>({
         <div className="form-template">
             <div className="form-template__header-container">
                 <div className="form-template__left">
-                    <h1 className="form-template__page-title">{currentPageTitle}</h1>
+                    <h1 className="form-template__page-title">{pageHeading}</h1>
                 </div>
                 <div className="form-template__right">
                     <Breadcrumb items={breadcrumbItems} />
@@ -235,7 +259,7 @@ const FormTemplate = <T extends Record<string, any>>({
             </div>
             <div className="form-template__content">
                 <div className="form-template__form-container">
-                    {(saveError) && (
+                    {saveError && (
                         <div className="form-template__error-message" role="alert">
                             <strong className="font-bold">{t('common.error')}: </strong>
                             <span className="block sm:inline">{saveError}</span>

@@ -11,6 +11,7 @@ $pagination-active-bg: #007bff;
 $pagination-active-color: #fff;
 $button-color: #6c757d; // Grey button color from image
 $button-text-color: #fff;
+$delete-color: #dc3545;
 
 // Base styles for the entire template
 .management-template {
@@ -251,12 +252,42 @@ $button-text-color: #fff;
   overflow-x: auto;
   padding: 15px;
 
+  &__toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+
   &__title {
     font-size: 1.2em;
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 0;
     color: $text-color;
     font-weight: normal; // As per image
+  }
+
+  &__bulk-delete-button {
+    background-color: $delete-color;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: darken($delete-color, 10%);
+    }
+
+    svg {
+      font-size: 16px;
+    }
   }
 
   .data-table {
@@ -295,6 +326,14 @@ $button-text-color: #fff;
       &--sortable {
         padding-right: 30px; // Make space for arrow
       }
+      &--checkbox, &--serial-number {
+        width: 1%;
+        text-align: center;
+        padding-left: 5px;
+        padding-right: 5px;
+        cursor: default;
+      }
+
       .sort-icon {
         position: absolute;
         right: 10px;

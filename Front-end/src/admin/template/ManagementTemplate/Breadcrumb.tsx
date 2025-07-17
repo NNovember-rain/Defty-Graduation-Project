@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from "react-router-dom";
 
 interface BreadcrumbItem {
     label: string;
@@ -16,9 +17,9 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
                 {items.map((item, index) => (
                     <li key={index} className="breadcrumb__item">
                         {item.path ? (
-                            <a href={item.path} className="breadcrumb__item--link">
+                            <Link to={item.path} className="breadcrumb__item--link">
                                 {item.label}
-                            </a>
+                            </Link>
                         ) : (
                             <span>{item.label}</span>
                         )}

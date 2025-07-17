@@ -103,7 +103,11 @@
     "cancel": "Hủy",
     "save": "Lưu",
     "saving": "Đang lưu...",
-    "error": "Lỗi"
+    "error": "Lỗi",
+    "loadingData": "Đang tải dữ liệu...",
+    "errorFetchingData": "Tải dữ liệu thất bại. Vui lòng thử lại.",
+    "errorNoIdToDelete": "Lỗi: Không có ID được cung cấp để xóa.",
+    "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại."
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -121,7 +125,13 @@
     "entries": "mục",
     "show": "Hiển thị",
     "entriesPerPage": "mục trên trang",
-    "actions": "Hành động"
+    "actions": "Hành động",
+    "deleteSelected": "Xóa nhiều",
+    "bulkDeleteTitle": "Xác nhận xóa hàng loạt",
+    "bulkDeleteSuccess": "Đã xóa thành công {{count}} mục.",
+    "confirmBulkDelete": "Bạn có chắc chắn muốn xóa",
+    "selectedItems": "mục đã chọn?",
+    "order": "STT"
   },
   "userPage": {
     "title": "Người dùng",
@@ -235,17 +245,10 @@
     "editTooltip": "Chỉnh sửa prompt",
     "deleteTooltip": "Xóa prompt",
     "confirmDelete": "Bạn có chắc chắn muốn xóa prompt:",
-    "deleteSuccess": "Xóa prompt thành công!",
-    "common": {
-      "errorFetchingData": "Tải dữ liệu thất bại. Vui lòng thử lại.",
-      "errorNoIdToDelete": "Lỗi: Không có ID được cung cấp để xóa.",
-      "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại.",
-      "loadingData": "Đang tải dữ liệu..."
-    }
+    "deleteSuccess": "Xóa prompt thành công!"
   },
   "promptForm": {
-    "createTitle": "Tạo Prompt Mới",
-    "editTitle": "Chỉnh sửa Prompt",
+    "title": "Prompt",
     "nameLabel": "Tên Prompt",
     "namePlaceholder": "Nhập tên prompt",
     "descriptionLabel": "Mô tả",
@@ -264,9 +267,17 @@
     "createdByPlaceholder": "Nhập ID người dùng (tùy chọn)",
     "validation": {
       "nameRequired": "Tên prompt là bắt buộc!",
-      "templateStringRequired": "Chuỗi template là bắt buộc!",
+      "templateStringRequired": "Mẫu là bắt buộc!",
       "typeRequired": "Loại prompt là bắt buộc!",
       "versionRequired": "Phiên bản là bắt buộc!"
     }
+  },
+  "formTemplate": {
+    "createTitle": "Tạo mới {{title}}",
+    "editTitle": "Chỉnh sửa {{title}}",
+    "fetchError": "Lỗi tải dữ liệu: {{message}}",
+    "saveError": "Lỗi lưu dữ liệu: {{message}}",
+    "unknownError": "Có lỗi không xác định xảy ra",
+    "parseError": "Lỗi xảy ra khi xử lý phản hồi"
   }
 }

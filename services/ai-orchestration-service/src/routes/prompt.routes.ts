@@ -4,7 +4,8 @@ import {
     getPromptByIdController,
     getPromptsController,
     updatePromptController,
-    deletePromptController
+    deletePromptController,
+    bulkDeletePromptsController
 } from '../controllers/prompt.controller';
 
 const router = Router();
@@ -16,6 +17,8 @@ router.get('/', getPromptsController);
 router.get('/:id', getPromptByIdController);
 
 router.patch('/:id', updatePromptController);
+
+router.delete('/bulk', bulkDeletePromptsController);
 
 router.delete('/:id', deletePromptController);
 

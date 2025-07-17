@@ -103,7 +103,11 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
-    "error": "Error"
+    "error": "Error",
+    "loadingData": "Loading data...",
+    "errorFetchingData": "Failed to load data. Please try again.",
+    "errorNoIdToDelete": "Error: No ID provided for deletion.",
+    "errorDeletingData": "Failed to delete data. Please try again."
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -121,7 +125,13 @@
     "entries": "entries",
     "show": "Show",
     "entriesPerPage": "entries per page",
-    "actions": "Action"
+    "actions": "Action",
+    "deleteSelected": "Bulk delete",
+    "bulkDeleteTitle": "Confirm Bulk Deletion",
+    "bulkDeleteSuccess": "Successfully deleted {{count}} item(s).",
+    "confirmBulkDelete": "Are you sure you want to delete",
+    "selectedItems": "selected item(s)?",
+    "order": "No."
   },
   "userPage": {
     "title": "Users",
@@ -169,7 +179,7 @@
       "creationDate": "Creation Date"
     }
   },
-  "rolePage":{
+  "rolePage": {
     "title": "Role Management",
     "breadcrumb": "Role Management",
     "columns": {
@@ -235,17 +245,10 @@
     "editTooltip": "Edit prompt",
     "deleteTooltip": "Delete prompt",
     "confirmDelete": "Are you sure you want to delete prompt:",
-    "deleteSuccess": "Prompt deleted successfully!",
-    "common": {
-      "errorFetchingData": "Failed to load data. Please try again.",
-      "errorNoIdToDelete": "Error: No ID provided for deletion.",
-      "errorDeletingData": "Failed to delete data. Please try again.",
-      "loadingData": "Loading data..."
-    }
+    "deleteSuccess": "Prompt deleted successfully!"
   },
   "promptForm": {
-    "createTitle": "Create New Prompt",
-    "editTitle": "Edit Prompt",
+    "title": "Prompt",
     "nameLabel": "Prompt Name",
     "namePlaceholder": "Enter prompt name",
     "descriptionLabel": "Description",
@@ -264,9 +267,17 @@
     "createdByPlaceholder": "Enter user ID (optional)",
     "validation": {
       "nameRequired": "Prompt name is required!",
-      "templateStringRequired": "Template string is required!",
+      "templateStringRequired": "Template is required!",
       "typeRequired": "Prompt type is required!",
       "versionRequired": "Version is required!"
     }
+  },
+  "formTemplate": {
+    "createTitle": "Create New {{title}}",
+    "editTitle": "Edit {{title}}",
+    "fetchError": "Failed to fetch data: {{message}}",
+    "saveError": "Failed to save data: {{message}}",
+    "unknownError": "An unknown error occurred",
+    "parseError": "An error occurred while processing the response"
   }
 }

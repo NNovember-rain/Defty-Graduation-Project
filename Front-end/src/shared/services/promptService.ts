@@ -1,4 +1,4 @@
-import { get, postJsonData, patchJsonData, del } from "./request"; // Giả định patch và remove là tên đúng
+import {get, postJsonData, patchJsonData, del, bulkDelete} from "./request"; // Giả định patch và remove là tên đúng
 import { getWithParams } from "./getWithParams"; // Import common function
 import handleRequest from "./handleRequest";
 
@@ -73,4 +73,8 @@ export const deletePrompt = async (id: string): Promise<IPrompt> => {
     const response = await handleRequest(del(`${PREFIX_AI_ORCHESTRATION}/${PREFIX_PROMPT}/${id}`));
     const deletedData = await response.json();
     return deletedData.data as IPrompt;
+};
+
+export const deletePromptsByIds = async (ids: string[]): Promise<void> => {
+    await handleRequest(bulkDelete(`${PREFIX_AI_ORCHESTRATION}/${PREFIX_PROMPT}/bulk`, ids));
 };

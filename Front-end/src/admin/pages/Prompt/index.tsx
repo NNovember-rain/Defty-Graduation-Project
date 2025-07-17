@@ -7,12 +7,14 @@ import {
     getPrompts,
     deletePrompt,
     type IPrompt,
-    type GetPromptsOptions
+    type GetPromptsOptions, deletePromptsByIds
 } from "../../../shared/services/promptService";
 import dayjs from "dayjs";
-import {useNavigate} from "react-router-dom"; // NEW: Import dayjs
+import {useNavigate} from "react-router-dom";
+import {useNotification} from "../../../shared/notification/useNotification.ts"; // NEW: Import dayjs
 
 const Prompt: React.FC = () => {
+    const { message, modal } = useNotification();
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -126,7 +128,6 @@ const Prompt: React.FC = () => {
         { key: 'name', label: t('promptPage.dataTableColumns.name'), sortable: true },
         { key: 'description', label: t('promptPage.dataTableColumns.description'), sortable: true },
         { key: 'templateString', label: t('promptPage.dataTableColumns.templateString'), sortable: true },
-        { key: 'type', label: t('promptPage.dataTableColumns.type'), sortable: true },
         { key: 'version', label: t('promptPage.dataTableColumns.version'), sortable: true },
         {
             key: 'createdAt',
@@ -222,18 +223,45 @@ const Prompt: React.FC = () => {
             return;
         }
 
-        if (window.confirm(`${t('promptPage.confirmDelete')} ${rowData.name || rowData._id}?`)) {
-            try {
-                setLoading(true);
-                await deletePrompt(rowData._id);
-                console.log(t('promptPage.deleteSuccess'));
-                await fetchData();
-            } catch (err) {
-                console.error("Failed to delete prompt:", err);
-                setError(t('common.errorDeletingData'));
-                setLoading(false);
-            }
-        }
+        modal.deleteConfirm(
+            t('promptPage.deleteTooltip'),
+            async () => {
+                try {
+                    setLoading(true);
+                    await deletePrompt(rowData._id as string);
+                    message.success(t('promptPage.deleteSuccess'));
+                    await fetchData();
+                } catch (error) {
+                    setError(t('common.errorDeletingData'));
+                    message.error(t('common.errorDeletingData'));
+                } finally {
+                    setLoading(false);
+                }
+            },
+            `${t('promptPage.confirmDelete')} ${rowData.name || rowData._id}?`
+        );
+    }, [t, fetchData]);
+
+    const handleBulkDelete = useCallback(async (ids: string[]) => {
+        if (ids.length === 0) return;
+
+        modal.deleteConfirm(
+            t('dataTable.bulkDeleteTitle'),
+            async () => {
+                try {
+                    setLoading(true);
+                    await deletePromptsByIds(ids);
+                    message.success(t('dataTable.bulkDeleteSuccess', { count: ids.length }));
+                    await fetchData();
+                } catch (error) {
+                    setError(t('common.errorDeletingData'));
+                    message.error(t('common.errorDeletingData'));
+                } finally {
+                    setLoading(false);
+                }
+            },
+            `${t('dataTable.confirmBulkDelete')} ${ids.length} ${t('dataTable.selectedItems')}`
+        );
     }, [t, fetchData]);
 
     const promptActions = React.useMemo(() => [
@@ -288,6 +316,7 @@ const Prompt: React.FC = () => {
             initialFilters={currentFilters}
             initialSortBy={currentSortColumn}
             initialSortOrder={currentSortOrder}
+            onBulkDelete={handleBulkDelete}
         />
     );
 }

@@ -100,8 +100,33 @@ export const deletePromptController = async (req: Request, res: Response, next: 
         const deletedPrompt = await promptService.deletePromptSafe(id);
         res.status(200).json({
             success: true,
-            message: 'Prompt deleted successfully',
+            message: 'Prompt deleted successfully (soft delete)',
             data: deletedPrompt
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc Bulk delete multiple prompts by IDs (soft delete)
+ * @route DELETE /api/v1/prompts/bulk
+ * @access Private
+ */
+export const bulkDeletePromptsController = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const ids = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or empty array of IDs provided.'
+            });
+        }
+        await promptService.deletePromptsByIds(ids as string[]);
+        res.status(200).json({
+            success: true,
+            message: `Successfully deleted ${ids.length} prompts.`,
+            data: null
         });
     } catch (error) {
         next(error);

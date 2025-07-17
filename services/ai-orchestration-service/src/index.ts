@@ -3,7 +3,7 @@ dotenv.config();
 import app from './app';
 import connectDB from './config/db';
 import runKafkaConsumer from './kafka/consumer';
-import {initModels} from "./models/initModels";
+import {initModels, runPromptMigration} from "./models/initModels";
 
 (async () => {
     try {
