@@ -2,16 +2,18 @@ import React, {useState} from "react";
 import "./Login.scss";
 import {FaEnvelope, FaEye, FaEyeSlash} from "react-icons/fa";
 import {getCurrentAccount, postLogin} from "../../../shared/services/authService.ts";
-import {message, Spin} from 'antd';
+import {Spin} from 'antd';
 import 'antd/dist/reset.css';
 import {useTranslation} from 'react-i18next';
 import {useNavigate} from "react-router-dom";
 import {type UserProfile, useUserStore} from "../../../shared/authentication/useUserStore.ts";
-import {setLocalStorageItem} from "../../../shared/utils/localStorage.ts"; // Import useTranslation
+import {setLocalStorageItem} from "../../../shared/utils/localStorage.ts";
+import {useNotification} from "../../../shared/notification/useNotification.ts"; // Import useTranslation
 
 const PREFIX_URL_ADMIN: string = import.meta.env.VITE_PREFIX_URL_ADMIN;
 
 const Login: React.FC = () => {
+    const { message, notification } = useNotification();
     const { t } = useTranslation(); // Khởi tạo hook useTranslation
     const navigate = useNavigate();
     const { setUser } = useUserStore();
@@ -109,7 +111,6 @@ const Login: React.FC = () => {
 
         setLoginLoading(true);
         try {
-            // TODO: SOLVE LOGIN, ZUSTAND STATE
             const response = await postLogin({ email: email, password: password });
             if (!response.ok) {
                 setPasswordError(t("login.invalidCredentials"));
@@ -137,7 +138,11 @@ const Login: React.FC = () => {
                 navigate(`${PREFIX_URL_ADMIN}/dashboard`);
             }
 
-            message.success(t("login.loginSuccessful"));
+            notification.success(
+                t("login.loginSuccessful"),
+                t('login.loginSuccessfulDescription', { name: userData.firstName ?? '' }),
+                { duration: 5, placement: 'topRight' }
+            );
         } catch (error: any) {
             console.error("Login failed:", error);
             const errorMessage = error.response?.data?.message || t("login.loginFailed");

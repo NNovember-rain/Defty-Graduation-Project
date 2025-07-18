@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "antd": "^5.26.0",
+    "antd": "^5.23.0",
     "dayjs": "^1.11.13",
     "i18next-browser-languagedetector": "^8.2.0",
     "moment": "^2.30.1",

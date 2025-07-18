@@ -43,6 +43,11 @@ interface ManagementTemplateProps {
     sortFields: SortField[];
     onSearch: (filters: Record<string, string>) => void;
     onClear: () => void;
+    // NEW: Thêm các props để truyền giá trị ban đầu cho FilterOption
+    initialFilters: Record<string, string>;
+    initialSortBy: string | null;
+    initialSortOrder: 'asc' | 'desc' | null;
+
 
     // Props for DataTable (giữ nguyên)
     dataTableTitle?: string;
@@ -60,6 +65,7 @@ interface ManagementTemplateProps {
 
     // NEW: Add actions prop
     actions?: ActionButton[]; // Optional array of action buttons
+    onBulkDelete?: (ids: string[]) => void;
 }
 
 const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
@@ -69,6 +75,9 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    sortFields,
                                                                    onSearch,
                                                                    onClear,
+                                                                   initialFilters, // NEW: Destructure
+                                                                   initialSortBy, // NEW: Destructure
+                                                                   initialSortOrder, // NEW: Destructure
                                                                    dataTableTitle,
                                                                    columns,
                                                                    data,
@@ -82,13 +91,31 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    onCreateNew, // Destructure onCreateNew
                                                                    onEntriesPerPageChange, // NEW: Destructure prop này
                                                                    actions, // NEW: Destructure actions prop
+                                                                   onBulkDelete,
                                                                }) => {
     const [isFilterVisible, setIsFilterVisible] = useState(true);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
     const { t } = useTranslation(); // Initialize useTranslation
 
     const toggleFilterVisibility = () => {
         setIsFilterVisible(!isFilterVisible);
     };
+
+    const handleSelectRow = (id: string, isSelected: boolean) => {
+        setSelectedRows(prev =>
+            isSelected ? [...prev, id] : prev.filter(rowId => rowId !== id)
+        );
+    };
+
+    const handleSelectAllRows = (isSelected: boolean) => {
+        if (isSelected) {
+            const allIds = data.map(row => row.id ? row.id : row._id);
+            setSelectedRows(allIds);
+        } else {
+            setSelectedRows([]);
+        }
+    };
+
 
     return (
         <div className="management-template">
@@ -125,6 +152,9 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                     sortFields={sortFields}
                     onSearch={onSearch}
                     onClear={onClear}
+                    initialFilters={initialFilters} // NEW: Truyền prop này
+                    initialSortBy={initialSortBy} // NEW: Truyền prop này
+                    initialSortOrder={initialSortOrder} // NEW: Truyền prop này
                 />
             </div>
 
@@ -141,7 +171,11 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                 currentSortColumn={currentSortColumn}
                 currentSortOrder={currentSortOrder}
                 onEntriesPerPageChange={onEntriesPerPageChange} // NEW: Truyền prop này
-                actions={actions} // NEW: Pass actions to DataTable
+                actions={actions}
+                onBulkDelete={onBulkDelete}
+                selectedRows={selectedRows}
+                onSelectRow={handleSelectRow}
+                onSelectAll={handleSelectAllRows}
             />
         </div>
     );

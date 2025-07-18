@@ -40,9 +40,9 @@ const Role: React.FC = () => {
     }, []);
 
     const dataTableColumns = useMemo(() => [
-        { key: 'name', label: t('rolePage.columns.name'), sortable: true, align: 'center' },
-        { key: 'description', label: t('rolePage.columns.description'), sortable: true, align: 'center' },
-        { key: 'creationDate', label: t('rolePage.columns.creationDate'), sortable: true, align: 'center' },
+        { key: 'name', label: t('rolePage.columns.name'), sortable: true },
+        { key: 'description', label: t('rolePage.columns.description'), sortable: true },
+        { key: 'creationDate', label: t('rolePage.columns.creationDate'), sortable: true },
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
@@ -157,9 +157,9 @@ const Role: React.FC = () => {
         <ManagementTemplate
             pageTitle={t('rolePage.title')}
             breadcrumbItems={[
-                { label: t('userPage.breadcrumb.home'), path: '/' },
-                { label: t('userPage.breadcrumb.adminDashboard'), path: '/admin' },
-                { label: t('rolePage.breadcrumb') },
+                {label: t('userPage.breadcrumb.home'), path: '/'},
+                {label: t('userPage.breadcrumb.adminDashboard'), path: '/admin'},
+                {label: t('rolePage.breadcrumb')},
             ]}
             searchFields={searchFields}
             sortFields={sortFields}
@@ -177,7 +177,9 @@ const Role: React.FC = () => {
             onCreateNew={handleCreateNew}
             onEntriesPerPageChange={handleEntriesPerPageChange}
             actions={actions}
-        />
+            initialFilters={currentFilters}
+            initialSortBy={currentSortColumn}
+            initialSortOrder={currentSortOrder} />
     );
 };
 

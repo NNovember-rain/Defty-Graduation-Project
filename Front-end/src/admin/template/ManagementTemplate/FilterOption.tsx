@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react'; // Import useEffect and useState
 import AntdDatePicker from '../../components/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
@@ -27,27 +27,50 @@ interface FilterOptionProps {
     sortFields: SortField[];
     onSearch: (filters: Record<string, string>) => void;
     onClear: () => void;
+    // NEW: Thêm các props để nhận giá trị ban đầu
+    initialFilters: Record<string, string>;
+    initialSortBy: string | null;
+    initialSortOrder: 'asc' | 'desc' | null;
 }
 
 const FilterOption: React.FC<FilterOptionProps> = ({
                                                        searchFields,
                                                        sortFields,
                                                        onSearch,
-                                                       onClear
+                                                       onClear,
+                                                       initialFilters, // NEW: Destructure
+                                                       initialSortBy, // NEW: Destructure
+                                                       initialSortOrder, // NEW: Destructure
                                                    }) => {
     const { t } = useTranslation(); // Initialize useTranslation
-    const initialFilterState = React.useMemo(() => {
-        const initialState: Record<string, string> = {};
-        searchFields.forEach(field => {
-            initialState[field.key] = '';
-        });
-        sortFields.forEach(field => {
-            initialState[field.key] = field.options[0]?.value || '';
-        });
-        return initialState;
-    }, [searchFields, sortFields]);
 
-    const [filters, setFilters] = React.useState<Record<string, string>>(initialFilterState);
+    // State để lưu trữ giá trị của các trường lọc
+    const [filters, setFilters] = useState<Record<string, string>>({});
+
+    // Effect để cập nhật state `filters` khi các props `initial` thay đổi
+    useEffect(() => {
+        const newFilters: Record<string, string> = {};
+
+        // Khởi tạo từ searchFields và initialFilters
+        searchFields.forEach(field => {
+            newFilters[field.key] = initialFilters[field.key] || '';
+        });
+
+        // Khởi tạo từ sortFields và initialSortBy/initialSortOrder
+        sortFields.forEach(field => {
+            if (field.key === 'sortBy' && initialSortBy) {
+                newFilters[field.key] = initialSortBy;
+            } else if (field.key === 'sortOrder' && initialSortOrder) {
+                newFilters[field.key] = initialSortOrder;
+            } else {
+                // Đặt giá trị mặc định nếu không có trong URL
+                newFilters[field.key] = initialFilters[field.key] || field.options[0]?.value || '';
+            }
+        });
+
+        setFilters(newFilters);
+    }, [initialFilters, initialSortBy, initialSortOrder, searchFields, sortFields]);
+
 
     const handleChange = (key: string, value: string) => {
         setFilters(prevFilters => ({
@@ -58,18 +81,34 @@ const FilterOption: React.FC<FilterOptionProps> = ({
 
     // Handler cho Ant Design DatePicker với type safety
     const handleDateChange = (key: string, _date: Dayjs | null, dateString: string | string[]) => {
-        // Xử lý dateString có thể là string hoặc array
         const finalDateString = Array.isArray(dateString) ? dateString[0] : dateString;
         handleChange(key, finalDateString || '');
     };
 
     const handleSearchClick = () => {
-        onSearch(filters);
+        // Khi tìm kiếm, chúng ta cần gửi cả sortBy và sortOrder trong object filters
+        const filtersToSend = { ...filters };
+        if (filters.sortBy) {
+            filtersToSend.sortBy = filters.sortBy;
+        }
+        if (filters.sortOrder) {
+            filtersToSend.sortOrder = filters.sortOrder;
+        }
+        onSearch(filtersToSend);
     };
 
     const handleClearClick = () => {
-        setFilters(initialFilterState);
-        onClear();
+        // Tạo lại trạng thái ban đầu rỗng cho tất cả các trường
+        const clearedFilters: Record<string, string> = {};
+        searchFields.forEach(field => {
+            clearedFilters[field.key] = '';
+        });
+        sortFields.forEach(field => {
+            // Đặt lại giá trị mặc định cho các trường sắp xếp nếu có
+            clearedFilters[field.key] = field.options[0]?.value || '';
+        });
+        setFilters(clearedFilters);
+        onClear(); // Gọi hàm onClear từ parent để reset URL
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -99,7 +138,7 @@ const FilterOption: React.FC<FilterOptionProps> = ({
                                 id={field.key}
                                 className="filter-options__form-group__input"
                                 placeholder={field.placeholder}
-                                value={filters[field.key] || ''}
+                                value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
                                 onChange={(e) => handleChange(field.key, e.target.value)}
                                 onKeyPress={handleKeyPress}
                             />
@@ -109,7 +148,7 @@ const FilterOption: React.FC<FilterOptionProps> = ({
                             <select
                                 id={field.key}
                                 className="filter-options__form-group__select"
-                                value={filters[field.key] || ''}
+                                value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
                                 onChange={(e) => handleChange(field.key, e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 style={{padding: '10px 12px'}}
@@ -157,7 +196,7 @@ const FilterOption: React.FC<FilterOptionProps> = ({
                         <select
                             id={field.key}
                             className="filter-options__form-group__select"
-                            value={filters[field.key] || ''}
+                            value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
                             onChange={(e) => handleChange(field.key, e.target.value)}
                             onKeyPress={handleKeyPress}
                             style={{padding: '10px 12px'}}
