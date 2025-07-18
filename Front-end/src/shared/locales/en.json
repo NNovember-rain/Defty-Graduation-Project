@@ -98,7 +98,16 @@
     "vietnameseFlagAlt": "Vietnamese Flag",
     "englishFlagAlt": "US Flag",
     "vietnamese": "Tiếng Việt",
-    "english": "English"
+    "english": "English",
+    "assignments": "Exercises",
+    "quiz": "Quiz",
+    "test": "Test",
+    "class": "Class"
+  },
+  "classes": {
+    "ise": "Introduction to Software Engineering",
+    "isad": "Information Systems Analysis and Design",
+    "sad": "Software Architecture and Design"
   },
   "common": {
     "clear": "Clear",

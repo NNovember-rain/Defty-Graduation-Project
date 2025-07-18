@@ -1,0 +1,209 @@
+// src/components/Header.scss
+$header-bg-color: #282828;
+$text-color: #a7a7a7;
+$text-color-hover: #ffffff;
+$premium-bg-color: #79553a;
+$premium-bg-color-hover: #8d6b4f;
+$border-color: #404040;
+$padding-x: 20px;
+$header-height: 50px;
+$active-underline-color: #ff9100;
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: $header-height;
+  background-color: $header-bg-color;
+  padding: 0 $padding-x;
+  border-bottom: 1px solid $border-color;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 100%;
+}
+
+.header-logo {
+  color: #ff9100;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+
+  &__image {
+    height: 40px;
+  }
+}
+
+.header-nav {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  height: 100%;
+}
+
+.nav-item {
+  color: $text-color;
+  text-decoration: none;
+  font-size: 1rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 100%;
+
+  &:hover {
+    color: $text-color-hover;
+  }
+
+  &.active {
+    color: $text-color-hover;
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: $text-color-hover;
+    }
+  }
+
+  &.with-dropdown {
+    cursor: pointer;
+
+    svg {
+      font-size: 25px;
+    }
+  }
+}
+
+.dropdown-arrow {
+  width: 10px;
+  height: 10px;
+  margin-left: 4px;
+  color: $text-color;
+  transition: color 0.2s ease-in-out;
+
+  .nav-item:hover & {
+    color: $text-color-hover;
+  }
+}
+
+.header-right {
+  gap: 15px;
+}
+
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: $text-color;
+}
+
+.icon-wrapper {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease-in-out;
+
+  &:hover {
+    color: $text-color-hover;
+  }
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background-color: #c74848;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+// Tùy chỉnh Ant Design Dropdown Menu
+.ant-dropdown-menu.header-dropdown-menu {
+  background-color: #383838 !important;
+  border-radius: 4px;
+  border: 1px solid $border-color;
+  padding: 0;
+
+  .ant-dropdown-menu-item {
+    padding: 10px 16px;
+    margin: 0;
+
+    a {
+      color: $text-color;
+      transition: color 0.2s ease-in-out;
+      &:hover {
+        color: $text-color-hover;
+      }
+    }
+
+    &:hover {
+      background-color: #404040 !important;
+    }
+  }
+}
+
+.ant-dropdown-menu.client__language-menu {
+  background-color: #2e2e2e !important;
+  border-radius: 4px;
+  border: 1px solid $border-color;
+
+  .ant-dropdown-menu-item {
+    color: $text-color;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    padding: 8px 12px;
+
+    &:hover {
+      background-color: #3a3a3a !important;
+      color: $text-color-hover;
+    }
+
+    &.active-language-item {
+      background-color: #404040 !important;
+      color: $text-color-hover;
+      font-weight: 600;
+    }
+  }
+}
+
+.client__language-dropdown {
+  background-color: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.client__language-dropdown--icon-button {
+  background-color: transparent;
+  border: none;
+  color: $text-color;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease-in-out;
+
+  &:hover {
+    color: $text-color-hover;
+  }
+}
+
+.outlet-container {
+  background-color: #1a1a1a;
+  min-height: calc(100vh - 50px);
+}

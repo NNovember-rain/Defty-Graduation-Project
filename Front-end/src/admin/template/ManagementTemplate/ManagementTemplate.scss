@@ -11,7 +11,7 @@ $pagination-active-bg: #007bff;
 $pagination-active-color: #fff;
 $button-color: #6c757d; // Grey button color from image
 $button-text-color: #fff;
-$delete-color: #dc3545;
+$delete-color: #fd1b31;
 
 // Base styles for the entire template
 .management-template {
@@ -282,7 +282,7 @@ $delete-color: #dc3545;
     transition: background-color 0.2s;
 
     &:hover {
-      background-color: darken($delete-color, 10%);
+      background-color: $delete-color;
     }
 
     svg {

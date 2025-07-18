@@ -98,7 +98,16 @@
     "vietnameseFlagAlt": "Cờ Việt Nam",
     "englishFlagAlt": "Cờ Mỹ",
     "vietnamese": "Tiếng Việt",
-    "english": "English"
+    "english": "English",
+    "assignments": "Bài tập",
+    "quiz": "Quiz",
+    "test": "Kiểm tra",
+    "class": "Lớp"
+  },
+  "classes": {
+    "ise": "Nhập môn Công nghệ Phần mềm",
+    "isad": "Phân tích Thiết kế Hệ thống Thông tin",
+    "sad": "Kiến trúc Thiết kế Phần mềm"
   },
   "common": {
     "clear": "Xóa",
