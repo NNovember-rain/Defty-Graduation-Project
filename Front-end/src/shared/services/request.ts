@@ -197,6 +197,16 @@ export const del = async (path: string): Promise<Response> => {
     });
 };
 
+export const bulkDelete = async (path: string, data: Record<string, any>): Promise<Response> => {
+    return requestWithRefresh(path, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+};
+
 export const patchStatus = async (path: string): Promise<Response> => {
     return requestWithRefresh(path, {
         method: 'PATCH',

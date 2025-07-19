@@ -16,7 +16,10 @@
     "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng đăng nhập lại.",
     "networkErrorInitialFetch": "Lỗi kết nối mạng. Vui lòng thử lại.",
     "requestFailedAfterRefresh": "Yêu cầu thất bại sau khi làm mới phiên.",
-    "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu."
+    "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu.",
+    "createSuccess": "Tạo mới thành công",
+    "updateSuccess": "Cập nhật thành công",
+    "fail": "Thao tác thất bại."
   },
   "login": {
     "adminLTE": "Admin",
@@ -34,7 +37,10 @@
     "passwordUppercase": "Mật khẩu phải chứa ít nhất một chữ cái hoa.",
     "passwordNumber": "Mật khẩu phải chứa ít nhất một số.",
     "invalidCredentials": "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.",
-    "passwordSpecialChar": "Mật khẩu phải chứa ít nhất một ký tự đặc biệt."
+    "passwordSpecialChar": "Mật khẩu phải chứa ít nhất một ký tự đặc biệt.",
+    "loginSuccessful": "Đăng nhập thành công.",
+    "loginSuccessfulDescription": "Xin chào, {{name}}",
+    "loginFailed": "Đăng nhập thất bại"
   },
   "sidebar": {
     "overview": "Tổng quan",
@@ -65,6 +71,7 @@
     "systemConfiguration": "Cấu hình Hệ thống",
     "plantUMLConfiguration": "Cấu hình PlantUML",
     "aiAPIConfiguration": "Cấu hình AI API",
+    "promptConfiguration": "Cấu hình Prompt",
     "searchPlaceholder": "Tìm kiếm",
     "deftyLogoAlt": "Logo Defty",
     "userAvatarAlt": "Ảnh đại diện người dùng",
@@ -95,7 +102,15 @@
   },
   "common": {
     "clear": "Xóa",
-    "search": "Tìm kiếm"
+    "search": "Tìm kiếm",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "error": "Lỗi",
+    "loadingData": "Đang tải dữ liệu...",
+    "errorFetchingData": "Tải dữ liệu thất bại. Vui lòng thử lại.",
+    "errorNoIdToDelete": "Lỗi: Không có ID được cung cấp để xóa.",
+    "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại."
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -113,7 +128,13 @@
     "entries": "mục",
     "show": "Hiển thị",
     "entriesPerPage": "mục trên trang",
-    "actions": "Hành động"
+    "actions": "Hành động",
+    "deleteSelected": "Xóa nhiều",
+    "bulkDeleteTitle": "Xác nhận xóa hàng loạt",
+    "bulkDeleteSuccess": "Đã xóa thành công {{count}} mục.",
+    "confirmBulkDelete": "Bạn có chắc chắn muốn xóa",
+    "selectedItems": "mục đã chọn?",
+    "order": "STT"
   },
   "userPage": {
     "title": "Người dùng",
@@ -191,6 +212,75 @@
     "editTooltip": "Chỉnh sửa vai trò",
     "deleteTooltip": "Xóa vai trò",
     "confirmDelete": "Bạn có chắc muốn xóa vai trò"
+  },
+  "promptPage": {
+    "title": "Quản lý Prompt",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "adminDashboard": "Bảng điều khiển Admin",
+      "promptManagement": "Quản lý Prompt"
+    },
+    "dataTableColumns": {
+      "name": "Tên",
+      "description": "Mô tả",
+      "templateString": "Mẫu",
+      "type": "Loại",
+      "version": "Phiên bản",
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Cập nhật lần cuối"
+    },
+    "searchFields": {
+      "nameLabel": "Tên Prompt",
+      "namePlaceholder": "Nhập tên prompt"
+    },
+    "sortFields": {
+      "sortOrderLabel": "Thứ tự Sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "sortByLabel": "Sắp xếp theo",
+      "name": "Tên",
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Cập nhật lần cuối"
+    },
+    "createNewAction": "Tạo prompt mới (chưa hỗ trợ)",
+    "editAction": "Chỉnh sửa",
+    "deleteAction": "Xóa",
+    "editTooltip": "Chỉnh sửa prompt",
+    "deleteTooltip": "Xóa prompt",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa prompt:",
+    "deleteSuccess": "Xóa prompt thành công!"
+  },
+  "promptForm": {
+    "title": "Prompt",
+    "nameLabel": "Tên Prompt",
+    "namePlaceholder": "Nhập tên prompt",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả prompt",
+    "templateStringLabel": "Mẫu",
+    "templateStringPlaceholder": "Nhập chuỗi template prompt tại đây...",
+    "typeLabel": "Loại",
+    "typeOptions": {
+      "user": "Người dùng",
+      "system": "Hệ thống",
+      "template": "Template"
+    },
+    "versionLabel": "Phiên bản",
+    "versionPlaceholder": "Ví dụ: 1.0, 2.1",
+    "createdByLabel": "Tạo bởi (ID Người dùng)",
+    "createdByPlaceholder": "Nhập ID người dùng (tùy chọn)",
+    "validation": {
+      "nameRequired": "Tên prompt là bắt buộc!",
+      "templateStringRequired": "Mẫu là bắt buộc!",
+      "typeRequired": "Loại prompt là bắt buộc!",
+      "versionRequired": "Phiên bản là bắt buộc!"
+    }
+  },
+  "formTemplate": {
+    "createTitle": "Tạo mới {{title}}",
+    "editTitle": "Chỉnh sửa {{title}}",
+    "fetchError": "Lỗi tải dữ liệu: {{message}}",
+    "saveError": "Lỗi lưu dữ liệu: {{message}}",
+    "unknownError": "Có lỗi không xác định xảy ra",
+    "parseError": "Lỗi xảy ra khi xử lý phản hồi"
   }
-
 }

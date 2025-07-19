@@ -1,27 +1,26 @@
-// DataTable.tsx
+// admin-dashboard/components/DataTable.tsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
-// NEW: Import ReactNode for action buttons
-// NEW: Import ReactNode for action buttons
+import { MdDelete } from "react-icons/md";
 import type {ReactNode} from 'react';
 
 interface Column {
     key: string;
     label: string;
     sortable?: boolean;
+    align?: 'left' | 'center' | 'right';
+    render?: (value: any, row: DataRow) => ReactNode;
 }
 
 interface DataRow {
     [key: string]: any;
 }
 
-// NEW: Define ActionButton interface
 interface ActionButton {
-    icon: ReactNode; // ReactNode to allow any React element (like an icon component)
+    icon: ReactNode;
     onClick: (rowData: any) => void;
     className?: string;
-    tooltip?: string; // Optional tooltip for the button,
+    tooltip?: string;
     color?: string;
 }
 
@@ -37,8 +36,11 @@ interface DataTableProps {
     currentSortColumn: string | null;
     currentSortOrder: 'asc' | 'desc' | null;
     onEntriesPerPageChange: (entries: number) => void;
-    // NEW: Add onAction prop, which is an array of ActionButton
     actions?: ActionButton[];
+    onBulkDelete?: (ids: string[]) => void;
+    selectedRows?: string[];
+    onSelectRow?: (id: string, isSelected: boolean) => void;
+    onSelectAll?: (isSelected: boolean) => void;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -53,63 +55,55 @@ const DataTable: React.FC<DataTableProps> = ({
                                                  currentSortColumn,
                                                  currentSortOrder,
                                                  onEntriesPerPageChange,
-                                                 actions, // NEW: Destructure actions prop
+                                                 actions,
+                                                 onBulkDelete,
+                                                 selectedRows = [],
+                                                 onSelectRow,
+                                                 onSelectAll
                                              }) => {
     const { t } = useTranslation();
     const totalPages = Math.ceil(totalEntries / entriesPerPage);
+    const startEntry = (currentPage - 1) * entriesPerPage;
+    const isAllSelected = onSelectAll && data.length > 0 && data.every(row => selectedRows.includes(row.id ? row.id : row._id));
 
     const getPaginationPages = () => {
-        const pages: (number | string)[] = []; // Allow number or string for '...'
-        const maxPagesToShow = 5; // Maximum number of page numbers to show (e.g., 1 2 ... 7 8 9 10)
-        const boundaryPages = 2; // Number of pages to show at the start and end (e.g., 1 2 ... 9 10)
+        const pages: (number | string)[] = [];
+        const maxPagesToShow = 5;
+        const boundaryPages = 2;
 
         if (totalPages <= maxPagesToShow) {
-            // If total pages are less than or equal to maxPagesToShow, show all pages
             for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
             }
         } else {
-            // Always show the first few pages
             for (let i = 1; i <= boundaryPages; i++) {
                 pages.push(i);
             }
 
-            // Determine if '...' is needed at the start
             if (currentPage > boundaryPages + 1) {
                 pages.push('...');
             }
 
-            // Show pages around the current page
             const startMiddle = Math.max(boundaryPages + 1, currentPage - Math.floor((maxPagesToShow - boundaryPages * 2 - 1) / 2));
             const endMiddle = Math.min(totalPages - boundaryPages, currentPage + Math.ceil((maxPagesToShow - boundaryPages * 2 - 1) / 2));
 
             for (let i = startMiddle; i <= endMiddle; i++) {
-                if (i > boundaryPages && i < totalPages - boundaryPages + 1) { // Ensure not to duplicate boundary pages
+                if (i > boundaryPages && i < totalPages - boundaryPages + 1) {
                     pages.push(i);
                 }
             }
 
-
-            // Determine if '...' is needed at the end
             if (currentPage < totalPages - boundaryPages) {
-                if (pages[pages.length - 1] !== '...') { // Avoid consecutive '...'
+                if (pages[pages.length - 1] !== '...') {
                     pages.push('...');
                 }
             }
 
-
-            // Always show the last few pages
             for (let i = totalPages - boundaryPages + 1; i <= totalPages; i++) {
-                if (!pages.includes(i)) { // Prevent duplicating if already added
+                if (!pages.includes(i)) {
                     pages.push(i);
                 }
             }
-            // Ensure no duplicate '...' if currentPage is very close to totalPages
-            if (pages.length > 1 && pages[pages.length - 2] === '...' && pages[pages.length - 1] === '...') {
-                pages.pop(); // Remove the last '...' if it's a duplicate
-            }
-
-            // Final check to remove consecutive '...'
             const finalPages: (number | string)[] = [];
             for (let i = 0; i < pages.length; i++) {
                 if (pages[i] === '...' && finalPages[finalPages.length - 1] === '...') {
@@ -143,12 +137,33 @@ const DataTable: React.FC<DataTableProps> = ({
 
     return (
         <div className="data-table-section">
-            {title && (
-                <h2 className="data-table-section__title">{title}</h2>
-            )}
+            <div className="data-table-section__toolbar">
+                {title && (
+                    <h2 className="data-table-section__title">{title}</h2>
+                )}
+                {onBulkDelete && selectedRows.length > 0 && (
+                    <button
+                        className="data-table-section__bulk-delete-button"
+                        onClick={() => onBulkDelete(selectedRows)}
+                    >
+                        <MdDelete />
+                        {t('dataTable.deleteSelected', { count: selectedRows.length })}
+                    </button>
+                )}
+            </div>
             <table className="data-table">
                 <thead className="data-table__header">
                 <tr>
+                    {onBulkDelete && (
+                        <th className="data-table__header-cell data-table__header-cell--checkbox">
+                            <input
+                                type="checkbox"
+                                checked={isAllSelected}
+                                onChange={e => onSelectAll?.(e.target.checked)}
+                            />
+                        </th>
+                    )}
+                    <th className="data-table__header-cell data-table__header-cell--serial-number">{t('dataTable.order')}</th>
                     {columns.map((col) => (
                         <th
                             key={col.key}
@@ -164,23 +179,34 @@ const DataTable: React.FC<DataTableProps> = ({
                             )}
                         </th>
                     ))}
-                    {/* NEW: Add Action header if actions are provided */}
                     {actions && actions.length > 0 && (
                         <th className="data-table__header-cell data-table__header-cell--actions">
-                            {t('dataTable.actions')} {/* Translate 'Actions' */}
+                            {t('dataTable.actions')}
                         </th>
                     )}
                 </tr>
                 </thead>
                 <tbody>
                 {data.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="data-table__row">
+                    <tr key={row.id || row._id || rowIndex} className="data-table__row">
+                        {onBulkDelete && (
+                            <td className="data-table__cell data-table__cell--checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedRows.includes(row.id ? row.id : row._id)}
+                                    onChange={e => onSelectRow?.(row.id ? row.id : row._id, e.target.checked)}
+                                />
+                            </td>
+                        )}
+                        <td className="data-table__cell data-table__cell--serial-number">
+                            {startEntry + rowIndex + 1}
+                        </td>
                         {columns.map((col) => (
                             <td key={col.key} className="data-table__cell">
-                                {row[col.key]}
+                                {/* NEW: Sử dụng hàm render nếu có, ngược lại hiển thị giá trị trực tiếp */}
+                                {col.render ? col.render(row[col.key], row) : row[col.key]}
                             </td>
                         ))}
-                        {/* NEW: Render Action buttons if actions are provided */}
                         {actions && actions.length > 0 && (
                             <td className="data-table__cell data-table__cell--actions">
                                 <div className="data-table__actions-container">

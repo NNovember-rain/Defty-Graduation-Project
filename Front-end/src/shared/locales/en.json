@@ -16,7 +16,10 @@
     "sessionExpired": "Your session has expired. Please log in again.",
     "networkErrorInitialFetch": "Network error. Please try again.",
     "requestFailedAfterRefresh": "Request failed after session refresh.",
-    "networkErrorRetryFetch": "Network error during retry."
+    "networkErrorRetryFetch": "Network error during retry.",
+    "createSuccess": "Created successfully.",
+    "updateSuccess": "Updated successfully.",
+    "fail": "Failed action."
   },
   "login": {
     "adminLTE": "Admin",
@@ -34,7 +37,10 @@
     "passwordUppercase": "Password must contain at least one uppercase letter.",
     "passwordNumber": "Password must contain at least one number.",
     "invalidCredentials": "Invalid login credentials. Please try again.",
-    "passwordSpecialChar": "Password must contain at least one special character."
+    "passwordSpecialChar": "Password must contain at least one special character.",
+    "loginSuccessful": "Login successfully.",
+    "loginSuccessfulDescription": "Hello, {{name}}",
+    "loginFailed": "Login fail"
   },
   "sidebar": {
     "overview": "Overview",
@@ -65,6 +71,7 @@
     "systemConfiguration": "System Configuration",
     "plantUMLConfiguration": "PlantUML Configuration",
     "aiAPIConfiguration": "AI API Configuration",
+    "promptConfiguration": "Prompt Configuration",
     "searchPlaceholder": "Search",
     "deftyLogoAlt": "Defty Logo",
     "userAvatarAlt": "User Avatar",
@@ -95,7 +102,15 @@
   },
   "common": {
     "clear": "Clear",
-    "search": "Search"
+    "search": "Search",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "error": "Error",
+    "loadingData": "Loading data...",
+    "errorFetchingData": "Failed to load data. Please try again.",
+    "errorNoIdToDelete": "Error: No ID provided for deletion.",
+    "errorDeletingData": "Failed to delete data. Please try again."
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -113,7 +128,13 @@
     "entries": "entries",
     "show": "Show",
     "entriesPerPage": "entries per page",
-    "actions": "Action"
+    "actions": "Action",
+    "deleteSelected": "Bulk delete",
+    "bulkDeleteTitle": "Confirm Bulk Deletion",
+    "bulkDeleteSuccess": "Successfully deleted {{count}} item(s).",
+    "confirmBulkDelete": "Are you sure you want to delete",
+    "selectedItems": "selected item(s)?",
+    "order": "No."
   },
   "userPage": {
     "title": "Users",
@@ -161,7 +182,7 @@
       "creationDate": "Creation Date"
     }
   },
-  "rolePage":{
+  "rolePage": {
     "title": "Role Management",
     "breadcrumb": "Role Management",
     "columns": {
@@ -191,5 +212,75 @@
     "editTooltip": "Edit role",
     "deleteTooltip": "Delete role",
     "confirmDelete": "Are you sure you want to delete role"
+  },
+  "promptPage": {
+    "title": "Prompt Management",
+    "breadcrumb": {
+      "home": "Home",
+      "adminDashboard": "Admin Dashboard",
+      "promptManagement": "Prompt Management"
+    },
+    "dataTableColumns": {
+      "name": "Name",
+      "description": "Description",
+      "templateString": "Template",
+      "type": "Type",
+      "version": "Version",
+      "createdAt": "Creation Date",
+      "updatedAt": "Last Updated"
+    },
+    "searchFields": {
+      "nameLabel": "Prompt Name",
+      "namePlaceholder": "Enter prompt name"
+    },
+    "sortFields": {
+      "sortOrderLabel": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "sortByLabel": "Order By",
+      "name": "Name",
+      "createdAt": "Creation Date",
+      "updatedAt": "Last Updated"
+    },
+    "createNewAction": "Create new prompt (not yet implemented)",
+    "editAction": "Edit",
+    "deleteAction": "Delete",
+    "editTooltip": "Edit prompt",
+    "deleteTooltip": "Delete prompt",
+    "confirmDelete": "Are you sure you want to delete prompt:",
+    "deleteSuccess": "Prompt deleted successfully!"
+  },
+  "promptForm": {
+    "title": "Prompt",
+    "nameLabel": "Prompt Name",
+    "namePlaceholder": "Enter prompt name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter prompt description",
+    "templateStringLabel": "Template",
+    "templateStringPlaceholder": "Enter the prompt template string here...",
+    "typeLabel": "Type",
+    "typeOptions": {
+      "user": "User",
+      "system": "System",
+      "template": "Template"
+    },
+    "versionLabel": "Version",
+    "versionPlaceholder": "e.g., 1.0, 2.1",
+    "createdByLabel": "Created By (User ID)",
+    "createdByPlaceholder": "Enter user ID (optional)",
+    "validation": {
+      "nameRequired": "Prompt name is required!",
+      "templateStringRequired": "Template is required!",
+      "typeRequired": "Prompt type is required!",
+      "versionRequired": "Version is required!"
+    }
+  },
+  "formTemplate": {
+    "createTitle": "Create New {{title}}",
+    "editTitle": "Edit {{title}}",
+    "fetchError": "Failed to fetch data: {{message}}",
+    "saveError": "Failed to save data: {{message}}",
+    "unknownError": "An unknown error occurred",
+    "parseError": "An error occurred while processing the response"
   }
 }

@@ -133,6 +133,7 @@ const sidebarContentConfig: SidebarItem[] = [
         icon: <MdOutlineSettings />,
         requiredAnyOfRoles: ['admin'],
         children: [
+            { id: 'promptConfiguration', labelKey: 'sidebar.promptConfiguration', icon: <FaTools />, path: '/admin/settings/prompts', requiredAnyOfRoles: ['admin'] },
             { id: 'plantUMLConfiguration', labelKey: 'sidebar.plantUMLConfiguration', icon: <FaTools />, path: '/admin/settings/plantuml', requiredAnyOfRoles: ['admin'] },
             { id: 'aiAPIConfiguration', labelKey: 'sidebar.aiAPIConfiguration', icon: <FaTools />, path: '/admin/settings/ai-api', requiredAnyOfRoles: ['admin'] },
         ],
