@@ -291,5 +291,26 @@
     "saveError": "Failed to save data: {{message}}",
     "unknownError": "An unknown error occurred",
     "parseError": "An error occurred while processing the response"
+  },
+  "problemDetail": {
+    "description": {
+      "title": "Description",
+      "viewerTitle": "PlantUML Editor & Viewer",
+      "introParagraph1": "This is an online editor for the PlantUML source code language. You can use it to create beautiful diagrams from simple text code.",
+      "introParagraph2_part1": "Enter your PlantUML code into the editor. Press the ",
+      "introParagraph2_part2": " button to see the rendered image in the frame below.",
+      "runButton": "Run",
+      "exampleTitle": "Example: Sequence Diagram"
+    },
+    "codeEditor": {
+      "title": "Code",
+      "runTooltip": "Run",
+      "submitTooltip": "Submit",
+      "submitMessage": "Code submitted:"
+    },
+    "result": {
+      "title": "Test Result",
+      "placeholder": "Press \"Run\" to see the diagram."
+    }
   }
 }

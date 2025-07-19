@@ -6,6 +6,7 @@ import ProtectedRoute from "../../shared/routes/ProtectedRoute";
 import Login from "../pages/Login";
 import Home from "../pages/Home";
 import UnauthorizedPage from "../../shared/routes/UnauthorizedPage.tsx";
+import ProblemDetail from "../pages/ProblemDetail";
 
 interface AppRoute {
     path: string;
@@ -38,6 +39,10 @@ const ClientAuthRoutesConfig: AppRoute[] = [
 ];
 
 const ProtectedClientRoutesConfig: AppRoute[] = [
+    {
+        path: '/problem/:slug',
+        component: ProblemDetail
+    },
     {
         path: '',
         component: Home

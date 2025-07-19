@@ -1,4 +1,3 @@
-// src/components/Header.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Dropdown, Menu, type MenuProps } from 'antd';
@@ -9,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import {IoLanguageOutline} from "react-icons/io5";
 import i18n from "i18next";
 
-// Định nghĩa kiểu dữ liệu cho các mục navigation
 interface NavLinkItem {
     type: 'link';
     labelKey: string;
@@ -134,7 +132,7 @@ const Header: React.FC = () => {
             </div>
             <div className="header-right">
                 <div className="header-icons">
-                    <Dropdown className='client__language-dropdown' menu={languageMenuProps} placement="bottom" trigger={['click']}>
+                    <Dropdown className='client__language-dropdown' menu={languageMenuProps} placement="bottom" trigger={['hover']}>
                         <button className="client__language-dropdown--icon-button">
                             <IoLanguageOutline />
                         </button>

@@ -291,5 +291,26 @@
     "saveError": "Lỗi lưu dữ liệu: {{message}}",
     "unknownError": "Có lỗi không xác định xảy ra",
     "parseError": "Lỗi xảy ra khi xử lý phản hồi"
+  },
+  "problemDetail": {
+    "description": {
+      "title": "Mô tả",
+      "viewerTitle": "Trình chỉnh sửa & xem PlantUML",
+      "introParagraph1": "Đây là một trình chỉnh sửa trực tuyến cho ngôn ngữ mã nguồn PlantUML. Bạn có thể sử dụng nó để tạo ra các sơ đồ đẹp mắt từ mã văn bản đơn giản.",
+      "introParagraph2_part1": "Nhập mã PlantUML của bạn vào trình chỉnh sửa. Nhấn nút ",
+      "introParagraph2_part2": " để xem hình ảnh được render ra ở khung bên dưới.",
+      "runButton": "Run",
+      "exampleTitle": "Ví dụ: Sơ đồ Tuần tự"
+    },
+    "codeEditor": {
+      "title": "Mã nguồn",
+      "runTooltip": "Chạy",
+      "submitTooltip": "Nộp bài",
+      "submitMessage": "Mã nguồn đã được nộp:"
+    },
+    "result": {
+      "title": "Kết quả",
+      "placeholder": "Nhấn \"Chạy\" để xem sơ đồ."
+    }
   }
 }
