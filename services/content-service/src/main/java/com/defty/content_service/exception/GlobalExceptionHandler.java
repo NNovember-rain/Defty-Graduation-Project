@@ -1,6 +1,7 @@
 package com.defty.content_service.exception;
 
 import com.defty.content_service.dto.response.ApiResponse;
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -66,5 +67,25 @@ public class GlobalExceptionHandler {
         apiResponse.setMessage(errorCode.getMessage());
 
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+    @ExceptionHandler(value = FeignException.class)
+    ResponseEntity<ApiResponse> handlingFeignException(FeignException exception) {
+        log.error("FeignException: ", exception);
+
+        ApiResponse apiResponse = new ApiResponse();
+
+        int status = exception.status();
+        String message = exception.getMessage();
+
+        ErrorCode errorCode = ErrorCode.USER_NOT_EXISTED;
+
+        if (status == 401) {
+            errorCode = ErrorCode.UNAUTHORIZED;
+        }
+
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessage(errorCode.getMessage());
+
+        return ResponseEntity.status(status).body(apiResponse);
     }
 }

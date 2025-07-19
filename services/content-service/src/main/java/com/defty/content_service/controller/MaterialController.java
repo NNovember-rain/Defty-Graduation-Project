@@ -58,7 +58,7 @@ public class MaterialController {
     }
 
     @PostMapping("/unassign")
-    ApiResponse<?> unassignMaterialToClasses(@RequestBody MaterialRequest request) {
+    ApiResponse<MaterialResponse> unassignMaterialToClasses(@RequestBody MaterialRequest request) {
         MaterialResponse response = materialService.unassignMaterialFromClasses(request);
         return ApiResponse.<MaterialResponse>builder()
                 .result(response)
