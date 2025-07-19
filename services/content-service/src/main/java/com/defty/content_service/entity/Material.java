@@ -22,7 +22,6 @@ public class Material extends BaseEntity{
     String url; // URL to access the material
     Long size;
     String format; // e.g., "mp4", "mp3", "pdf"
-    Long classId;
     Integer status;
     Long userId;
 

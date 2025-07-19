@@ -43,8 +43,6 @@ public class MaterialServiceImpl implements MaterialService {
             identityServiceClient.getUser(request.getUserId());
         } catch (FeignException.NotFound ex) {
             throw new IllegalArgumentException("User not found with id: " + request.getUserId());
-        } catch (Exception ex) {
-            throw new NotFoundException("User Service is not available.");
         }
 
         String url = uploadFile.upload(request.getFile());
@@ -56,7 +54,6 @@ public class MaterialServiceImpl implements MaterialService {
                 .url(url)
                 .size(request.getFile().getSize())
                 .format(getFileExtension(request.getFile().getOriginalFilename()))
-                .classId(request.getClassId())
                 .userId(request.getUserId())
                 .status(1)
                 .build();
@@ -75,6 +72,7 @@ public class MaterialServiceImpl implements MaterialService {
 
     @Override
     public MaterialResponse assignMaterialToClasses(MaterialRequest request) {
+        //TODO: Chua check classID
         Long materialId = request.getMaterialId();
 
         Material material = materialRepository.findById(materialId)
@@ -107,8 +105,8 @@ public class MaterialServiceImpl implements MaterialService {
 
     @Override
     public MaterialResponse unassignMaterialFromClasses(MaterialRequest request) {
+        //TODO: Chua check classID
         Long materialId = request.getMaterialId();
-
         List<MaterialClass> materialClasses = materialClassRepository.findByMaterialId(materialId);
 
         for (Long classId : request.getClassIds()) {
@@ -129,8 +127,6 @@ public class MaterialServiceImpl implements MaterialService {
                 .build();
     }
 
-
-
     private String getFileExtension(String fileName) {
         if (fileName == null) return null;
         int index = fileName.lastIndexOf('.');
@@ -145,6 +141,12 @@ public class MaterialServiceImpl implements MaterialService {
     }
 
     private MaterialUploadResponse toMaterialUploadResponse(Material material) {
+        //TODO: Chua check classID
+        List<Long> classIds = materialClassRepository.findByMaterialId(material.getId())
+                .stream()
+                .map(MaterialClass::getClassId)
+                .distinct()
+                .toList();
         return MaterialUploadResponse.builder()
                 .title(material.getTitle())
                 .description(material.getDescription())
@@ -152,7 +154,7 @@ public class MaterialServiceImpl implements MaterialService {
                 .format(material.getFormat())
                 .url(material.getUrl())
                 .readableSize(readableFileSize(material.getSize()))
-                .classId(material.getClassId())
+                .classId(classIds)
                 .userId(material.getUserId())
                 .build();
     }

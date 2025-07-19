@@ -3,6 +3,8 @@ package com.defty.content_service.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,7 +15,7 @@ public class MaterialUploadResponse {
     String title;
     String description;
     String type;      // "image", "document", "video",...
-    Long classId;
+    List<Long> classId;
     Long userId;
     String url;
     String format;
