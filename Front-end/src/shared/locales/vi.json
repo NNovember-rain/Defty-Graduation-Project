@@ -119,7 +119,13 @@
     "loadingData": "Đang tải dữ liệu...",
     "errorFetchingData": "Tải dữ liệu thất bại. Vui lòng thử lại.",
     "errorNoIdToDelete": "Lỗi: Không có ID được cung cấp để xóa.",
-    "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại."
+    "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại.",
+    "errorUpdatingData": "Cập nhật dữ liệu thất bại. Vui lòng thử lại.",
+    "active": "đã kích hoạt",
+    "inactive": "đã vô hiệu hóa",
+    "confirm": "Xác nhận",
+    "delete": "Xóa",
+    "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác."
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -234,13 +240,16 @@
       "description": "Mô tả",
       "templateString": "Mẫu",
       "type": "Loại",
+      "isActive": "Trạng thái hoạt động",
       "version": "Phiên bản",
       "createdAt": "Ngày tạo",
       "updatedAt": "Cập nhật lần cuối"
     },
     "searchFields": {
       "nameLabel": "Tên Prompt",
-      "namePlaceholder": "Nhập tên prompt"
+      "namePlaceholder": "Nhập tên prompt",
+      "typePlaceholder": "Chọn loại sơ đồ",
+      "typeAll": "Tất cả"
     },
     "sortFields": {
       "sortOrderLabel": "Thứ tự Sắp xếp",
@@ -257,7 +266,17 @@
     "editTooltip": "Chỉnh sửa prompt",
     "deleteTooltip": "Xóa prompt",
     "confirmDelete": "Bạn có chắc chắn muốn xóa prompt:",
-    "deleteSuccess": "Xóa prompt thành công!"
+    "deleteSuccess": "Xóa prompt thành công!",
+    "activateTooltip": "Kích hoạt prompt",
+    "deactivateTooltip": "Vô hiệu hóa prompt",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmActivate": "Bạn có chắc chắn muốn kích hoạt prompt {{name}}? Điều này sẽ vô hiệu hóa các prompt khác cùng loại.",
+    "confirmDeactivate": "Bạn có chắc chắn muốn vô hiệu hóa prompt {{name}}?",
+    "toggleSuccess": "Đã cập nhật trạng thái thành {{status}}.",
+    "umlTypes": {
+      "useCase": "Use case",
+      "class": "Biểu đồ lớp"
+    }
   },
   "promptForm": {
     "title": "Prompt",

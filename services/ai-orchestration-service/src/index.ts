@@ -3,12 +3,12 @@ dotenv.config();
 import app from './app';
 import connectDB from './config/db';
 import runKafkaConsumer from './kafka/consumer';
-import {initModels, runPromptMigration} from "./models/initModels";
+// import {initModels} from "./models/initModels";
 
 (async () => {
     try {
         await connectDB();
-        await initModels();
+        // await initModels();
         await runKafkaConsumer();
 
         const PORT = process.env.PORT || 3000;

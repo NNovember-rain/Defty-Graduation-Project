@@ -363,6 +363,11 @@ $delete-color: #fd1b31;
       }
     }
 
+    &__actions-container {
+      display: flex;
+      align-items: center;
+    }
+
     &__action-button {
       background-color: #fff;
       border: none;

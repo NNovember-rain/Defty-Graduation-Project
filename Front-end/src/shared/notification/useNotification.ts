@@ -1,5 +1,6 @@
 import React from "react";
 import { App } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 export interface NotificationOptions {
     duration?: number;
@@ -24,6 +25,7 @@ export interface ModalConfirmOptions {
 
 export const useNotification = () => {
     const { message, notification, modal } = App.useApp();
+    const { t } = useTranslation();
 
     // Message functions với type safety
     const showSuccess = (content: string, duration: number = 3): void => {
@@ -42,8 +44,8 @@ export const useNotification = () => {
         message.info(content, duration);
     };
 
-    const showLoading = (content: string = 'Đang tải...') => {
-        return message.loading(content, 0);
+    const showLoading = (content: string = t('common.loadingData')): void => {
+        message.loading(content, 0);
     };
 
     // Notification functions
@@ -68,8 +70,8 @@ export const useNotification = () => {
             content: options.content,
             onOk: options.onOk,
             onCancel: options.onCancel,
-            okText: options.okText || 'Xác nhận',
-            cancelText: options.cancelText || 'Hủy',
+            okText: options.okText || t('common.confirm'),
+            cancelText: options.cancelText || t('common.cancel'),
             okType: options.okType || 'primary',
         });
     };
@@ -81,17 +83,17 @@ export const useNotification = () => {
     ): void => {
         modal.confirm({
             title,
-            content: content || 'Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.',
-            okText: 'Xóa',
+            content: content || t('common.confirmDeleteContent'),
+            okText: t('common.delete'),
             okType: 'danger',
-            cancelText: 'Hủy',
+            cancelText: t('common.cancel'),
             onOk,
         });
     };
 
     // Advanced message functions
     const showApiError = (error: any): void => {
-        const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra';
+        const errorMsg = error?.response?.data?.message || error?.message || t('common.error');
         message.error(errorMsg);
     };
 

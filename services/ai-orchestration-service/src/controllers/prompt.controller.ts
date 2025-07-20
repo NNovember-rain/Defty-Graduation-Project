@@ -29,7 +29,7 @@ export const createPromptController = async (req: Request, res: Response, next: 
 export const getPromptByIdController = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
-        const prompt = await promptService.getPromptByIdSafe(id); // Sử dụng hàm safe để validate ID
+        const prompt = await promptService.getPromptByIdSafe(id); // Use safe function to validate ID
         res.status(200).json({
             success: true,
             message: 'Prompt retrieved successfully',
@@ -41,7 +41,7 @@ export const getPromptByIdController = async (req: Request, res: Response, next:
 };
 
 /**
- * @desc Get all prompts with pagination and optional name filter
+ * @desc Get all prompts with pagination and optional filters
  * @route GET /api/v1/prompts
  * @access Private
  */
@@ -50,10 +50,12 @@ export const getPromptsController = async (req: Request, res: Response, next: Ne
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const name = req.query.name as string;
-        const sortBy = req.query.sortBy as string; // Get sortBy from query
-        const sortOrder = req.query.sortOrder as 'asc' | 'desc'; // Get sortOrder from query
+        const umlType = req.query.umlType as 'use-case' | 'class'; // Get umlType from query
+        const isActive = req.query.isActive ? req.query.isActive === 'true' : undefined; // Get isActive from query
+        const sortBy = req.query.sortBy as string;
+        const sortOrder = req.query.sortOrder as 'asc' | 'desc';
 
-        const result = await promptService.getPrompts({ page, limit, name, sortBy, sortOrder });
+        const result = await promptService.getPrompts({ page, limit, name, umlType, isActive, sortBy, sortOrder });
         res.status(200).json({
             success: true,
             message: 'Prompts retrieved successfully',
@@ -90,7 +92,7 @@ export const updatePromptController = async (req: Request, res: Response, next: 
 };
 
 /**
- * @desc Delete a prompt by ID
+ * @desc Delete a prompt by ID (soft delete)
  * @route DELETE /api/v1/prompts/:id
  * @access Private
  */
@@ -127,6 +129,34 @@ export const bulkDeletePromptsController = async (req: Request, res: Response, n
             success: true,
             message: `Successfully deleted ${ids.length} prompts.`,
             data: null
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc Toggle the active status of a prompt
+ * @route PATCH /api/v1/prompts/:id/toggle-active
+ * @access Private
+ */
+export const togglePromptActiveStatusController = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const { isActive } = req.body;
+
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: 'isActive field must be a boolean.'
+            });
+        }
+
+        const updatedPrompt = await promptService.togglePromptActiveStatus(id, isActive);
+        res.status(200).json({
+            success: true,
+            message: `Prompt status updated to ${isActive}.`,
+            data: updatedPrompt
         });
     } catch (error) {
         next(error);
