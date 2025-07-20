@@ -1,6 +1,7 @@
 package com.submission_service.controller;
 
 import com.submission_service.model.dto.request.SubmissionRequest;
+import com.submission_service.model.dto.response.ApiResponse;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.service.SubmissionService;
 import lombok.AccessLevel;
@@ -22,8 +23,10 @@ public class SubmissionController {
     SubmissionService submissionService;
 
     @PostMapping()
-    ResponseEntity<?> validatePlantUML(@RequestBody SubmissionRequest submissionRequest) {
-        SubmissionResponse message=submissionService.handleSubmission(submissionRequest);
-        return new ResponseEntity<>(message, HttpStatus.OK);
+    ApiResponse<Long> addSubmissionPlantUML(@RequestBody SubmissionRequest submissionRequest) {
+        Long response=submissionService.handleSubmission(submissionRequest);
+        return ApiResponse.<Long>builder()
+                .result(response)
+                .build();
     }
 }

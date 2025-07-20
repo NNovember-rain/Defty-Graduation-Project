@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class SubmissionRequest {
     private Integer studentId;
     private Integer assignmentId;
-    private String plantUmlCode;
+    private String studentPlantUmlCode;
+    private String solutionUmlCode;
 //    private MultipartFile plantUmlFile;
 }

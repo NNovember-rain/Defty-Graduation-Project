@@ -1,42 +1,50 @@
 package com.submission_service.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.BeanUtil;
 import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.SubmissionResponse;
+import com.submission_service.model.entity.Submission;
+import com.submission_service.repository.ISubmissionRepository;
 import com.submission_service.service.SubmissionService;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.kafka.core.KafkaTemplate;
 
 @Getter
 @Setter
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Service
 public class SubmissionServiceImpl implements SubmissionService {
-    private final RestTemplate restTemplate;
+    RestTemplate restTemplate;
+    ISubmissionRepository submissionRepository;
+    ObjectMapper objectMapper;
 
-    private final String PLANTUML_SERVER_URL = "http://localhost:8091/svg";
+    @NonFinal
+    @Value("${PLANTUML_SERVER_URL}")
+    String PLANTUML_SERVER_URL;
+
+    KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
-    public SubmissionResponse handleSubmission(SubmissionRequest submissionRequest) {
+    public Long handleSubmission(SubmissionRequest submissionRequest) {
         // Kiểm tra dữ liệu đầu vào
-        if (submissionRequest == null || submissionRequest.getPlantUmlCode() == null || submissionRequest.getPlantUmlCode().isBlank()) {
-            return SubmissionResponse.builder()
-                    .status("ERROR")
-                    .message("PlantUML code cannot be null or empty")
-                    .build();
+        if (submissionRequest == null || submissionRequest.getStudentPlantUmlCode() == null || submissionRequest.getStudentPlantUmlCode().isBlank()) {
+            throw new RestClientException("Please provide a student plant UML code");
         }
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.TEXT_PLAIN);
-            HttpEntity<String> request = new HttpEntity<>(submissionRequest.getPlantUmlCode(), headers);
+            HttpEntity<String> request = new HttpEntity<>(submissionRequest.getStudentPlantUmlCode(), headers);
             // Sử dụng exchange để xử lý mọi mã trạng thái
             ResponseEntity<String> response = restTemplate.exchange(
                     PLANTUML_SERVER_URL,
@@ -46,29 +54,19 @@ public class SubmissionServiceImpl implements SubmissionService {
             );
 
             // In body để debug
-            System.out.println("PlantUML Server Response (Status: " + response.getStatusCode() + "): " + response.getBody());
+//            System.out.println("PlantUML Server Response (Status: " + response.getStatusCode() + "): " + response.getBody());
+//            if (response.getStatusCode().is2xxSuccessful()) {
+//            }
+            String message = objectMapper.writeValueAsString(submissionRequest);
+            kafkaTemplate.send("submission.sendSubmission", message);
+            Submission submission=new Submission();
+            BeanUtils.copyProperties(submissionRequest, submission);
+            return submissionRepository.save(submission).getId();
 
-            // Xử lý mã trạng thái
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return SubmissionResponse.builder()
-                        .status("OK")
-                        .message("PlantUML code is valid")
-                        .build();
-            } else if (response.getStatusCode().value() == 400) {
-                // Lỗi cú pháp, throw ngoại lệ tùy chỉnh
-                throw new RuntimeException("Syntax Error in PlantUML code: " + response.getBody());
-            } else {
-                return SubmissionResponse.builder()
-                        .status("ERROR")
-                        .message("Unexpected response from PlantUML server: " + response.getStatusCode())
-                        .build();
-            }
-
+        }catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to convert SubmissionRequest to Json");
         } catch (RestClientException e) {
-            return SubmissionResponse.builder()
-                    .status("ERROR")
-                    .message("Failed to connect to PlantUML server: " + e.getMessage())
-                    .build();
+            throw new RestClientException("Syntax Error in PlantUML code");
         }
     }
 }
