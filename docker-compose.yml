@@ -76,8 +76,33 @@ services:
     networks:
       - app-network
 
+  plantuml-server:
+    image: plantuml/plantuml-server
+    container_name: plantuml_server
+    ports:
+      - "8091:8080"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: defty_user
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: defty_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
 volumes:
   mongodb_data:
+  postgres_data:
 
 networks:
   app-network:
