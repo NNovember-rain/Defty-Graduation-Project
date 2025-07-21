@@ -9,4 +9,5 @@ public interface AssignmentService {
     Page<AssignmentResponse> getAllAssignments(Long classId, Long typeUmlId, String title, Pageable pageable);
     AssignmentResponse assignAssignment(AssignmentRequest request);
     AssignmentResponse unassignAssignment(AssignmentRequest request);
+    AssignmentResponse getAssignment(Long assignmentId);
 }

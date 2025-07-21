@@ -52,7 +52,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                     .title(assignment.getTitle())
                     .description(assignment.getDescription())
                     .userId(assignment.getUserId())
-                    .typeUmlId(assignment.getTypeUML().getId())
+                    .typeUmlName(assignment.getTypeUML().getName())
                     .classIds(classIds)
                     .build();
         });
@@ -92,7 +92,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .title(assignment.getTitle())
                 .description(assignment.getDescription())
                 .userId(assignment.getUserId())
-                .typeUmlId(assignment.getTypeUML().getId())
+                .typeUmlName(assignment.getTypeUML().getName())
                 .classIds(request.getClassIds())
                 .build();
     }
@@ -120,9 +120,26 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .title(assignment.getTitle())
                 .description(assignment.getDescription())
                 .userId(assignment.getUserId())
-                .typeUmlId(assignment.getTypeUML().getId())
+                .typeUmlName(assignment.getTypeUML().getName())
                 .classIds(request.getClassIds())
                 .build();
     }
 
+    @Override
+    public AssignmentResponse getAssignment(Long assignmentId) {
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+            .orElseThrow(() -> new NotFoundException("Assignment not found"));
+        List<Long> classIds = assignmentClassRepository.findByAssignmentId(assignment.getId())
+                .stream()
+                .map(AssignmentClass::getClassId)
+                .toList();
+        return AssignmentResponse.builder()
+                .id(assignment.getId())
+                .title(assignment.getTitle())
+                .description(assignment.getDescription())
+                .userId(assignment.getUserId())
+                .typeUmlName(assignment.getTypeUML().getName())
+                .classIds(classIds)
+                .build();
+    }
 }
