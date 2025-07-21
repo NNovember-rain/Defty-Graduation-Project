@@ -1,20 +1,24 @@
 package com.submission_service.model.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
-public class Submission {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-    private Integer studentId;
-    private Integer assignmentId;
-    private String plantUMLCode;
-    private String submissionFile;
-    private String status;
-    private LocalDateTime createdAt;
+@Getter
+@Setter
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Submission extends BaseEntity {
+
+    Integer studentId;
+    Integer assignmentId;
+    String studentPlantUMLCode;
+//    String submissionFile;
+    Integer status;
+
 }

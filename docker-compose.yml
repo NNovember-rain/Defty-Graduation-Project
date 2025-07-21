@@ -76,8 +76,45 @@ services:
     networks:
       - app-network
 
+  plantuml-server:
+    image: plantuml/plantuml-server
+    container_name: plantuml_server
+    ports:
+      - "8091:8080"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: defty_user
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: defty_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    ports:
+      - "3308:3306"
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes:
+      - mysql-data:/var/lib/mysql
+
 volumes:
   mongodb_data:
+  postgres_data:
+  mysql-data:
 
 networks:
   app-network:

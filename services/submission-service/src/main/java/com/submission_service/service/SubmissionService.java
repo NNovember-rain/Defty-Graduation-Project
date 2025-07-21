@@ -4,5 +4,5 @@ import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.SubmissionResponse;
 
 public interface SubmissionService {
-    SubmissionResponse handleSubmission(SubmissionRequest submissionRequest);
+    Long handleSubmission(SubmissionRequest submissionRequest);
 }
