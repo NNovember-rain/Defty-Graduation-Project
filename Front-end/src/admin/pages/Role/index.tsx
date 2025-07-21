@@ -40,9 +40,9 @@ const Role: React.FC = () => {
     }, []);
 
     const dataTableColumns = useMemo(() => [
-        { key: 'name', label: t('rolePage.columns.name'), sortable: true },
-        { key: 'description', label: t('rolePage.columns.description'), sortable: true },
-        { key: 'creationDate', label: t('rolePage.columns.creationDate'), sortable: true },
+        { key: 'name', label: t('rolePage.columns.name'), sortable: true},
+        { key: 'description', label: t('rolePage.columns.description'), sortable: true},
+        { key: 'creationDate', label: t('rolePage.columns.creationDate'), sortable: true},
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
@@ -137,8 +137,17 @@ const Role: React.FC = () => {
     const handleDelete = useCallback((r: RoleData) => window.confirm(`${t('rolePage.confirmDelete')} ${r.id}`) && alert(`${t('rolePage.delete')} ${r.id}`), [t]);
 
     const actions = useMemo<ActionButton[]>(() => [
-        { icon: <FaEdit />, onClick: handleEdit, tooltip: t('rolePage.editTooltip'), color: 'blue' },
-        { icon: <FaTrash />, onClick: handleDelete, tooltip: t('rolePage.deleteTooltip'), color: 'red' },
+        {
+            icon: <FaEdit />,
+            onClick: handleEdit,
+            tooltip: t('rolePage.editTooltip'),
+            color: 'blue' },
+        {
+            icon: <FaTrash />,
+            onClick: handleDelete,
+            tooltip: t('rolePage.deleteTooltip'),
+            color: 'red'
+        },
     ], [handleEdit, handleDelete, t]);
 
     const paginatedData = useMemo(() => {
@@ -157,9 +166,9 @@ const Role: React.FC = () => {
         <ManagementTemplate
             pageTitle={t('rolePage.title')}
             breadcrumbItems={[
-                {label: t('userPage.breadcrumb.home'), path: '/'},
-                {label: t('userPage.breadcrumb.adminDashboard'), path: '/admin'},
-                {label: t('rolePage.breadcrumb')},
+                { label: t('userPage.breadcrumb.home'), path: '/' },
+                { label: t('userPage.breadcrumb.adminDashboard'), path: '/admin' },
+                { label: t('rolePage.breadcrumb') },
             ]}
             searchFields={searchFields}
             sortFields={sortFields}
@@ -177,9 +186,7 @@ const Role: React.FC = () => {
             onCreateNew={handleCreateNew}
             onEntriesPerPageChange={handleEntriesPerPageChange}
             actions={actions}
-            initialFilters={currentFilters}
-            initialSortBy={currentSortColumn}
-            initialSortOrder={currentSortOrder} />
+        />
     );
 };
 

@@ -8,15 +8,29 @@ spring:
     name: submission-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/submission-service?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3308/submission-service?createDatabaseIfNotExist=true
     username: root
-    password: 1234
+    password: 123456
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: submission-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+
+PLANTUML_SERVER_URL: http://localhost:8091/svg
