@@ -30,6 +30,19 @@ spring:
           filters:
             - StripPrefix=2
 
+#        - id: submission-service
+#          uri: http://localhost:8086
+#          predicates:
+#            - Path=${app.api-prefix}/submission/**
+#          filters:
+#            - StripPrefix=2
+
+#        - id: ai-feedback-service
+#          uri: http://localhost:8087
+#          predicates:
+#            - Path=${app.api-prefix}/ai-feedback/**
+#          filters:
+#            - StripPrefix=2
 eureka:
 #  instance:
 #    prefer-ip-address: true

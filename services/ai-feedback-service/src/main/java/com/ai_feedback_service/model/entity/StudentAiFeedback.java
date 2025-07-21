@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class StudentAiFeedback {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private Integer rating;
     private String comment;
     private LocalDateTime createdAt;

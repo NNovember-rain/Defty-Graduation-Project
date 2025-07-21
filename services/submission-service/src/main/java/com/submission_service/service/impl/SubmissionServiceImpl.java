@@ -6,12 +6,13 @@ import com.fasterxml.jackson.databind.util.BeanUtil;
 import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.model.entity.Submission;
+import com.submission_service.model.event.AssignmentEvent;
+import com.submission_service.model.event.SubmissionEvent;
 import com.submission_service.repository.ISubmissionRepository;
 import com.submission_service.service.SubmissionService;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -53,15 +54,31 @@ public class SubmissionServiceImpl implements SubmissionService {
                     String.class
             );
 
-            // In body để debug
-//            System.out.println("PlantUML Server Response (Status: " + response.getStatusCode() + "): " + response.getBody());
-//            if (response.getStatusCode().is2xxSuccessful()) {
-//            }
-            String message = objectMapper.writeValueAsString(submissionRequest);
-            kafkaTemplate.send("submission.sendSubmission", message);
             Submission submission=new Submission();
-            BeanUtils.copyProperties(submissionRequest, submission);
-            return submissionRepository.save(submission).getId();
+            submission.setAssignmentId(submissionRequest.getAssignmentId());
+            submission.setStudentPlantUMLCode(submissionRequest.getStudentPlantUmlCode());
+            submission.setStudentId(submissionRequest.getStudentId());
+            Long id=submissionRepository.save(submission).getId();
+
+            // Tạm fake data
+            AssignmentEvent assignmentEvent = new AssignmentEvent(
+                    1L,
+                    "UseCase",
+                    "Quản lý đặt món ăn",
+                    "@startuml\n(Đặt món) --> (Thanh toán)\n@enduml",
+                    "Sinh viên cần thiết kế sơ đồ Use Case cho chức năng đặt món"
+            );
+            SubmissionEvent submissionEvent= SubmissionEvent.builder()
+                    .id(id)
+                    .contentAssignment(assignmentEvent.getDescription())
+                    .solutionPlantUmlCode(assignmentEvent.getSolutionCode())
+                    .typeUmlName(assignmentEvent.getTypeUmlName())
+                    .studentPlantUmlCode(submissionRequest.getStudentPlantUmlCode())
+                    .build();
+
+            String message = objectMapper.writeValueAsString(submissionEvent);
+            kafkaTemplate.send("submission.sendSubmission", message);
+            return id;
 
         }catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to convert SubmissionRequest to Json");
