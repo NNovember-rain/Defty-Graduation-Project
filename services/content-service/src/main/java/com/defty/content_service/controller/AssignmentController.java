@@ -52,4 +52,11 @@ public class AssignmentController {
                 .build();
     }
 
+    @GetMapping("/{assignmentId}")
+     ApiResponse<AssignmentResponse> getAssignment(@PathVariable Long assignmentId) {
+        AssignmentResponse response = assignmentService.getAssignment(assignmentId);
+        return ApiResponse.<AssignmentResponse>builder()
+                .result(response)
+                .build();
+    }
 }

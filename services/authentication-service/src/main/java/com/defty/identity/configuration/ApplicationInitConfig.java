@@ -27,7 +27,7 @@ public class ApplicationInitConfig {
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository){
         return args -> {
-            if (userRepository.findByUsername("admin").isEmpty()){
+            if (userRepository.findByUsername("admin1").isEmpty()){
                 Set<Role> roles = new HashSet<>();
                 if (!roleRepository.existsRoleByName("ADMIN")) {
                     Role role = new Role();
@@ -42,6 +42,7 @@ public class ApplicationInitConfig {
                 }
                 User user = User.builder()
                         .username("admin")
+                        .email("admin@gmail.com")
                         .password(passwordEncoder.encode("Defty@12345"))
                         .roles(roles)
                         .build();
