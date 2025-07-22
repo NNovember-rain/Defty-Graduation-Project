@@ -10,4 +10,7 @@ import java.util.List;
 public interface RoleService {
     RoleResponse createRole(RoleRequest roleRequest);
     Page<RoleResponse> findAllRoles(String name, Pageable pageable);
+    RoleResponse updateRole(Long id, RoleRequest roleRequest);
+    RoleResponse getRoleById(Long id);
+    void deleteRole(Long id);
 }

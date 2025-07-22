@@ -7,15 +7,18 @@ import com.defty.identity.mapper.RoleMapper;
 import com.defty.identity.repository.PermissionRepository;
 import com.defty.identity.repository.RoleRepository;
 import com.defty.identity.service.RoleService;
+import com.defty.identity.specification.RoleSpecification;
+import com.example.common_library.exceptions.AlreadyExitException;
+import com.example.common_library.exceptions.NotFoundException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -36,15 +39,47 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Page<RoleResponse> findAllRoles(String name, Pageable pageable) {
-        Page<Role> rolesPage;
+        Specification<Role> spec = Specification.where(RoleSpecification.notDeleted());
 
-        if (name == null || name.trim().isEmpty()) {
-            rolesPage = roleRepository.findAll(pageable);
-        } else {
-            rolesPage = roleRepository.findByNameContainingIgnoreCase(name.trim(), pageable);
+        if (name != null && !name.trim().isEmpty()) {
+            spec = spec.and(RoleSpecification.nameContains(name.trim()));
         }
 
+        Page<Role> rolesPage = roleRepository.findAll(spec, pageable);
         return rolesPage.map(roleMapper::toRoleResponse);
     }
 
+    @Override
+    public RoleResponse updateRole(Long id, RoleRequest request) {
+        Role role = roleRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Role not found"));
+
+        if (roleRepository.existsByNameAndIdNotAndDeletedFalse(request.getName(), id)) {
+            throw new AlreadyExitException("Role with name '" + request.getName() + "' already exists");
+        }
+
+        if (request.getPermissions() != null) {
+            var permissions = permissionRepository.findAllById(request.getPermissions());
+            role.setPermissions(new HashSet<>(permissions));
+        }
+
+        role.setName(request.getName());
+        role.setDescription(request.getDescription());
+        return roleMapper.toRoleResponse(roleRepository.save(role));
+    }
+
+    @Override
+    public RoleResponse getRoleById(Long id) {
+        Role role = roleRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Role not found"));
+        return roleMapper.toRoleResponse(role);
+    }
+
+    @Override
+    public void deleteRole(Long id) {
+        Role role = roleRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Role not found"));
+        role.setDeleted(true);
+        roleRepository.save(role);
+    }
 }
