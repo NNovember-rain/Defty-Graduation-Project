@@ -16,8 +16,10 @@
         <option value="$PROJECT_DIR$/services/submission-service/pom.xml" />
         <option value="$PROJECT_DIR$/class-management-service/pom.xml" />
         <option value="$PROJECT_DIR$/content-service/pom.xml" />
+        <option value="$PROJECT_DIR$/services/class-management-service/pom.xml" />
       </list>
     </option>
+    <option name="workspaceImportForciblyTurnedOn" value="true" />
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
