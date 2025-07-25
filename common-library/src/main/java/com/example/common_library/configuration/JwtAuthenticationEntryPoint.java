@@ -1,8 +1,7 @@
-package com.defty.content_service.configuration;
+package com.example.common_library.configuration;
 
-
-import com.defty.content_service.dto.response.ApiResponse;
-import com.defty.content_service.exception.ErrorCode;
+import com.example.common_library.exceptions.ErrorCode;
+import com.example.common_library.response.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
