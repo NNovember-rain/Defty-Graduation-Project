@@ -10,12 +10,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "classes")
+@Table(name = "class")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Class {
-
+public class ClassEntity extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,17 +28,9 @@ public class Class {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "invite_code", nullable = false, unique = true, length = 50)
+    @Column(name = "invite_code")
     private String inviteCode;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ClassEnrollment> enrollments = new HashSet<>();
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    private Set<ClassEnrollmentEntity> enrollments = new HashSet<>();
 }
