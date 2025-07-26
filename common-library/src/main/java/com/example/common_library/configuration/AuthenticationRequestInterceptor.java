@@ -1,4 +1,4 @@
-package com.defty.content_service.configuration;
+package com.example.common_library.configuration;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;

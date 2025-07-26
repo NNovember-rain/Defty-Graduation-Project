@@ -10,15 +10,20 @@ import com.defty.identity.mapper.UserMapper;
 import com.defty.identity.repository.RoleRepository;
 import com.defty.identity.repository.UserRepository;
 import com.defty.identity.service.UserService;
+import com.defty.identity.specification.UserSpecification;
+import com.example.common_library.exceptions.AlreadyExitException;
+import com.example.common_library.exceptions.NotFoundException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -45,15 +50,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (userRepository.existsByUsernameAndIdNot(request.getUsername(), userId)) {
+            throw new AlreadyExitException("Username '" + request.getUsername() + "' already exists");
+        }
+
+        if (userRepository.existsByEmailAndIdNot(request.getEmail(), userId)) {
+            throw new AlreadyExitException("Email '" + request.getEmail() + "' already exists");
+        }
 
         userMapper.updateUser(user, request);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        var roles = roleRepository.findAllById(request.getRoles());
-        user.setRoles(new HashSet<>(roles));
+
+        if (request.getRoles() != null) {
+            var roles = roleRepository.findAllById(request.getRoles());
+            user.setRoles(new HashSet<>(roles));
+        }
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
+
 
     @Override
     public void deleteUser(Long userId){
@@ -61,9 +77,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserResponse> getUsers(){
-        return userRepository.findAll().stream()
-                .map(userMapper::toUserResponse).toList();
+    public Page<UserResponse> getUsers(String username, String email, Pageable pageable) {
+        Specification<User> spec = UserSpecification.build(username, email);
+        return userRepository.findAll(spec, pageable)
+                .map(userMapper::toUserResponse);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.defty.identity.exception;
+package com.example.common_library.exceptions;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

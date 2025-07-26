@@ -1,48 +1,54 @@
 import handleRequest from "./handleRequest.ts";
 import {getWithParams} from "./getWithParams.ts";
+import type {IRole} from "./roleService.ts";
 
-const PREFIX_ROLES = import.meta.env.VITE_PREFIX_ROLES as string;
+const PREFIX_USER = import.meta.env.VITE_PREFIX_USER as string;
 const PREFIX_IDENTITY: string = import.meta.env.VITE_PREFIX_IDENTITY as string;
 
-export interface GetRolesOptions {
+export interface GetUsersOptions {
     page?: number;
     limit?: number;
-    name?: string;
+    username?: string;
+    email?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
 }
 
-export interface GetRolesResult {
-    roles: IRole[];
+export interface GetUsersResult {
+    users: IUser[];
     total: number;
     page: number;
     limit: number;
 }
 
-export interface IRole {
+export interface IUser {
     id: number;
-    name: string;
-    description: string;
-    createdDate: string;
+    username: string;
+    firstName: string | null;
+    lastName: string | null;
+    dob: string | null;
+    email: string;
+    roles: IRole[];
 }
 
-export const getRoles = async (options: GetRolesOptions = {}): Promise<GetRolesResult> => {
+export const getUsers = async (options: GetUsersOptions = {}): Promise<GetUsersResult> => {
     const params = {
         page: (options.page || 1) - 1,
         limit: options.limit,
-        name: options.name,
+        username: options.username,
+        email: options.email,
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
     };
 
     // Sử dụng getWithParams để xây dựng URL và gửi request
-    const response = await handleRequest(getWithParams(`${PREFIX_IDENTITY}/${PREFIX_ROLES}`, params));
+    const response = await handleRequest(getWithParams(`${PREFIX_IDENTITY}/${PREFIX_USER}`, params));
     const data = await response.json();
     return {
-        roles: data.result.content,
+        users: data.result.content,
         total: data.result.totalElements,
         // page: data.result.number - 1,
         limit: data.result.size
-    } as GetRolesResult;
+    } as GetUsersResult;
 };
 

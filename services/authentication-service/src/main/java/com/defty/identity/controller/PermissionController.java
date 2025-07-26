@@ -1,6 +1,5 @@
 package com.defty.identity.controller;
 
-
 import com.defty.identity.dto.request.PermissionRequest;
 import com.defty.identity.dto.response.ApiResponse;
 import com.defty.identity.dto.response.PermissionResponse;
@@ -9,10 +8,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -22,21 +23,48 @@ import java.util.List;
 public class PermissionController {
     PermissionService permissionService;
 
-//    @PreAuthorize("hasAuthority('CREATE_PERMISSION')")
+    @PreAuthorize("hasRole('admin')")
     @GetMapping
-    ApiResponse<List<PermissionResponse>> getAllPermissions() {
-        List<PermissionResponse> permissions = permissionService.getPermissions();
-        return ApiResponse.<List<PermissionResponse>>builder()
+    public ApiResponse<Page<PermissionResponse>> getPermissions(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "name", required = false) String name
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<PermissionResponse> permissions = permissionService.getPermissions(name, pageable);
+        return ApiResponse.<Page<PermissionResponse>>builder()
                 .result(permissions)
                 .build();
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/{id}")
+    public ApiResponse<PermissionResponse> getPermissionById(@PathVariable Long id) {
+        PermissionResponse response = permissionService.getPermissionById(id);
+        return ApiResponse.<PermissionResponse>builder().result(response).build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
     @PostMapping
     ApiResponse<PermissionResponse> createPermission(@RequestBody PermissionRequest permissionRequest) {
         PermissionResponse createdPermission = permissionService.createPermission(permissionRequest);
         return ApiResponse.<PermissionResponse>builder()
                 .result(createdPermission)
                 .build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @PutMapping("/{id}")
+    public ApiResponse<PermissionResponse> updatePermission(@PathVariable Long id,
+                                                            @RequestBody PermissionRequest request) {
+        PermissionResponse response = permissionService.updatePermission(id, request);
+        return ApiResponse.<PermissionResponse>builder().result(response).build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deletePermission(@PathVariable Long id) {
+        permissionService.deletePermission(id);
+        return ApiResponse.<Void>builder().build();
     }
 }
