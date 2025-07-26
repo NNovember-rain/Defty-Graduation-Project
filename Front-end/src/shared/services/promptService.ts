@@ -1,5 +1,5 @@
-import {get, postJsonData, patchJsonData, del, bulkDelete} from "./request"; // Giả định patch và remove là tên đúng
-import { getWithParams } from "./getWithParams"; // Import common function
+import {get, postJsonData, patchJsonData, del, bulkDelete} from "./request";
+import { getWithParams } from "./getWithParams";
 import handleRequest from "./handleRequest";
 
 const PREFIX_AI_ORCHESTRATION: string = import.meta.env.VITE_PREFIX_AI_ORCHESTRATION as string;
@@ -10,17 +10,19 @@ export interface IPrompt {
     name: string;
     description?: string;
     templateString: string;
-    type: 'system' | 'user' | 'template';
+    umlType?: 'use-case' | 'class';
     version: string;
     createdBy?: number;
     createdAt?: string;
     updatedAt?: string;
+    isActive: boolean;
 }
 
 export interface GetPromptsOptions {
     page?: number;
     limit?: number;
     name?: string;
+    umlType?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
 }
@@ -42,11 +44,11 @@ export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPr
         page: options.page,
         limit: options.limit,
         name: options.name,
+        umlType: options.umlType,
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
     };
 
-    // Sử dụng getWithParams để xây dựng URL và gửi request
     const response = await handleRequest(getWithParams(`${PREFIX_AI_ORCHESTRATION}/${PREFIX_PROMPT}`, params));
     const data = await response.json();
     return {
@@ -77,4 +79,12 @@ export const deletePrompt = async (id: string): Promise<IPrompt> => {
 
 export const deletePromptsByIds = async (ids: string[]): Promise<void> => {
     await handleRequest(bulkDelete(`${PREFIX_AI_ORCHESTRATION}/${PREFIX_PROMPT}/bulk`, ids));
+};
+
+export const togglePromptActiveStatus = async (id: string, isActive: boolean): Promise<IPrompt> => {
+    const response = await handleRequest(
+        patchJsonData(`${PREFIX_AI_ORCHESTRATION}/${PREFIX_PROMPT}/${id}/toggle-active`, { isActive })
+    );
+    const updatedData = await response.json();
+    return updatedData.data as IPrompt;
 };

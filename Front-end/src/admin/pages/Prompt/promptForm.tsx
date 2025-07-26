@@ -36,14 +36,6 @@ const PromptForm: React.FC = () => {
             required: true,
             gridSpan: 24,
         },
-        {
-            key: 'version',
-            labelKey: 'promptForm.versionLabel',
-            type: 'text',
-            placeholderKey: 'promptForm.versionPlaceholder',
-            required: true,
-            gridSpan: 24,
-        },
     ], []);
 
     const promptValidationSchema = React.useMemo(() => ({

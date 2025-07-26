@@ -98,7 +98,16 @@
     "vietnameseFlagAlt": "Vietnamese Flag",
     "englishFlagAlt": "US Flag",
     "vietnamese": "Tiếng Việt",
-    "english": "English"
+    "english": "English",
+    "assignments": "Exercises",
+    "quiz": "Quiz",
+    "test": "Test",
+    "class": "Class"
+  },
+  "classes": {
+    "ise": "Introduction to Software Engineering",
+    "isad": "Information Systems Analysis and Design",
+    "sad": "Software Architecture and Design"
   },
   "common": {
     "clear": "Clear",
@@ -110,7 +119,13 @@
     "loadingData": "Loading data...",
     "errorFetchingData": "Failed to load data. Please try again.",
     "errorNoIdToDelete": "Error: No ID provided for deletion.",
-    "errorDeletingData": "Failed to delete data. Please try again."
+    "errorDeletingData": "Failed to delete data. Please try again.",
+    "errorUpdatingData": "Failed to update data. Please try again.",
+    "active": "active",
+    "inactive": "inactive",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "confirmDeleteContent": "Are you sure you want to delete? This action cannot be undone."
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -225,13 +240,16 @@
       "description": "Description",
       "templateString": "Template",
       "type": "Type",
+      "isActive": "Active Status",
       "version": "Version",
       "createdAt": "Creation Date",
       "updatedAt": "Last Updated"
     },
     "searchFields": {
       "nameLabel": "Prompt Name",
-      "namePlaceholder": "Enter prompt name"
+      "namePlaceholder": "Enter prompt name",
+      "typePlaceholder": "Select diagram type",
+      "typeAll": "All"
     },
     "sortFields": {
       "sortOrderLabel": "Sort Order",
@@ -248,7 +266,17 @@
     "editTooltip": "Edit prompt",
     "deleteTooltip": "Delete prompt",
     "confirmDelete": "Are you sure you want to delete prompt:",
-    "deleteSuccess": "Prompt deleted successfully!"
+    "deleteSuccess": "Prompt deleted successfully!",
+    "activateTooltip": "Activate prompt",
+    "deactivateTooltip": "Deactivate prompt",
+    "confirmToggleTitle": "Confirm Status Change",
+    "confirmActivate": "Are you sure you want to activate prompt {{name}}? This will deactivate other prompts of the same type.",
+    "confirmDeactivate": "Are you sure you want to deactivate prompt {{name}}?",
+    "toggleSuccess": "Status updated to {{status}}.",
+    "umlTypes": {
+      "useCase": "Use case diagram",
+      "class": "Class diagram"
+    }
   },
   "promptForm": {
     "title": "Prompt",
@@ -282,5 +310,26 @@
     "saveError": "Failed to save data: {{message}}",
     "unknownError": "An unknown error occurred",
     "parseError": "An error occurred while processing the response"
+  },
+  "problemDetail": {
+    "description": {
+      "title": "Description",
+      "viewerTitle": "PlantUML Editor & Viewer",
+      "introParagraph1": "This is an online editor for the PlantUML source code language. You can use it to create beautiful diagrams from simple text code.",
+      "introParagraph2_part1": "Enter your PlantUML code into the editor. Press the ",
+      "introParagraph2_part2": " button to see the rendered image in the frame below.",
+      "runButton": "Run",
+      "exampleTitle": "Example: Sequence Diagram"
+    },
+    "codeEditor": {
+      "title": "Code",
+      "runTooltip": "Run",
+      "submitTooltip": "Submit",
+      "submitMessage": "Code submitted:"
+    },
+    "result": {
+      "title": "Test Result",
+      "placeholder": "Press \"Run\" to see the diagram."
+    }
   }
 }

@@ -2,19 +2,24 @@ import React, { useEffect, useCallback } from "react";
 import ManagementTemplate, { type ActionButton } from "../../template/ManagementTemplate";
 import type { SearchField, SortField } from "../../template/ManagementTemplate/FilterOption.tsx";
 import { useTranslation } from "react-i18next";
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+
 import {
     getPrompts,
     deletePrompt,
     type IPrompt,
-    type GetPromptsOptions, deletePromptsByIds
+    type GetPromptsOptions,
+    deletePromptsByIds,
+    togglePromptActiveStatus
 } from "../../../shared/services/promptService";
 import dayjs from "dayjs";
-import {useNavigate} from "react-router-dom";
-import {useNotification} from "../../../shared/notification/useNotification.ts"; // NEW: Import dayjs
+import { useNavigate } from "react-router-dom";
+import { useNotification } from "../../../shared/notification/useNotification.ts";
 
 const Prompt: React.FC = () => {
+    // Correct usage: Destructuring the returned object
     const { message, modal } = useNotification();
+
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -42,7 +47,7 @@ const Prompt: React.FC = () => {
         if (currentPage !== 1) {
             params.set('page', currentPage.toString());
         }
-        if (entriesPerPage !== 10) { // Giả sử 10 là giá trị mặc định ban đầu
+        if (entriesPerPage !== 10) {
             params.set('limit', entriesPerPage.toString());
         }
         if (currentSortColumn) {
@@ -104,7 +109,8 @@ const Prompt: React.FC = () => {
                 limit: entriesPerPage,
                 sortBy: currentSortColumn || undefined,
                 sortOrder: currentSortOrder || undefined,
-                name: currentFilters.name || undefined
+                name: currentFilters.name || undefined,
+                umlType: currentFilters.umlType || undefined
             };
 
             const result = await getPrompts(options);
@@ -127,24 +133,37 @@ const Prompt: React.FC = () => {
     const dataTableColumns = React.useMemo(() => [
         { key: 'name', label: t('promptPage.dataTableColumns.name'), sortable: true },
         { key: 'description', label: t('promptPage.dataTableColumns.description'), sortable: true },
-        { key: 'templateString', label: t('promptPage.dataTableColumns.templateString'), sortable: true },
+        { key: 'umlType', label: t('promptPage.dataTableColumns.type'), sortable: true },
+        // { key: 'templateString', label: t('promptPage.dataTableColumns.templateString'), sortable: true },
         { key: 'version', label: t('promptPage.dataTableColumns.version'), sortable: true },
         {
             key: 'createdAt',
             label: t('promptPage.dataTableColumns.createdAt'),
             sortable: true,
-            render: (value: string | Date) => dayjs(value).format('YYYY-MM-DD HH:mm:ss') // NEW: Format ngày giờ
+            render: (value: string | Date) => dayjs(value).format('YYYY-MM-DD HH:mm:ss')
         },
         {
             key: 'updatedAt',
             label: t('promptPage.dataTableColumns.updatedAt'),
             sortable: true,
-            render: (value: string | Date) => dayjs(value).format('YYYY-MM-DD HH:mm:ss') // NEW: Format ngày giờ
+            render: (value: string | Date) => dayjs(value).format('YYYY-MM-DD HH:mm:ss')
         },
     ], [t]);
 
     const searchFields: SearchField[] = React.useMemo(() => [
         { key: 'name', label: t('promptPage.searchFields.nameLabel'), type: 'text', placeholder: t('promptPage.searchFields.namePlaceholder'), gridSpan: 1 },
+        {
+            key: 'umlType',
+            label: t('promptPage.dataTableColumns.type'),
+            type: 'select',
+            placeholder: t('promptPage.searchFields.typePlaceholder'),
+            gridSpan: 1,
+            options: [
+                {value: '', label: t('promptPage.searchFields.typeAll')},
+                {value: 'use-case', label: t('promptPage.umlTypes.useCase')},
+                {value: 'class', label: t('promptPage.umlTypes.class')}
+            ]
+        }
     ], [t]);
 
     const sortFields: SortField[] = React.useMemo(() => [
@@ -223,16 +242,19 @@ const Prompt: React.FC = () => {
             return;
         }
 
+        // Correct usage: modal.deleteConfirm
         modal.deleteConfirm(
             t('promptPage.deleteTooltip'),
             async () => {
                 try {
                     setLoading(true);
                     await deletePrompt(rowData._id as string);
+                    // Correct usage: message.success
                     message.success(t('promptPage.deleteSuccess'));
                     await fetchData();
                 } catch (error) {
                     setError(t('common.errorDeletingData'));
+                    // Correct usage: message.error
                     message.error(t('common.errorDeletingData'));
                 } finally {
                     setLoading(false);
@@ -240,21 +262,24 @@ const Prompt: React.FC = () => {
             },
             `${t('promptPage.confirmDelete')} ${rowData.name || rowData._id}?`
         );
-    }, [t, fetchData]);
+    }, [t, fetchData, modal, message]);
 
     const handleBulkDelete = useCallback(async (ids: string[]) => {
         if (ids.length === 0) return;
 
+        // Correct usage: modal.deleteConfirm
         modal.deleteConfirm(
             t('dataTable.bulkDeleteTitle'),
             async () => {
                 try {
                     setLoading(true);
                     await deletePromptsByIds(ids);
+                    // Correct usage: message.success
                     message.success(t('dataTable.bulkDeleteSuccess', { count: ids.length }));
                     await fetchData();
                 } catch (error) {
                     setError(t('common.errorDeletingData'));
+                    // Correct usage: message.error
                     message.error(t('common.errorDeletingData'));
                 } finally {
                     setLoading(false);
@@ -262,13 +287,47 @@ const Prompt: React.FC = () => {
             },
             `${t('dataTable.confirmBulkDelete')} ${ids.length} ${t('dataTable.selectedItems')}`
         );
-    }, [t, fetchData]);
+    }, [t, fetchData, modal, message]);
+
+    const handleToggleActiveStatus = useCallback(async (rowData: IPrompt) => {
+        if (!rowData._id) return;
+        const newStatus = !rowData.isActive;
+        const confirmMessage = newStatus
+            ? t('promptPage.confirmActivate', { name: rowData.name })
+            : t('promptPage.confirmDeactivate', { name: rowData.name });
+
+        // Đã sửa lỗi: truyền một đối tượng cấu hình duy nhất
+        modal.confirm({
+            title: t('promptPage.confirmToggleTitle'),
+            content: confirmMessage,
+            onOk: async () => {
+                try {
+                    setLoading(true);
+                    await togglePromptActiveStatus(rowData._id as string, newStatus);
+                    message.success(t('promptPage.toggleSuccess', { status: newStatus ? t('common.active') : t('common.inactive') }));
+                    await fetchData();
+                } catch (error) {
+                    setError(t('common.errorUpdatingData'));
+                    message.error(t('common.errorUpdatingData'));
+                } finally {
+                    setLoading(false);
+                }
+            },
+        });
+    }, [t, fetchData, modal, message]);
 
     const promptActions = React.useMemo(() => [
         {
+            icon: (rowData: IPrompt) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
+            onClick: handleToggleActiveStatus,
+            className: (rowData: IPrompt) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
+            tooltip: (rowData: IPrompt) => rowData.isActive ? t('promptPage.deactivateTooltip') : t('promptPage.activateTooltip'),
+            color: '#63782b'
+        },
+        {
             icon: <FaEdit />,
             onClick: handleEditPrompt,
-            className: 'text-blue-500 hover:text-blue-700',
+            className: 'text-blue-500 hover:text-blue-700 ml-2',
             tooltip: t('promptPage.editTooltip'),
             color: '#7600ff'
         },
@@ -277,9 +336,9 @@ const Prompt: React.FC = () => {
             onClick: handleDeletePrompt,
             className: 'text-red-500 hover:text-red-700 ml-2',
             tooltip: t('promptPage.deleteTooltip'),
-            color: 'red'
+            color: '#f62626'
         },
-    ], [handleEditPrompt, handleDeletePrompt, t]);
+    ], [handleEditPrompt, handleDeletePrompt, handleToggleActiveStatus, t]);
 
     if (loading && prompts.length === 0) {
         return <div>{t('common.loadingData')}</div>;

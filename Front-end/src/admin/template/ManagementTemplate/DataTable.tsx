@@ -4,6 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { MdDelete } from "react-icons/md";
 import type {ReactNode} from 'react';
 
+// Cập nhật interface để hỗ trợ icon và tooltip động
+interface ActionButton {
+    icon: ReactNode | ((rowData: DataRow) => ReactNode);
+    onClick: (rowData: any) => void;
+    className?: string | ((rowData: DataRow) => string);
+    tooltip?: string | ((rowData: DataRow) => string);
+    color?: string | ((rowData: DataRow) => string);
+}
+
 interface Column {
     key: string;
     label: string;
@@ -14,14 +23,6 @@ interface Column {
 
 interface DataRow {
     [key: string]: any;
-}
-
-interface ActionButton {
-    icon: ReactNode;
-    onClick: (rowData: any) => void;
-    className?: string;
-    tooltip?: string;
-    color?: string;
 }
 
 interface DataTableProps {
@@ -203,24 +204,31 @@ const DataTable: React.FC<DataTableProps> = ({
                         </td>
                         {columns.map((col) => (
                             <td key={col.key} className="data-table__cell">
-                                {/* NEW: Sử dụng hàm render nếu có, ngược lại hiển thị giá trị trực tiếp */}
                                 {col.render ? col.render(row[col.key], row) : row[col.key]}
                             </td>
                         ))}
                         {actions && actions.length > 0 && (
                             <td className="data-table__cell data-table__cell--actions">
                                 <div className="data-table__actions-container">
-                                    {actions.map((action, actionIndex) => (
-                                        <button
-                                            key={actionIndex}
-                                            className={`data-table__action-button ${action.className || ''}`}
-                                            onClick={() => action.onClick(row)}
-                                            title={action.tooltip || ''}
-                                            style={{color: action.color, cursor: "pointer"}}
-                                        >
-                                            {action.icon}
-                                        </button>
-                                    ))}
+                                    {actions.map((action, actionIndex) => {
+                                        // Kiểm tra nếu prop là hàm, gọi hàm với dữ liệu hàng
+                                        const icon = typeof action.icon === 'function' ? action.icon(row) : action.icon;
+                                        const tooltip = typeof action.tooltip === 'function' ? action.tooltip(row) : action.tooltip;
+                                        const className = typeof action.className === 'function' ? action.className(row) : action.className;
+                                        const color = typeof action.color === 'function' ? action.color(row) : action.color;
+
+                                        return (
+                                            <button
+                                                key={actionIndex}
+                                                className={`data-table__action-button ${className || ''}`}
+                                                onClick={() => action.onClick(row)}
+                                                title={tooltip || ''}
+                                                style={{ color: color, cursor: "pointer" }}
+                                            >
+                                                {icon}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </td>
                         )}
