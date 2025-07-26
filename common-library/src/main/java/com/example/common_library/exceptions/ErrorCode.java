@@ -16,6 +16,10 @@ public enum ErrorCode {
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
     LOGIN_ERROR(1008, "Invalid login credentials. Please try again.", HttpStatus.BAD_REQUEST),
+    INVALID_EMAIL(1009, "Invalid email. Please try again.", HttpStatus.BAD_REQUEST),
+    EMAIL_REQUIRED(1010, "Email is required", HttpStatus.BAD_REQUEST),
+    USERNAME_REQUIRED(1011, "Username is required", HttpStatus.BAD_REQUEST),
+    PASSWORD_REQUIRED(1012, "Password is required", HttpStatus.BAD_REQUEST)
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

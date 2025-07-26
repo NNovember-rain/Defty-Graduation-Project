@@ -11,7 +11,7 @@
 	<groupId>com.defty</groupId>
 	<artifactId>authentication</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>identity-service</name>
+	<name>authentication-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
