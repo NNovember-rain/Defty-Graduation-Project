@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class RoleController {
     RoleService roleService;
 
-//    @PreAuthorize("hasAuthority('GET_ROLES')")
+    @PreAuthorize("hasRole('admin')")
     @GetMapping
     ApiResponse<Page<RoleResponse>> getAllRoles(@RequestParam(value = "page", defaultValue = "0") int page,
                                                 @RequestParam(value = "size", defaultValue = "10") int size,
@@ -34,12 +35,40 @@ public class RoleController {
                 .build();
     }
 
-//    @PreAuthorize("hasAuthority('CREATE_ROLE')")
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/{id}")
+    public ApiResponse<RoleResponse> getRoleById(@PathVariable Long id) {
+        RoleResponse roleResponse = roleService.getRoleById(id);
+        return ApiResponse.<RoleResponse>builder()
+                .result(roleResponse)
+                .build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
     @PostMapping
     ApiResponse<RoleResponse> createRole(@RequestBody RoleRequest roleRequest) {
         RoleResponse createRole = roleService.createRole(roleRequest);
         return ApiResponse.<RoleResponse>builder()
                 .result(createRole)
+                .build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @PutMapping("/{id}")
+    public ApiResponse<RoleResponse> updateRole(@PathVariable Long id,
+                                                @RequestBody RoleRequest roleRequest) {
+        RoleResponse updatedRole = roleService.updateRole(id, roleRequest);
+        return ApiResponse.<RoleResponse>builder()
+                .result(updatedRole)
+                .build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteRole(@PathVariable Long id) {
+        roleService.deleteRole(id);
+        return ApiResponse.<Void>builder()
+                .message("Role deleted successfully")
                 .build();
     }
 }

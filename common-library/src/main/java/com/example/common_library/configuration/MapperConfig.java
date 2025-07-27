@@ -1,4 +1,4 @@
-package com.defty.content_service.configuration;
+package com.example.common_library.configuration;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;

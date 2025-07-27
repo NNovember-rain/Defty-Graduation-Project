@@ -4,7 +4,7 @@ spring:
   application:
     name: class-service # Tên ứng dụng (vẫn nên giữ để dễ nhận diện log)
   datasource:
-    url: jdbc:mysql://localhost:3306/class_management_service?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/class_management_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: 12345
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -16,6 +16,9 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect # Chọn Dialect phù hợp với phiên bản MySQL của bạn
+
+api:
+  prefix: /api/v1
 
 # --- Bỏ hoặc Comment phần Eureka khi chạy riêng lẻ ---
 # eureka:

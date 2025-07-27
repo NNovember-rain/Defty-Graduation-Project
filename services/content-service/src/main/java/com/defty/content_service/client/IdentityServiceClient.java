@@ -1,6 +1,7 @@
 package com.defty.content_service.client;
 
-import com.defty.content_service.configuration.AuthenticationRequestInterceptor;
+
+import com.example.common_library.configuration.AuthenticationRequestInterceptor;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

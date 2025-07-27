@@ -8,13 +8,11 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "class_enrollments", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"class_id", "student_id"})
-})
+@Table(name = "class_enrollments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClassEnrollment {
+public class ClassEnrollmentEntity extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,22 +20,11 @@ public class ClassEnrollment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id", nullable = false)
-    private Class classroom;
+    private ClassEntity classroom;
 
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
     @Column(name = "enrollment_date", nullable = false, updatable = false)
     private LocalDateTime enrollmentDate;
-
-    @Column(name = "status", nullable = false, length = 50)
-    private String status;
-
-    @PrePersist
-    protected void onCreate() {
-        enrollmentDate = LocalDateTime.now();
-        if (status == null) {
-            status = "ACTIVE";
-        }
-    }
 }

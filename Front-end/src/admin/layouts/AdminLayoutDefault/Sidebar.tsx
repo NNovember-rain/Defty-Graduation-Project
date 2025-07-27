@@ -48,15 +48,15 @@ const sidebarContentConfig: SidebarItem[] = [
         requiredAnyOfRoles: ['admin', 'teacher']
     },
     {
-        id: 'userManagement',
-        labelKey: 'sidebar.userManagement',
-        icon: <FaUsers />,
-        requiredAnyOfRoles: ['admin'],
+        id: 'reportsAndStatistics',
+        labelKey: 'sidebar.reportsAndStatistics',
+        icon: <FaChartBar />,
+        requiredAnyOfRoles: ['admin', 'teacher'],
         children: [
-            { id: 'userList', labelKey: 'sidebar.userManagement', icon: <FaUsers />, path: '/admin/users', requiredAnyOfRoles: ['admin'] },
-            { id: 'roleManagement', labelKey: 'sidebar.roleManagement', icon: <FaUserCog />, path: '/admin/roles', requiredAnyOfRoles: ['admin'] },
-            { id: 'permissionManagement', labelKey: 'sidebar.permissionManagement', icon: <FaKey />, path: '/admin/permissions', requiredAnyOfRoles: ['admin'] },
-        ],
+            { id: 'overviewStatistics', labelKey: 'sidebar.overviewStatistics', icon: <FaChartBar />, path: '/admin/reports/overview', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'assignmentResultsStatistics', labelKey: 'sidebar.assignmentResultsStatistics', icon: <FaPollH />, path: '/admin/reports/assignment-results', requiredAnyOfRoles: ['admin', 'teacher'] },
+            { id: 'studentProgress', labelKey: 'sidebar.studentProgress', icon: <FaRegListAlt />, path: '/admin/reports/student-progress', requiredAnyOfRoles: ['admin', 'teacher'] },
+        ]
     },
     {
         id: 'contentManagement',
@@ -117,17 +117,6 @@ const sidebarContentConfig: SidebarItem[] = [
         ]
     },
     {
-        id: 'reportsAndStatistics',
-        labelKey: 'sidebar.reportsAndStatistics',
-        icon: <FaChartBar />,
-        requiredAnyOfRoles: ['admin', 'teacher'],
-        children: [
-            { id: 'overviewStatistics', labelKey: 'sidebar.overviewStatistics', icon: <FaChartBar />, path: '/admin/reports/overview', requiredAnyOfRoles: ['admin', 'teacher'] },
-            { id: 'assignmentResultsStatistics', labelKey: 'sidebar.assignmentResultsStatistics', icon: <FaPollH />, path: '/admin/reports/assignment-results', requiredAnyOfRoles: ['admin', 'teacher'] },
-            { id: 'studentProgress', labelKey: 'sidebar.studentProgress', icon: <FaRegListAlt />, path: '/admin/reports/student-progress', requiredAnyOfRoles: ['admin', 'teacher'] },
-        ]
-    },
-    {
         id: 'systemConfiguration',
         labelKey: 'sidebar.systemConfiguration',
         icon: <MdOutlineSettings />,
@@ -136,6 +125,17 @@ const sidebarContentConfig: SidebarItem[] = [
             { id: 'promptConfiguration', labelKey: 'sidebar.promptConfiguration', icon: <FaTools />, path: '/admin/settings/prompts', requiredAnyOfRoles: ['admin'] },
             { id: 'plantUMLConfiguration', labelKey: 'sidebar.plantUMLConfiguration', icon: <FaTools />, path: '/admin/settings/plantuml', requiredAnyOfRoles: ['admin'] },
             { id: 'aiAPIConfiguration', labelKey: 'sidebar.aiAPIConfiguration', icon: <FaTools />, path: '/admin/settings/ai-api', requiredAnyOfRoles: ['admin'] },
+        ],
+    },
+    {
+        id: 'userManagement',
+        labelKey: 'sidebar.userManagement',
+        icon: <FaUsers />,
+        requiredAnyOfRoles: ['admin'],
+        children: [
+            { id: 'userList', labelKey: 'sidebar.userManagement', icon: <FaUsers />, path: '/admin/users', requiredAnyOfRoles: ['admin'] },
+            { id: 'roleManagement', labelKey: 'sidebar.roleManagement', icon: <FaUserCog />, path: '/admin/roles', requiredAnyOfRoles: ['admin'] },
+            { id: 'permissionManagement', labelKey: 'sidebar.permissionManagement', icon: <FaKey />, path: '/admin/permissions', requiredAnyOfRoles: ['admin'] },
         ],
     },
 ];
