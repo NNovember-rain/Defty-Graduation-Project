@@ -1,4 +1,4 @@
-package com.grading_service.model.entity;
+package com.ai_feedback_service.model.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
