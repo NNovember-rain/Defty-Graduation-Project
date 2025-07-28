@@ -9,13 +9,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long>, JpaSpecificationExecutor<Permission> {
     boolean existsByNameAndIdNot(String name, Long id);
-    Optional<Permission> findByIdAndIsActive(Long id, Integer isActive);
+    boolean existsPermissionByName(String name);
     @Query(value = "SELECT p.* FROM permission p " +
             "JOIN role_permissions rp ON p.id = rp.permissions_id " +
             "WHERE rp.role_id = :roleId " +

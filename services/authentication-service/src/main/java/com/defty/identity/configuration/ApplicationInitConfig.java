@@ -32,7 +32,7 @@ public class ApplicationInitConfig {
                 if (!roleRepository.existsRoleByName("admin")) {
                     Role role = new Role();
                     role.setName("admin");
-                    role.setDescription("Administrator role with all permissions");
+                    role.setDescription("Full system access. Can manage users, roles, settings, and perform administrative tasks.");
                     roleRepository.save(role);
                     roles.add(role);
                 } else {
@@ -43,6 +43,8 @@ public class ApplicationInitConfig {
                 User user = User.builder()
                         .username("admin")
                         .email("admin@gmail.com")
+                        .firstName("Admin")
+                        .isActive(1)
                         .password(passwordEncoder.encode("Defty@12345"))
                         .roles(roles)
                         .build();

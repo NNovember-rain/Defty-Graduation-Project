@@ -47,9 +47,9 @@ public class UserController {
                 .build();
     }
 
-    //    @PreAuthorize("hasRole('GET_USER')")
-    @GetMapping("/{userId}")
-    ApiResponse<UserResponse> getUser(@PathVariable("userId") Long userId){
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/{id}")
+    ApiResponse<UserResponse> getUser(@PathVariable("id") Long userId){
         return ApiResponse.<UserResponse>builder()
                 .result(userService.getUser(userId))
                 .build();
@@ -62,20 +62,31 @@ public class UserController {
                 .build();
     }
 
-//    @PreAuthorize("hasRole('UPDATE_USER')")
-    @PutMapping("/{userId}")
-    ApiResponse<UserResponse> updateUser(@PathVariable Long userId, @RequestBody UserUpdateRequest request){
+    @PreAuthorize("hasRole('admin')")
+    @PutMapping("/{id}")
+    ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request){
         return ApiResponse.<UserResponse>builder()
-                .result(userService.updateUser(userId, request))
+                .result(userService.updateUser(id, request))
                 .build();
     }
 
-//    @PreAuthorize("hasRole('DELETE_USER')")
-    @DeleteMapping("/{userId}")
-    ApiResponse<String> deleteUser(@PathVariable Long userId){
-        userService.deleteUser(userId);
+    @PreAuthorize("hasRole('admin')")
+    @DeleteMapping("/{id}")
+    ApiResponse<String> deleteUser(@PathVariable Long id){
+        userService.deleteUser(id);
         return ApiResponse.<String>builder()
                 .result("User has been deleted")
                 .build();
     }
+
+    @PreAuthorize("hasRole('admin')")
+    @PatchMapping("/{id}/toggle-active")
+    ApiResponse<UserResponse> toggleActiveStatus(@PathVariable Long id) {
+        UserResponse updatedUser = userService.toggleActiveStatus(id);
+        return ApiResponse.<UserResponse>builder()
+                .result(updatedUser)
+                .message("User status toggled successfully")
+                .build();
+    }
+
 }
