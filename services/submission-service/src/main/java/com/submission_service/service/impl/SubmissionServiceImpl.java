@@ -3,6 +3,7 @@ package com.submission_service.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.BeanUtil;
+import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.model.entity.Submission;
@@ -58,6 +59,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             submission.setAssignmentId(submissionRequest.getAssignmentId());
             submission.setStudentPlantUMLCode(submissionRequest.getStudentPlantUmlCode());
             submission.setStudentId(submissionRequest.getStudentId());
+            submission.setStatus(SubmissionStatus.SUBMITTED);
             Long id=submissionRepository.save(submission).getId();
 
             // Tạm fake data

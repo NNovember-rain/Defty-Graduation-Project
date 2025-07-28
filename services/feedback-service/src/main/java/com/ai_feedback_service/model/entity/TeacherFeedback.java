@@ -11,13 +11,10 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-public class InstructorFeedback {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-    private Integer userId;
-    private Integer submissionsId;
+public class TeacherFeedback extends BaseEntity {
+
+    private Long teacherId;
+    private Long submissionsId;
     private Double grade;
-    private String comment;
-    private LocalDateTime createdAt;
+    private String content;
 }

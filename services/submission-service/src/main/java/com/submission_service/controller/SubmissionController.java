@@ -2,7 +2,6 @@ package com.submission_service.controller;
 
 import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.ApiResponse;
-import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.service.SubmissionService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,5 +28,6 @@ public class SubmissionController {
                 .result(response)
                 .build();
     }
+
 
 }

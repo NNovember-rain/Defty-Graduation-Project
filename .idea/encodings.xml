@@ -9,6 +9,7 @@
     <file url="file://$PROJECT_DIR$/services/class-management-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/services/content-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/services/discovery-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/feedback-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/services/grading-service/grading-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/services/grading-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/services/submission-service/src/main/java" charset="UTF-8" />
