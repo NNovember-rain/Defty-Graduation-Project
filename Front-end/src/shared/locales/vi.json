@@ -98,7 +98,16 @@
     "vietnameseFlagAlt": "Cờ Việt Nam",
     "englishFlagAlt": "Cờ Mỹ",
     "vietnamese": "Tiếng Việt",
-    "english": "English"
+    "english": "English",
+    "assignments": "Bài tập",
+    "quiz": "Quiz",
+    "test": "Kiểm tra",
+    "class": "Lớp"
+  },
+  "classes": {
+    "ise": "Nhập môn Công nghệ Phần mềm",
+    "isad": "Phân tích Thiết kế Hệ thống Thông tin",
+    "sad": "Kiến trúc Thiết kế Phần mềm"
   },
   "common": {
     "clear": "Xóa",
@@ -110,7 +119,13 @@
     "loadingData": "Đang tải dữ liệu...",
     "errorFetchingData": "Tải dữ liệu thất bại. Vui lòng thử lại.",
     "errorNoIdToDelete": "Lỗi: Không có ID được cung cấp để xóa.",
-    "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại."
+    "errorDeletingData": "Xóa dữ liệu thất bại. Vui lòng thử lại.",
+    "errorUpdatingData": "Cập nhật dữ liệu thất bại. Vui lòng thử lại.",
+    "active": "đã kích hoạt",
+    "inactive": "đã vô hiệu hóa",
+    "confirm": "Xác nhận",
+    "delete": "Xóa",
+    "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác."
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -225,13 +240,16 @@
       "description": "Mô tả",
       "templateString": "Mẫu",
       "type": "Loại",
+      "isActive": "Trạng thái hoạt động",
       "version": "Phiên bản",
       "createdAt": "Ngày tạo",
       "updatedAt": "Cập nhật lần cuối"
     },
     "searchFields": {
       "nameLabel": "Tên Prompt",
-      "namePlaceholder": "Nhập tên prompt"
+      "namePlaceholder": "Nhập tên prompt",
+      "typePlaceholder": "Chọn loại sơ đồ",
+      "typeAll": "Tất cả"
     },
     "sortFields": {
       "sortOrderLabel": "Thứ tự Sắp xếp",
@@ -248,7 +266,17 @@
     "editTooltip": "Chỉnh sửa prompt",
     "deleteTooltip": "Xóa prompt",
     "confirmDelete": "Bạn có chắc chắn muốn xóa prompt:",
-    "deleteSuccess": "Xóa prompt thành công!"
+    "deleteSuccess": "Xóa prompt thành công!",
+    "activateTooltip": "Kích hoạt prompt",
+    "deactivateTooltip": "Vô hiệu hóa prompt",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmActivate": "Bạn có chắc chắn muốn kích hoạt prompt {{name}}? Điều này sẽ vô hiệu hóa các prompt khác cùng loại.",
+    "confirmDeactivate": "Bạn có chắc chắn muốn vô hiệu hóa prompt {{name}}?",
+    "toggleSuccess": "Đã cập nhật trạng thái thành {{status}}.",
+    "umlTypes": {
+      "useCase": "Use case",
+      "class": "Biểu đồ lớp"
+    }
   },
   "promptForm": {
     "title": "Prompt",
@@ -282,5 +310,26 @@
     "saveError": "Lỗi lưu dữ liệu: {{message}}",
     "unknownError": "Có lỗi không xác định xảy ra",
     "parseError": "Lỗi xảy ra khi xử lý phản hồi"
+  },
+  "problemDetail": {
+    "description": {
+      "title": "Mô tả",
+      "viewerTitle": "Trình chỉnh sửa & xem PlantUML",
+      "introParagraph1": "Đây là một trình chỉnh sửa trực tuyến cho ngôn ngữ mã nguồn PlantUML. Bạn có thể sử dụng nó để tạo ra các sơ đồ đẹp mắt từ mã văn bản đơn giản.",
+      "introParagraph2_part1": "Nhập mã PlantUML của bạn vào trình chỉnh sửa. Nhấn nút ",
+      "introParagraph2_part2": " để xem hình ảnh được render ra ở khung bên dưới.",
+      "runButton": "Run",
+      "exampleTitle": "Ví dụ: Sơ đồ Tuần tự"
+    },
+    "codeEditor": {
+      "title": "Mã nguồn",
+      "runTooltip": "Chạy",
+      "submitTooltip": "Nộp bài",
+      "submitMessage": "Mã nguồn đã được nộp:"
+    },
+    "result": {
+      "title": "Kết quả",
+      "placeholder": "Nhấn \"Chạy\" để xem sơ đồ."
+    }
   }
 }

@@ -1,7 +1,7 @@
 package com.defty.identity.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +26,6 @@ public class UserCreationRequest {
     LocalDate dob;
 
     @NotBlank(message = "EMAIL_REQUIRED")
-    @Email(message = "INVALID_EMAIL")
+    @Pattern(regexp = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "INVALID_EMAIL")
     String email;
 }

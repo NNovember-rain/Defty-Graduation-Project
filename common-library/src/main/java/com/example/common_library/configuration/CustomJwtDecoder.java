@@ -1,4 +1,4 @@
-package com.defty.content_service.configuration;
+package com.example.common_library.configuration;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 
-@Component
 public class CustomJwtDecoder implements JwtDecoder {
 
     @Override

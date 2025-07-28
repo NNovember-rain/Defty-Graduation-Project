@@ -5,7 +5,8 @@ import {
     getPromptsController,
     updatePromptController,
     deletePromptController,
-    bulkDeletePromptsController
+    bulkDeletePromptsController,
+    togglePromptActiveStatusController // Import the new controller
 } from '../controllers/prompt.controller';
 
 const router = Router();
@@ -17,6 +18,9 @@ router.get('/', getPromptsController);
 router.get('/:id', getPromptByIdController);
 
 router.patch('/:id', updatePromptController);
+
+// NEW: Route to toggle active status
+router.patch('/:id/toggle-active', togglePromptActiveStatusController);
 
 router.delete('/bulk', bulkDeletePromptsController);
 

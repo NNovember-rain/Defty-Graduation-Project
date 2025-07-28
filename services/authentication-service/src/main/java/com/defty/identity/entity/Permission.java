@@ -15,4 +15,5 @@ public class Permission extends  BaseEntity {
     @Column(nullable = false, length = 255, unique = true)
     String name;
     String description;
+    boolean deleted = false;
 }

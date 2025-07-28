@@ -4,20 +4,22 @@ export interface IPrompt extends Document {
     name: string;
     description?: string;
     templateString: string;
-    type?: 'system' | 'user' | 'template';
+    umlType?: 'use-case' | 'class';
     version: string;
     createdBy?: number;
-    isDeleted?: boolean;
+    isDeleted: boolean;
+    isActive: boolean;
 }
 
 const PromptSchema = new Schema<IPrompt>({
     name: { type: String, required: true, unique: true, trim: true },
     description: { type: String, trim: true },
     templateString: { type: String, required: true },
-    type: { type: String, enum: ['system', 'user', 'template'] },
-    version: { type: String, required: true },
+    umlType: { type: String, enum: ['use-case', 'class'] },
+    version: { type: String, required: true, default: '1.0' },
     createdBy: { type: Number },
-    isDeleted: { type: Boolean, default: false }
+    isDeleted: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const Prompt = model<IPrompt>('Prompt', PromptSchema);

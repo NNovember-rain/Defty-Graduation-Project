@@ -3,6 +3,8 @@ package com.defty.identity.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -11,4 +13,5 @@ import lombok.experimental.FieldDefaults;
 public class PermissionResponse {
     String name;
     String description;
+    Date createdDate;
 }
