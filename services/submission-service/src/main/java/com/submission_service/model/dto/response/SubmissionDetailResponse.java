@@ -12,11 +12,12 @@ import java.util.Date;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SubmissionResponse {
+public class SubmissionDetailResponse {
     Long id;
     String studentName;
     String assignmentTitle;
     Long classId;
     Date createdDate;
     SubmissionStatus submissionStatus;
+    String studentPlantUMLCode;
 }

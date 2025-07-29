@@ -22,6 +22,7 @@
         </processorPath>
         <module name="submission-service" />
         <module name="ai-feedback-service" />
+        <module name="feedback-service" />
         <module name="grading-service" />
       </profile>
       <profile name="Annotation profile for authentication-service" enabled="true">
