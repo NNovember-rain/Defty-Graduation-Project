@@ -44,4 +44,7 @@ public class BaseEntity implements Serializable {
     @Column(name = "modifiedby")
     @LastModifiedBy
     private String modifiedBy = null;
+
+    @Column(name = "status")
+    private Integer status = 1;
 }
