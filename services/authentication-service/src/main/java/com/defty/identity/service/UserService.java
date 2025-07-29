@@ -13,4 +13,5 @@ public interface UserService {
     void deleteUser(Long userId);
     Page<UserResponse> getUsers(String username, String email, Pageable pageable);
     UserResponse getMyInfo();
+    UserResponse toggleActiveStatus(Long userId);
 }

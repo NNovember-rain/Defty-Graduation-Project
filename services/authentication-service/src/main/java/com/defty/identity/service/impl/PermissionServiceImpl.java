@@ -3,6 +3,8 @@ package com.defty.identity.service.impl;
 import com.defty.identity.dto.request.PermissionRequest;
 import com.defty.identity.dto.response.PermissionResponse;
 import com.defty.identity.entity.Permission;
+import com.defty.identity.exception.AppException;
+import com.defty.identity.exception.ErrorCode;
 import com.defty.identity.mapper.PermissionMapper;
 import com.defty.identity.repository.PermissionRepository;
 import com.defty.identity.service.PermissionService;
@@ -27,16 +29,20 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public PermissionResponse createPermission(PermissionRequest permissionRequest) {
         Permission permission = permissionMapper.toPermission(permissionRequest);
+        if (permissionRepository.existsPermissionByName(permission.getName())) {
+            throw new AppException(ErrorCode.PERMISSION_EXISTED);
+        }
+        permission.setIsActive(1);
         permissionRepository.save(permission);
         return permissionMapper.toPermissionResponse(permission);
     }
 
     @Override
     public PermissionResponse updatePermission(Long id, PermissionRequest request) {
-        Permission permission = permissionRepository.findByIdAndDeletedFalse(id)
+        Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Permission not found"));
 
-        if (permissionRepository.existsByNameAndIdNotAndDeletedFalse(request.getName(), id)) {
+        if (permissionRepository.existsByNameAndIdNot(request.getName(), id)) {
             throw new AlreadyExitException("Permission name already exists");
         }
 
@@ -59,16 +65,36 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public PermissionResponse getPermissionById(Long id) {
-        Permission permission = permissionRepository.findByIdAndDeletedFalse(id)
+        Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Permission not found"));
         return permissionMapper.toPermissionResponse(permission);
     }
 
     @Override
     public void deletePermission(Long id) {
-        Permission permission = permissionRepository.findByIdAndDeletedFalse(id)
+        Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Permission not found"));
-        permission.setDeleted(true);
+        permission.setIsActive(-1);
         permissionRepository.save(permission);
     }
+
+    @Override
+    public Page<PermissionResponse> getPermissionsByRoleId(Long roleId, String name, Pageable pageable) {
+        Page<Permission> permissionsPage = permissionRepository
+                .findAllActiveByRoleIdAndNameContaining(roleId, name, pageable);
+        return permissionsPage.map(permissionMapper::toPermissionResponse);
+    }
+
+    @Override
+    public PermissionResponse togglePermissionStatus(Long id) {
+        Permission permission = permissionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Permission not found with ID: " + id));
+
+        Integer currentStatus = permission.getIsActive();
+        permission.setIsActive(currentStatus != null && currentStatus == 1 ? 0 : 1);
+
+        Permission updatedPermission = permissionRepository.save(permission);
+        return permissionMapper.toPermissionResponse(updatedPermission);
+    }
+
 }

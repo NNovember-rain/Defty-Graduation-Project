@@ -3,6 +3,8 @@ package com.defty.identity.service.impl;
 import com.defty.identity.dto.request.RoleRequest;
 import com.defty.identity.dto.response.RoleResponse;
 import com.defty.identity.entity.Role;
+import com.defty.identity.exception.AppException;
+import com.defty.identity.exception.ErrorCode;
 import com.defty.identity.mapper.RoleMapper;
 import com.defty.identity.repository.PermissionRepository;
 import com.defty.identity.repository.RoleRepository;
@@ -33,6 +35,9 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleMapper.toRole(roleRequest);
         var permissions = permissionRepository.findAllById(roleRequest.getPermissions());
         role.setPermissions(new HashSet<>(permissions));
+        if (roleRepository.existsRoleByName(role.getName())) {
+            throw new AppException(ErrorCode.ROLE_EXISTED);
+        }
         roleRepository.save(role);
         return roleMapper.toRoleResponse(role);
     }
@@ -51,10 +56,10 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponse updateRole(Long id, RoleRequest request) {
-        Role role = roleRepository.findByIdAndDeletedFalse(id)
+        Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Role not found"));
 
-        if (roleRepository.existsByNameAndIdNotAndDeletedFalse(request.getName(), id)) {
+        if (roleRepository.existsByNameAndIdNot(request.getName(), id)) {
             throw new AlreadyExitException("Role with name '" + request.getName() + "' already exists");
         }
 
@@ -70,16 +75,32 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponse getRoleById(Long id) {
-        Role role = roleRepository.findByIdAndDeletedFalse(id)
+        Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Role not found"));
         return roleMapper.toRoleResponse(role);
     }
 
     @Override
     public void deleteRole(Long id) {
-        Role role = roleRepository.findByIdAndDeletedFalse(id)
+        Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Role not found"));
-        role.setDeleted(true);
+        role.setIsActive(-1);
         roleRepository.save(role);
     }
+
+    @Override
+    public RoleResponse toggleRoleStatus(Long id) {
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Role not found with ID: " + id));
+
+        if ("admin".equalsIgnoreCase(role.getName()) && role.getIsActive() == 1) {
+            throw new AppException(ErrorCode.ROLE_DELETE_FORBIDDEN);
+        }
+
+        role.setIsActive(role.getIsActive() == 1 ? 0 : 1);
+        Role updatedRole = roleRepository.save(role);
+
+        return roleMapper.toRoleResponse(updatedRole);
+    }
+
 }
