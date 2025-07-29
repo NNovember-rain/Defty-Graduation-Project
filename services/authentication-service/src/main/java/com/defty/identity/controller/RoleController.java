@@ -71,4 +71,14 @@ public class RoleController {
                 .message("Role deleted successfully")
                 .build();
     }
+
+    @PreAuthorize("hasRole('admin')")
+    @PatchMapping("/{id}/toggle-active")
+    public ApiResponse<RoleResponse> toggleActiveStatus(@PathVariable Long id) {
+        RoleResponse updatedRole = roleService.toggleRoleStatus(id);
+        return ApiResponse.<RoleResponse>builder()
+                .result(updatedRole)
+                .message("Role status updated successfully")
+                .build();
+    }
 }

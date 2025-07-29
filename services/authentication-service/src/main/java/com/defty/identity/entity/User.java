@@ -23,6 +23,7 @@ public class User extends BaseEntity {
     String firstName;
     String lastName;
     LocalDate dob;
+    Integer isActive = 1; // 1 for active, 0 for inactive, -1 for deleted
 
     @Column(unique = true, nullable = false)
     String email;

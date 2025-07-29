@@ -110,6 +110,10 @@
     "sad": "Software Architecture and Design"
   },
   "common": {
+    "breadcrumb": {
+      "home": "Home",
+      "adminDashboard": "Admin Dashboard"
+    },
     "clear": "Clear",
     "search": "Search",
     "cancel": "Cancel",
@@ -152,48 +156,30 @@
     "order": "No."
   },
   "userPage": {
-    "title": "Users",
-    "editTooltip": "Edit user",
-    "deleteTooltip": "Delete user",
-    "breadcrumb": {
-      "home": "Home",
-      "adminDashboard": "Admin Dashboard",
-      "userManagement": "User Management"
+    "title": "User Management",
+    "breadcrumb": "User Management",
+    "columns": {
+      "name": "Full Name",
+      "username": "Username",
+      "dob": "Date of Birth",
+      "email": "Email",
+      "roles": "Roles",
+      "creationDate": "Created At"
     },
-    "dataTableColumns": {
-      "renderingEngine": "Rendering engine",
-      "browser": "Browser",
-      "platform": "Platform(s)",
-      "engineVersion": "Engine version",
-      "cssGrade": "CSS grade",
-      "creationDate": "Creation Date"
+    "search": {
+      "username": "Username",
+      "namePlaceholder": "Enter username...",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "global": "Global Search",
+      "globalPlaceholder": "Search by name, email..."
     },
-    "searchFields": {
-      "renderingEngineLabel": "Rendering Engine",
-      "renderingEnginePlaceholder": "Enter engine name",
-      "browserNameLabel": "Browser Name",
-      "browserNamePlaceholder": "Enter browser name",
-      "platformLabel": "Platform",
-      "platformPlaceholder": "Enter platform",
-      "cssGradeLabel": "CSS Grade",
-      "cssGradeAny": "Any",
-      "cssGradeA": "Grade A",
-      "cssGradeB": "Grade B",
-      "cssGradeC": "Grade C",
-      "cssGradeX": "Grade X",
-      "startDate": "From Creation Date",
-      "endDate": "To Creation Date",
-      "generalSearchLabel": "General Search",
-      "generalSearchPlaceholder": "Search all fields..."
-    },
-    "sortFields": {
-      "sortOrderLabel": "Sort Order",
+    "sort": {
+      "order": "Sort Order",
       "ascending": "Ascending",
       "descending": "Descending",
-      "orderByLabel": "Order By",
-      "renderingEngine": "Rendering Engine",
-      "browser": "Browser",
-      "id": "ID",
+      "by": "Sort By",
+      "name": "Name",
       "creationDate": "Creation Date"
     }
   },
@@ -219,15 +205,97 @@
       "descending": "Descending",
       "by": "Order By",
       "name": "Role Name",
-      "creationDate": "Creation Date"
+      "creationDate": "Created Date"
     },
     "createNew": "Create new role (not yet implemented)",
     "edit": "Edit",
     "delete": "Deleted",
     "editTooltip": "Edit role",
     "deleteTooltip": "Delete role",
-    "confirmDelete": "Are you sure you want to delete role"
+    "confirmDelete": "Are you sure you want to delete role",
+    "nameLabel": "Role Name",
+    "namePlaceholder": "Enter role name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter description",
+    "permissionsLabel": "Permissions",
+    "validation": {
+      "nameRequired": "Role name is required.",
+      "templateStringRequired": "Template string is required.",
+      "typeRequired": "Type is required.",
+      "versionRequired": "Version is required.",
+      "permissionsRequired": "Please select at least one permission."
+    },
+    "permissionsTable": {
+      "title": "Permission",
+      "tag": "Tag"
+    }
   },
+  "roleForm": {
+    "title": "Role",
+    "nameLabel": "Role Name",
+    "namePlaceholder": "Enter role name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter description",
+    "permissionsLabel": "Permissions",
+    "validation": {
+      "nameRequired": "Role name is required.",
+      "templateStringRequired": "Template string is required.",
+      "typeRequired": "Type is required.",
+      "versionRequired": "Version is required.",
+      "permissionsRequired": "Please select at least one permission."
+    },
+    "permissionsTable": {
+      "title": "Permission",
+      "tag": "Tag"
+    }
+  },
+
+  "permissionPage": {
+    "title": "Permission Management",
+    "breadcrumb": "Permissions",
+    "columns": {
+      "name": "Name",
+      "description": "Description",
+      "creationDate": "Created Date"
+    },
+    "search": {
+      "name": "Permission Name",
+      "namePlaceholder": "Enter permission name...",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "global": "Global Search",
+      "globalPlaceholder": "Search by name or description"
+    },
+    "sort": {
+      "order": "Order",
+      "by": "Sort by",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "name": "Name",
+      "creationDate": "Created Date"
+    },
+    "editTooltip": "Edit this permission",
+    "deleteTooltip": "Delete this permission",
+    "confirmDelete": "Are you sure you want to delete",
+    "deleteSuccess": "Permission deleted successfully!",
+    "confirmActivate": "Do you want to activate {{name}}?",
+    "confirmDeactivate": "Do you want to deactivate {{name}}?",
+    "confirmToggleTitle": "Confirm Status Change",
+    "toggleSuccess": "Status updated to {{status}}"
+  },
+  "permissionForm": {
+    "title": "Permission",
+    "nameLabel": "Permission Name",
+    "namePlaceholder": "Enter permission name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter description",
+    "validation": {
+      "nameRequired": "Permission name is required.",
+      "descriptionRequired": "Description is required.",
+      "nameInvalid": "Name must be in the format 'something.something', e.g., 'user.create'."
+    }
+  },
+
   "promptPage": {
     "title": "Prompt Management",
     "breadcrumb": {
