@@ -22,6 +22,7 @@
         </processorPath>
         <module name="submission-service" />
         <module name="ai-feedback-service" />
+        <module name="feedback-service" />
         <module name="grading-service" />
       </profile>
       <profile name="Annotation profile for authentication-service" enabled="true">
@@ -50,6 +51,7 @@
       <module name="common-library" options="-parameters" />
       <module name="content-service" options="-parameters" />
       <module name="discovery" options="-parameters" />
+      <module name="feedback-service" options="-parameters" />
       <module name="grading-service" options="-parameters" />
       <module name="identity" options="-parameters" />
       <module name="submission-service" options="-parameters" />

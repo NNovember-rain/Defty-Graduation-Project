@@ -3,15 +3,17 @@ server:
 #  servlet:
 #    context-path: /submission
 
+api:
+  prefix: /api/v1
+
 spring:
   application:
     name: submission-service
 
   datasource:
-    url: jdbc:mysql://localhost:3308/submission-service?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/submission-service?createDatabaseIfNotExist=true
     username: root
-    password: 123456
-
+    password: 1234
   jpa:
     hibernate:
       ddl-auto: update
@@ -34,3 +36,13 @@ spring:
 
 
 PLANTUML_SERVER_URL: http://localhost:8091/svg
+
+eureka:
+  #  instance:
+  #    prefer-ip-address: true
+  #    ip-address: ${HOST_IP_ADDRESS}
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
