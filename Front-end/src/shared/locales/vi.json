@@ -110,6 +110,10 @@
     "sad": "Kiến trúc Thiết kế Phần mềm"
   },
   "common": {
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "adminDashboard": "Bảng điều khiển Admin"
+    },
     "clear": "Xóa",
     "search": "Tìm kiếm",
     "cancel": "Hủy",
@@ -152,51 +156,34 @@
     "order": "STT"
   },
   "userPage": {
-    "title": "Người dùng",
-    "editTooltip": "Cập nhật người dùng",
-    "deleteTooltip": "Xóa người dùng",
-    "breadcrumb": {
-      "home": "Trang chủ",
-      "adminDashboard": "Bảng điều khiển Admin",
-      "userManagement": "Quản lý Người dùng"
-    },
-    "dataTableColumns": {
-      "renderingEngine": "Công cụ hiển thị",
-      "browser": "Trình duyệt",
-      "platform": "Nền tảng",
-      "engineVersion": "Phiên bản công cụ",
-      "cssGrade": "Hạng CSS",
+    "title": "Quản lý người dùng",
+    "breadcrumb": "Quản lý người dùng",
+    "columns": {
+      "name": "Họ và tên",
+      "username": "Tên đăng nhập",
+      "dob": "Ngày sinh",
+      "email": "Email",
+      "roles": "Vai trò",
       "creationDate": "Ngày tạo"
     },
-    "searchFields": {
-      "renderingEngineLabel": "Công cụ hiển thị",
-      "renderingEnginePlaceholder": "Nhập tên công cụ",
-      "browserNameLabel": "Tên trình duyệt",
-      "browserNamePlaceholder": "Nhập tên trình duyệt",
-      "platformLabel": "Nền tảng",
-      "platformPlaceholder": "Nhập nền tảng",
-      "cssGradeLabel": "Hạng CSS",
-      "cssGradeAny": "Bất kỳ",
-      "cssGradeA": "Hạng A",
-      "cssGradeB": "Hạng B",
-      "cssGradeC": "Hạng C",
-      "cssGradeX": "Hạng X",
-      "startDate": "Từ Ngày tạo",
-      "endDate": "Đến Ngày tạo",
-      "generalSearchLabel": "Tìm kiếm chung",
-      "generalSearchPlaceholder": "Tìm kiếm tất cả các trường..."
+    "search": {
+      "username": "Tên đăng nhập",
+      "namePlaceholder": "Nhập tên đăng nhập...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm tổng quát",
+      "globalPlaceholder": "Tìm theo tên, email..."
     },
-    "sortFields": {
-      "sortOrderLabel": "Thứ tự Sắp xếp",
+    "sort": {
+      "order": "Thứ tự sắp xếp",
       "ascending": "Tăng dần",
       "descending": "Giảm dần",
-      "orderByLabel": "Sắp xếp theo",
-      "renderingEngine": "Công cụ hiển thị",
-      "browser": "Trình duyệt",
-      "id": "ID",
+      "by": "Sắp xếp theo",
+      "name": "Tên",
       "creationDate": "Ngày tạo"
     }
   },
+
   "rolePage": {
     "title": "Quản lý vai trò",
     "breadcrumb": "Quản lý vai trò",
@@ -228,6 +215,71 @@
     "deleteTooltip": "Xóa vai trò",
     "confirmDelete": "Bạn có chắc muốn xóa vai trò"
   },
+  "roleForm": {
+    "title": "Vai trò",
+    "nameLabel": "Tên vai trò",
+    "namePlaceholder": "Nhập tên vai trò",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả",
+    "permissionsLabel": "Quyền hạn",
+    "validation": {
+      "nameRequired": "Tên vai trò không được để trống.",
+      "templateStringRequired": "Chuỗi mẫu không được để trống.",
+      "typeRequired": "Loại vai trò là bắt buộc.",
+      "versionRequired": "Phiên bản là bắt buộc.",
+      "permissionsRequired": "Vui lòng chọn ít nhất một quyền."
+    },
+    "permissionsTable": {
+      "title": "Quyền",
+      "tag": "Thẻ"
+    }
+  },
+
+  "permissionPage": {
+    "title": "Quản lý quyền",
+    "breadcrumb": "Quyền",
+    "columns": {
+      "name": "Tên quyền",
+      "description": "Mô tả",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "name": "Tên quyền",
+      "namePlaceholder": "Nhập tên quyền...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm toàn bộ",
+      "globalPlaceholder": "Tìm theo tên hoặc mô tả"
+    },
+    "sort": {
+      "order": "Thứ tự",
+      "by": "Sắp xếp theo",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "name": "Tên",
+      "creationDate": "Ngày tạo"
+    },
+    "editTooltip": "Chỉnh sửa quyền này",
+    "deleteTooltip": "Xóa quyền này",
+    "confirmDelete": "Bạn có chắc muốn xóa",
+    "deleteSuccess": "Xóa quyền thành công!",
+    "confirmActivate": "Bạn có muốn kích hoạt {{name}} không?",
+    "confirmDeactivate": "Bạn có muốn vô hiệu hóa {{name}} không?",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "toggleSuccess": "Cập nhật trạng thái thành {{status}}"
+  },
+    "permissionForm": {
+        "title": "Quyền",
+        "nameLabel": "Tên quyền",
+        "namePlaceholder": "Nhập tên quyền",
+        "descriptionLabel": "Mô tả",
+        "descriptionPlaceholder": "Nhập mô tả quyền",
+        "validation": {
+          "nameRequired": "Tên quyền là bắt buộc!",
+          "descriptionRequired": "Mô tả là bắt buộc!",
+          "nameInvalid": "Tên phải theo định dạng 'something.something', ví dụ: 'user.create', 'assignment.view'."
+        }
+    },
   "promptPage": {
     "title": "Quản lý Prompt",
     "breadcrumb": {

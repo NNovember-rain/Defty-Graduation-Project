@@ -21,4 +21,5 @@ public class UserResponse {
     Set<RoleResponse> roles;
     Date createdDate;
     String email;
+    Integer isActive; // 1 for active, 0 for inactive, -1 for deleted
 }

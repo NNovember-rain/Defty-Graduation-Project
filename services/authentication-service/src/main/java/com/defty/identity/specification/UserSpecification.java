@@ -1,9 +1,11 @@
 package com.defty.identity.specification;
 
+import com.defty.identity.entity.Role;
 import com.defty.identity.entity.User;
 import org.springframework.data.jpa.domain.Specification;
 
 public class UserSpecification {
+
     public static Specification<User> usernameContains(String username) {
         return (root, query, cb) ->
                 username == null ? null : cb.like(cb.lower(root.get("username")), "%" + username.toLowerCase() + "%");
@@ -16,7 +18,9 @@ public class UserSpecification {
 
     public static Specification<User> build(String username, String email) {
         return Specification.where(usernameContains(username))
-                .and(emailContains(email));
+                .and(emailContains(email))
+                .and((root, query, cb) -> cb.notEqual(root.get("isActive"), -1)); // lọc bỏ user bị xóa
     }
+
 }
 

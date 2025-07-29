@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {useTranslation} from 'react-i18next';
 import Breadcrumb from './Breadcrumb';
 import AntdDatePicker from '../../components/DatePicker';
-import dayjs, { Dayjs } from 'dayjs';
-import { Spin } from 'antd';
-import { useNotification } from "../../../shared/notification/useNotification.ts";
+import dayjs, {Dayjs} from 'dayjs';
+import {Spin, Tag} from 'antd';
+import {useNotification} from "../../../shared/notification/useNotification.ts";
 
 import './FormTemplate.scss';
+import DualListBox from "../../components/DualListBox/DualListBox.tsx";
 
 export interface FormField {
     key: string;
     labelKey: string; // Key dịch thuật cho label
-    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime';
+    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'duallistbox';
     placeholderKey?: string; // Key dịch thuật cho placeholder
     options?: { value: string; labelKey: string }[]; // labelKey cho options
     required?: boolean;
@@ -34,9 +35,9 @@ interface FormTemplateProps<T extends Record<string, any>> {
     pageTitleKey: string; // Key dịch thuật cho tiêu đề trang
     breadcrumbItems: BreadcrumbItem[];
     formFields: FormField[];
-    serviceGetById?: (id: string) => Promise<T>;
+    serviceGetById?: (id: string | number) => Promise<T>;
     serviceCreate?: (data: Omit<T, '_id' | 'createdAt' | 'updatedAt'>) => Promise<T>;
-    serviceUpdate?: (id: string, data: Partial<Omit<T, '_id' | 'createdAt' | 'updatedAt'>>) => Promise<T>;
+    serviceUpdate?: (id: string | number, data: Partial<Omit<T, '_id' | 'createdAt' | 'updatedAt'>>) => Promise<T>;
     validationSchema?: ValidationSchema<T>;
     redirectPath: string;
 }
@@ -282,7 +283,7 @@ const FormTemplate = <T extends Record<string, any>>({
                                             type="text"
                                             id={field.key}
                                             name={field.key}
-                                            value={formData[field.key as keyof T] || ''}
+                                            value={(formData && formData[field.key as keyof T]) ?? ''}
                                             onChange={(e) => handleChange(field.key, e.target.value)}
                                             className="form-template__input"
                                             placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
@@ -307,7 +308,7 @@ const FormTemplate = <T extends Record<string, any>>({
                                         <textarea
                                             id={field.key}
                                             name={field.key}
-                                            value={formData[field.key as keyof T] || ''}
+                                            value={(formData && formData[field.key as keyof T]) ?? ''}
                                             onChange={(e) => handleChange(field.key, e.target.value)}
                                             rows={field.key === 'templateString' ? 8 : 3}
                                             className={`form-template__input form-template__textarea ${field.key === 'templateString' ? 'form-template__font-mono form-template__text-sm' : ''}`}
@@ -351,6 +352,29 @@ const FormTemplate = <T extends Record<string, any>>({
                                             placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
                                         />
                                     )}
+
+                                    {field.type === 'duallistbox' && (
+                                        <DualListBox
+                                            dataSource={(field.options || []).map((opt) => ({
+                                                key: opt.value,
+                                                title: t(opt.labelKey),
+                                                description: t(opt.labelKey),
+                                                tag: opt.value,
+                                            }))}
+                                            targetKeys={formData[field.key as keyof T] as string[] || []}
+                                            onChange={(nextKeys) => handleChange(field.key, nextKeys)}
+                                            leftColumns={[
+                                                { dataIndex: 'title', title: t('roleForm.permissionsTable.title') },
+                                                { dataIndex: 'tag', title: t('roleForm.permissionsTable.tag'), render: (tag: string) => <Tag color="blue">{tag}</Tag> }
+                                            ]}
+                                            rightColumns={[
+                                                { dataIndex: 'title', title: t('roleForm.permissionsTable.title') },
+                                                { dataIndex: 'tag', title: t('roleForm.permissionsTable.tag'), render: (tag: string) => <Tag color="green">{tag}</Tag> }
+                                            ]}
+                                            showSearch
+                                        />
+                                    )}
+
 
                                     {validationErrors[field.key] && (
                                         <p className="form-template__error-text">{validationErrors[field.key]}</p>

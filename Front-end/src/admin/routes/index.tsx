@@ -12,6 +12,8 @@ import Permission from "../pages/Permission";
 import Prompt from "../pages/Prompt";
 import PromptForm from "../pages/Prompt/promptForm.tsx";
 import TestNotification from "../../shared/notification/TestNotification.tsx";
+import RoleForm from "../pages/Role/roleForm.tsx";
+import PermissionForm from "../pages/Permission/permissionForm.tsx";
 
 interface AppRoute {
     path: string;
@@ -53,22 +55,52 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'dashboard',
         component: DashboardPage,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
     },
     {
         path: 'users',
         component: User,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
     },
     {
-        path: 'roles',
+        path: 'users/create',
+        component: User,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'users/update/:id',
+        component: User,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/roles',
         component: Role,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
     },
     {
-        path: 'permissions',
+        path: 'auth/roles/create',
+        component: RoleForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/roles/update/:id',
+        component: RoleForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/permissions',
         component: Permission,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/permissions/create',
+        component: PermissionForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/permissions/update/:id',
+        component: PermissionForm,
+        requiredAnyOfRoles: ['admin'],
     },
     {
         path: 'settings/prompts',
