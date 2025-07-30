@@ -21,6 +21,7 @@ public enum ErrorCode {
     USERNAME_REQUIRED(1011, "Username is required", HttpStatus.BAD_REQUEST),
     PASSWORD_REQUIRED(1012, "Password is required", HttpStatus.BAD_REQUEST),
     ROLE_DELETE_FORBIDDEN(1013, "Deleting this role is not allowed", HttpStatus.BAD_REQUEST),
+    ROLE_INACTIVE_FORBIDDEN(1013, "This role is inactive and cannot be used", HttpStatus.BAD_REQUEST),
     ROLE_EXISTED(1014, "Role existed", HttpStatus.BAD_REQUEST),
     PERMISSION_EXISTED(1015, "Permission existed", HttpStatus.BAD_REQUEST),
     ;

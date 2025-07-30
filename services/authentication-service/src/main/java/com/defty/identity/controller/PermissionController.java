@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,7 +72,7 @@ public class PermissionController {
 
     @PreAuthorize("hasRole('admin')")
     @GetMapping("/by-role/{roleId}")
-    public ApiResponse<Page<PermissionResponse>> getByRoleAndName(@PathVariable Long roleId,
+    public ApiResponse<Page<PermissionResponse>> getPermissionsByRole(@PathVariable Long roleId,
                                                                   @RequestParam(required = false) String name,
                                                                   @RequestParam(value = "page", defaultValue = "0") int page,
                                                                   @RequestParam(value = "size", defaultValue = "10") int size) {
