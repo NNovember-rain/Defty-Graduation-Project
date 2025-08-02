@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("${api.prefix}/admin/class-management-service/enrollment")
+@RequestMapping("/enrollment")
 public class EnrollmentController {
     IEnrollmentService enrollmentService;
 //    @PostMapping("/add-students")

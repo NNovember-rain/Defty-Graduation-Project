@@ -56,6 +56,10 @@
     "createQuiz": "Create Quiz / Test",
     "lecturesAndMaterials": "Lectures & Materials",
     "classManagement": "Class Management",
+    "classList": "Class list",
+    "courseCategories": "Course Categories",
+    "classReports": "Class Reports",
+    "globalClassSettings": "Global Class Settings",
     "submissionManagement": "Submission Management",
     "submissionList": "Submission List",
     "manualGrading": "Manual Grading",
@@ -126,6 +130,7 @@
     "confirm": "Confirm",
     "delete": "Delete",
     "confirmDeleteContent": "Are you sure you want to delete? This action cannot be undone."
+
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
