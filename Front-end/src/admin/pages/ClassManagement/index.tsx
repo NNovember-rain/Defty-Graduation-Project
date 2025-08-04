@@ -137,11 +137,11 @@ const ClassManagement: React.FC = () => {
     // Các cột cho bảng (thay đổi theo ClassDto)
     const dataTableColumns = React.useMemo(() => [
         { key: 'name', label: t('classPage.dataTableColumns.name'), sortable: true },
-        { key: 'description', label: t('classPage.dataTableColumns.description'), sortable: true },
         { key: 'teacherId', label: t('classPage.dataTableColumns.teacherId'), sortable: true },
-        { key: 'section', label: t('classPage.dataTableColumns.section'), sortable: true },
-        { key: 'subject', label: t('classPage.dataTableColumns.subject'), sortable: true },
-        { key: 'room', label: t('classPage.dataTableColumns.room'), sortable: true },
+        { key: 'description', label: t('classPage.dataTableColumns.description'), sortable: true },
+        // { key: 'section', label: t('classPage.dataTableColumns.section'), sortable: true },
+        // { key: 'subject', label: t('classPage.dataTableColumns.subject'), sortable: true },
+        // { key: 'room', label: t('classPage.dataTableColumns.room'), sortable: true },
         {
             key: 'createdDate',
             label: t('classPage.dataTableColumns.createdDate'),
@@ -161,8 +161,8 @@ const ClassManagement: React.FC = () => {
     const searchFields: SearchField[] = React.useMemo(() => [
         { key: 'name', label: t('classPage.searchFields.nameLabel'), type: 'text', placeholder: t('classPage.searchFields.namePlaceholder'), gridSpan: 1 },
         { key: 'teacherId', label: t('classPage.searchFields.teacherIdLabel'), type: 'text', placeholder: t('classPage.searchFields.teacherIdPlaceholder'), gridSpan: 1 },
-        { key: 'section', label: t('classPage.searchFields.sectionLabel'), type: 'text', placeholder: t('classPage.searchFields.sectionPlaceholder'), gridSpan: 1 },
-        { key: 'subject', label: t('classPage.searchFields.subjectLabel'), type: 'text', placeholder: t('classPage.searchFields.subjectPlaceholder'), gridSpan: 1 }
+        // { key: 'section', label: t('classPage.searchFields.sectionLabel'), type: 'text', placeholder: t('classPage.searchFields.sectionPlaceholder'), gridSpan: 1 },
+        // { key: 'subject', label: t('classPage.searchFields.subjectLabel'), type: 'text', placeholder: t('classPage.searchFields.subjectPlaceholder'), gridSpan: 1 }
         // Bạn có thể thêm các trường tìm kiếm khác nếu cần
     ], [t]);
 

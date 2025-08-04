@@ -46,13 +46,10 @@ public class ClassService implements IClassService {
         ClassEntity classEntity = classMapper.toClassEntity(classRequest);
 
         try {
-
             classRepository.save(classEntity);
-
         } catch (Exception e) {
-
-            return new ApiResponse<>(500, e.getMessage(), classEntity.getId());
-
+            log.error("Error saving classEntity: {}", e.getMessage(), e); // log đầy đủ stacktrace
+            throw e;
         }
 
         return new ApiResponse<>(201, "Created", classEntity.getId());
@@ -76,9 +73,9 @@ public class ClassService implements IClassService {
         Page<ClassEntity> classEntities = classRepository.findClasses(
                 className, teacherName, status, sortedPageable
         );
-        if(classEntities.isEmpty()){
-            return new ApiResponse<>(404, "Class doesn't exist", null);
-        }
+//        if(classEntities.isEmpty()){
+//            return new ApiResponse<>(404, "Class doesn't exist", null);
+//        }
         List<ClassResponse> classResponses = new ArrayList<>();
 
         for(ClassEntity c : classEntities){

@@ -66,17 +66,22 @@ export const createClass = async (data: CreateClassRequest): Promise<ApiResponse
     return await response.json() as ApiResponse<number>;
 };
 export const updateClass = async (id: number, data: UpdateClassRequest): Promise<ApiResponse<number>> => {
+
+    console.log(data);
+
     const formData = convertToFormData(data);
     const response = await handleRequest(putFormData(`${CLASS_SERVICE_PREFIX}/class/${id}`, formData));
     return await response.json() as ApiResponse<number>;
 };
 
-// Utility chuyển object → FormData
 const convertToFormData = (data: Record<string, any>): FormData => {
     const formData = new FormData();
     for (const key in data) {
         if (Object.prototype.hasOwnProperty.call(data, key)) {
-            formData.append(key, data[key]);
+            const value = data[key];
+            if (value !== null && value !== undefined) {
+                formData.append(key, value);
+            }
         }
     }
     return formData;
@@ -90,8 +95,8 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
     const params = {
         page: currentPage - 1, // Backend dùng 0-indexed
         size: entriesPerPage,
-        name: options.name,
-        teacherId: options.teacherId,
+        class_name: options.name,
+        teacher_name: options.teacherId,
         section: options.section,
         subject: options.subject,
         sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
@@ -134,8 +139,13 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
 
 export const getClassById = async (id: number): Promise<IClass> => {
     const response = await handleRequest(get(`${CLASS_SERVICE_PREFIX}/class/${id}`));
-    return await response.json() as IClass;
+
+    const data = await response.json();
+    console.log("Dữ liệu trả về:", data);
+
+    return data.data as IClass;
 };
+
 export const deleteClass = async (ids: number | number[], teacherId: number): Promise<ApiResponse<void>> => {
     let pathIds: string;
 

@@ -15,7 +15,7 @@ public class ClassRequest {
     Long teacherId;
     String name;
     String description;
-    String section;
-    String subject;
-    String room;
+//    String section;
+//    String subject;
+//    String room;
 }

@@ -39,27 +39,27 @@ const ClassForm: React.FC = () => {
             placeholderKey: 'classForm.descriptionPlaceholder',
             gridSpan: 24, // Chiếm toàn bộ chiều rộng
         },
-        {
-            key: 'section',
-            labelKey: 'classForm.sectionLabel',
-            type: 'text',
-            placeholderKey: 'classForm.sectionPlaceholder',
-            gridSpan: 8, // Chia 3 cột cho hàng này (24 / 3 = 8)
-        },
-        {
-            key: 'subject',
-            labelKey: 'classForm.subjectLabel',
-            type: 'text',
-            placeholderKey: 'classForm.subjectPlaceholder',
-            gridSpan: 8,
-        },
-        {
-            key: 'room',
-            labelKey: 'classForm.roomLabel',
-            type: 'text',
-            placeholderKey: 'classForm.roomPlaceholder',
-            gridSpan: 8,
-        },
+        // {
+        //     key: 'section',
+        //     labelKey: 'classForm.sectionLabel',
+        //     type: 'text',
+        //     placeholderKey: 'classForm.sectionPlaceholder',
+        //     gridSpan: 8, // Chia 3 cột cho hàng này (24 / 3 = 8)
+        // },
+        // {
+        //     key: 'subject',
+        //     labelKey: 'classForm.subjectLabel',
+        //     type: 'text',
+        //     placeholderKey: 'classForm.subjectPlaceholder',
+        //     gridSpan: 8,
+        // },
+        // {
+        //     key: 'room',
+        //     labelKey: 'classForm.roomLabel',
+        //     type: 'text',
+        //     placeholderKey: 'classForm.roomPlaceholder',
+        //     gridSpan: 8,
+        // },
     ], []);
 
     // Định nghĩa schema validation cho form lớp học
