@@ -38,6 +38,7 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                 .name(typeUML.getName())
                 .description(typeUML.getDescription())
                 .isActive(typeUML.getIsActive())
+                .createdDate(typeUML.getCreatedDate())
                 .build();
     }
 
@@ -58,6 +59,7 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                 .name(typeUML.getName())
                 .description(typeUML.getDescription())
                 .isActive(typeUML.getIsActive())
+                .createdDate(typeUML.getCreatedDate())
                 .build();
     }
 
@@ -79,6 +81,7 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                 .name(typeUML.getName())
                 .description(typeUML.getDescription())
                 .isActive(typeUML.getIsActive())
+                .createdDate(typeUML.getCreatedDate())
                 .build();
     }
 
@@ -93,6 +96,7 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                         .name(type.getName())
                         .description(type.getDescription())
                         .isActive(type.getIsActive())
+                        .createdDate(type.getCreatedDate())
                         .build());
     }
 
@@ -108,6 +112,7 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                 .name(updateTypeUml.getName())
                 .description(updateTypeUml.getDescription())
                 .isActive(updateTypeUml.getIsActive())
+                .createdDate(updateTypeUml.getCreatedDate())
                 .build();
     }
 }

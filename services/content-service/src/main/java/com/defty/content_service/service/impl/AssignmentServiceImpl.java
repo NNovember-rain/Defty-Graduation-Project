@@ -57,6 +57,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                     .classIds(classIds)
                     .isActive(assignment.getIsActive())
                     .assignmentCode(assignment.getAssignmentCode())
+                    .createdDate(assignment.getCreatedDate())
                     .build();
         });
     }
@@ -100,6 +101,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .classIds(request.getClassIds())
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())
+                .createdDate(assignment.getCreatedDate())
                 .build();
     }
 
@@ -130,6 +132,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .classIds(request.getClassIds())
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())
+                .createdDate(assignment.getCreatedDate())
                 .build();
     }
 
@@ -150,6 +153,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())
                 .classIds(classIds)
+                .createdDate(assignment.getCreatedDate())
                 .build();
     }
 
@@ -176,6 +180,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .isActive(updatedAssignment.getIsActive())
                 .assignmentCode(updatedAssignment.getAssignmentCode())
                 .typeUmlName(updatedAssignment.getTypeUML().getName())
+                .createdDate(updatedAssignment.getCreatedDate())
                 .classIds(assignmentClassRepository.findByAssignmentId(updatedAssignment.getId())
                         .stream()
                         .map(AssignmentClass::getClassId)
