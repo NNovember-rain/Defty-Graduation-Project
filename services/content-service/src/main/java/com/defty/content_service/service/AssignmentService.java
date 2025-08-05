@@ -10,4 +10,6 @@ public interface AssignmentService {
     AssignmentResponse assignAssignment(AssignmentRequest request);
     AssignmentResponse unassignAssignment(AssignmentRequest request);
     AssignmentResponse getAssignment(Long assignmentId);
+    void deleteAssignment(Long assignmentId);
+    AssignmentResponse toggleAssignmentStatus(Long assignmentId );
 }

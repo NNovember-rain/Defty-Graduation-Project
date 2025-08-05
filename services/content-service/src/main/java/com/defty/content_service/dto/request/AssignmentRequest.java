@@ -17,4 +17,5 @@ public class AssignmentRequest {
     String description;
     Long typeUmlId;
     List<Long> classIds;
+    String assignmentCode;
 }

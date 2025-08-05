@@ -44,4 +44,6 @@ public class BaseEntity implements Serializable {
     @Column(name = "modifiedby")
     @LastModifiedBy
     private String modifiedBy = null;
+
+    Integer isActive = 1; // 1 for active, 0 for inactive, -1 for deleted
 }

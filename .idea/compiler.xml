@@ -9,6 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="apigateway" />
         <module name="common-library" />
+        <module name="content-service" />
         <module name="discovery" />
         <module name="class-management-service" />
       </profile>
@@ -36,7 +37,6 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="content-service" target="17" />
       <module name="demo" target="17" />
       <module name="feedback-service" target="17" />
       <module name="identity" target="21" />

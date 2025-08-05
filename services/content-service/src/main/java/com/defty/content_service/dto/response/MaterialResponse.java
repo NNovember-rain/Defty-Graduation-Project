@@ -14,4 +14,5 @@ import java.util.List;
 public class MaterialResponse {
      Long materialId;
      List<Long> classIds;
+     Integer isActive;
 }

@@ -20,6 +20,10 @@ public class AssignmentSpecification {
         };
     }
 
+    public static Specification<Assignment> isActiveOnly() {
+        return (root, query, cb) -> cb.in(root.get("isActive")).value(0).value(1);
+    }
+
     public static Specification<Assignment> hasClassId(Long classId) {
         return (root, query, cb) -> {
             if (classId == null) return cb.conjunction();
