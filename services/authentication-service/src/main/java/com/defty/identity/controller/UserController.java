@@ -3,6 +3,7 @@ package com.defty.identity.controller;
 import com.defty.identity.dto.request.UserCreationRequest;
 import com.defty.identity.dto.request.UserUpdateRequest;
 import com.defty.identity.dto.response.ApiResponse;
+import com.defty.identity.dto.response.UserExistenceCheckResult;
 import com.defty.identity.dto.response.UserResponse;
 import com.defty.identity.service.UserService;
 import jakarta.validation.Valid;
@@ -43,6 +44,24 @@ public class UserController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<UserResponse> result = userService.getUsers(username, email, pageable);
         return ApiResponse.<Page<UserResponse>>builder()
+                .result(result)
+                .build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/by-role/{roleId}")
+    ApiResponse<List<UserResponse>> getUsersByRole(@PathVariable Long roleId,
+                                                   @RequestParam(required = false) String fullName) {
+        List<UserResponse> result = userService.getAllUsersByRole(fullName, roleId);
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/{ids}/check-existence")
+    ApiResponse<UserExistenceCheckResult> checkUsersExistence(@PathVariable List<Long> ids) {
+        UserExistenceCheckResult result = userService.checkUsersExistByIds(ids);
+        return ApiResponse.<UserExistenceCheckResult>builder()
                 .result(result)
                 .build();
     }

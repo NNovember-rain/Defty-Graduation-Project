@@ -20,10 +20,10 @@ public class User extends BaseEntity {
     String username;
 
     String password;
-    String firstName;
-    String lastName;
+    String fullName;
     LocalDate dob;
     Integer isActive = 1; // 1 for active, 0 for inactive, -1 for deleted
+    String userCode;
 
     @Column(unique = true, nullable = false)
     String email;
