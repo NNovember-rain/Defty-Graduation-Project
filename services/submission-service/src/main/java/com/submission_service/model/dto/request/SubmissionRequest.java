@@ -11,11 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SubmissionRequest {
     Long studentId;
-    String studentName;
     Long classId;
-    String className;
     Long assignmentId;
-    String assignmentTitle;
     String studentPlantUmlCode;
 
 //    private MultipartFile plantUmlFile;

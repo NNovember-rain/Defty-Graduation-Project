@@ -20,19 +20,10 @@ public class Submission extends BaseEntity {
     Long studentId;
 
     @Column(nullable = false)
-    String studentName;
-
-    @Column(nullable = false)
     Long assignmentId;
 
     @Column(nullable = false)
-    String assignmentTitle;
-
-    @Column(nullable = false)
     Long classId;
-
-//    @Column(nullable = false)
-//    Integer classUUID;
 
     @Column
     Double score;

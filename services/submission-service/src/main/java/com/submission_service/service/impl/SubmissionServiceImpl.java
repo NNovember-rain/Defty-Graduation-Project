@@ -104,6 +104,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     public Page<SubmissionResponse> getAllSubmissions(Pageable pageable, SubmissionSearchBuilder criteria) {
 
+
         Specification<Submission> spec = SubmissionSpecification.withCriteria(criteria);
         Page<Submission> pageResult = submissionRepository.findAll(spec, pageable);
         return pageResult.map(submission ->{

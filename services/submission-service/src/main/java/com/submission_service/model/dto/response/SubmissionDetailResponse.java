@@ -14,6 +14,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class SubmissionDetailResponse {
     Long id;
+    String studentId;
     String studentName;
     String assignmentTitle;
     Long classId;

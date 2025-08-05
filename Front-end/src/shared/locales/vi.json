@@ -448,5 +448,53 @@
       "title": "Kết quả",
       "placeholder": "Nhấn \"Chạy\" để xem sơ đồ."
     }
-  }
+  },
+  "submissionPage": {
+    "title": "Quản lý Bài nộp",
+    "breadcrumb": "Bài nộp",
+    "columns": {
+      "studentName": "Tên sinh viên",
+      "studentCode": "Mã sinh viên",
+      "assignmentTitle": "Tiêu đề bài tập",
+      "umlType": "Loại sơ đồ",
+      "classCode": "Mã lớp",
+      "createdDate": "Ngày nộp",
+      "submissionStatus": "Trạng thái"
+    },
+    "search": {
+      "studentName": "Tên sinh viên",
+      "studentNamePlaceholder": "Nhập tên sinh viên...",
+      "studentCode": "Mã sinh viên",
+      "studentCodePlaceholder": "Nhập mã sinh viên...",
+      "assignmentTitle": "Tiêu đề bài tập",
+      "assignmentTitlePlaceholder": "Nhập tiêu đề bài tập...",
+      "umlType": "Loại sơ đồ",
+      "umlTypePlaceholder": "Nhập tên sơ đồ",
+      "classCode": "Mã lớp",
+      "classCodePlaceholder": "Nhập mã lớp...",
+      "submissionStatus": "Trạng thái bài nộp",
+      "submissionStatusPlaceholder": "Chọn trạng thái...",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày"
+    },
+    "sort": {
+      "order": "Thứ tự sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "studentName": "Tên sinh viên",
+      "assignmentTitle": "Tiêu đề bài tập",
+      "classCode": "Mã lớp",
+      "createdDate": "Ngày nộp",
+      "submissionStatus": "Trạng thái"
+    },
+    "status": {
+      "submitted": "Đã nộp",
+      "processing": "Đang xử lý",
+      "completed": "Đã hoàn thành",
+      "reviewed": "Đã được nhận xét",
+      "failed": "Lỗi"
+    },
+    "viewTooltip": "Xem chi tiết bài nộp"
+  } 
 }
