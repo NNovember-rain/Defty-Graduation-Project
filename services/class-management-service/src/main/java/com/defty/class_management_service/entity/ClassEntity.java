@@ -22,7 +22,7 @@ public class ClassEntity extends BaseEntity{
     @Column(name = "teacher_id", nullable = false)
     private Long teacherId;
 
-    @Column(name = "name", nullable = false, unique = true)
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "description", columnDefinition = "TEXT")

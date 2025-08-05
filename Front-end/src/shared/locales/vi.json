@@ -56,6 +56,10 @@
     "createQuiz": "Tạo Quiz / Bài kiểm tra",
     "lecturesAndMaterials": "Bài giảng & Tài liệu",
     "classManagement": "Quản lý Lớp học",
+    "classList": "Danh sách lớp học",
+    "courseCategories": "Danh mục Khóa học",
+    "classReports": "Báo cáo Lớp học",
+    "globalClassSettings": "Cài đặt Chung Lớp học",
     "submissionManagement": "Quản lý Bài nộp",
     "submissionList": "Danh sách Bài nộp",
     "manualGrading": "Chấm điểm thủ công",
@@ -184,6 +188,67 @@
     }
   },
 
+  "classPage": {
+    "title": "Quản lý Lớp học",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "adminDashboard": "Bảng điều khiển Admin",
+      "classManagement": "Quản lý lớp học"
+    },
+    "dataTableColumns": {
+      "name": "Tên lớp",
+      "description": "Mô tả",
+      "teacherId": "ID Giáo viên",
+      "section": "Phần",
+      "subject": "Môn học",
+      "room": "Phòng",
+      "createdDate": "Ngày tạo",
+      "modifiedDate": "Ngày sửa"
+    },
+    "searchFields": {
+      "nameLabel": "Tên lớp",
+      "namePlaceholder": "Tìm kiếm theo tên lớp...",
+      "teacherIdLabel": "ID Giáo viên",
+      "teacherIdPlaceholder": "Tìm kiếm theo ID giáo viên...",
+      "sectionLabel": "Phần",
+      "sectionPlaceholder": "Tìm kiếm theo phần...",
+      "subjectLabel": "Môn học",
+      "subjectPlaceholder": "Tìm kiếm theo môn học..."
+    },
+    "sortFields": {
+      "sortOrderLabel": "Thứ tự sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "sortByLabel": "Sắp xếp theo",
+      "name": "Tên lớp",
+      "createdDate": "Ngày tạo",
+      "modifiedDate": "Ngày sửa"
+    },
+    "editTooltip": "Chỉnh sửa lớp học",
+    "deleteTooltip": "Xóa lớp học",
+    "confirmDelete": "Bạn có chắc muốn xóa lớp học",
+    "deleteSuccess": "Xóa lớp học thành công!"
+  },
+  "classForm": {
+    "title": "Thêm/Cập nhật Lớp học",
+    "teacherIdLabel": "ID Giáo viên",
+    "teacherIdPlaceholder": "Nhập ID của giáo viên...",
+    "nameLabel": "Tên lớp",
+    "namePlaceholder": "Nhập tên lớp...",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả cho lớp học...",
+    "sectionLabel": "Phần",
+    "sectionPlaceholder": "Nhập phần...",
+    "subjectLabel": "Môn học",
+    "subjectPlaceholder": "Nhập tên môn học...",
+    "roomLabel": "Phòng",
+    "roomPlaceholder": "Nhập phòng học...",
+    "validation": {
+      "teacherIdRequired": "ID Giáo viên là bắt buộc.",
+      "teacherIdPositive": "ID Giáo viên phải là số dương.",
+      "nameRequired": "Tên lớp là bắt buộc."
+    }
+  },
   "rolePage": {
     "title": "Quản lý vai trò",
     "breadcrumb": "Quản lý vai trò",

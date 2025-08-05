@@ -14,6 +14,8 @@ import PromptForm from "../pages/Prompt/promptForm.tsx";
 import TestNotification from "../../shared/notification/TestNotification.tsx";
 import RoleForm from "../pages/Role/roleForm.tsx";
 import PermissionForm from "../pages/Permission/permissionForm.tsx";
+import ClassManagement from "../pages/ClassManagement";
+import classForm from "../pages/ClassManagement/classForm.tsx";
 
 interface AppRoute {
     path: string;
@@ -101,6 +103,36 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         path: 'auth/permissions/update/:id',
         component: PermissionForm,
         requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'class/list',
+        component: ClassManagement,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'class/categories',
+        component: ClassManagement,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'class/reports',
+        component: ClassManagement,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'class/settings',
+        component: ClassManagement,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'class/create',
+        component: classForm,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'class/update/:id',
+        component: classForm,
+        requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
         path: 'settings/prompts',

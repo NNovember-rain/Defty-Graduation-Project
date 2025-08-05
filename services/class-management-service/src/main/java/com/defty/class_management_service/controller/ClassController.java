@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("${api.prefix}/admin/class-management-service/class")
+@RequestMapping("/class")
 public class ClassController {
     private final IClassService classService;
     @PostMapping("")

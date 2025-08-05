@@ -9,7 +9,8 @@ public class ClassValidation {
     public void fieldValidation(ClassRequest classRequest){
         String message = "";
         if(checknull(classRequest.getName())) message += "Class name can't be left blank!";
-        if(checknull(classRequest.getName())){
+        if(classRequest.getTeacherId() == null) message += "Teacher id can't be left blank!";
+        if(checknull(classRequest.getName()) || classRequest.getTeacherId() == null){
             message = "Field Riquired Exception!" + message;
             throw new FieldRequiredException(message);
         }

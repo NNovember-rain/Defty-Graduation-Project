@@ -56,6 +56,10 @@
     "createQuiz": "Create Quiz / Test",
     "lecturesAndMaterials": "Lectures & Materials",
     "classManagement": "Class Management",
+    "classList": "Class list",
+    "courseCategories": "Course Categories",
+    "classReports": "Class Reports",
+    "globalClassSettings": "Global Class Settings",
     "submissionManagement": "Submission Management",
     "submissionList": "Submission List",
     "manualGrading": "Manual Grading",
@@ -130,6 +134,7 @@
     "confirm": "Confirm",
     "delete": "Delete",
     "confirmDeleteContent": "Are you sure you want to delete? This action cannot be undone."
+
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -181,6 +186,67 @@
       "by": "Sort By",
       "name": "Name",
       "creationDate": "Creation Date"
+    }
+  },
+  "classPage": {
+    "title": "Class Management",
+    "breadcrumb": {
+      "home": "Home",
+      "adminDashboard": "Admin Dashboard",
+      "classManagement": "Class Management"
+    },
+    "dataTableColumns": {
+      "name": "Class Name",
+      "description": "Description",
+      "teacherId": "Teacher ID",
+      "section": "Section",
+      "subject": "Subject",
+      "room": "Room",
+      "createdDate": "Created Date",
+      "modifiedDate": "Modified Date"
+    },
+    "searchFields": {
+      "nameLabel": "Class Name",
+      "namePlaceholder": "Search by class name...",
+      "teacherIdLabel": "Teacher ID",
+      "teacherIdPlaceholder": "Search by teacher ID...",
+      "sectionLabel": "Section",
+      "sectionPlaceholder": "Search by section...",
+      "subjectLabel": "Subject",
+      "subjectPlaceholder": "Search by subject..."
+    },
+    "sortFields": {
+      "sortOrderLabel": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "sortByLabel": "Sort By",
+      "name": "Class Name",
+      "createdDate": "Created Date",
+      "modifiedDate": "Modified Date"
+    },
+    "editTooltip": "Edit class",
+    "deleteTooltip": "Delete class",
+    "confirmDelete": "Are you sure you want to delete class",
+    "deleteSuccess": "Class deleted successfully!"
+  },
+  "classForm": {
+    "title": "Add/Update Class",
+    "teacherIdLabel": "Teacher ID",
+    "teacherIdPlaceholder": "Enter teacher ID...",
+    "nameLabel": "Class Name",
+    "namePlaceholder": "Enter class name...",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter class description...",
+    "sectionLabel": "Section",
+    "sectionPlaceholder": "Enter section...",
+    "subjectLabel": "Subject",
+    "subjectPlaceholder": "Enter subject name...",
+    "roomLabel": "Room",
+    "roomPlaceholder": "Enter room number...",
+    "validation": {
+      "teacherIdRequired": "Teacher ID is required.",
+      "teacherIdPositive": "Teacher ID must be a positive number.",
+      "nameRequired": "Class name is required."
     }
   },
   "rolePage": {

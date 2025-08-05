@@ -3,7 +3,8 @@ package com.defty.class_management_service.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+
 
 @Data
 @NoArgsConstructor
@@ -24,9 +25,9 @@ public class ClassResponse {
 
     Integer status;
 
-    LocalDateTime createdDate;
+    Date createdDate;
     String createdBy;
-    LocalDateTime modifiedDate;
+    Date modifiedDate;
     String modifiedBy;
 }
 
