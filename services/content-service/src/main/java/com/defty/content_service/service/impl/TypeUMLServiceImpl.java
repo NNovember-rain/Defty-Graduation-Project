@@ -37,6 +37,7 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                 .id(typeUML.getId())
                 .name(typeUML.getName())
                 .description(typeUML.getDescription())
+                .isActive(typeUML.getIsActive())
                 .build();
     }
 
@@ -56,15 +57,16 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                 .id(typeUML.getId())
                 .name(typeUML.getName())
                 .description(typeUML.getDescription())
+                .isActive(typeUML.getIsActive())
                 .build();
     }
 
     @Override
     public void delete(Long id) {
-        if (!typeUMLRepository.existsById(id)) {
-            throw new NotFoundException("TypeUML not found");
-        }
-        typeUMLRepository.deleteById(id);
+        TypeUML typeUML = typeUMLRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("TypeUML not found"));
+        typeUML.setIsActive(-1);
+        typeUMLRepository.save(typeUML);
     }
 
     @Override
@@ -76,19 +78,37 @@ public class TypeUMLServiceImpl implements TypeUMLService {
                 .id(typeUML.getId())
                 .name(typeUML.getName())
                 .description(typeUML.getDescription())
+                .isActive(typeUML.getIsActive())
                 .build();
     }
 
     @Override
     public Page<TypeUMLResponse> getAll(String name, Pageable pageable) {
-        Specification<TypeUML> spec = Specification.where(TypeUMLSpecification.hasNameLike(name));
+        Specification<TypeUML> spec = Specification.where(TypeUMLSpecification.hasNameLike(name))
+                .and(TypeUMLSpecification.isActiveOnly());
 
         return typeUMLRepository.findAll(spec, pageable)
                 .map(type -> TypeUMLResponse.builder()
                         .id(type.getId())
                         .name(type.getName())
                         .description(type.getDescription())
+                        .isActive(type.getIsActive())
                         .build());
+    }
+
+    @Override
+    public TypeUMLResponse toggleActive(Long id) {
+        TypeUML typeUML = typeUMLRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("TypeUML not found"));
+        Integer currentStatus = typeUML.getIsActive();
+        typeUML.setIsActive(currentStatus != null && currentStatus == 1 ? 0 : 1);
+        TypeUML updateTypeUml = typeUMLRepository.save(typeUML);
+        return TypeUMLResponse.builder()
+                .id(updateTypeUml.getId())
+                .name(updateTypeUml.getName())
+                .description(updateTypeUml.getDescription())
+                .isActive(updateTypeUml.getIsActive())
+                .build();
     }
 }
 

@@ -13,4 +13,5 @@ public class TypeUMLResponse {
     Long id;
     String name;
     String description;
+    Integer isActive;
 }

@@ -11,4 +11,5 @@ public interface TypeUMLService {
     void delete(Long id);
     TypeUMLResponse getById(Long id);
     Page<TypeUMLResponse> getAll(String name, Pageable pageable);
+    TypeUMLResponse toggleActive(Long id);
 }

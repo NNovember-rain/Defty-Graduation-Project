@@ -19,6 +19,9 @@ public class User extends BaseEntity {
     @Column(unique = true, nullable = false)
     String username;
 
+    String avatarUrl;
+    String phoneNumber;
+
     String password;
     String fullName;
     LocalDate dob;

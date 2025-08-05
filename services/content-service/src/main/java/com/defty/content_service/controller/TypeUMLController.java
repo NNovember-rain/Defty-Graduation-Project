@@ -2,6 +2,7 @@ package com.defty.content_service.controller;
 
 import com.defty.content_service.dto.request.TypeUMLRequest;
 import com.defty.content_service.dto.response.ApiResponse;
+import com.defty.content_service.dto.response.AssignmentResponse;
 import com.defty.content_service.dto.response.TypeUMLResponse;
 import com.defty.content_service.service.TypeUMLService;
 import lombok.AccessLevel;
@@ -39,6 +40,15 @@ public class TypeUMLController {
         typeUMLService.delete(id);
         return ApiResponse.<String>builder()
                 .result("Deleted successfully")
+                .build();
+    }
+
+    @PatchMapping("/{id}/toggle-active")
+    public ApiResponse<TypeUMLResponse> toggleActiveStatus(@PathVariable Long id) {
+        TypeUMLResponse updateTypeUml = typeUMLService.toggleActive(id);
+        return ApiResponse.<TypeUMLResponse>builder()
+                .result(updateTypeUml)
+                .message("Type Uml status updated successfully")
                 .build();
     }
 
