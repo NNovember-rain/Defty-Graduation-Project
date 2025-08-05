@@ -14,9 +14,11 @@ import java.util.Date;
 @NoArgsConstructor
 public class SubmissionResponse {
     Long id;
-    String studentName;
-    String assignmentTitle;
-    Long classId;
+    String studentName="Hoàng Hiệp";
+    String studentCode="B21DCCN341";
+    String classCode="B555";
+    String assignmentTitle="Quản lý thư viện";
+    String umlType="Use Case";
     Date createdDate;
     SubmissionStatus submissionStatus;
 }

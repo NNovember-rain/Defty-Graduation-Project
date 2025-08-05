@@ -16,6 +16,8 @@ import RoleForm from "../pages/Role/roleForm.tsx";
 import PermissionForm from "../pages/Permission/permissionForm.tsx";
 import ClassManagement from "../pages/ClassManagement";
 import classForm from "../pages/ClassManagement/classForm.tsx";
+import Submission from "../pages/Submission";
+import SubmissionForm from "../pages/Submission";
 
 interface AppRoute {
     path: string;
@@ -162,6 +164,16 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: '*',
         component: DashboardPage,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'submissions',
+        component: Submission,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'submissions/create',
+        component: SubmissionForm,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
 ];
