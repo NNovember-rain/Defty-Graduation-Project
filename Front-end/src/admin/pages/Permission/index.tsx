@@ -112,7 +112,7 @@ const Permission: React.FC = () => {
             const formattedPermissions = (response.permissions || []).map(permission => ({
                 ...permission,
                 createdDate: permission.createdDate
-                    ? dayjs(permission.createdDate).format('YYYY-MM-DD')
+                    ? dayjs(permission.createdDate).format('YYYY-MM-DD HH:mm:ss')
                     : '',
             }));
 
@@ -244,7 +244,7 @@ const Permission: React.FC = () => {
     }, [t]);
 
     const handleEditPermission = useCallback((rowData: IPermission) => {
-        console.log("Editing permission:", rowData);
+        // console.log("Editing permission:", rowData);
         navigate(`/admin/auth/permissions/update/${rowData.id}`);
     }, [t]);
 

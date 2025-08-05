@@ -110,7 +110,7 @@ const User: React.FC = () => {
             };
 
             const response = await getUsers(options);
-            console.log("Fetched users:", response);
+            // console.log("Fetched users:", response);
             setUsers(response.users || []);
             setTotalUsers(response.total || 0);
             setLoading(false);
@@ -128,10 +128,9 @@ const User: React.FC = () => {
 
     const dataTableColumns = useMemo(() => [
         {
-            key: 'firstName',
+            key: 'fullName',
             label: t('userPage.columns.name'),
             sortable: false,
-            render: (row: any) => `${row?.firstName ?? ''} ${row?.lastName ?? ''}`.trim()
         },
         {
             key: 'username',
@@ -152,7 +151,7 @@ const User: React.FC = () => {
             key: 'roles',
             label: t('userPage.columns.roles'),
             sortable: false,
-            render: (row: any) => row.roles?.map((r: any) => r.name).join(', ')
+            render: (_value: any, row: any) => row.roles?.map((r: any) => r.name).join(', ')
         },
         {
             key: 'createdDate',
