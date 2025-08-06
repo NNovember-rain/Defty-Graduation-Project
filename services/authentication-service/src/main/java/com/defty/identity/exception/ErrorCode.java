@@ -19,13 +19,7 @@ public enum ErrorCode {
     INVALID_EMAIL(1009, "Invalid email. Please try again.", HttpStatus.BAD_REQUEST),
     EMAIL_REQUIRED(1010, "Email is required", HttpStatus.BAD_REQUEST),
     USERNAME_REQUIRED(1011, "Username is required", HttpStatus.BAD_REQUEST),
-    PASSWORD_REQUIRED(1012, "Password is required", HttpStatus.BAD_REQUEST),
-    ROLE_DELETE_FORBIDDEN(1013, "Deleting this role is not allowed", HttpStatus.BAD_REQUEST),
-    ROLE_INACTIVE_FORBIDDEN(1013, "This role is inactive and cannot be used", HttpStatus.BAD_REQUEST),
-    ROLE_EXISTED(1014, "Role existed", HttpStatus.BAD_REQUEST),
-    PERMISSION_EXISTED(1015, "Permission existed", HttpStatus.BAD_REQUEST),
-    ROLE_NOT_EXISTED(1016, "Role not existed", HttpStatus.NOT_FOUND),
-    USER_CODE_EXISTED(1002, "User code existed", HttpStatus.BAD_REQUEST),
+    PASSWORD_REQUIRED(1012, "Password is required", HttpStatus.BAD_REQUEST)
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

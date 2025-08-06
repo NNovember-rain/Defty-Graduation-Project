@@ -85,13 +85,6 @@ const sidebarContentConfig: SidebarItem[] = [
                 path: '/admin/content/materials',
                 requiredAnyOfRoles: ['admin', 'teacher']
             },
-            {
-                id: 'lecturesAndMaterials',
-                labelKey: 'sidebar.typeUml',
-                icon: <FaTools />,
-                path: '/admin/content/type-uml',
-                requiredAnyOfRoles: ['admin', 'teacher']
-            },
         ],
     },
     {
@@ -175,8 +168,8 @@ const sidebarContentConfig: SidebarItem[] = [
         requiredAnyOfRoles: ['admin'],
         children: [
             { id: 'userList', labelKey: 'sidebar.userManagement', icon: <FaUsers />, path: '/admin/users', requiredAnyOfRoles: ['admin'] },
-            { id: 'roleManagement', labelKey: 'sidebar.roleManagement', icon: <FaUserCog />, path: '/admin/auth/roles', requiredAnyOfRoles: ['admin'] },
-            { id: 'permissionManagement', labelKey: 'sidebar.permissionManagement', icon: <FaKey />, path: '/admin/auth/permissions', requiredAnyOfRoles: ['admin'] },
+            { id: 'roleManagement', labelKey: 'sidebar.roleManagement', icon: <FaUserCog />, path: '/admin/roles', requiredAnyOfRoles: ['admin'] },
+            { id: 'permissionManagement', labelKey: 'sidebar.permissionManagement', icon: <FaKey />, path: '/admin/permissions', requiredAnyOfRoles: ['admin'] },
         ],
     },
 ];

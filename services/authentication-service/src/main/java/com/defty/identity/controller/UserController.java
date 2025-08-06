@@ -3,7 +3,6 @@ package com.defty.identity.controller;
 import com.defty.identity.dto.request.UserCreationRequest;
 import com.defty.identity.dto.request.UserUpdateRequest;
 import com.defty.identity.dto.response.ApiResponse;
-import com.defty.identity.dto.response.UserExistenceCheckResult;
 import com.defty.identity.dto.response.UserResponse;
 import com.defty.identity.service.UserService;
 import jakarta.validation.Valid;
@@ -48,27 +47,9 @@ public class UserController {
                 .build();
     }
 
-    @PreAuthorize("hasRole('admin')")
-    @GetMapping("/by-role/{roleId}")
-    ApiResponse<List<UserResponse>> getUsersByRole(@PathVariable Long roleId,
-                                                   @RequestParam(required = false) String fullName) {
-        List<UserResponse> result = userService.getAllUsersByRole(fullName, roleId);
-        return ApiResponse.<List<UserResponse>>builder()
-                .result(result)
-                .build();
-    }
-
-    @PostMapping("/{ids}/check-existence")
-    ApiResponse<UserExistenceCheckResult> checkUsersExistence(@PathVariable List<Long> ids) {
-        UserExistenceCheckResult result = userService.checkUsersExistByIds(ids);
-        return ApiResponse.<UserExistenceCheckResult>builder()
-                .result(result)
-                .build();
-    }
-
-    @PreAuthorize("hasRole('admin')")
-    @GetMapping("/{id}")
-    ApiResponse<UserResponse> getUser(@PathVariable("id") Long userId){
+    //    @PreAuthorize("hasRole('GET_USER')")
+    @GetMapping("/{userId}")
+    ApiResponse<UserResponse> getUser(@PathVariable("userId") Long userId){
         return ApiResponse.<UserResponse>builder()
                 .result(userService.getUser(userId))
                 .build();
@@ -81,31 +62,20 @@ public class UserController {
                 .build();
     }
 
-    @PreAuthorize("hasRole('admin')")
-    @PutMapping("/{id}")
-    ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request){
+//    @PreAuthorize("hasRole('UPDATE_USER')")
+    @PutMapping("/{userId}")
+    ApiResponse<UserResponse> updateUser(@PathVariable Long userId, @RequestBody UserUpdateRequest request){
         return ApiResponse.<UserResponse>builder()
-                .result(userService.updateUser(id, request))
+                .result(userService.updateUser(userId, request))
                 .build();
     }
 
-    @PreAuthorize("hasRole('admin')")
-    @DeleteMapping("/{id}")
-    ApiResponse<String> deleteUser(@PathVariable Long id){
-        userService.deleteUser(id);
+//    @PreAuthorize("hasRole('DELETE_USER')")
+    @DeleteMapping("/{userId}")
+    ApiResponse<String> deleteUser(@PathVariable Long userId){
+        userService.deleteUser(userId);
         return ApiResponse.<String>builder()
                 .result("User has been deleted")
                 .build();
     }
-
-    @PreAuthorize("hasRole('admin')")
-    @PatchMapping("/{id}/toggle-active")
-    ApiResponse<UserResponse> toggleActiveStatus(@PathVariable Long id) {
-        UserResponse updatedUser = userService.toggleActiveStatus(id);
-        return ApiResponse.<UserResponse>builder()
-                .result(updatedUser)
-                .message("User status toggled successfully")
-                .build();
-    }
-
 }

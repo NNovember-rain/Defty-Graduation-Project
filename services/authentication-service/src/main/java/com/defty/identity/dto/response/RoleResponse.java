@@ -12,10 +12,8 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoleResponse {
-    Long id;
     String name;
     String description;
     Date createdDate;
     Set<PermissionResponse> permissions;
-    Integer isActive;
 }

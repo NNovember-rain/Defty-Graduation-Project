@@ -111,22 +111,10 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
 
-  redis:
-    image: redis:latest
-    container_name: redis_cache
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_cache:/data
-    restart: unless-stopped
-    networks:
-      - app-network
-
 volumes:
   mongodb_data:
   postgres_data:
   mysql-data:
-  redis_cache:
 
 networks:
   app-network:

@@ -55,7 +55,6 @@
     "quizList": "Quiz List",
     "createQuiz": "Create Quiz / Test",
     "lecturesAndMaterials": "Lectures & Materials",
-    "typeUml": "Type UML",
     "classManagement": "Class Management",
     "classList": "Class list",
     "courseCategories": "Course Categories",
@@ -115,10 +114,6 @@
     "sad": "Software Architecture and Design"
   },
   "common": {
-    "breadcrumb": {
-      "home": "Home",
-      "adminDashboard": "Admin Dashboard"
-    },
     "clear": "Clear",
     "search": "Search",
     "cancel": "Cancel",
@@ -161,115 +156,49 @@
     "selectedItems": "selected item(s)?",
     "order": "No."
   },
-  "typeUmlPage": {
-    "title": "UML Type Management",
-    "breadcrumb": "UML Types",
-    "columns": {
-      "name": "Name",
-      "description": "Description",
-      "creationDate": "Created Date"
-    },
-    "search": {
-      "name": "Name",
-      "namePlaceholder": "Enter UML name...",
-      "startDate": "From Date",
-      "endDate": "To Date",
-      "global": "Global Search",
-      "globalPlaceholder": "Search by name or description..."
-    },
-    "sort": {
-      "order": "Order",
-      "ascending": "Ascending",
-      "descending": "Descending",
-      "by": "Sort by",
-      "name": "Name",
-      "creationDate": "Created Date"
-    },
-    "editTooltip": "Edit UML type",
-    "deleteTooltip": "Delete UML type",
-    "confirmDelete": "Are you sure you want to delete",
-    "deleteSuccess": "Deleted successfully",
-    "activateTooltip": "Activate",
-    "deactivateTooltip": "Deactivate",
-    "confirmActivate": "Are you sure you want to activate '{{name}}'?",
-    "confirmDeactivate": "Are you sure you want to deactivate '{{name}}'?",
-    "confirmToggleTitle": "Confirm Status Change",
-    "toggleSuccess": "Status changed successfully: {{status}}"
-  },
-  "typeUmlForm":{
-    "title": "UML Type Form",
-    "nameLabel": "Name",
-    "namePlaceholder": "Enter UML type name ",
-    "descriptionLabel": "Description",
-    "descriptionPlaceholder": "Enter a description for the UML type",
-
-    "validation": {
-      "nameRequired": "Name is required.",
-      "nameInvalid": "Name must be in format: lowercase with at least one dot (e.g. class.diagram)."
-    }
-  },
-
-  "assignmentPage": {
-    "title": "Assignment Management",
-    "breadcrumb": "Assignments",
-    "columns": {
-      "name": "Assignment Name",
-      "description": "Description",
-      "creationDate": "Creation Date"
-    },
-    "search": {
-      "name": "Assignment Name",
-      "namePlaceholder": "Enter assignment name...",
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "global": "Global Search",
-      "globalPlaceholder": "Search by name, description..."
-    },
-    "sort": {
-      "order": "Order",
-      "ascending": "Ascending",
-      "descending": "Descending",
-      "by": "Sort By",
-      "name": "Name",
-      "creationDate": "Creation Date"
-    },
-    "editTooltip": "Edit assignment",
-    "deleteTooltip": "Delete assignment",
-    "deactivateTooltip": "Deactivate assignment",
-    "activateTooltip": "Activate assignment",
-    "confirmDelete": "Are you sure you want to delete",
-    "deleteSuccess": "Assignment deleted successfully!",
-    "confirmToggleTitle": "Confirm Status Change",
-    "confirmActivate": "Are you sure you want to activate '{{name}}'?",
-    "confirmDeactivate": "Are you sure you want to deactivate '{{name}}'?",
-    "toggleSuccess": "Status updated successfully: {{status}}"
-  },
-
   "userPage": {
-    "title": "User Management",
-    "breadcrumb": "User Management",
-    "columns": {
-      "name": "Full Name",
-      "username": "Username",
-      "dob": "Date of Birth",
-      "email": "Email",
-      "roles": "Roles",
-      "creationDate": "Created At"
+    "title": "Users",
+    "editTooltip": "Edit user",
+    "deleteTooltip": "Delete user",
+    "breadcrumb": {
+      "home": "Home",
+      "adminDashboard": "Admin Dashboard",
+      "userManagement": "User Management"
     },
-    "search": {
-      "username": "Username",
-      "namePlaceholder": "Enter username...",
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "global": "Global Search",
-      "globalPlaceholder": "Search by name, email..."
+    "dataTableColumns": {
+      "renderingEngine": "Rendering engine",
+      "browser": "Browser",
+      "platform": "Platform(s)",
+      "engineVersion": "Engine version",
+      "cssGrade": "CSS grade",
+      "creationDate": "Creation Date"
     },
-    "sort": {
-      "order": "Sort Order",
+    "searchFields": {
+      "renderingEngineLabel": "Rendering Engine",
+      "renderingEnginePlaceholder": "Enter engine name",
+      "browserNameLabel": "Browser Name",
+      "browserNamePlaceholder": "Enter browser name",
+      "platformLabel": "Platform",
+      "platformPlaceholder": "Enter platform",
+      "cssGradeLabel": "CSS Grade",
+      "cssGradeAny": "Any",
+      "cssGradeA": "Grade A",
+      "cssGradeB": "Grade B",
+      "cssGradeC": "Grade C",
+      "cssGradeX": "Grade X",
+      "startDate": "From Creation Date",
+      "endDate": "To Creation Date",
+      "generalSearchLabel": "General Search",
+      "generalSearchPlaceholder": "Search all fields..."
+    },
+    "sortFields": {
+      "sortOrderLabel": "Sort Order",
       "ascending": "Ascending",
       "descending": "Descending",
-      "by": "Sort By",
-      "name": "Name",
+      "orderByLabel": "Order By",
+      "renderingEngine": "Rendering Engine",
+      "browser": "Browser",
+      "id": "ID",
       "creationDate": "Creation Date"
     }
   },
@@ -334,6 +263,30 @@
       "nameRequired": "Class name is required."
     }
   },
+  "classDetail": {
+    "customise": "Customise",
+    "classCode": "Class code",
+    "upcoming": "Upcoming",
+    "noUpcomingWork": "No work due in soon",
+    "announcePlaceholder": "Announce something to your class",
+    "error": {
+      "noId": "No class ID found in the URL.",
+      "classNotFound": "Class not found."
+    },
+    "tabs": {
+      "stream": "Stream",
+      "classwork": "Classwork",
+      "people": "People",
+      "marks": "Marks",
+      "classworkContent": "This is the Classwork page.",
+      "peopleContent": "This is the People page.",
+      "marksContent": "This is the Marks page."
+    },
+    "peopleTab": {
+      "teachersTitle": "Teachers",
+      "studentsTitle": "Students"
+    }
+  },
   "rolePage": {
     "title": "Role Management",
     "breadcrumb": "Role Management",
@@ -356,97 +309,15 @@
       "descending": "Descending",
       "by": "Order By",
       "name": "Role Name",
-      "creationDate": "Created Date"
+      "creationDate": "Creation Date"
     },
     "createNew": "Create new role (not yet implemented)",
     "edit": "Edit",
     "delete": "Deleted",
     "editTooltip": "Edit role",
     "deleteTooltip": "Delete role",
-    "confirmDelete": "Are you sure you want to delete role",
-    "nameLabel": "Role Name",
-    "namePlaceholder": "Enter role name",
-    "descriptionLabel": "Description",
-    "descriptionPlaceholder": "Enter description",
-    "permissionsLabel": "Permissions",
-    "validation": {
-      "nameRequired": "Role name is required.",
-      "templateStringRequired": "Template string is required.",
-      "typeRequired": "Type is required.",
-      "versionRequired": "Version is required.",
-      "permissionsRequired": "Please select at least one permission."
-    },
-    "permissionsTable": {
-      "title": "Permission",
-      "tag": "Tag"
-    }
+    "confirmDelete": "Are you sure you want to delete role"
   },
-  "roleForm": {
-    "title": "Role",
-    "nameLabel": "Role Name",
-    "namePlaceholder": "Enter role name",
-    "descriptionLabel": "Description",
-    "descriptionPlaceholder": "Enter description",
-    "permissionsLabel": "Permissions",
-    "validation": {
-      "nameRequired": "Role name is required.",
-      "templateStringRequired": "Template string is required.",
-      "typeRequired": "Type is required.",
-      "versionRequired": "Version is required.",
-      "permissionsRequired": "Please select at least one permission."
-    },
-    "permissionsTable": {
-      "name": "Name",
-      "description": "Permission"
-    }
-  },
-
-  "permissionPage": {
-    "title": "Permission Management",
-    "breadcrumb": "Permissions",
-    "columns": {
-      "name": "Name",
-      "description": "Description",
-      "creationDate": "Created Date"
-    },
-    "search": {
-      "name": "Permission Name",
-      "namePlaceholder": "Enter permission name...",
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "global": "Global Search",
-      "globalPlaceholder": "Search by name or description"
-    },
-    "sort": {
-      "order": "Order",
-      "by": "Sort by",
-      "ascending": "Ascending",
-      "descending": "Descending",
-      "name": "Name",
-      "creationDate": "Created Date"
-    },
-    "editTooltip": "Edit this permission",
-    "deleteTooltip": "Delete this permission",
-    "confirmDelete": "Are you sure you want to delete",
-    "deleteSuccess": "Permission deleted successfully!",
-    "confirmActivate": "Do you want to activate {{name}}?",
-    "confirmDeactivate": "Do you want to deactivate {{name}}?",
-    "confirmToggleTitle": "Confirm Status Change",
-    "toggleSuccess": "Status updated to {{status}}"
-  },
-  "permissionForm": {
-    "title": "Permission",
-    "nameLabel": "Permission Name",
-    "namePlaceholder": "Enter permission name",
-    "descriptionLabel": "Description",
-    "descriptionPlaceholder": "Enter description",
-    "validation": {
-      "nameRequired": "Permission name is required.",
-      "descriptionRequired": "Description is required.",
-      "nameInvalid": "Name must be in the format 'something.something', e.g., 'user.create'."
-    }
-  },
-
   "promptPage": {
     "title": "Prompt Management",
     "breadcrumb": {

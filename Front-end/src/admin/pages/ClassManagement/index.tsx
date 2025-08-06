@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from "react";
 import ManagementTemplate, { type ActionButton } from "../../template/ManagementTemplate";
 import type { SearchField, SortField } from "../../template/ManagementTemplate/FilterOption.tsx";
 import { useTranslation } from "react-i18next";
-import { FaEdit, FaTrash, FaPlusSquare, FaBookOpen } from 'react-icons/fa'; // Các icon phù hợp hơn
+import {FaEdit, FaTrash, FaPlusSquare, FaBookOpen, FaEye} from 'react-icons/fa'; // Các icon phù hợp hơn
 
 import {
     getClasses,
@@ -233,6 +233,11 @@ const ClassManagement: React.FC = () => {
         navigate("/admin/class/create"); // Đường dẫn đến trang tạo lớp mới
     }, [navigate]);
 
+    const handleViewClassDetails = useCallback((rowData: IClass) => {
+        // Chuyển hướng đến đường dẫn chi tiết của lớp học, ví dụ: /admin/class/view/123
+        navigate(`/admin/class/view/${rowData.id}`);
+    }, [navigate]);
+
     const handleEditClass = useCallback((rowData: IClass) => {
         navigate(`/admin/class/update/${rowData.id}`); // Đường dẫn đến trang cập nhật lớp
     }, [navigate]);
@@ -302,6 +307,14 @@ const ClassManagement: React.FC = () => {
     // Nếu lớp học có trường status riêng, bạn có thể tạo hàm tương tự.
 
     const classActions = React.useMemo(() => [
+        {
+            // Nút "Xem chi tiết" sử dụng icon con mắt
+            icon: <FaEye />, // Thay FaBookOpen bằng FaEye
+            onClick: handleViewClassDetails,
+            className: 'text-gray-600 hover:text-gray-900 ml-2',
+            tooltip: t('classPage.viewDetailsTooltip'),
+            color: '#6c757d'
+        },
         // Bỏ FaToggleOn/FaToggleOff nếu không có isActive status
         {
             icon: <FaEdit />,
@@ -317,7 +330,7 @@ const ClassManagement: React.FC = () => {
             tooltip: t('classPage.deleteTooltip'),
             color: '#f62626'
         },
-    ], [handleEditClass, handleDeleteClass, t]);
+    ], [handleEditClass, handleDeleteClass, handleViewClassDetails, t]);
 
     if (loading && classes.length === 0) {
         return <div>{t('common.loadingData')}</div>;

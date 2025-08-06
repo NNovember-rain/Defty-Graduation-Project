@@ -9,9 +9,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface PermissionMapper {
     Permission toPermission(PermissionRequest request);
-
-    @Mapping(source = "isActive", target = "isActive")
-    @Mapping(source = "id", target = "id")
     @Mapping(source = "createdDate", target = "createdDate")
     PermissionResponse toPermissionResponse(Permission permission);
 }

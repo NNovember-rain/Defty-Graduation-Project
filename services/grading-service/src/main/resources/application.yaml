@@ -1,0 +1,22 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /grading
+
+spring:
+  application:
+    name: grading-service
+
+  datasource:
+    url: jdbc:mysql://45.117.171.17:3306/grading-service?createDatabaseIfNotExist=true
+    username: deftyuser
+    password: 123456
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true

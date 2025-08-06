@@ -13,6 +13,4 @@ public interface PermissionService {
     Page<PermissionResponse> getPermissions(String name, Pageable pageable);
     PermissionResponse getPermissionById(Long id);
     void deletePermission(Long id);
-    Page<PermissionResponse> getPermissionsByRoleId(Long roleId, String name, Pageable pageable);
-    PermissionResponse togglePermissionStatus(Long id);
 }

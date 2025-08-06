@@ -17,13 +17,8 @@ public class Role extends  BaseEntity {
     @Column(nullable = false, length = 255, unique = true)
     String name;
     String description;
-    Integer isActive = 1; // 1 for active, 0 for inactive, -1 for deleted
+    boolean deleted = false;
 
     @ManyToMany
-    @JoinTable(
-            name = "role_permission",
-            joinColumns = @JoinColumn(name = "permissions_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
     Set<Permission> permissions;
 }

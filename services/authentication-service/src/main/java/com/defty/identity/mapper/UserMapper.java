@@ -12,9 +12,6 @@ import org.mapstruct.MappingTarget;
 public interface UserMapper {
     User toUser(UserCreationRequest request);
 
-    @Mapping(source = "userCode", target = "userCode")
-    @Mapping(source = "isActive", target = "isActive")
-    @Mapping(source = "id", target = "id")
     @Mapping(source = "createdDate", target = "createdDate")
     UserResponse toUserResponse(User user);
 
