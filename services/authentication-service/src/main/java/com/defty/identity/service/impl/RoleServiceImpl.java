@@ -38,6 +38,7 @@ public class RoleServiceImpl implements RoleService {
         if (roleRepository.existsRoleByName(role.getName())) {
             throw new AppException(ErrorCode.ROLE_EXISTED);
         }
+        role.setIsActive(1);
         roleRepository.save(role);
         return roleMapper.toRoleResponse(role);
     }
@@ -84,9 +85,15 @@ public class RoleServiceImpl implements RoleService {
     public void deleteRole(Long id) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Role not found"));
+
+        if ("admin".equalsIgnoreCase(role.getName())) {
+            throw new AppException(ErrorCode.ROLE_DELETE_FORBIDDEN);
+        }
+
         role.setIsActive(-1);
         roleRepository.save(role);
     }
+
 
     @Override
     public RoleResponse toggleRoleStatus(Long id) {
@@ -94,7 +101,7 @@ public class RoleServiceImpl implements RoleService {
                 .orElseThrow(() -> new NotFoundException("Role not found with ID: " + id));
 
         if ("admin".equalsIgnoreCase(role.getName()) && role.getIsActive() == 1) {
-            throw new AppException(ErrorCode.ROLE_DELETE_FORBIDDEN);
+            throw new AppException(ErrorCode.ROLE_INACTIVE_FORBIDDEN);
         }
 
         role.setIsActive(role.getIsActive() == 1 ? 0 : 1);

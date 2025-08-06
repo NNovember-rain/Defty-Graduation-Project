@@ -3,6 +3,7 @@ package com.defty.content_service.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -18,5 +19,8 @@ public class AssignmentResponse {
     Long userId;
     String typeUmlName;
     String solutionCode;
+    String assignmentCode;
+    Integer isActive;
     List<Long> classIds;
+    Date createdDate;
 }

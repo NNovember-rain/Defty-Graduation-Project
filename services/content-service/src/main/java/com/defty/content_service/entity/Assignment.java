@@ -18,6 +18,8 @@ public class Assignment extends  BaseEntity{
     String title;
     String description;
     String solutionCode;
+    String assignmentCode;
+
     @ManyToOne
     @JoinColumn(name = "type_uml_id")
     TypeUML typeUML;

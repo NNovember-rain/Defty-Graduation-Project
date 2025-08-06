@@ -52,10 +52,30 @@ export const getPermissions = async (options: GetPermissionsOptions = {}): Promi
     } as GetPermissionsResult;
 };
 
+// export const getPermissionsByRole = async (options: GetPermissionsOptions = {}): Promise<GetPermissionsResult> => {
+//     const params = {
+//         page: (options.page || 1) - 1,
+//         limit: options.limit,
+//         name: options.name,
+//         sortBy: options.sortBy,
+//         sortOrder: options.sortOrder,
+//     };
+//
+//     const response = await handleRequest(getWithParams(`${PREFIX_IDENTITY}/${PREFIX_PERMISSIONS}/${id}`, params));
+//     const data = await response.json();
+//     return {
+//         permissions: data.result.content,
+//         total: data.result.totalElements,
+//         // page: data.result.number - 1,
+//         limit: data.result.size
+//     } as GetPermissionsResult;
+// };
+
+
 export const getPermissionById = async (id: string | number): Promise<IPermission> => {
     const response = await handleRequest(get(`${PREFIX_IDENTITY}/${PREFIX_PERMISSIONS}/${id}`));
     const data = await response.json();
-    return data.data as IPermission;
+    return data.result as IPermission;
 };
 
 export const updatePermission = async (id: string | number, data: Partial<Omit<IPermission, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IPermission> => {

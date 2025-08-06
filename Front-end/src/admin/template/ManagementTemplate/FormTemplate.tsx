@@ -15,7 +15,7 @@ export interface FormField {
     labelKey: string; // Key dịch thuật cho label
     type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'duallistbox';
     placeholderKey?: string; // Key dịch thuật cho placeholder
-    options?: { value: string; labelKey: string }[]; // labelKey cho options
+    options?: { value: string; label: string; [key: string]: any };
     required?: boolean;
     gridSpan?: number; // Cho layout grid
     format?: string;
@@ -357,20 +357,22 @@ const FormTemplate = <T extends Record<string, any>>({
                                         <DualListBox
                                             dataSource={(field.options || []).map((opt) => ({
                                                 key: opt.value,
-                                                title: t(opt.labelKey),
-                                                description: t(opt.labelKey),
+                                                name: opt.name,
+                                                description: opt.description,
                                                 tag: opt.value,
                                             }))}
                                             targetKeys={formData[field.key as keyof T] as string[] || []}
                                             onChange={(nextKeys) => handleChange(field.key, nextKeys)}
                                             leftColumns={[
-                                                { dataIndex: 'title', title: t('roleForm.permissionsTable.title') },
-                                                { dataIndex: 'tag', title: t('roleForm.permissionsTable.tag'), render: (tag: string) => <Tag color="blue">{tag}</Tag> }
+                                                { dataIndex: 'name', title: t('roleForm.permissionsTable.name') },
+                                                { dataIndex: 'description', title: t('roleForm.permissionsTable.description'), render: (text: string) => <Tag color="blue">{text}</Tag> }
                                             ]}
+
                                             rightColumns={[
-                                                { dataIndex: 'title', title: t('roleForm.permissionsTable.title') },
-                                                { dataIndex: 'tag', title: t('roleForm.permissionsTable.tag'), render: (tag: string) => <Tag color="green">{tag}</Tag> }
+                                                { dataIndex: 'name', title: t('roleForm.permissionsTable.name') },
+                                                { dataIndex: 'description', title: t('roleForm.permissionsTable.description'), render: (text: string) => <Tag color="green">{text}</Tag> }
                                             ]}
+
                                             showSearch
                                         />
                                     )}

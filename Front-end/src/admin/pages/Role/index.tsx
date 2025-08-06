@@ -113,11 +113,11 @@ const Role: React.FC = () => {
             const formattedRoles = (response.roles || []).map(role => ({
                 ...role,
                 createdDate: role.createdDate
-                    ? dayjs(role.createdDate).format('YYYY-MM-DD')
+                    ? dayjs(role.createdDate).format('YYYY-MM-DD HH:mm:ss')
                     : '',
             }));
 
-            console.log("Fetched roles:", formattedRoles);
+            // console.log("Fetched roles:", formattedRoles);
             setRoles(formattedRoles);
             setTotalRoles(response.total || 0);
             setLoading(false);

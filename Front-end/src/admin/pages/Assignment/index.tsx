@@ -7,19 +7,19 @@ import {FaEdit, FaToggleOff, FaToggleOn, FaTrash} from "react-icons/fa";
 import dayjs from 'dayjs';
 import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {
-    deletePermission,
-    getPermissions,
-    type GetPermissionsOptions,
-    type IPermission, togglePermissionActiveStatus
-} from "../../../shared/services/permissionService.ts";
+    deleteAssignment,
+    getAssignments,
+    type GetAssignmentsOptions,
+    type IAssignment, toggleAssignmentActiveStatus
+} from "../../../shared/services/assignmentService.ts";
 
-const Permission: React.FC = () => {
+const Assignment: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { message, modal } = useNotification();
 
-    const [permissions, setPermissions] = useState<IPermission[]>([]);
-    const [totalPermissions, setTotalPermissions] = React.useState(0);
+    const [assignments, setAssignments] = useState<IAssignment[]>([]);
+    const [totalAssignments, setTotalAssignments] = React.useState(0);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
 
@@ -100,7 +100,7 @@ const Permission: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const options: GetPermissionsOptions = {
+            const options: GetAssignmentsOptions = {
                 page: currentPage,
                 limit: entriesPerPage,
                 sortBy: currentSortColumn || undefined,
@@ -108,20 +108,20 @@ const Permission: React.FC = () => {
                 name: currentFilters.name || undefined
             };
 
-            const response = await getPermissions(options);
-            const formattedPermissions = (response.permissions || []).map(permission => ({
-                ...permission,
-                createdDate: permission.createdDate
-                    ? dayjs(permission.createdDate).format('YYYY-MM-DD HH:mm:ss')
+            const response = await getAssignments(options);
+            const formattedAssignments = (response.assignments || []).map(assignment => ({
+                ...assignment,
+                createdDate: assignment.createdDate
+                    ? dayjs(assignment.createdDate).format('YYYY-MM-DD HH:mm:ss')
                     : '',
             }));
 
-            // console.log("Fetched permissions:", formattedPermissions);
-            setPermissions(formattedPermissions);
-            setTotalPermissions(response.total || 0);
+            console.log("Fetched assignments:", formattedAssignments);
+            setAssignments(formattedAssignments);
+            setTotalAssignments(response.total || 0);
             setLoading(false);
         } catch (err) {
-            console.error("Failed to fetch permissions:", err);
+            console.error("Failed to fetch assignments:", err);
             setError(t('common.errorFetchingData'));
             setLoading(false);
         }
@@ -134,48 +134,53 @@ const Permission: React.FC = () => {
 
     const dataTableColumns = useMemo(() => [
         {
-            key: 'name',
-            label: t('permissionPage.columns.name'),
+            key: 'title',
+            label: t('assignmentPage.columns.name'),
             sortable: true
         },
         {
             key: 'description',
-            label: t('permissionPage.columns.description'),
+            label: t('assignmentPage.columns.description'),
+            sortable: true
+        },
+        {
+            key: 'typeUmlName',
+            label: t('assignmentPage.columns.description'),
             sortable: true
         },
         {
             key: 'createdDate',
-            label: t('permissionPage.columns.creationDate'),
+            label: t('assignmentPage.columns.creationDate'),
             sortable: true
         },
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
         {
-            key: 'name',
-            label: t('permissionPage.search.name'),
+            key: 'title',
+            label: t('assignmentPage.search.name'),
             type: 'text',
-            placeholder: t('permissionPage.search.namePlaceholder'),
+            placeholder: t('assignmentPage.search.namePlaceholder'),
             gridSpan: 1
         },
         {
             key: 'startDate',
-            label: t('permissionPage.search.startDate'),
+            label: t('assignmentPage.search.startDate'),
             type: 'datetime',
             gridSpan: 1,
             format: 'YYYY-MM-DD HH:mm:ss' },
         {
             key: 'endDate',
-            label: t('permissionPage.search.endDate'),
+            label: t('assignmentPage.search.endDate'),
             type: 'datetime',
             gridSpan: 1,
             format: 'YYYY-MM-DD HH:mm:ss'
         },
         {
             key: 'globalSearch',
-            label: t('permissionPage.search.global'),
+            label: t('assignmentPage.search.global'),
             type: 'text',
-            placeholder: t('permissionPage.search.globalPlaceholder'),
+            placeholder: t('assignmentPage.search.globalPlaceholder'),
             gridSpan: 2
         },
     ], [t]);
@@ -183,19 +188,19 @@ const Permission: React.FC = () => {
     const sortFields: SortField[] = useMemo(() => [
         {
             key: 'sortOrder',
-            label: t('permissionPage.sort.order'),
+            label: t('assignmentPage.sort.order'),
             options: [
-                { value: 'asc', label: t('permissionPage.sort.ascending') },
-                { value: 'desc', label: t('permissionPage.sort.descending') },
+                { value: 'asc', label: t('assignmentPage.sort.ascending') },
+                { value: 'desc', label: t('assignmentPage.sort.descending') },
             ],
             gridSpan: 1
         },
         {
             key: 'orderBy',
-            label: t('permissionPage.sort.by'),
+            label: t('assignmentPage.sort.by'),
             options: [
-                { value: 'name', label: t('permissionPage.sort.name') },
-                { value: 'creationDate', label: t('permissionPage.sort.creationDate') },
+                { value: 'name', label: t('assignmentPage.sort.name') },
+                { value: 'creationDate', label: t('assignmentPage.sort.creationDate') },
             ],
             gridSpan: 1
         },
@@ -239,60 +244,57 @@ const Permission: React.FC = () => {
         setCurrentPage(1);
     }, []);
 
-    const handleCreateNew = useCallback(() => {
-        navigate("/admin/auth/permissions/create");
+
+    const handleEditAssignment = useCallback((rowData: IAssignment) => {
+        // console.log("Editing assignment:", rowData);
+        navigate(`/admin/content/assignments/update/${rowData.id}`);
     }, [t]);
 
-    const handleEditPermission = useCallback((rowData: IPermission) => {
-        // console.log("Editing permission:", rowData);
-        navigate(`/admin/auth/permissions/update/${rowData.id}`);
-    }, [t]);
-
-    const handleDeletePermission = useCallback(async (rowData: IPermission) => {
+    const handleDeleteAssignment = useCallback(async (rowData: IAssignment) => {
         if (!rowData.id) {
-            console.error("Attempted to delete permission with no ID:", rowData);
+            console.error("Attempted to delete assignment with no ID:", rowData);
             console.log(t('common.errorNoIdToDelete'));
             return;
         }
         modal.deleteConfirm(
-            t('permissionPage.deleteTooltip'),
+            t('assignmentPage.deleteTooltip'),
             async () => {
                 try {
                     setLoading(true);
-                    await deletePermission(rowData.id as number);
-                    message.success(t('permissionPage.deleteSuccess'));
+                    await deleteAssignment(rowData.id as number);
+                    message.success(t('assignmentPage.deleteSuccess'));
                     await fetchData();
                 } catch (error) {
                     setError(t('common.errorDeletingData'));
-                    console.error("Error deleting permission:", error);
+                    console.error("Error deleting assignment:", error);
                     message.error(t('common.errorDeletingData'));
                 } finally {
                     setLoading(false);
                 }
             },
-            `${t('permissionPage.confirmDelete')} ${rowData.name || rowData.id}?`
+            `${t('assignmentPage.confirmDelete')} ${rowData.name || rowData.id}?`
         );
     }, [t, fetchData, modal, message]);
 
-    const handleToggleActiveStatus = useCallback(async (rowData: IPermission) => {
+    const handleToggleActiveStatus = useCallback(async (rowData: IAssignment) => {
         if (!rowData.id) return;
         const newStatus = !rowData.isActive;
         const confirmMessage = newStatus
-            ? t('permissionPage.confirmActivate', { name: rowData.name })
-            : t('permissionPage.confirmDeactivate', { name: rowData.name });
+            ? t('assignmentPage.confirmActivate', { name: rowData.name })
+            : t('assignmentPage.confirmDeactivate', { name: rowData.name });
 
         // Đã sửa lỗi: truyền một đối tượng cấu hình duy nhất
         modal.confirm({
-            title: t('permissionPage.confirmToggleTitle'),
+            title: t('assignmentPage.confirmToggleTitle'),
             content: confirmMessage,
             onOk: async () => {
                 try {
                     setLoading(true);
-                    await togglePermissionActiveStatus(rowData.id as number, newStatus);
-                    message.success(t('permissionPage.toggleSuccess', { status: newStatus ? t('common.active') : t('common.inactive') }));
+                    await toggleAssignmentActiveStatus(rowData.id as number, newStatus);
+                    message.success(t('assignmentPage.toggleSuccess', { status: newStatus ? t('common.active') : t('common.inactive') }));
                     await fetchData();
                 } catch (error) {
-                    console.log("Error toggling permission active status:", error);
+                    console.log("Error toggling assignment active status:", error);
                     setError(t('common.errorUpdatingData'));
                     message.error(t('common.errorUpdatingData'));
                 } finally {
@@ -302,31 +304,31 @@ const Permission: React.FC = () => {
         });
     }, [t, fetchData, modal, message]);
 
-    const permissionActions = React.useMemo(() => [
+    const assignmentActions = React.useMemo(() => [
         {
-            icon: (rowData: IPermission) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
+            icon: (rowData: IAssignment) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
             onClick: handleToggleActiveStatus,
-            className: (rowData: IPermission) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
-            tooltip: (rowData: IPermission) => rowData.isActive ? t('permissionPage.deactivateTooltip') : t('permissionPage.activateTooltip'),
+            className: (rowData: IAssignment) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
+            tooltip: (rowData: IAssignment) => rowData.isActive ? t('assignmentPage.deactivateTooltip') : t('assignmentPage.activateTooltip'),
             color: '#63782b'
         },
         {
             icon: <FaEdit />,
-            onClick: handleEditPermission,
+            onClick: handleEditAssignment,
             className: 'text-blue-500 hover:text-blue-700',
-            tooltip: t('permissionPage.editTooltip'),
+            tooltip: t('assignmentPage.editTooltip'),
             color: '#7600ff'
         },
         {
             icon: <FaTrash />,
-            onClick: handleDeletePermission,
+            onClick: handleDeleteAssignment,
             className: 'text-red-500 hover:text-red-700 ml-2',
-            tooltip: t('permissionPage.deleteTooltip'),
+            tooltip: t('assignmentPage.deleteTooltip'),
             color: 'red'
         },
-    ], [handleEditPermission, handleDeletePermission, handleToggleActiveStatus, t]);
+    ], [handleEditAssignment, handleDeleteAssignment, handleToggleActiveStatus, t]);
 
-    if (loading && permissions.length === 0) {
+    if (loading && assignments.length === 0) {
         return <div>{t('common.loadingData')}</div>;
     }
 
@@ -336,28 +338,27 @@ const Permission: React.FC = () => {
 
     return (
         <ManagementTemplate
-            pageTitle={t('permissionPage.title')}
+            pageTitle={t('assignmentPage.title')}
             breadcrumbItems={[
                 {label: t('common.breadcrumb.home'), path: '/'},
                 {label: t('common.breadcrumb.adminDashboard'), path: '/admin'},
-                {label: t('permissionPage.breadcrumb')},
+                {label: t('assignmentPage.breadcrumb')},
             ]}
             searchFields={searchFields}
             sortFields={sortFields}
             onSearch={handleSearch}
             onClear={handleClear}
             columns={dataTableColumns}
-            data={permissions}
-            totalEntries={totalPermissions}
+            data={assignments}
+            totalEntries={totalAssignments}
             entriesPerPage={entriesPerPage}
             currentPage={currentPage}
             onPageChange={handlePageChange}
             onSort={handleTableSort}
             currentSortColumn={currentSortColumn}
             currentSortOrder={currentSortOrder}
-            onCreateNew={handleCreateNew}
             onEntriesPerPageChange={handleEntriesPerPageChange}
-            actions={permissionActions as ActionButton[]}
+            actions={assignmentActions as ActionButton[]}
             initialFilters={currentFilters}
             initialSortBy={currentSortColumn}
             initialSortOrder={currentSortOrder}
@@ -365,4 +366,4 @@ const Permission: React.FC = () => {
     );
 };
 
-export default Permission;
+export default Assignment;

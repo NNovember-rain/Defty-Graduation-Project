@@ -7,19 +7,20 @@ import {FaEdit, FaToggleOff, FaToggleOn, FaTrash} from "react-icons/fa";
 import dayjs from 'dayjs';
 import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {
-    deletePermission,
-    getPermissions,
-    type GetPermissionsOptions,
-    type IPermission, togglePermissionActiveStatus
-} from "../../../shared/services/permissionService.ts";
+    deleteTypeUml,
+    type GetTypeUmlOptions,
+    getTypeUmls,
+    type ITypeUml,
+    toggleTypeUmlActiveStatus
+} from "../../../shared/services/typeUmlService.ts";
 
-const Permission: React.FC = () => {
+const TypeUml: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { message, modal } = useNotification();
 
-    const [permissions, setPermissions] = useState<IPermission[]>([]);
-    const [totalPermissions, setTotalPermissions] = React.useState(0);
+    const [typeUml, setTypeUml] = useState<ITypeUml[]>([]);
+    const [totalTypeUmls, setTotalTypeUmls] = React.useState(0);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
 
@@ -100,7 +101,7 @@ const Permission: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const options: GetPermissionsOptions = {
+            const options: GetTypeUmlOptions = {
                 page: currentPage,
                 limit: entriesPerPage,
                 sortBy: currentSortColumn || undefined,
@@ -108,20 +109,20 @@ const Permission: React.FC = () => {
                 name: currentFilters.name || undefined
             };
 
-            const response = await getPermissions(options);
-            const formattedPermissions = (response.permissions || []).map(permission => ({
-                ...permission,
-                createdDate: permission.createdDate
-                    ? dayjs(permission.createdDate).format('YYYY-MM-DD HH:mm:ss')
+            const response = await getTypeUmls(options);
+            const formattedTypeUmls = (response.typeUmls || []).map(typeUml => ({
+                ...typeUml,
+                createdDate: typeUml.createdDate
+                    ? dayjs(typeUml.createdDate).format('YYYY-MM-DD HH:mm:ss')
                     : '',
             }));
 
-            // console.log("Fetched permissions:", formattedPermissions);
-            setPermissions(formattedPermissions);
-            setTotalPermissions(response.total || 0);
+            // console.log("Fetched typeUml:", formattedTypeUml);
+            setTypeUml(formattedTypeUmls);
+            setTotalTypeUmls(response.total || 0);
             setLoading(false);
         } catch (err) {
-            console.error("Failed to fetch permissions:", err);
+            console.error("Failed to fetch typeUml:", err);
             setError(t('common.errorFetchingData'));
             setLoading(false);
         }
@@ -135,17 +136,17 @@ const Permission: React.FC = () => {
     const dataTableColumns = useMemo(() => [
         {
             key: 'name',
-            label: t('permissionPage.columns.name'),
+            label: t('typeUmlPage.columns.name'),
             sortable: true
         },
         {
             key: 'description',
-            label: t('permissionPage.columns.description'),
+            label: t('typeUmlPage.columns.description'),
             sortable: true
         },
         {
             key: 'createdDate',
-            label: t('permissionPage.columns.creationDate'),
+            label: t('typeUmlPage.columns.creationDate'),
             sortable: true
         },
     ], [t]);
@@ -153,29 +154,29 @@ const Permission: React.FC = () => {
     const searchFields: SearchField[] = useMemo(() => [
         {
             key: 'name',
-            label: t('permissionPage.search.name'),
+            label: t('typeUmlPage.search.name'),
             type: 'text',
-            placeholder: t('permissionPage.search.namePlaceholder'),
+            placeholder: t('typeUmlPage.search.namePlaceholder'),
             gridSpan: 1
         },
         {
             key: 'startDate',
-            label: t('permissionPage.search.startDate'),
+            label: t('typeUmlPage.search.startDate'),
             type: 'datetime',
             gridSpan: 1,
             format: 'YYYY-MM-DD HH:mm:ss' },
         {
             key: 'endDate',
-            label: t('permissionPage.search.endDate'),
+            label: t('typeUmlPage.search.endDate'),
             type: 'datetime',
             gridSpan: 1,
             format: 'YYYY-MM-DD HH:mm:ss'
         },
         {
             key: 'globalSearch',
-            label: t('permissionPage.search.global'),
+            label: t('typeUmlPage.search.global'),
             type: 'text',
-            placeholder: t('permissionPage.search.globalPlaceholder'),
+            placeholder: t('typeUmlPage.search.globalPlaceholder'),
             gridSpan: 2
         },
     ], [t]);
@@ -183,19 +184,19 @@ const Permission: React.FC = () => {
     const sortFields: SortField[] = useMemo(() => [
         {
             key: 'sortOrder',
-            label: t('permissionPage.sort.order'),
+            label: t('typeUmlPage.sort.order'),
             options: [
-                { value: 'asc', label: t('permissionPage.sort.ascending') },
-                { value: 'desc', label: t('permissionPage.sort.descending') },
+                { value: 'asc', label: t('typeUmlPage.sort.ascending') },
+                { value: 'desc', label: t('typeUmlPage.sort.descending') },
             ],
             gridSpan: 1
         },
         {
             key: 'orderBy',
-            label: t('permissionPage.sort.by'),
+            label: t('typeUmlPage.sort.by'),
             options: [
-                { value: 'name', label: t('permissionPage.sort.name') },
-                { value: 'creationDate', label: t('permissionPage.sort.creationDate') },
+                { value: 'name', label: t('typeUmlPage.sort.name') },
+                { value: 'creationDate', label: t('typeUmlPage.sort.creationDate') },
             ],
             gridSpan: 1
         },
@@ -240,59 +241,59 @@ const Permission: React.FC = () => {
     }, []);
 
     const handleCreateNew = useCallback(() => {
-        navigate("/admin/auth/permissions/create");
+        navigate("/admin/content/type-uml/create");
     }, [t]);
 
-    const handleEditPermission = useCallback((rowData: IPermission) => {
-        // console.log("Editing permission:", rowData);
-        navigate(`/admin/auth/permissions/update/${rowData.id}`);
+    const handleEditTypeUml = useCallback((rowData: ITypeUml) => {
+        // console.log("Editing typeUml:", rowData);
+        navigate(`/admin/content/type-uml/update/${rowData.id}`);
     }, [t]);
 
-    const handleDeletePermission = useCallback(async (rowData: IPermission) => {
+    const handleDeleteTypeUml = useCallback(async (rowData: ITypeUml) => {
         if (!rowData.id) {
-            console.error("Attempted to delete permission with no ID:", rowData);
+            console.error("Attempted to delete typeUml with no ID:", rowData);
             console.log(t('common.errorNoIdToDelete'));
             return;
         }
         modal.deleteConfirm(
-            t('permissionPage.deleteTooltip'),
+            t('typeUmlPage.deleteTooltip'),
             async () => {
                 try {
                     setLoading(true);
-                    await deletePermission(rowData.id as number);
-                    message.success(t('permissionPage.deleteSuccess'));
+                    await deleteTypeUml(rowData.id as number);
+                    message.success(t('typeUmlPage.deleteSuccess'));
                     await fetchData();
                 } catch (error) {
                     setError(t('common.errorDeletingData'));
-                    console.error("Error deleting permission:", error);
+                    console.error("Error deleting typeUml:", error);
                     message.error(t('common.errorDeletingData'));
                 } finally {
                     setLoading(false);
                 }
             },
-            `${t('permissionPage.confirmDelete')} ${rowData.name || rowData.id}?`
+            `${t('typeUmlPage.confirmDelete')} ${rowData.name || rowData.id}?`
         );
     }, [t, fetchData, modal, message]);
 
-    const handleToggleActiveStatus = useCallback(async (rowData: IPermission) => {
+    const handleToggleActiveStatus = useCallback(async (rowData: ITypeUml) => {
         if (!rowData.id) return;
         const newStatus = !rowData.isActive;
         const confirmMessage = newStatus
-            ? t('permissionPage.confirmActivate', { name: rowData.name })
-            : t('permissionPage.confirmDeactivate', { name: rowData.name });
+            ? t('typeUmlPage.confirmActivate', { name: rowData.name })
+            : t('typeUmlPage.confirmDeactivate', { name: rowData.name });
 
         // Đã sửa lỗi: truyền một đối tượng cấu hình duy nhất
         modal.confirm({
-            title: t('permissionPage.confirmToggleTitle'),
+            title: t('typeUmlPage.confirmToggleTitle'),
             content: confirmMessage,
             onOk: async () => {
                 try {
                     setLoading(true);
-                    await togglePermissionActiveStatus(rowData.id as number, newStatus);
-                    message.success(t('permissionPage.toggleSuccess', { status: newStatus ? t('common.active') : t('common.inactive') }));
+                    await toggleTypeUmlActiveStatus(rowData.id as number, newStatus);
+                    message.success(t('typeUmlPage.toggleSuccess', { status: newStatus ? t('common.active') : t('common.inactive') }));
                     await fetchData();
                 } catch (error) {
-                    console.log("Error toggling permission active status:", error);
+                    console.log("Error toggling typeUml active status:", error);
                     setError(t('common.errorUpdatingData'));
                     message.error(t('common.errorUpdatingData'));
                 } finally {
@@ -302,31 +303,31 @@ const Permission: React.FC = () => {
         });
     }, [t, fetchData, modal, message]);
 
-    const permissionActions = React.useMemo(() => [
+    const typeUmlActions = React.useMemo(() => [
         {
-            icon: (rowData: IPermission) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
+            icon: (rowData: ITypeUml) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
             onClick: handleToggleActiveStatus,
-            className: (rowData: IPermission) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
-            tooltip: (rowData: IPermission) => rowData.isActive ? t('permissionPage.deactivateTooltip') : t('permissionPage.activateTooltip'),
+            className: (rowData: ITypeUml) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
+            tooltip: (rowData: ITypeUml) => rowData.isActive ? t('typeUmlPage.deactivateTooltip') : t('typeUmlPage.activateTooltip'),
             color: '#63782b'
         },
         {
             icon: <FaEdit />,
-            onClick: handleEditPermission,
+            onClick: handleEditTypeUml,
             className: 'text-blue-500 hover:text-blue-700',
-            tooltip: t('permissionPage.editTooltip'),
+            tooltip: t('typeUmlPage.editTooltip'),
             color: '#7600ff'
         },
         {
             icon: <FaTrash />,
-            onClick: handleDeletePermission,
+            onClick: handleDeleteTypeUml,
             className: 'text-red-500 hover:text-red-700 ml-2',
-            tooltip: t('permissionPage.deleteTooltip'),
+            tooltip: t('typeUmlPage.deleteTooltip'),
             color: 'red'
         },
-    ], [handleEditPermission, handleDeletePermission, handleToggleActiveStatus, t]);
+    ], [handleEditTypeUml, handleDeleteTypeUml, handleToggleActiveStatus, t]);
 
-    if (loading && permissions.length === 0) {
+    if (loading && typeUml.length === 0) {
         return <div>{t('common.loadingData')}</div>;
     }
 
@@ -336,19 +337,19 @@ const Permission: React.FC = () => {
 
     return (
         <ManagementTemplate
-            pageTitle={t('permissionPage.title')}
+            pageTitle={t('typeUmlPage.title')}
             breadcrumbItems={[
                 {label: t('common.breadcrumb.home'), path: '/'},
                 {label: t('common.breadcrumb.adminDashboard'), path: '/admin'},
-                {label: t('permissionPage.breadcrumb')},
+                {label: t('typeUmlPage.breadcrumb')},
             ]}
             searchFields={searchFields}
             sortFields={sortFields}
             onSearch={handleSearch}
             onClear={handleClear}
             columns={dataTableColumns}
-            data={permissions}
-            totalEntries={totalPermissions}
+            data={typeUml}
+            totalEntries={totalTypeUmls}
             entriesPerPage={entriesPerPage}
             currentPage={currentPage}
             onPageChange={handlePageChange}
@@ -357,7 +358,7 @@ const Permission: React.FC = () => {
             currentSortOrder={currentSortOrder}
             onCreateNew={handleCreateNew}
             onEntriesPerPageChange={handleEntriesPerPageChange}
-            actions={permissionActions as ActionButton[]}
+            actions={typeUmlActions as ActionButton[]}
             initialFilters={currentFilters}
             initialSortBy={currentSortColumn}
             initialSortOrder={currentSortOrder}
@@ -365,4 +366,4 @@ const Permission: React.FC = () => {
     );
 };
 
-export default Permission;
+export default TypeUml;

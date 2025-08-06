@@ -24,6 +24,8 @@ public enum ErrorCode {
     ROLE_INACTIVE_FORBIDDEN(1013, "This role is inactive and cannot be used", HttpStatus.BAD_REQUEST),
     ROLE_EXISTED(1014, "Role existed", HttpStatus.BAD_REQUEST),
     PERMISSION_EXISTED(1015, "Permission existed", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_EXISTED(1016, "Role not existed", HttpStatus.NOT_FOUND),
+    USER_CODE_EXISTED(1002, "User code existed", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

@@ -37,7 +37,8 @@ public class AssignmentServiceImpl implements AssignmentService {
         //TODO: Chua check classID
         Specification<Assignment> spec = Specification.where(AssignmentSpecification.hasTypeUmlId(typeUmlId))
                 .and(AssignmentSpecification.hasTitleLike(title))
-                .and(AssignmentSpecification.hasClassId(classId));
+                .and(AssignmentSpecification.hasClassId(classId))
+                .and(AssignmentSpecification.isActiveOnly());
 
         Page<Assignment> assignments = assignmentRepository.findAll(spec, pageable);
 
@@ -54,6 +55,9 @@ public class AssignmentServiceImpl implements AssignmentService {
                     .userId(assignment.getUserId())
                     .typeUmlName(assignment.getTypeUML().getName())
                     .classIds(classIds)
+                    .isActive(assignment.getIsActive())
+                    .assignmentCode(assignment.getAssignmentCode())
+                    .createdDate(assignment.getCreatedDate())
                     .build();
         });
     }
@@ -75,6 +79,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .typeUML(typeUML)
+                .assignmentCode(request.getAssignmentCode())
                 .build();
 
         assignmentRepository.save(assignment);
@@ -94,6 +99,9 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .userId(assignment.getUserId())
                 .typeUmlName(assignment.getTypeUML().getName())
                 .classIds(request.getClassIds())
+                .isActive(assignment.getIsActive())
+                .assignmentCode(assignment.getAssignmentCode())
+                .createdDate(assignment.getCreatedDate())
                 .build();
     }
 
@@ -122,6 +130,9 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .userId(assignment.getUserId())
                 .typeUmlName(assignment.getTypeUML().getName())
                 .classIds(request.getClassIds())
+                .isActive(assignment.getIsActive())
+                .assignmentCode(assignment.getAssignmentCode())
+                .createdDate(assignment.getCreatedDate())
                 .build();
     }
 
@@ -139,7 +150,41 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .description(assignment.getDescription())
                 .userId(assignment.getUserId())
                 .typeUmlName(assignment.getTypeUML().getName())
+                .isActive(assignment.getIsActive())
+                .assignmentCode(assignment.getAssignmentCode())
                 .classIds(classIds)
+                .createdDate(assignment.getCreatedDate())
+                .build();
+    }
+
+    @Override
+    public void deleteAssignment(Long assignmentId) {
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new NotFoundException("Assignment not found"));
+        assignment.setIsActive(-1);
+        assignmentRepository.save(assignment);
+    }
+
+    @Override
+    public AssignmentResponse toggleAssignmentStatus(Long assignmentId) {
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new NotFoundException("Assignment not found with ID: " + assignmentId));
+        Integer currentStatus = assignment.getIsActive();
+        assignment.setIsActive(currentStatus != null && currentStatus == 1 ? 0 : 1);
+        Assignment updatedAssignment = assignmentRepository.save(assignment);
+        return AssignmentResponse.builder()
+                .id(updatedAssignment.getId())
+                .title(updatedAssignment.getTitle())
+                .description(updatedAssignment.getDescription())
+                .userId(updatedAssignment.getUserId())
+                .isActive(updatedAssignment.getIsActive())
+                .assignmentCode(updatedAssignment.getAssignmentCode())
+                .typeUmlName(updatedAssignment.getTypeUML().getName())
+                .createdDate(updatedAssignment.getCreatedDate())
+                .classIds(assignmentClassRepository.findByAssignmentId(updatedAssignment.getId())
+                        .stream()
+                        .map(AssignmentClass::getClassId)
+                        .toList())
                 .build();
     }
 }

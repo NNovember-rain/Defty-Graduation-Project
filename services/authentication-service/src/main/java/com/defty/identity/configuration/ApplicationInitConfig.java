@@ -43,7 +43,7 @@ public class ApplicationInitConfig {
                 User user = User.builder()
                         .username("admin")
                         .email("admin@gmail.com")
-                        .firstName("Admin")
+                        .fullName("Admin")
                         .isActive(1)
                         .password(passwordEncoder.encode("Defty@12345"))
                         .roles(roles)

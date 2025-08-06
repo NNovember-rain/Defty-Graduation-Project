@@ -2,8 +2,9 @@ package com.defty.identity.service.impl;
 
 import com.defty.identity.dto.request.UserCreationRequest;
 import com.defty.identity.dto.request.UserUpdateRequest;
+import com.defty.identity.dto.response.UserExistenceCheckResult;
 import com.defty.identity.dto.response.UserResponse;
-import com.defty.identity.entity.Permission;
+import com.defty.identity.entity.Role;
 import com.defty.identity.entity.User;
 import com.defty.identity.exception.AppException;
 import com.defty.identity.exception.ErrorCode;
@@ -25,6 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,17 +39,26 @@ public class UserServiceImpl implements UserService {
     RoleRepository roleRepository;
 
     @Override
-    public UserResponse createUser(UserCreationRequest request){
+    public UserResponse createUser(UserCreationRequest request) {
         if (userRepository.existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.USER_EXISTED);
         if (userRepository.existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.EMAIL_EXISTED);
+        if (userRepository.existsByUserCode(request.getUserCode()))
+            throw new AppException(ErrorCode.USER_CODE_EXISTED);
 
         User user = userMapper.toUser(request);
+        user.setIsActive(1);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        user.setRoles(new HashSet<>(List.of(role)));
+        user.setUserCode(request.getUserCode());
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
+
 
     @Override
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
@@ -104,6 +116,34 @@ public class UserServiceImpl implements UserService {
         user.setIsActive(user.getIsActive() == 1 ? 0 : 1);
         userRepository.save(user);
         return userMapper.toUserResponse(user);
+    }
+
+    @Override
+    public List<UserResponse> getAllUsersByRole(String fullName, Long roleId) {
+        Specification<User> spec = UserSpecification.buildActive(fullName, roleId);
+
+        return userRepository.findAll(spec)
+                .stream().map(userMapper::toUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserExistenceCheckResult checkUsersExistByIds(List<Long> userIds) {
+        List<User> users = userRepository.findAllById(userIds);
+
+        List<UserResponse> foundUsers = users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        List<Long> foundIds = users.stream()
+                .map(User::getId)
+                .toList();
+
+        List<Long> notFoundIds = userIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        return new UserExistenceCheckResult(foundUsers, notFoundIds);
     }
 
     @Override

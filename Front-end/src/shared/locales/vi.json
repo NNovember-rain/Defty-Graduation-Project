@@ -44,8 +44,8 @@
   },
   "sidebar": {
     "overview": "Tổng quan",
-    "userManagement": "Quản lý Người dùng",
-    "roleManagement": "Quản lý nhóm quyền",
+    "userManagement": "Quản lý người dùng",
+    "roleManagement": "Quản lý vai trò",
     "permissionManagement": "Quản lý quyền",
     "contentManagement": "Quản lý Nội dung",
     "assignments": "Đề bài & Bài tập",
@@ -55,6 +55,7 @@
     "quizList": "Danh sách Quiz",
     "createQuiz": "Tạo Quiz / Bài kiểm tra",
     "lecturesAndMaterials": "Bài giảng & Tài liệu",
+    "typeUml": "Sơ đồ UML",
     "classManagement": "Quản lý Lớp học",
     "classList": "Danh sách lớp học",
     "courseCategories": "Danh mục Khóa học",
@@ -159,6 +160,90 @@
     "selectedItems": "mục đã chọn?",
     "order": "STT"
   },
+  "typeUmlPage": {
+    "title": "Quản lý loại UML",
+    "breadcrumb": "Loại UML",
+    "columns": {
+      "name": "Tên",
+      "description": "Mô tả",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "name": "Tên",
+      "namePlaceholder": "Nhập tên UML...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm toàn cục",
+      "globalPlaceholder": "Tìm theo tên hoặc mô tả..."
+    },
+    "sort": {
+      "order": "Thứ tự",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "name": "Tên",
+      "creationDate": "Ngày tạo"
+    },
+    "editTooltip": "Chỉnh sửa loại UML",
+    "deleteTooltip": "Xóa loại UML",
+    "confirmDelete": "Bạn có chắc muốn xóa",
+    "deleteSuccess": "Xóa thành công",
+    "activateTooltip": "Kích hoạt",
+    "deactivateTooltip": "Vô hiệu hóa",
+    "confirmActivate": "Bạn có chắc muốn kích hoạt '{{name}}' không?",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hóa '{{name}}' không?",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "toggleSuccess": "Thay đổi trạng thái thành công: {{status}}"
+  },
+  "typeUmlForm": {
+    "title": "Biểu mẫu Loại UML",
+    "nameLabel": "Tên",
+    "namePlaceholder": "Nhập tên loại UML ",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả cho loại UML",
+
+    "validation": {
+      "nameRequired": "Tên không được để trống.",
+      "nameInvalid": "Tên phải theo định dạng: chữ thường và có ít nhất một dấu chấm (ví dụ: class.diagram)."
+    }
+  },
+
+  "assignmentPage": {
+    "title": "Quản lý Bài tập",
+    "breadcrumb": "Bài tập",
+    "columns": {
+      "name": "Tên bài tập",
+      "description": "Mô tả",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "name": "Tên bài tập",
+      "namePlaceholder": "Nhập tên bài tập...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm toàn cục",
+      "globalPlaceholder": "Tìm theo tên, mô tả..."
+    },
+    "sort": {
+      "order": "Thứ tự",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "name": "Tên",
+      "creationDate": "Ngày tạo"
+    },
+    "editTooltip": "Chỉnh sửa bài tập",
+    "deleteTooltip": "Xoá bài tập",
+    "deactivateTooltip": "Vô hiệu hoá bài tập",
+    "activateTooltip": "Kích hoạt bài tập",
+    "confirmDelete": "Bạn có chắc chắn muốn xoá",
+    "deleteSuccess": "Xoá bài tập thành công!",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmActivate": "Bạn có chắc muốn kích hoạt '{{name}}'?",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hoá '{{name}}'?",
+    "toggleSuccess": "Cập nhật trạng thái thành công: {{status}}"
+  },
+
   "userPage": {
     "title": "Quản lý người dùng",
     "breadcrumb": "Quản lý người dùng",
@@ -295,8 +380,8 @@
       "permissionsRequired": "Vui lòng chọn ít nhất một quyền."
     },
     "permissionsTable": {
-      "title": "Quyền",
-      "tag": "Thẻ"
+      "name": "Tên quyền",
+      "description": "Mô tả"
     }
   },
 

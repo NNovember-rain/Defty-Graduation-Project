@@ -85,6 +85,13 @@ const sidebarContentConfig: SidebarItem[] = [
                 path: '/admin/content/materials',
                 requiredAnyOfRoles: ['admin', 'teacher']
             },
+            {
+                id: 'lecturesAndMaterials',
+                labelKey: 'sidebar.typeUml',
+                icon: <FaTools />,
+                path: '/admin/content/type-uml',
+                requiredAnyOfRoles: ['admin', 'teacher']
+            },
         ],
     },
     {

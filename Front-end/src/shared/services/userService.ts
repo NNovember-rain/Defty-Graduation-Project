@@ -1,6 +1,7 @@
 import handleRequest from "./handleRequest.ts";
 import {getWithParams} from "./getWithParams.ts";
 import {del, get, patchJsonData} from "./request.ts";
+import type {IRole} from "./roleService.ts";
 
 const PREFIX_USER = import.meta.env.VITE_PREFIX_USER as string;
 const PREFIX_IDENTITY: string = import.meta.env.VITE_PREFIX_IDENTITY as string;
@@ -24,12 +25,12 @@ export interface GetUsersResult {
 export interface IUser {
     id: number;
     username: string;
-    firstName: string | null;
+    fullName: string | null;
     lastName: string | null;
     dob: string | null;
     email: string;
     isActive: boolean;
-    // roles: IRole[];
+    roles: IRole[];
 }
 
 export const getUsers = async (options: GetUsersOptions = {}): Promise<GetUsersResult> => {
@@ -56,7 +57,7 @@ export const getUsers = async (options: GetUsersOptions = {}): Promise<GetUsersR
 export const getUserById = async (id: string | number): Promise<IUser> => {
     const response = await handleRequest(get(`${PREFIX_IDENTITY}/${PREFIX_USER}/${id}`));
     const data = await response.json();
-    return data.data as IUser;
+    return data.result as IUser;
 };
 
 export const updateUser = async (id: string | number, data: Partial<Omit<IUser, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IUser> => {

@@ -56,7 +56,7 @@ export const getRoles = async (options: GetRolesOptions = {}): Promise<GetRolesR
 export const getRoleById = async (id: string | number): Promise<IRole> => {
     const response = await handleRequest(get(`${PREFIX_IDENTITY}/${PREFIX_ROLES}/${id}`));
     const data = await response.json();
-    return data.data as IRole;
+    return data.result as IRole;
 };
 
 export const updateRole = async (id: string | number, data: Partial<Omit<IRole, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IRole> => {
