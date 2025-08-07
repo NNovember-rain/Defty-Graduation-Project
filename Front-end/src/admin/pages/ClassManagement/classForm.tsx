@@ -1,28 +1,58 @@
-import React from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import { useTranslation } from 'react-i18next';
-import FormTemplate from '../../template/ManagementTemplate/FormTemplate';
-import type { FormField } from '../../template/ManagementTemplate/FormTemplate';
+import FormTemplate from '../../template/ManagementTemplate/FormtemplateCustom.tsx';
+import type { FormField } from '../../template/ManagementTemplate/FormtemplateCustom';
 import {
-    createClass, // Import hàm createClass mới
-    getClassById, // Import hàm getClassById mới
-    updateClass, // Import hàm updateClass mới
-    IClass, // Import interface IClass mới
-    CreateClassRequest, // Import CreateClassRequest
-    UpdateClassRequest, ApiResponse // Import UpdateClassRequest
-} from '../../../shared/services/classManagementService.ts'; // Thay đổi import sang classService
+    createClass,
+    getClassById,
+    updateClass,
+    IClass,
+    CreateClassRequest,
+    UpdateClassRequest,
+} from '../../../shared/services/classManagementService.ts';
+
+// Import service mới để lấy danh sách giáo viên
+import { getUsersByRole, type IUser } from '../../../shared/services/authService.ts';
 
 const ClassForm: React.FC = () => {
     const { t } = useTranslation();
 
-    // Định nghĩa các trường cho form tạo/cập nhật lớp học
+    const [teachers, setTeachers] = useState<IUser[]>([]);
+    const [loadingTeachers, setLoadingTeachers] = useState(false);
+    const [teachersError, setTeachersError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchTeachers = async () => {
+            setLoadingTeachers(true);
+            try {
+                const teacherList = await getUsersByRole(3);
+                setTeachers(teacherList);
+            } catch (err: any) {
+                console.error("Failed to fetch teachers:", err);
+                setTeachersError(t('classForm.fetchTeachersError', { message: err.message || '' }));
+            } finally {
+                setLoadingTeachers(false);
+            }
+        };
+
+        fetchTeachers();
+    }, [t]);
+
     const classFormFields: FormField[] = React.useMemo(() => [
         {
             key: 'teacherId',
-            labelKey: 'classForm.teacherIdLabel',
-            type: 'number', // Kiểu số cho teacherId
-            placeholderKey: 'classForm.teacherIdPlaceholder',
+            labelKey: 'classForm.teacherLabel',
+            type: 'select',
+            placeholderKey: 'classForm.teacherPlaceholder',
             required: true,
-            gridSpan: 12, // Chia layout thành 2 cột cho mỗi hàng (24 / 2 = 12)
+            gridSpan: 12,
+            options: teachers.map(teacher => ({
+                value: teacher.id, // Đảm bảo này là number
+                label: teacher.fullName,
+            })),
+            loading: loadingTeachers,
+            error: teachersError,
+            disabled: loadingTeachers,
         },
         {
             key: 'name',
@@ -37,62 +67,83 @@ const ClassForm: React.FC = () => {
             labelKey: 'classForm.descriptionLabel',
             type: 'textarea',
             placeholderKey: 'classForm.descriptionPlaceholder',
-            gridSpan: 24, // Chiếm toàn bộ chiều rộng
+            gridSpan: 24,
         },
-        // {
-        //     key: 'section',
-        //     labelKey: 'classForm.sectionLabel',
-        //     type: 'text',
-        //     placeholderKey: 'classForm.sectionPlaceholder',
-        //     gridSpan: 8, // Chia 3 cột cho hàng này (24 / 3 = 8)
-        // },
-        // {
-        //     key: 'subject',
-        //     labelKey: 'classForm.subjectLabel',
-        //     type: 'text',
-        //     placeholderKey: 'classForm.subjectPlaceholder',
-        //     gridSpan: 8,
-        // },
-        // {
-        //     key: 'room',
-        //     labelKey: 'classForm.roomLabel',
-        //     type: 'text',
-        //     placeholderKey: 'classForm.roomPlaceholder',
-        //     gridSpan: 8,
-        // },
-    ], []);
+    ], [teachers, loadingTeachers, teachersError, t]);
 
-    // Định nghĩa schema validation cho form lớp học
     const classValidationSchema = React.useMemo(() => ({
-        teacherId: (value: number | undefined, t: (key: string) => string) => {
-            if (value === undefined || value === null) return t('classForm.validation.teacherIdRequired');
-            if (value <= 0) return t('classForm.validation.teacherIdPositive');
+        teacherId: (value, t) => {
+            if (value === undefined || value === null || value <= 0) {
+                return t('classForm.validation.teacherRequired');
+            }
             return null;
         },
-        name: (value: string, t: (key: string) => string) => {
-            if (!value?.trim()) return t('classForm.validation.nameRequired');
+        name: (value, t) => {
+            if (!value?.trim()) {
+                return t('classForm.validation.nameRequired');
+            }
             return null;
-        },
-        // Description, section, subject, room là tùy chọn, không cần validation ở đây trừ khi có ràng buộc cụ thể.
+        }
     }), []);
 
-    // Định nghĩa các mục breadcrumb
     const breadcrumbItems = [
         { label: t('classPage.breadcrumb.home'), path: '/' },
         { label: t('classPage.breadcrumb.adminDashboard'), path: '/admin' },
-        { label: t('classPage.breadcrumb.classManagement'), path: '/admin/class/list' }, // Đường dẫn đến danh sách lớp
+        { label: t('classPage.breadcrumb.classManagement'), path: '/admin/class/list' },
     ];
 
+    // Hàm adapter - QUAN TRỌNG: Đảm bảo trả về đúng kiểu dữ liệu
+    const adaptedGetServiceGetById = useCallback(async (id: string | number): Promise<IClass> => {
+        try {
+            const apiResponse = await getClassById(id);
+
+            console.log("Full API Response:", apiResponse); // Debug log
+
+            // Xử lý các trường hợp khác nhau của API response structure
+            let classData;
+
+            if (apiResponse.data) {
+                // Trường hợp 1: { status: 200, data: {...} }
+                classData = apiResponse.data;
+            } else if (apiResponse.status === 200) {
+                // Trường hợp 2: response chính là data
+                classData = apiResponse;
+            } else {
+                // Trường hợp 3: response trực tiếp là object class
+                classData = apiResponse;
+            }
+
+            if (classData && classData.id) {
+                // Đảm bảo teacherId là number (quan trọng cho việc match với options)
+                const processedClassData = {
+                    ...classData,
+                    teacherId: Number(classData.teacherId) // Convert về number
+                };
+
+                console.log("Processed class data:", processedClassData); // Debug log
+                console.log("Available teachers:", teachers.map(t => ({ id: t.id, name: t.fullName }))); // Debug log
+
+                return processedClassData;
+            } else {
+                const errorMessage = apiResponse.message || "No class data found.";
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            console.error("Adapter failed to fetch class:", error);
+            throw error;
+        }
+    }, [teachers]);
+
     return (
-        <FormTemplate<IClass, CreateClassRequest, UpdateClassRequest> // Cập nhật generic types
-            pageTitleKey="classForm.title" // Khóa dịch cho tiêu đề trang
+        <FormTemplate<IClass, CreateClassRequest, UpdateClassRequest>
+            pageTitleKey="classForm.title"
             breadcrumbItems={breadcrumbItems}
             formFields={classFormFields}
-            serviceGetById={getClassById}
-            serviceCreate={createClass} // Hàm service để tạo lớp mới
-            serviceUpdate={updateClass} // Hàm service để cập nhật lớp
+            serviceGetById={adaptedGetServiceGetById}
+            serviceCreate={createClass}
+            serviceUpdate={updateClass}
             validationSchema={classValidationSchema}
-            redirectPath="/admin/class/list" // Đường dẫn chuyển hướng sau khi hoàn thành
+            redirectPath="/admin/class/list"
         />
     );
 };

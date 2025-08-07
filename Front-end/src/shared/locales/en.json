@@ -134,8 +134,8 @@
     "inactive": "inactive",
     "confirm": "Confirm",
     "delete": "Delete",
-    "confirmDeleteContent": "Are you sure you want to delete? This action cannot be undone."
-
+    "confirmDeleteContent": "Are you sure you want to delete? This action cannot be undone.",
+    "all": "All"
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -283,7 +283,7 @@
     "dataTableColumns": {
       "name": "Class Name",
       "description": "Description",
-      "teacherId": "Teacher ID",
+      "teacherName": "Teacher Name",
       "section": "Section",
       "subject": "Subject",
       "room": "Room",
@@ -293,12 +293,14 @@
     "searchFields": {
       "nameLabel": "Class Name",
       "namePlaceholder": "Search by class name...",
-      "teacherIdLabel": "Teacher ID",
-      "teacherIdPlaceholder": "Search by teacher ID...",
+      "teacherNameLabel": "Teacher",
+      "teacherNamePlaceholder": "Search by teacher...",
       "sectionLabel": "Section",
       "sectionPlaceholder": "Search by section...",
       "subjectLabel": "Subject",
-      "subjectPlaceholder": "Search by subject..."
+      "subjectPlaceholder": "Search by subject...",
+      "statusLabel": "Status",
+      "statusPlaceholder": "Select status..."
     },
     "sortFields": {
       "sortOrderLabel": "Sort Order",
@@ -317,7 +319,8 @@
   "classForm": {
     "title": "Add/Update Class",
     "teacherIdLabel": "Teacher ID",
-    "teacherIdPlaceholder": "Enter teacher ID...",
+    "teacherLabel": "Teacher",
+    "teacherPlaceholder": "Select Teacher",
     "nameLabel": "Class Name",
     "namePlaceholder": "Enter class name...",
     "descriptionLabel": "Description",
@@ -329,9 +332,33 @@
     "roomLabel": "Room",
     "roomPlaceholder": "Enter room number...",
     "validation": {
-      "teacherIdRequired": "Teacher ID is required.",
+      "teacherRequired": "Please chooose a teacher.",
       "teacherIdPositive": "Teacher ID must be a positive number.",
       "nameRequired": "Class name is required."
+    }
+  },
+  "classDetail": {
+    "customise": "Customise",
+    "classCode": "Class code",
+    "upcoming": "Upcoming",
+    "noUpcomingWork": "No work due in soon",
+    "announcePlaceholder": "Announce something to your class",
+    "error": {
+      "noId": "No class ID found in the URL.",
+      "classNotFound": "Class not found."
+    },
+    "tabs": {
+      "stream": "Stream",
+      "classwork": "Classwork",
+      "people": "People",
+      "marks": "Marks",
+      "classworkContent": "This is the Classwork page.",
+      "peopleContent": "This is the People page.",
+      "marksContent": "This is the Marks page."
+    },
+    "peopleTab": {
+      "teachersTitle": "Teachers",
+      "studentsTitle": "Students"
     }
   },
   "rolePage": {

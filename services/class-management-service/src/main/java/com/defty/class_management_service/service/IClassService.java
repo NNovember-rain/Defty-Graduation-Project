@@ -16,6 +16,8 @@ public interface IClassService {
     ApiResponse<PageableResponse<ClassResponse>> getClassesByTeacherId(Pageable pageable, Long teacherId, Integer status);
     ApiResponse<Long> updateClass(Long id, ClassRequest request);
     ApiResponse<List<Long>> deleteClass(List<Long> ids);
+    ApiResponse<Long> toggleActiveStatus(Long classId);
+
 
 //    EnrollmentResponse enrollStudentInClass(String inviteCode, Long studentId);
 //    List<EnrollmentResponse> getStudentsInClass(Long classId);

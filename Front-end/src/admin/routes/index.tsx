@@ -22,6 +22,8 @@ import UserForm from "../pages/User/userForm.tsx";
 import Assignment from "../pages/Assignment";
 import TypeUml from "../pages/TypeUml";
 import TypeUMlForm from "../pages/TypeUml/typeUmlForm.tsx";
+import ClassDetailPage from "../pages/ClassManagement/ClassDetailPage.tsx";
+
 
 interface AppRoute {
     path: string;
@@ -155,6 +157,11 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'content/type-uml',
         component: TypeUml,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'class/view/:id',
+        component: ClassDetailPage,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {

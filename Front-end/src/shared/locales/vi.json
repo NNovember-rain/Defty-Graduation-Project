@@ -134,7 +134,8 @@
     "inactive": "đã vô hiệu hóa",
     "confirm": "Xác nhận",
     "delete": "Xóa",
-    "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác."
+    "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.",
+    "all": "Tất cả"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -272,7 +273,6 @@
       "creationDate": "Ngày tạo"
     }
   },
-
   "classPage": {
     "title": "Quản lý Lớp học",
     "breadcrumb": {
@@ -283,7 +283,7 @@
     "dataTableColumns": {
       "name": "Tên lớp",
       "description": "Mô tả",
-      "teacherId": "ID Giáo viên",
+      "teacherName": "Tên Giáo viên",
       "section": "Phần",
       "subject": "Môn học",
       "room": "Phòng",
@@ -293,12 +293,14 @@
     "searchFields": {
       "nameLabel": "Tên lớp",
       "namePlaceholder": "Tìm kiếm theo tên lớp...",
-      "teacherIdLabel": "ID Giáo viên",
-      "teacherIdPlaceholder": "Tìm kiếm theo ID giáo viên...",
+      "teacherNameLabel": "Giáo viên",
+      "teacherNamePlaceholder": "Tìm kiếm theo giáo viên...",
       "sectionLabel": "Phần",
       "sectionPlaceholder": "Tìm kiếm theo phần...",
       "subjectLabel": "Môn học",
-      "subjectPlaceholder": "Tìm kiếm theo môn học..."
+      "subjectPlaceholder": "Tìm kiếm theo môn học...",
+      "statusLabel": "Trạng thái",
+      "statusPlaceholder": "Chọn trạng thái..."
     },
     "sortFields": {
       "sortOrderLabel": "Thứ tự sắp xếp",
@@ -317,7 +319,8 @@
   "classForm": {
     "title": "Thêm/Cập nhật Lớp học",
     "teacherIdLabel": "ID Giáo viên",
-    "teacherIdPlaceholder": "Nhập ID của giáo viên...",
+    "teacherLabel": "Giáo viên",
+    "teacherPlaceholder": "Chọn",
     "nameLabel": "Tên lớp",
     "namePlaceholder": "Nhập tên lớp...",
     "descriptionLabel": "Mô tả",
@@ -329,9 +332,33 @@
     "roomLabel": "Phòng",
     "roomPlaceholder": "Nhập phòng học...",
     "validation": {
-      "teacherIdRequired": "ID Giáo viên là bắt buộc.",
+      "teacherRequired": "Vui lòng chọn một giáo viên.",
       "teacherIdPositive": "ID Giáo viên phải là số dương.",
       "nameRequired": "Tên lớp là bắt buộc."
+    }
+  },
+  "classDetail": {
+    "customise": "Tùy chỉnh",
+    "classCode": "Mã lớp học",
+    "upcoming": "Sắp tới",
+    "noUpcomingWork": "Không có công việc nào sắp đến hạn",
+    "announcePlaceholder": "Thông báo điều gì đó cho lớp học của bạn",
+    "error": {
+      "noId": "Không tìm thấy ID lớp học trong URL.",
+      "classNotFound": "Không tìm thấy lớp học."
+    },
+    "tabs": {
+      "stream": "Bảng tin",
+      "classwork": "Bài tập trên lớp",
+      "people": "Mọi người",
+      "marks": "Điểm số",
+      "classworkContent": "Đây là trang Bài tập trên lớp.",
+      "peopleContent": "Đây là trang Mọi người.",
+      "marksContent": "Đây là trang Điểm số."
+    },
+    "peopleTab": {
+      "teachersTitle": "Giáo viên",
+      "studentsTitle": "Học sinh"
     }
   },
   "rolePage": {
@@ -581,5 +608,5 @@
       "failed": "Lỗi"
     },
     "viewTooltip": "Xem chi tiết bài nộp"
-  } 
+  }
 }
