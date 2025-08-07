@@ -140,6 +140,16 @@ public class ClassService implements IClassService {
         return new ApiResponse<>(200, "Delete class successfully", ids);
     }
 
+    @Override
+    public ApiResponse<Long> toggleActiveStatus(Long classId) {
+        ClassEntity classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new NotFoundException("Class not found with ID: " + classId));
+
+        classEntity.setStatus(classEntity.getStatus() == 1 ? 0 : 1);
+        classRepository.save(classEntity);
+        return new ApiResponse<>(200, "update class status successfully", classEntity.getId());
+    }
+
 //    @Transactional
 //    public ApiResponse<List<EnrollmentDto>> addStudentsToClass(Long classId, List<Long> studentIds) {
 //        Class classroom = classRepository.findById(classId)

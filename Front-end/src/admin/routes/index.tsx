@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import {Navigate} from "react-router-dom";
 import AdminLayoutDefault from "../layouts/AdminLayoutDefault";
 import AdminAuthLayout from "../layouts/AdminAuthLayout";
 import ProtectedRoute from "../../shared/routes/ProtectedRoute";
@@ -12,9 +12,18 @@ import Permission from "../pages/Permission";
 import Prompt from "../pages/Prompt";
 import PromptForm from "../pages/Prompt/promptForm.tsx";
 import TestNotification from "../../shared/notification/TestNotification.tsx";
+import RoleForm from "../pages/Role/roleForm.tsx";
+import PermissionForm from "../pages/Permission/permissionForm.tsx";
 import ClassManagement from "../pages/ClassManagement";
 import classForm from "../pages/ClassManagement/classForm.tsx";
+import Submission from "../pages/Submission";
+import SubmissionForm from "../pages/Submission";
+import UserForm from "../pages/User/userForm.tsx";
+import Assignment from "../pages/Assignment";
+import TypeUml from "../pages/TypeUml";
+import TypeUMlForm from "../pages/TypeUml/typeUmlForm.tsx";
 import ClassDetailPage from "../pages/ClassManagement/ClassDetailPage.tsx";
+
 
 interface AppRoute {
     path: string;
@@ -56,22 +65,52 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'dashboard',
         component: DashboardPage,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
     },
     {
         path: 'users',
         component: User,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
     },
     {
-        path: 'roles',
+        path: 'users/create',
+        component: UserForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'users/update/:id',
+        component: UserForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/roles',
         component: Role,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
     },
     {
-        path: 'permissions',
+        path: 'auth/roles/create',
+        component: RoleForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/roles/update/:id',
+        component: RoleForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/permissions',
         component: Permission,
-        requiredAnyOfRoles: ['admin', 'teacher'],
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/permissions/create',
+        component: PermissionForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+    {
+        path: 'auth/permissions/update/:id',
+        component: PermissionForm,
+        requiredAnyOfRoles: ['admin'],
     },
     {
         path: 'class/list',
@@ -103,11 +142,39 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         component: classForm,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
+
+    {
+        path: 'content/assignments',
+        component: Assignment,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'content/assignments/update/:id',
+        component: Assignment,
+        requiredAnyOfRoles: ['admin'],
+    },
+
+    {
+        path: 'content/type-uml',
+        component: TypeUml,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
     {
         path: 'class/view/:id',
         component: ClassDetailPage,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
+    {
+        path: 'content/type-uml/create',
+        component: TypeUMlForm,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'content/type-uml/update/:id',
+        component: TypeUMlForm,
+        requiredAnyOfRoles: ['admin'],
+    },
+
     {
         path: 'settings/prompts',
         component: Prompt,
@@ -136,6 +203,16 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: '*',
         component: DashboardPage,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'submissions',
+        component: Submission,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'submissions/create',
+        component: SubmissionForm,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
 ];

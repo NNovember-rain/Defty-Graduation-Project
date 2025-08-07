@@ -30,7 +30,7 @@ public class PermissionController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "name", required = false) String name
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").ascending());
         Page<PermissionResponse> permissions = permissionService.getPermissions(name, pageable);
         return ApiResponse.<Page<PermissionResponse>>builder()
                 .result(permissions)
@@ -58,7 +58,9 @@ public class PermissionController {
     public ApiResponse<PermissionResponse> updatePermission(@PathVariable Long id,
                                                             @RequestBody PermissionRequest request) {
         PermissionResponse response = permissionService.updatePermission(id, request);
-        return ApiResponse.<PermissionResponse>builder().result(response).build();
+        return ApiResponse.<PermissionResponse>builder()
+                .result(response)
+                .build();
     }
 
     @PreAuthorize("hasRole('admin')")
@@ -67,4 +69,28 @@ public class PermissionController {
         permissionService.deletePermission(id);
         return ApiResponse.<Void>builder().build();
     }
+
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/by-role/{roleId}")
+    public ApiResponse<Page<PermissionResponse>> getPermissionsByRole(@PathVariable Long roleId,
+                                                                  @RequestParam(required = false) String name,
+                                                                  @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                  @RequestParam(value = "size", defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").ascending());
+        Page<PermissionResponse> permissions = permissionService.getPermissionsByRoleId(roleId, name, pageable);
+        return ApiResponse.<Page<PermissionResponse>>builder()
+                .result(permissions)
+                .build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @PatchMapping("/{id}/toggle-active")
+    public ApiResponse<PermissionResponse> toggleActiveStatus(@PathVariable Long id) {
+        PermissionResponse updatedPermission = permissionService.togglePermissionStatus(id);
+        return ApiResponse.<PermissionResponse>builder()
+                .result(updatedPermission)
+                .message("Permission status updated successfully")
+                .build();
+    }
+
 }

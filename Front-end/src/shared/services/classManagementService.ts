@@ -1,8 +1,9 @@
-import {get, postJsonData, putJsonData, del, bulkDelete, postFormData, putFormData} from "./request";
+import {get, postJsonData, putJsonData, del, bulkDelete, postFormData, putFormData, patchJsonData} from "./request";
 import { getWithParams } from "./getWithParams";
 import handleRequest from "./handleRequest";
 
 const CLASS_SERVICE_PREFIX: string = import.meta.env.VITE_PREFIX_CLASS_SERVICE as string;
+const TEACHER_ROLE_ID: number = 3;
 
 // --- 1. Định nghĩa Interfaces cho Dữ liệu Lớp học ---
 export interface IClass {
@@ -33,11 +34,12 @@ export interface GetClassesOptions {
     page?: number;
     limit?: number;
     name?: string;
-    teacherId?: number; // Thêm filter teacherId
-    section?: string;   // Thêm filter section
-    subject?: string;   // Thêm filter subject
+    teacherId?: number;
+    section?: string;
+    subject?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    status?: number;
 }
 
 // Cập nhật GetClassesResult để khớp với RESPONSE BACKEND HIỆN TẠI VÀ TỰ TÍNH TOÁN
@@ -100,6 +102,7 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
         section: options.section,
         subject: options.subject,
         sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
+        status: options.status !== undefined ? options.status : undefined
     };
 
     // Giả định API endpoint là `/class/teacher/{teacherId}` nếu có filter teacherId,
@@ -156,6 +159,14 @@ export const deleteClass = async (ids: number | number[], teacherId: number): Pr
     }
     const response = await handleRequest(del(`${CLASS_SERVICE_PREFIX}/class/${pathIds}`));
     return await response.json() as ApiResponse<void>;
+};
+
+export const toggleClassStatus = async (id: number, status: 0 | 1): Promise<IClass> => {
+    const response = await handleRequest(
+        patchJsonData(`${CLASS_SERVICE_PREFIX}/class/${id}/toggle-status`, { status })
+    );
+    const updatedData = await response.json();
+    return updatedData.data as IClass;
 };
 
 // ... Các hàm API cho Enrollment (addStudentsToClass, getStudentsInClass, getClassesByStudentId, leaveClass)

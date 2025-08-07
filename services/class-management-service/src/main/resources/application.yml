@@ -21,9 +21,12 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect # Chọn Dialect phù hợp với phiên bản MySQL của bạn
 
 # --- Bỏ hoặc Comment phần Eureka khi chạy riêng lẻ ---
-# eureka:
-#   client:
-#     serviceUrl:
-#       defaultZone: http://localhost:8761/eureka
-#     register-with-eureka: true # Không cần đăng ký
-#     fetch-registry: true       # Không cần tìm kiếm
+eureka:
+  #  instance:
+  #    prefer-ip-address: true
+  #    ip-address: ${HOST_IP_ADDRESS}
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka

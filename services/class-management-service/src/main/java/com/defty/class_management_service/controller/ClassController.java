@@ -58,4 +58,8 @@ public class ClassController {
         log.info("Request to delete classes with IDS {}", ids);
         return classService.deleteClass(ids);
     }
+    @PatchMapping("/{id}/toggle-status")
+    ApiResponse<Long> toggleActiveStatus(@PathVariable Long id) {
+        return classService.toggleActiveStatus(id);
+    }
 }
