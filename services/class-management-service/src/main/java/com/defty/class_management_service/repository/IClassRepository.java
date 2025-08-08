@@ -34,16 +34,17 @@ public interface IClassRepository extends JpaRepository<ClassEntity, Long> {
     @Query(value = "SELECT c FROM ClassEntity c WHERE " +
             "(:className IS NULL OR c.name LIKE %:className%) AND " +
             "(c.status != -1) AND " +
-            "(:status IS NULL OR c.status = :status) " +
+            "(:status IS NULL OR c.status = :status) AND " +
+            "(:teacherId IS NULL OR c.teacherId = :teacherId) " +
             "ORDER BY c.createdDate DESC",
             countQuery = "SELECT count(c) FROM ClassEntity c WHERE " +
                     "(:className IS NULL OR c.name LIKE %:className%) AND " +
                     "(c.status != -1) AND " +
-                    "(:status IS NULL OR c.status = :status) ",
-            nativeQuery = false)
+                    "(:status IS NULL OR c.status = :status) AND " +
+                    "(:teacherId IS NULL OR c.teacherId = :teacherId)")
     Page<ClassEntity> findClasses(
             @Param("className") String className,
-            @Param("teacherName") String teacherName,
+            @Param("teacherId") Long teacherId,
             @Param("status") Integer status,
             Pageable pageable);
 }

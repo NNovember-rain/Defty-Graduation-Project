@@ -67,11 +67,11 @@ public class ClassService implements IClassService {
     }
 
     @Override
-    public ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable, String className, String teacherName, Integer status) {
+    public ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable, String className, Long teacherId, Integer status) {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdDate").descending());
 
         Page<ClassEntity> classEntities = classRepository.findClasses(
-                className, teacherName, status, sortedPageable
+                className, teacherId, status, sortedPageable
         );
 //        if(classEntities.isEmpty()){
 //            return new ApiResponse<>(404, "Class doesn't exist", null);
