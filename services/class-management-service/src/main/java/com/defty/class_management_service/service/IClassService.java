@@ -12,7 +12,7 @@ import java.util.List;
 public interface IClassService {
     ApiResponse<Long> createClass(ClassRequest request);
     Object getClassById(Long id);
-    ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable, String className, String teacherName, Integer status);
+    ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable, String className, Long teacherId, Integer status);
     ApiResponse<PageableResponse<ClassResponse>> getClassesByTeacherId(Pageable pageable, Long teacherId, Integer status);
     ApiResponse<Long> updateClass(Long id, ClassRequest request);
     ApiResponse<List<Long>> deleteClass(List<Long> ids);

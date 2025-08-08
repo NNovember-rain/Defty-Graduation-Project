@@ -5,8 +5,8 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<!-- Giữ nguyên phiên bản Spring Boot 3.5.3 theo yêu cầu của bạn -->
-		<version>3.5.3</version>
+		<!-- Sửa thành phiên bản Spring Boot 3.3.2 (phiên bản stable mới nhất) -->
+		<version>3.3.13</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.defty</groupId>
@@ -29,7 +29,22 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<!-- Thêm Spring Cloud version tương thích với Spring Boot 3.3.x -->
+		<spring-cloud.version>2023.0.3</spring-cloud.version>
 	</properties>
+
+	<!-- Thêm Spring Cloud BOM để quản lý version -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
@@ -60,6 +75,7 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 		</dependency>
+
 		<!-- Lombok (tùy chọn) -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -77,20 +93,23 @@
 			<artifactId>common-library</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.modelmapper</groupId>
 			<artifactId>modelmapper</artifactId>
 			<version>3.1.1</version>
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.cloud</groupId>-->
-<!--			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>-->
-<!--		</dependency>-->
+		<!-- Eureka Client - Bây giờ sẽ hoạt động với Spring Cloud BOM -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
