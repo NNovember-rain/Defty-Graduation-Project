@@ -219,7 +219,7 @@ const ClassManagement: React.FC = () => {
             options: [
                 { value: '', label: t('common.all') }, // Option "Tất cả"
                 ...teachers.map(teacher => ({
-                    value: teacher.id.toString(),
+                    value: teacher.id,
                     label: teacher.fullName
                 }))
             ]
