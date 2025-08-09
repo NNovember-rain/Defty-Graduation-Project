@@ -91,7 +91,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                     .build();
 
             String message = objectMapper.writeValueAsString(submissionEvent);
-            kafkaTemplate.send("submission.sendSubmission", message);
+            kafkaTemplate.send("umlDiagram.submission", message);
             return id;
 
         }catch (JsonProcessingException e) {

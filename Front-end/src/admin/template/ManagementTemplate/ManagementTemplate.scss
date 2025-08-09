@@ -142,6 +142,8 @@ $delete-color: #fd1b31;
   border-radius: 5px;
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
   overflow: hidden; // Hide overflow during collapse
+  max-width: 100%;
+  overflow-x: auto;
 
   &__grid {
     display: grid;
@@ -235,7 +237,7 @@ $delete-color: #fd1b31;
 
         &:hover {
           background-color: $button-color;
-          color: $button-color, 10%;
+          color: #fff;
         }
       }
     }
@@ -251,6 +253,7 @@ $delete-color: #fd1b31;
   border-radius: 5px;
   overflow-x: auto;
   padding: 15px;
+  max-width: 100vw;
 
   &__toolbar {
     display: flex;
@@ -315,6 +318,19 @@ $delete-color: #fd1b31;
       padding: 12px 15px;
       border: 1px solid $border-color;
       font-size: 0.95em;
+      max-width: 300px;       // giới hạn độ rộng cột
+      overflow: hidden;       // ẩn phần tràn
+      vertical-align: middle;
+    }
+
+    &__cell-content {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;         // giới hạn 3 dòng
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: normal;
+      word-break: break-word;
     }
 
     &__header-cell {
@@ -371,6 +387,10 @@ $delete-color: #fd1b31;
     &__action-button {
       background-color: #fff;
       border: none;
+    }
+
+    &__cell--actions {
+      min-width: 100px;
     }
   }
 
@@ -433,6 +453,7 @@ $delete-color: #fd1b31;
           cursor: not-allowed;
           &:hover {
             background-color: #f2f2f2; // Prevent hover effect on disabled
+            color: #3232ea;
           }
         }
       }
@@ -453,6 +474,7 @@ $delete-color: #fd1b31;
 
       &:hover:not(.pagination__item--disabled) {
         background-color: $table-hover-bg;
+        color: $pagination-active-bg;
       }
 
       &--active {
@@ -463,7 +485,7 @@ $delete-color: #fd1b31;
 
         &:hover {
           background-color: $pagination-active-bg;
-          color: $pagination-active-color; // Keep active color on hover
+          color: $pagination-active-color;
         }
       }
     }

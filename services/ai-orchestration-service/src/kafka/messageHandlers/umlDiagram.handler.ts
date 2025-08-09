@@ -1,13 +1,16 @@
 import { getPrompts } from "../../services/prompt.service";
 import { IPrompt } from "../../models/prompt.model";
-import generateAIContent from "../../client/googleAiApi";
+import generateAIContent from "../../client/googleAiApi"; // Your updated service
 import logger from "../../config/logger";
-import {getErrorMessage, getErrorStack} from "../../utils/errorHandler"; // Import logger
+import { getErrorMessage, getErrorStack } from "../../utils/errorHandler";
+import sendFeedBack from "../../client/feedbackServiceApi";
 
-interface UmlDiagramMessage {
-    umlType: string;
-    plantumlCode: string;
-    samplePlantumlCode: string;
+export interface UmlDiagramMessage {
+    id: number;
+    typeUmlName: string;
+    contentAssignment: string;
+    solutionPlantUmlCode: string;
+    studentPlantUmlCode: string;
 }
 
 const fillTemplate = (template: string, data: any): string => {
@@ -22,7 +25,6 @@ const fillTemplate = (template: string, data: any): string => {
 
 export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
     try {
-        // Log sự kiện bắt đầu xử lý với dữ liệu đầu vào
         logger.info({
             message: 'Bắt đầu xử lý yêu cầu sơ đồ Use-Case.',
             event_type: 'request_start',
@@ -35,25 +37,42 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
         });
 
         if (useCasePromptResult.prompts.length === 0) {
-            // Log cảnh báo khi không tìm thấy prompt
             logger.warn({
                 message: "Không tìm thấy prompt 'use-case' đang hoạt động.",
                 event_type: 'prompt_not_found',
                 umlType: 'use-case'
             });
+            // Consider sending feedback to the user about missing prompts.
             return;
         }
 
         const useCasePrompt: IPrompt = useCasePromptResult.prompts[0];
         const finalPromptString = fillTemplate(useCasePrompt.templateString, {
-            plantumlCode: message.plantumlCode,
-            samplePlantumlCode: message.samplePlantumlCode
+            plantumlCode: message.studentPlantUmlCode,
+            samplePlantumlCode: message.solutionPlantUmlCode
         });
 
         const aiModel = 'gemini-2.5-flash';
-        const response = await generateAIContent(finalPromptString, "apikey", aiModel);
+        // IMPORTANT: Fetch API key securely, e.g., from environment variables
+        const apiKey = process.env.GOOGLE_AI_API_KEY || "YOUR_DEFAULT_API_KEY_IF_NEEDED";
 
-        // Log sự kiện thành công với đầy đủ thông tin cần thiết
+        // Call the updated generateAIContent service
+        const aiGeneratedText = await generateAIContent(finalPromptString, apiKey, aiModel);
+
+        if (aiGeneratedText === undefined || aiGeneratedText.trim() === '') {
+            logger.warn({
+                message: 'AI API returned no content for Use-Case diagram.',
+                event_type: 'ai_no_content',
+                input: message,
+                ai_model: aiModel,
+                prompt: finalPromptString
+            });
+            // Handle cases where AI doesn't return any text (e.g., send empty feedback or an error message).
+            await sendFeedBack(message.id, "AI could not generate content for this diagram.");
+            return;
+        }
+
+        // Log the successful AI content generation
         logger.info({
             message: 'Tạo nội dung AI thành công.',
             event_type: 'ai_content_generated',
@@ -65,8 +84,17 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
                 final_string: finalPromptString
             },
             input: message,
-            ai_response: response,
+            ai_response: aiGeneratedText, // Directly log the generated text
         });
+
+        // Send feedback to your internal service
+        await sendFeedBack(message.id, aiGeneratedText);
+        logger.info({
+            message: `Feedback for Use-Case diagram ID ${message.id} sent successfully.`,
+            event_type: 'feedback_sent_success',
+            submissionId: message.id
+        });
+
     } catch (error: unknown) {
         logger.error({
             message: 'Lỗi khi xử lý sơ đồ Use-Case.',
@@ -75,10 +103,11 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
             stack: getErrorStack(error),
             input: message,
         });
+        // If an error occurs during AI generation, send a failure feedback
+        await sendFeedBack(message.id, "AI generation failed for this diagram.");
     }
 };
 
-// Logic tương tự cho hàm handleClassDiagram
 export const handleClassDiagram = async (message: UmlDiagramMessage) => {
     try {
         logger.info({
@@ -98,17 +127,35 @@ export const handleClassDiagram = async (message: UmlDiagramMessage) => {
                 event_type: 'prompt_not_found',
                 umlType: 'class'
             });
+            // Consider sending feedback to the user about missing prompts.
             return;
         }
 
         const classPrompt: IPrompt = classPromptResult.prompts[0];
         const finalPromptString = fillTemplate(classPrompt.templateString, {
-            plantumlCode: message.plantumlCode,
-            samplePlantumlCode: message.samplePlantumlCode
+            plantumlCode: message.studentPlantUmlCode,
+            samplePlantumlCode: message.solutionPlantUmlCode
         });
 
         const aiModel = 'gemini-2.5-flash';
-        const response = await generateAIContent(finalPromptString, "apikey", aiModel);
+        // IMPORTANT: Fetch API key securely, e.g., from environment variables
+        const apiKey = process.env.GOOGLE_AI_API_KEY || "YOUR_DEFAULT_API_KEY_IF_NEEDED";
+
+        // Call the updated generateAIContent service
+        const aiGeneratedText = await generateAIContent(finalPromptString, apiKey, aiModel);
+
+        if (aiGeneratedText === undefined || aiGeneratedText.trim() === '') {
+            logger.warn({
+                message: 'AI API returned no content for Class diagram.',
+                event_type: 'ai_no_content',
+                input: message,
+                ai_model: aiModel,
+                prompt: finalPromptString
+            });
+            // Handle cases where AI doesn't return any text.
+            await sendFeedBack(message.id, "AI could not generate content for this diagram.");
+            return;
+        }
 
         logger.info({
             message: 'Tạo nội dung AI thành công.',
@@ -121,8 +168,17 @@ export const handleClassDiagram = async (message: UmlDiagramMessage) => {
                 final_string: finalPromptString
             },
             input: message,
-            ai_response: response,
+            ai_response: aiGeneratedText, // Directly log the generated text
         });
+
+        // Send feedback to your internal service
+        await sendFeedBack(message.id, aiGeneratedText);
+        logger.info({
+            message: `Feedback for Class diagram ID ${message.id} sent successfully.`,
+            event_type: 'feedback_sent_success',
+            submissionId: message.id
+        });
+
     } catch (error: unknown) {
         logger.error({
             message: 'Lỗi khi xử lý sơ đồ Class.',
@@ -131,5 +187,7 @@ export const handleClassDiagram = async (message: UmlDiagramMessage) => {
             stack: getErrorStack(error),
             input: message,
         });
+        // If an error occurs during AI generation, send a failure feedback
+        await sendFeedBack(message.id, "AI generation failed for this diagram.");
     }
 };
