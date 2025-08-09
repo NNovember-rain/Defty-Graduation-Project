@@ -21,11 +21,15 @@ public class UserCreationRequest {
     @NotBlank(message = "PASSWORD_REQUIRED")
     @Size(min = 8, message = "INVALID_PASSWORD")
     String password;
-    String firstName;
-    String lastName;
+    String fullName;
     LocalDate dob;
 
     @NotBlank(message = "EMAIL_REQUIRED")
     @Pattern(regexp = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "INVALID_EMAIL")
     String email;
+
+    Long roleId;
+
+    @NotBlank(message = "USER_CODE_REQUIRED")
+    String userCode;
 }

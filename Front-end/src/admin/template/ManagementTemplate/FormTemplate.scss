@@ -223,6 +223,15 @@
     background-size: 1.25rem;
     padding-right: 2.5rem; /* pr-10 */
   }
+  .form-template__select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    /* Thêm padding bên phải để nhãn không bị che mất */
+    padding-right: 1.5rem; /* Cần điều chỉnh giá trị này để khớp với design của bạn */
+  }
+
 
   /* Date Picker Specific */
   &__date-picker {

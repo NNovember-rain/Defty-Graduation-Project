@@ -44,8 +44,8 @@
   },
   "sidebar": {
     "overview": "Tổng quan",
-    "userManagement": "Quản lý Người dùng",
-    "roleManagement": "Quản lý nhóm quyền",
+    "userManagement": "Quản lý người dùng",
+    "roleManagement": "Quản lý vai trò",
     "permissionManagement": "Quản lý quyền",
     "contentManagement": "Quản lý Nội dung",
     "assignments": "Đề bài & Bài tập",
@@ -55,7 +55,12 @@
     "quizList": "Danh sách Quiz",
     "createQuiz": "Tạo Quiz / Bài kiểm tra",
     "lecturesAndMaterials": "Bài giảng & Tài liệu",
+    "typeUml": "Sơ đồ UML",
     "classManagement": "Quản lý Lớp học",
+    "classList": "Danh sách lớp học",
+    "courseCategories": "Danh mục Khóa học",
+    "classReports": "Báo cáo Lớp học",
+    "globalClassSettings": "Cài đặt Chung Lớp học",
     "submissionManagement": "Quản lý Bài nộp",
     "submissionList": "Danh sách Bài nộp",
     "manualGrading": "Chấm điểm thủ công",
@@ -110,6 +115,10 @@
     "sad": "Kiến trúc Thiết kế Phần mềm"
   },
   "common": {
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "adminDashboard": "Bảng điều khiển Admin"
+    },
     "clear": "Xóa",
     "search": "Tìm kiếm",
     "cancel": "Hủy",
@@ -125,7 +134,8 @@
     "inactive": "đã vô hiệu hóa",
     "confirm": "Xác nhận",
     "delete": "Xóa",
-    "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác."
+    "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.",
+    "all": "Tất cả"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -151,50 +161,204 @@
     "selectedItems": "mục đã chọn?",
     "order": "STT"
   },
+  "typeUmlPage": {
+    "title": "Quản lý loại UML",
+    "breadcrumb": "Loại UML",
+    "columns": {
+      "name": "Tên",
+      "description": "Mô tả",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "name": "Tên",
+      "namePlaceholder": "Nhập tên UML...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm toàn cục",
+      "globalPlaceholder": "Tìm theo tên hoặc mô tả..."
+    },
+    "sort": {
+      "order": "Thứ tự",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "name": "Tên",
+      "creationDate": "Ngày tạo"
+    },
+    "editTooltip": "Chỉnh sửa loại UML",
+    "deleteTooltip": "Xóa loại UML",
+    "confirmDelete": "Bạn có chắc muốn xóa",
+    "deleteSuccess": "Xóa thành công",
+    "activateTooltip": "Kích hoạt",
+    "deactivateTooltip": "Vô hiệu hóa",
+    "confirmActivate": "Bạn có chắc muốn kích hoạt '{{name}}' không?",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hóa '{{name}}' không?",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "toggleSuccess": "Thay đổi trạng thái thành công: {{status}}"
+  },
+  "typeUmlForm": {
+    "title": "Biểu mẫu Loại UML",
+    "nameLabel": "Tên",
+    "namePlaceholder": "Nhập tên loại UML ",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả cho loại UML",
+
+    "validation": {
+      "nameRequired": "Tên không được để trống.",
+      "nameInvalid": "Tên phải theo định dạng: chữ thường và có ít nhất một dấu chấm (ví dụ: class.diagram)."
+    }
+  },
+
+  "assignmentPage": {
+    "title": "Quản lý Bài tập",
+    "breadcrumb": "Bài tập",
+    "columns": {
+      "name": "Tên bài tập",
+      "description": "Mô tả",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "name": "Tên bài tập",
+      "namePlaceholder": "Nhập tên bài tập...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm toàn cục",
+      "globalPlaceholder": "Tìm theo tên, mô tả..."
+    },
+    "sort": {
+      "order": "Thứ tự",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "name": "Tên",
+      "creationDate": "Ngày tạo"
+    },
+    "editTooltip": "Chỉnh sửa bài tập",
+    "deleteTooltip": "Xoá bài tập",
+    "deactivateTooltip": "Vô hiệu hoá bài tập",
+    "activateTooltip": "Kích hoạt bài tập",
+    "confirmDelete": "Bạn có chắc chắn muốn xoá",
+    "deleteSuccess": "Xoá bài tập thành công!",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmActivate": "Bạn có chắc muốn kích hoạt '{{name}}'?",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hoá '{{name}}'?",
+    "toggleSuccess": "Cập nhật trạng thái thành công: {{status}}"
+  },
+
   "userPage": {
-    "title": "Người dùng",
-    "editTooltip": "Cập nhật người dùng",
-    "deleteTooltip": "Xóa người dùng",
+    "title": "Quản lý người dùng",
+    "breadcrumb": "Quản lý người dùng",
+    "columns": {
+      "name": "Họ và tên",
+      "username": "Tên đăng nhập",
+      "dob": "Ngày sinh",
+      "email": "Email",
+      "roles": "Vai trò",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "username": "Tên đăng nhập",
+      "namePlaceholder": "Nhập tên đăng nhập...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm tổng quát",
+      "globalPlaceholder": "Tìm theo tên, email..."
+    },
+    "sort": {
+      "order": "Thứ tự sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "name": "Tên",
+      "creationDate": "Ngày tạo"
+    }
+  },
+  "classPage": {
+    "title": "Quản lý Lớp học",
     "breadcrumb": {
       "home": "Trang chủ",
       "adminDashboard": "Bảng điều khiển Admin",
-      "userManagement": "Quản lý Người dùng"
+      "classManagement": "Quản lý lớp học"
     },
     "dataTableColumns": {
-      "renderingEngine": "Công cụ hiển thị",
-      "browser": "Trình duyệt",
-      "platform": "Nền tảng",
-      "engineVersion": "Phiên bản công cụ",
-      "cssGrade": "Hạng CSS",
-      "creationDate": "Ngày tạo"
+      "name": "Tên lớp",
+      "description": "Mô tả",
+      "teacherName": "Tên Giáo viên",
+      "section": "Phần",
+      "subject": "Môn học",
+      "room": "Phòng",
+      "createdDate": "Ngày tạo",
+      "modifiedDate": "Ngày sửa"
     },
     "searchFields": {
-      "renderingEngineLabel": "Công cụ hiển thị",
-      "renderingEnginePlaceholder": "Nhập tên công cụ",
-      "browserNameLabel": "Tên trình duyệt",
-      "browserNamePlaceholder": "Nhập tên trình duyệt",
-      "platformLabel": "Nền tảng",
-      "platformPlaceholder": "Nhập nền tảng",
-      "cssGradeLabel": "Hạng CSS",
-      "cssGradeAny": "Bất kỳ",
-      "cssGradeA": "Hạng A",
-      "cssGradeB": "Hạng B",
-      "cssGradeC": "Hạng C",
-      "cssGradeX": "Hạng X",
-      "startDate": "Từ Ngày tạo",
-      "endDate": "Đến Ngày tạo",
-      "generalSearchLabel": "Tìm kiếm chung",
-      "generalSearchPlaceholder": "Tìm kiếm tất cả các trường..."
+      "nameLabel": "Tên lớp",
+      "namePlaceholder": "Tìm kiếm theo tên lớp...",
+      "teacherNameLabel": "Giáo viên",
+      "teacherNamePlaceholder": "Tìm kiếm theo giáo viên...",
+      "sectionLabel": "Phần",
+      "sectionPlaceholder": "Tìm kiếm theo phần...",
+      "subjectLabel": "Môn học",
+      "subjectPlaceholder": "Tìm kiếm theo môn học...",
+      "statusLabel": "Trạng thái",
+      "statusPlaceholder": "Chọn trạng thái..."
     },
     "sortFields": {
-      "sortOrderLabel": "Thứ tự Sắp xếp",
+      "sortOrderLabel": "Thứ tự sắp xếp",
       "ascending": "Tăng dần",
       "descending": "Giảm dần",
-      "orderByLabel": "Sắp xếp theo",
-      "renderingEngine": "Công cụ hiển thị",
-      "browser": "Trình duyệt",
-      "id": "ID",
-      "creationDate": "Ngày tạo"
+      "sortByLabel": "Sắp xếp theo",
+      "name": "Tên lớp",
+      "createdDate": "Ngày tạo",
+      "modifiedDate": "Ngày sửa"
+    },
+    "editTooltip": "Chỉnh sửa lớp học",
+    "deleteTooltip": "Xóa lớp học",
+    "confirmDelete": "Bạn có chắc muốn xóa lớp học",
+    "deleteSuccess": "Xóa lớp học thành công!"
+  },
+  "classForm": {
+    "title": "Thêm/Cập nhật Lớp học",
+    "teacherIdLabel": "ID Giáo viên",
+    "teacherLabel": "Giáo viên",
+    "teacherPlaceholder": "Chọn",
+    "nameLabel": "Tên lớp",
+    "namePlaceholder": "Nhập tên lớp...",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả cho lớp học...",
+    "sectionLabel": "Phần",
+    "sectionPlaceholder": "Nhập phần...",
+    "subjectLabel": "Môn học",
+    "subjectPlaceholder": "Nhập tên môn học...",
+    "roomLabel": "Phòng",
+    "roomPlaceholder": "Nhập phòng học...",
+    "validation": {
+      "teacherRequired": "Vui lòng chọn một giáo viên.",
+      "teacherIdPositive": "ID Giáo viên phải là số dương.",
+      "nameRequired": "Tên lớp là bắt buộc."
+    }
+  },
+  "classDetail": {
+    "customise": "Tùy chỉnh",
+    "classCode": "Mã lớp học",
+    "upcoming": "Sắp tới",
+    "noUpcomingWork": "Không có công việc nào sắp đến hạn",
+    "announcePlaceholder": "Thông báo điều gì đó cho lớp học của bạn",
+    "error": {
+      "noId": "Không tìm thấy ID lớp học trong URL.",
+      "classNotFound": "Không tìm thấy lớp học."
+    },
+    "tabs": {
+      "stream": "Bảng tin",
+      "classwork": "Bài tập trên lớp",
+      "people": "Mọi người",
+      "marks": "Điểm số",
+      "classworkContent": "Đây là trang Bài tập trên lớp.",
+      "peopleContent": "Đây là trang Mọi người.",
+      "marksContent": "Đây là trang Điểm số."
+    },
+    "peopleTab": {
+      "teachersTitle": "Giáo viên",
+      "studentsTitle": "Học sinh"
     }
   },
   "rolePage": {
@@ -228,6 +392,71 @@
     "deleteTooltip": "Xóa vai trò",
     "confirmDelete": "Bạn có chắc muốn xóa vai trò"
   },
+  "roleForm": {
+    "title": "Vai trò",
+    "nameLabel": "Tên vai trò",
+    "namePlaceholder": "Nhập tên vai trò",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Nhập mô tả",
+    "permissionsLabel": "Quyền hạn",
+    "validation": {
+      "nameRequired": "Tên vai trò không được để trống.",
+      "templateStringRequired": "Chuỗi mẫu không được để trống.",
+      "typeRequired": "Loại vai trò là bắt buộc.",
+      "versionRequired": "Phiên bản là bắt buộc.",
+      "permissionsRequired": "Vui lòng chọn ít nhất một quyền."
+    },
+    "permissionsTable": {
+      "name": "Tên quyền",
+      "description": "Mô tả"
+    }
+  },
+
+  "permissionPage": {
+    "title": "Quản lý quyền",
+    "breadcrumb": "Quyền",
+    "columns": {
+      "name": "Tên quyền",
+      "description": "Mô tả",
+      "creationDate": "Ngày tạo"
+    },
+    "search": {
+      "name": "Tên quyền",
+      "namePlaceholder": "Nhập tên quyền...",
+      "startDate": "Từ ngày",
+      "endDate": "Đến ngày",
+      "global": "Tìm kiếm toàn bộ",
+      "globalPlaceholder": "Tìm theo tên hoặc mô tả"
+    },
+    "sort": {
+      "order": "Thứ tự",
+      "by": "Sắp xếp theo",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "name": "Tên",
+      "creationDate": "Ngày tạo"
+    },
+    "editTooltip": "Chỉnh sửa quyền này",
+    "deleteTooltip": "Xóa quyền này",
+    "confirmDelete": "Bạn có chắc muốn xóa",
+    "deleteSuccess": "Xóa quyền thành công!",
+    "confirmActivate": "Bạn có muốn kích hoạt {{name}} không?",
+    "confirmDeactivate": "Bạn có muốn vô hiệu hóa {{name}} không?",
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "toggleSuccess": "Cập nhật trạng thái thành {{status}}"
+  },
+    "permissionForm": {
+        "title": "Quyền",
+        "nameLabel": "Tên quyền",
+        "namePlaceholder": "Nhập tên quyền",
+        "descriptionLabel": "Mô tả",
+        "descriptionPlaceholder": "Nhập mô tả quyền",
+        "validation": {
+          "nameRequired": "Tên quyền là bắt buộc!",
+          "descriptionRequired": "Mô tả là bắt buộc!",
+          "nameInvalid": "Tên phải theo định dạng 'something.something', ví dụ: 'user.create', 'assignment.view'."
+        }
+    },
   "promptPage": {
     "title": "Quản lý Prompt",
     "breadcrumb": {
@@ -331,5 +560,53 @@
       "title": "Kết quả",
       "placeholder": "Nhấn \"Chạy\" để xem sơ đồ."
     }
+  },
+  "submissionPage": {
+    "title": "Quản lý Bài nộp",
+    "breadcrumb": "Bài nộp",
+    "columns": {
+      "studentName": "Tên sinh viên",
+      "studentCode": "Mã sinh viên",
+      "assignmentTitle": "Tiêu đề bài tập",
+      "umlType": "Loại sơ đồ",
+      "classCode": "Mã lớp",
+      "createdDate": "Ngày nộp",
+      "submissionStatus": "Trạng thái"
+    },
+    "search": {
+      "studentName": "Tên sinh viên",
+      "studentNamePlaceholder": "Nhập tên sinh viên...",
+      "studentCode": "Mã sinh viên",
+      "studentCodePlaceholder": "Nhập mã sinh viên...",
+      "assignmentTitle": "Tiêu đề bài tập",
+      "assignmentTitlePlaceholder": "Nhập tiêu đề bài tập...",
+      "umlType": "Loại sơ đồ",
+      "umlTypePlaceholder": "Nhập tên sơ đồ",
+      "classCode": "Mã lớp",
+      "classCodePlaceholder": "Nhập mã lớp...",
+      "submissionStatus": "Trạng thái bài nộp",
+      "submissionStatusPlaceholder": "Chọn trạng thái...",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày"
+    },
+    "sort": {
+      "order": "Thứ tự sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "studentName": "Tên sinh viên",
+      "assignmentTitle": "Tiêu đề bài tập",
+      "classCode": "Mã lớp",
+      "createdDate": "Ngày nộp",
+      "submissionStatus": "Trạng thái"
+    },
+    "status": {
+      "submitted": "Đã nộp",
+      "processing": "Đang xử lý",
+      "completed": "Đã hoàn thành",
+      "reviewed": "Đã được nhận xét",
+      "failed": "Lỗi"
+    },
+    "viewTooltip": "Xem chi tiết bài nộp"
   }
 }

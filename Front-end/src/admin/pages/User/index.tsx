@@ -2,16 +2,23 @@ import ManagementTemplate, {type ActionButton} from "../../template/ManagementTe
 import type {SearchField, SortField} from "../../template/ManagementTemplate/FilterOption.tsx";
 import {useTranslation} from "react-i18next";
 import React, {useCallback, useEffect, useMemo, useState} from "react";
-import {type IPrompt} from "../../../shared/services/promptService.ts";
 import {useNavigate} from "react-router-dom";
-import {FaEdit, FaTrash} from "react-icons/fa";
-import {getUsers, type GetUsersOptions, type IUser} from "../../../shared/services/userService.ts";
+import {FaEdit, FaToggleOff, FaToggleOn, FaTrash} from "react-icons/fa";
+import {
+    deleteUser,
+    getUsers,
+    type GetUsersOptions,
+    type IUser,
+    toggleUserActiveStatus
+} from "../../../shared/services/userService.ts";
+import {useNotification} from "../../../shared/notification/useNotification.ts";
 
 const User: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
     const [users, setUsers] = useState<IUser[]>([]);
+    const { message, modal } = useNotification();
     const [totalUsers, setTotalUsers] = React.useState(0);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
@@ -103,7 +110,7 @@ const User: React.FC = () => {
             };
 
             const response = await getUsers(options);
-            console.log("Fetched users:", response);
+            // console.log("Fetched users:", response);
             setUsers(response.users || []);
             setTotalUsers(response.total || 0);
             setLoading(false);
@@ -121,10 +128,9 @@ const User: React.FC = () => {
 
     const dataTableColumns = useMemo(() => [
         {
-            key: 'firstName',
+            key: 'fullName',
             label: t('userPage.columns.name'),
             sortable: false,
-            render: (row: any) => `${row?.firstName ?? ''} ${row?.lastName ?? ''}`.trim()
         },
         {
             key: 'username',
@@ -145,7 +151,7 @@ const User: React.FC = () => {
             key: 'roles',
             label: t('userPage.columns.roles'),
             sortable: false,
-            render: (row: any) => row.roles?.map((r: any) => r.name).join(', ')
+            render: (_value: any, row: any) => row.roles?.map((r: any) => r.name).join(', ')
         },
         {
             key: 'createdDate',
@@ -244,33 +250,92 @@ const User: React.FC = () => {
     }, []);
 
     const handleCreateNew = useCallback(() => {
-        navigate("/admin/identity/roles/create");
+        navigate("/admin/users/create");
     }, [t]);
 
-    const handleEditRole = useCallback((rowData: IPrompt) => {
-        navigate(`/admin/identity/userPages/update/${rowData._id}`);
+    const handleEditUser = useCallback((rowData: IUser) => {
+        console.log("Editing user:", rowData);
+        navigate(`/admin/users/update/${rowData.id}`);
     }, [t]);
 
-    const handleDeleteRole = useCallback(async (rowData: IUser) => {
-        console.log("Deleting user:", rowData);
-    }, [t, fetchData]);
+    const handleDeleteUser = useCallback(async (rowData: IUser) => {
+        if (!rowData.id) {
+            console.error("Attempted to delete user with no ID:", rowData);
+            console.log(t('common.errorNoIdToDelete'));
+            return;
+        }
+        modal.deleteConfirm(
+            t('userPage.deleteTooltip'),
+            async () => {
+                try {
+                    setLoading(true);
+                    await deleteUser(rowData.id as number);
+                    message.success(t('userPage.deleteSuccess'));
+                    await fetchData();
+                } catch (error) {
+                    setError(t('common.errorDeletingData'));
+                    console.error("Error deleting user:", error);
+                    message.error(t('common.errorDeletingData'));
+                } finally {
+                    setLoading(false);
+                }
+            },
+            `${t('userPage.confirmDelete')} ${rowData.username || rowData.id}?`
+        );
+    }, [t, fetchData, modal, message]);
+
+    const handleToggleActiveStatus = useCallback(async (rowData: IUser) => {
+        if (!rowData.id) return;
+        const newStatus = !rowData.isActive;
+        const confirmMessage = newStatus
+            ? t('userPage.confirmActivate', { name: rowData.username })
+            : t('userPage.confirmDeactivate', { name: rowData.username });
+
+        // Đã sửa lỗi: truyền một đối tượng cấu hình duy nhất
+        modal.confirm({
+            title: t('userPage.confirmToggleTitle'),
+            content: confirmMessage,
+            onOk: async () => {
+                try {
+                    setLoading(true);
+                    await toggleUserActiveStatus(rowData.id as number, newStatus);
+                    message.success(t('userPage.toggleSuccess', { status: newStatus ? t('common.active') : t('common.inactive') }));
+                    await fetchData();
+                } catch (error) {
+                    console.log("Error toggling user active status:", error);
+                    setError(t('common.errorUpdatingData'));
+                    message.error(t('common.errorUpdatingData'));
+                } finally {
+                    setLoading(false);
+                }
+            },
+        });
+    }, [t, fetchData, modal, message]);
+
 
     const userActions = React.useMemo(() => [
         {
+            icon: (rowData: IUser) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
+            onClick: handleToggleActiveStatus,
+            className: (rowData: IUser) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
+            tooltip: (rowData: IUser) => rowData.isActive ? t('userPage.deactivateTooltip') : t('userPage.activateTooltip'),
+            color: '#63782b'
+        },
+        {
             icon: <FaEdit />,
-            onClick: handleEditRole,
+            onClick: handleEditUser,
             className: 'text-blue-500 hover:text-blue-700',
-            tooltip: t('promptPage.editTooltip'),
+            tooltip: t('userPage.editTooltip'),
             color: '#7600ff'
         },
         {
             icon: <FaTrash />,
-            onClick: handleDeleteRole,
+            onClick: handleDeleteUser,
             className: 'text-red-500 hover:text-red-700 ml-2',
-            tooltip: t('promptPage.deleteTooltip'),
+            tooltip: t('userPage.deleteTooltip'),
             color: 'red'
         },
-    ], [handleEditRole, handleDeleteRole, t]);
+    ], [handleEditUser, handleDeleteUser, handleToggleActiveStatus, t]);
 
     if (loading && users.length === 0) {
         return <div>{t('common.loadingData')}</div>;
@@ -282,10 +347,10 @@ const User: React.FC = () => {
 
     return (
         <ManagementTemplate
-            pageTitle={t('rolePage.title')}
+            pageTitle={t('userPage.title')}
             breadcrumbItems={[
-                {label: t('userPage.breadcrumb.home'), path: '/'},
-                {label: t('userPage.breadcrumb.adminDashboard'), path: '/admin'},
+                {label: t('common.breadcrumb.home'), path: '/'},
+                {label: t('common.breadcrumb.adminDashboard'), path: '/admin'},
                 {label: t('userPage.breadcrumb')},
             ]}
             searchFields={searchFields}

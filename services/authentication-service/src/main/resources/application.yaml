@@ -8,9 +8,9 @@ spring:
     name: identity-service
 
   datasource:
-    url: jdbc:mysql://localhost:3308/identity_service?createDatabaseIfNotExist=true
-    username: root
-    password: 123456
+    url: jdbc:mysql://auth-service-nguyenvietvan223-40d2.b.aivencloud.com:17716/auth-service?createDatabaseIfNotExist=true
+    username: avnadmin
+    password: AVNS_nUCWJcWtQzQz48Qx-Q5
 
   jpa:
     hibernate:

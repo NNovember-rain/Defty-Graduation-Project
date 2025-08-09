@@ -1,24 +1,41 @@
 package com.submission_service.model.entity;
 
+import com.submission_service.enums.SubmissionStatus;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Getter
 @Setter
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Submission extends BaseEntity {
 
-    Integer studentId;
-    Integer assignmentId;
+    @Column(nullable = false)
+    Long studentId;
+
+    @Column(nullable = false)
+    Long assignmentId;
+
+    @Column(nullable = false)
+    Long classId;
+
+    @Column
+    Double score;
+
+    @Lob
+    @Column(columnDefinition = "TEXT", nullable = false)
     String studentPlantUMLCode;
+
 //    String submissionFile;
-    Integer status;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    SubmissionStatus submissionStatus=SubmissionStatus.PROCESSING;
 
 }

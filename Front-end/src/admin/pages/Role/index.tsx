@@ -2,15 +2,22 @@ import ManagementTemplate, {type ActionButton} from "../../template/ManagementTe
 import type {SearchField, SortField} from "../../template/ManagementTemplate/FilterOption.tsx";
 import {useTranslation} from "react-i18next";
 import React, {useCallback, useEffect, useMemo, useState} from "react";
-import {getRoles, type GetRolesOptions, type IRole,} from "../../../shared/services/roleService.ts";
-import {type IPrompt} from "../../../shared/services/promptService.ts";
+import {
+    deleteRole,
+    getRoles,
+    type GetRolesOptions,
+    type IRole,
+    toggleRoleActiveStatus,
+} from "../../../shared/services/roleService.ts";
 import {useNavigate} from "react-router-dom";
-import {FaEdit, FaTrash} from "react-icons/fa";
+import {FaEdit, FaToggleOff, FaToggleOn, FaTrash} from "react-icons/fa";
 import dayjs from 'dayjs';
+import {useNotification} from "../../../shared/notification/useNotification.ts";
 
 const Role: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { message, modal } = useNotification();
 
     const [roles, setRoles] = useState<IRole[]>([]);
     const [totalRoles, setTotalRoles] = React.useState(0);
@@ -106,10 +113,11 @@ const Role: React.FC = () => {
             const formattedRoles = (response.roles || []).map(role => ({
                 ...role,
                 createdDate: role.createdDate
-                    ? dayjs(role.createdDate).format('YYYY-MM-DD')
+                    ? dayjs(role.createdDate).format('YYYY-MM-DD HH:mm:ss')
                     : '',
             }));
 
+            // console.log("Fetched roles:", formattedRoles);
             setRoles(formattedRoles);
             setTotalRoles(response.total || 0);
             setLoading(false);
@@ -233,33 +241,91 @@ const Role: React.FC = () => {
     }, []);
 
     const handleCreateNew = useCallback(() => {
-        navigate("/admin/identity/roles/create");
+        navigate("/admin/auth/roles/create");
     }, [t]);
 
-    const handleEditRole = useCallback((rowData: IPrompt) => {
-        navigate(`/admin/identity/roles/update/${rowData._id}`);
+    const handleEditRole = useCallback((rowData: IRole) => {
+        console.log("Editing role:", rowData);
+        navigate(`/admin/auth/roles/update/${rowData.id}`);
     }, [t]);
 
     const handleDeleteRole = useCallback(async (rowData: IRole) => {
-        console.log("Deleting role:", rowData);
-    }, [t, fetchData]);
+        if (!rowData.id) {
+            console.error("Attempted to delete role with no ID:", rowData);
+            console.log(t('common.errorNoIdToDelete'));
+            return;
+        }
+        modal.deleteConfirm(
+            t('rolePage.deleteTooltip'),
+            async () => {
+                try {
+                    setLoading(true);
+                    await deleteRole(rowData.id as number);
+                    message.success(t('rolePage.deleteSuccess'));
+                    await fetchData();
+                } catch (error) {
+                    setError(t('common.errorDeletingData'));
+                    console.error("Error deleting role:", error);
+                    message.error(t('common.errorDeletingData'));
+                } finally {
+                    setLoading(false);
+                }
+            },
+            `${t('rolePage.confirmDelete')} ${rowData.name || rowData.id}?`
+        );
+    }, [t, fetchData, modal, message]);
+
+    const handleToggleActiveStatus = useCallback(async (rowData: IRole) => {
+        if (!rowData.id) return;
+        const newStatus = !rowData.isActive;
+        const confirmMessage = newStatus
+            ? t('rolePage.confirmActivate', { name: rowData.name })
+            : t('rolePage.confirmDeactivate', { name: rowData.name });
+
+        // Đã sửa lỗi: truyền một đối tượng cấu hình duy nhất
+        modal.confirm({
+            title: t('rolePage.confirmToggleTitle'),
+            content: confirmMessage,
+            onOk: async () => {
+                try {
+                    setLoading(true);
+                    await toggleRoleActiveStatus(rowData.id as number, newStatus);
+                    message.success(t('rolePage.toggleSuccess', { status: newStatus ? t('common.active') : t('common.inactive') }));
+                    await fetchData();
+                } catch (error) {
+                    console.log("Error toggling role active status:", error);
+                    setError(t('common.errorUpdatingData'));
+                    message.error(t('common.errorUpdatingData'));
+                } finally {
+                    setLoading(false);
+                }
+            },
+        });
+    }, [t, fetchData, modal, message]);
 
     const roleActions = React.useMemo(() => [
+        {
+            icon: (rowData: IRole) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
+            onClick: handleToggleActiveStatus,
+            className: (rowData: IRole) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
+            tooltip: (rowData: IRole) => rowData.isActive ? t('rolePage.deactivateTooltip') : t('rolePage.activateTooltip'),
+            color: '#63782b'
+        },
         {
             icon: <FaEdit />,
             onClick: handleEditRole,
             className: 'text-blue-500 hover:text-blue-700',
-            tooltip: t('promptPage.editTooltip'),
+            tooltip: t('rolePage.editTooltip'),
             color: '#7600ff'
         },
         {
             icon: <FaTrash />,
             onClick: handleDeleteRole,
             className: 'text-red-500 hover:text-red-700 ml-2',
-            tooltip: t('promptPage.deleteTooltip'),
+            tooltip: t('rolePage.deleteTooltip'),
             color: 'red'
         },
-    ], [handleEditRole, handleDeleteRole, t]);
+    ], [handleEditRole, handleDeleteRole, handleToggleActiveStatus, t]);
 
     if (loading && roles.length === 0) {
         return <div>{t('common.loadingData')}</div>;
@@ -273,8 +339,8 @@ const Role: React.FC = () => {
         <ManagementTemplate
             pageTitle={t('rolePage.title')}
             breadcrumbItems={[
-                {label: t('userPage.breadcrumb.home'), path: '/'},
-                {label: t('userPage.breadcrumb.adminDashboard'), path: '/admin'},
+                {label: t('common.breadcrumb.home'), path: '/'},
+                {label: t('common.breadcrumb.adminDashboard'), path: '/admin'},
                 {label: t('rolePage.breadcrumb')},
             ]}
             searchFields={searchFields}

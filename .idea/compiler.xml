@@ -18,13 +18,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/unknown/lombok-unknown.jar" />
         </processorPath>
         <module name="submission-service" />
-        <module name="ai-feedback-service" />
-        <module name="grading-service" />
       </profile>
-      <profile name="Annotation profile for identity-service" enabled="true">
+      <profile name="Annotation profile for authentication-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -38,6 +36,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="demo" target="17" />
+      <module name="feedback-service" target="17" />
       <module name="identity" target="21" />
     </bytecodeTargetLevel>
   </component>
@@ -50,6 +49,7 @@
       <module name="common-library" options="-parameters" />
       <module name="content-service" options="-parameters" />
       <module name="discovery" options="-parameters" />
+      <module name="feedback-service" options="-parameters" />
       <module name="grading-service" options="-parameters" />
       <module name="identity" options="-parameters" />
       <module name="submission-service" options="-parameters" />

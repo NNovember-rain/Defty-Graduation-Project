@@ -3,23 +3,41 @@ server:
 #  servlet:
 #    context-path: /submission
 
+api:
+  prefix: /api/v1
+
 spring:
   application:
     name: submission-service
 
   datasource:
-    url: jdbc:mysql://localhost:3308/submission-service?createDatabaseIfNotExist=true
-    username: root
-    password: 123456
-
+    url: jdbc:postgresql://pg-2544ba05-hiephh6663-27d2.d.aivencloud.com:21433/submission-feedback-service?sslMode=require
+    username: avnadmin
+    password: AVNS_RXm8azDD_dmGVpRndg6
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
-        use_sql_comments: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect  # Đảm bảo sử dụng đúng Dialect cho MySQL 8
+        format_sql: true  # Hiển thị SQL đã định dạng đẹp (kèm theo tham số)
+        show_sql: false  # In câu lệnh SQL ra console
+        use_sql_comments: true  # Thêm các chú thích SQL (nếu cần thiết)
+        jdbc:
+          batch_size: 50
+        order_inserts: true  # Tối ưu hóa chèn hàng loạt
+        order_updates: true  # Tối ưu hóa cập nhật hàng loạt
+        generate_statistics: false  # Bật thống kê Hibernate
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password: # Nếu Redis có mật khẩu, hãy bỏ comment và điền vào đây
+
 
   kafka:
     bootstrap-servers: localhost:9092
@@ -34,3 +52,13 @@ spring:
 
 
 PLANTUML_SERVER_URL: http://localhost:8091/svg
+
+eureka:
+  #  instance:
+  #    prefer-ip-address: true
+  #    ip-address: ${HOST_IP_ADDRESS}
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka

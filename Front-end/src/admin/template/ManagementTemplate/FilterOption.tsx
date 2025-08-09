@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'; // Import useTranslation
 export interface SearchField {
     key: string;
     label: string;
-    type: 'text' | 'select' | 'datetime';
+    type: 'text' | 'number' | 'select' | 'datetime'; // Thêm 'number' vào kiểu union
     placeholder?: string;
     options?: { value: string; label: string }[];
     gridSpan?: number;
@@ -179,6 +179,19 @@ const FilterOption: React.FC<FilterOptionProps> = ({
                                 placeholder={field.placeholder}
                             />
                         )}
+
+                        {field.type === 'number' && (
+                            <input
+                                type="number"
+                                id={field.key}
+                                className="filter-options__form-group__input"
+                                placeholder={field.placeholder}
+                                value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
+                                onChange={(e) => handleChange(field.key, e.target.value)}
+                                onKeyPress={handleKeyPress}
+                            />
+                        )}
+
                     </div>
                 ))}
 

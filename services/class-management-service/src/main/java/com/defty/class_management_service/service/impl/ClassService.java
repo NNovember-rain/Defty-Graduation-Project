@@ -46,13 +46,10 @@ public class ClassService implements IClassService {
         ClassEntity classEntity = classMapper.toClassEntity(classRequest);
 
         try {
-
             classRepository.save(classEntity);
-
         } catch (Exception e) {
-
-            return new ApiResponse<>(500, e.getMessage(), classEntity.getId());
-
+            log.error("Error saving classEntity: {}", e.getMessage(), e); // log đầy đủ stacktrace
+            throw e;
         }
 
         return new ApiResponse<>(201, "Created", classEntity.getId());
@@ -70,15 +67,15 @@ public class ClassService implements IClassService {
     }
 
     @Override
-    public ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable, String className, String teacherName, Integer status) {
+    public ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable, String className, Long teacherId, Integer status) {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdDate").descending());
 
         Page<ClassEntity> classEntities = classRepository.findClasses(
-                className, teacherName, status, sortedPageable
+                className, teacherId, status, sortedPageable
         );
-        if(classEntities.isEmpty()){
-            return new ApiResponse<>(404, "Class doesn't exist", null);
-        }
+//        if(classEntities.isEmpty()){
+//            return new ApiResponse<>(404, "Class doesn't exist", null);
+//        }
         List<ClassResponse> classResponses = new ArrayList<>();
 
         for(ClassEntity c : classEntities){
@@ -141,6 +138,16 @@ public class ClassService implements IClassService {
             return new ApiResponse<>(200, "Delete classes successfully", ids);
         }
         return new ApiResponse<>(200, "Delete class successfully", ids);
+    }
+
+    @Override
+    public ApiResponse<Long> toggleActiveStatus(Long classId) {
+        ClassEntity classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new NotFoundException("Class not found with ID: " + classId));
+
+        classEntity.setStatus(classEntity.getStatus() == 1 ? 0 : 1);
+        classRepository.save(classEntity);
+        return new ApiResponse<>(200, "update class status successfully", classEntity.getId());
     }
 
 //    @Transactional

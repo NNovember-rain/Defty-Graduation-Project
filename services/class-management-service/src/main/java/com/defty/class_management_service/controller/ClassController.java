@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("${api.prefix}/admin/class-management-service/class")
+@RequestMapping("/class")
 public class ClassController {
     private final IClassService classService;
     @PostMapping("")
@@ -30,13 +30,13 @@ public class ClassController {
         return classService.getClassById(id);
     }
 
-    @GetMapping("")
+    @GetMapping("/classes")
     public Object getClasses(Pageable pageable,
                              @RequestParam(name = "class_name", required = false) String className,
-                             @RequestParam(name = "teacher_name", required = false) String teacherName,
+                             @RequestParam(name = "teacher_id", required = false) Long teacherId,
                              @RequestParam(name = "status", required = false) Integer status) {
         log.info("Request to get classes");
-        return classService.getClasses(pageable, className, teacherName, status);
+        return classService.getClasses(pageable, className, teacherId, status);
     }
 
     @GetMapping("/teacher/{teacherId}")
@@ -57,5 +57,9 @@ public class ClassController {
     public ApiResponse<List<Long>> deleteClasses(@PathVariable List<Long> ids) {
         log.info("Request to delete classes with IDS {}", ids);
         return classService.deleteClass(ids);
+    }
+    @PatchMapping("/{id}/toggle-status")
+    ApiResponse<Long> toggleActiveStatus(@PathVariable Long id) {
+        return classService.toggleActiveStatus(id);
     }
 }

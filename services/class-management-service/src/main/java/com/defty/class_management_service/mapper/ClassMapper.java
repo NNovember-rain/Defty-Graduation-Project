@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 public class ClassMapper {
     private final ModelMapper modelMapper;
     public ClassEntity toClassEntity(ClassRequest classRequest){
-        return modelMapper.map(classRequest, ClassEntity.class);
+        ClassEntity classEntity = modelMapper.map(classRequest, ClassEntity.class);
+        classEntity.setId(null);
+        return classEntity;
     }
     public ClassResponse toClassResponse(ClassEntity classEntity){
         return modelMapper.map(classEntity, ClassResponse.class);
