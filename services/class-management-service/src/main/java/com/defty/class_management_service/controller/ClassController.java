@@ -3,8 +3,8 @@ package com.defty.class_management_service.controller;
 import com.defty.class_management_service.dto.request.ClassRequest;
 import com.defty.class_management_service.dto.response.ClassResponse;
 import com.defty.class_management_service.service.IClassService;
-import com.example.common_library.dto.response.ApiResponse;
 import com.example.common_library.dto.response.PageableResponse;
+import com.example.common_library.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,13 +25,13 @@ public class ClassController {
         return classService.createClass(classRequest);
     }
     @GetMapping("/{id}")
-    public Object getClassById(@PathVariable Long id) {
+    public ApiResponse getClassById(@PathVariable Long id) {
         log.info("Request to get class by ID: {}", id);
         return classService.getClassById(id);
     }
 
-    @GetMapping("/classes")
-    public Object getClasses(Pageable pageable,
+    @GetMapping("")
+    public ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable,
                              @RequestParam(name = "class_name", required = false) String className,
                              @RequestParam(name = "teacher_id", required = false) Long teacherId,
                              @RequestParam(name = "status", required = false) Integer status) {
@@ -40,7 +40,7 @@ public class ClassController {
     }
 
     @GetMapping("/teacher/{teacherId}")
-    public Object getClassesByTeacherId(Pageable pageable,
+    public ApiResponse<PageableResponse<ClassResponse>> getClassesByTeacherId(Pageable pageable,
                                         @PathVariable Long teacherId,
                                         @RequestParam(name = "status", required = false) Integer status) {
         log.info("Request to get classes by teacher ID: {}", teacherId);
