@@ -1,4 +1,4 @@
-package com.ai_feedback_service.model.entity;
+package com.submission_service.model.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
