@@ -58,6 +58,15 @@ public class UserController {
                 .build();
     }
 
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/users-with-ids")
+    ApiResponse<List<UserResponse>> getUsersWithIds(@RequestParam List<Long> userIds) {
+        List<UserResponse> result = userService.getUsersByIds(userIds);
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(result)
+                .build();
+    }
+
     @PostMapping("/{ids}/check-existence")
     ApiResponse<UserExistenceCheckResult> checkUsersExistence(@PathVariable List<Long> ids) {
         UserExistenceCheckResult result = userService.checkUsersExistByIds(ids);

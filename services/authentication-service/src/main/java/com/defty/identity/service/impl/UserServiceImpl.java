@@ -147,6 +147,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserResponse> getUsersByIds(List<Long> userIds) {
+        List<User> users = userRepository.findAllByIdInAndIsActive(userIds, 1);
+        if (!users.isEmpty()) {
+            return users.stream()
+                    .map(userMapper::toUserResponse)
+                    .collect(Collectors.toList());
+        }
+        throw new NotFoundException("No users found with the provided IDs: " + userIds);
+    }
+
+    @Override
     public UserResponse getUser(Long id){
         return userMapper.toUserResponse(userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found")));
