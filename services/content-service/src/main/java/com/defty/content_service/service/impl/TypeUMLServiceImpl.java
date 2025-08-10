@@ -3,6 +3,8 @@ package com.defty.content_service.service.impl;
 import com.defty.content_service.dto.request.TypeUMLRequest;
 import com.defty.content_service.dto.response.TypeUMLResponse;
 import com.defty.content_service.entity.TypeUML;
+import com.defty.content_service.exception.AppException;
+import com.defty.content_service.exception.ErrorCode;
 import com.defty.content_service.repository.TypeUMLRepository;
 import com.defty.content_service.service.TypeUMLService;
 import com.defty.content_service.specification.TypeUMLSpecification;
@@ -24,7 +26,7 @@ public class TypeUMLServiceImpl implements TypeUMLService {
     @Override
     public TypeUMLResponse create(TypeUMLRequest request) {
         if (typeUMLRepository.existsByName(request.getName())) {
-            throw new IllegalArgumentException("TypeUML already exists");
+            throw new AppException(ErrorCode.TYPE_UML_EXISTED);
         }
 
         TypeUML typeUML = TypeUML.builder()
@@ -47,11 +49,12 @@ public class TypeUMLServiceImpl implements TypeUMLService {
         TypeUML typeUML = typeUMLRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("TypeUML not found"));
 
-        if (typeUMLRepository.existsByName(request.getName())) {
-            throw new IllegalArgumentException("TypeUML already exists");
+        if (typeUMLRepository.existsByNameAndIdNot(request.getName(), id)) {
+            throw new AppException(ErrorCode.TYPE_UML_EXISTED);
         }
 
         typeUML.setName(request.getName());
+        typeUML.setDescription(request.getDescription());
         typeUMLRepository.save(typeUML);
 
         return TypeUMLResponse.builder()

@@ -16,6 +16,7 @@ public enum ErrorCode {
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
     LOGIN_ERROR(1008, "Invalid login credentials. Please try again.", HttpStatus.BAD_REQUEST),
+    TYPE_UML_EXISTED(2001, "Type UML already exists", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

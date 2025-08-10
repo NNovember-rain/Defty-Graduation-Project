@@ -160,19 +160,6 @@ const TypeUml: React.FC = () => {
             gridSpan: 1
         },
         {
-            key: 'startDate',
-            label: t('typeUmlPage.search.startDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss' },
-        {
-            key: 'endDate',
-            label: t('typeUmlPage.search.endDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss'
-        },
-        {
             key: 'globalSearch',
             label: t('typeUmlPage.search.global'),
             type: 'text',
