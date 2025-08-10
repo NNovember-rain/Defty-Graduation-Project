@@ -160,19 +160,6 @@ const Role: React.FC = () => {
             gridSpan: 1
         },
         {
-            key: 'startDate',
-            label: t('rolePage.search.startDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss' },
-        {
-            key: 'endDate',
-            label: t('rolePage.search.endDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss'
-        },
-        {
             key: 'globalSearch',
             label: t('rolePage.search.global'),
             type: 'text',
