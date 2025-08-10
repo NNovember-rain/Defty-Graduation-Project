@@ -3,15 +3,17 @@ import type {SearchField, SortField} from "../../template/ManagementTemplate/Fil
 import {useTranslation} from "react-i18next";
 import React, {useCallback, useEffect, useMemo, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {FaEdit, FaToggleOff, FaToggleOn, FaTrash} from "react-icons/fa";
+import {FaEdit, FaTasks, FaToggleOff, FaToggleOn, FaTrash} from "react-icons/fa";
 import dayjs from 'dayjs';
 import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {
     deleteAssignment,
     getAssignments,
     type GetAssignmentsOptions,
-    type IAssignment, toggleAssignmentActiveStatus
+    type IAssignment,
+    toggleAssignmentActiveStatus
 } from "../../../shared/services/assignmentService.ts";
+import ClassListModal from "./ClassListModal.tsx";
 
 const Assignment: React.FC = () => {
     const { t } = useTranslation();
@@ -28,6 +30,16 @@ const Assignment: React.FC = () => {
     const [entriesPerPage, setEntriesPerPage] = useState(10);
     const [currentSortColumn, setCurrentSortColumn] = useState<string | null>(null);
     const [currentSortOrder, setCurrentSortOrder] = useState<'asc' | 'desc' | null>(null);
+    const [isClassModalVisible, setIsClassModalVisible] = useState(false);
+    const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<number[]>([]);
+
+    const showClassModal = React.useCallback(() => {
+        setIsClassModalVisible(true);
+    }, []);
+
+    const hideClassModal = () => {
+        setIsClassModalVisible(false);
+    };
 
 
     const updateUrl = useCallback(() => {
@@ -42,7 +54,7 @@ const Assignment: React.FC = () => {
         if (currentPage !== 1) {
             params.set('page', currentPage.toString());
         }
-        if (entriesPerPage !== 10) { // Giả sử 10 là giá trị mặc định ban đầu
+        if (entriesPerPage !== 10) {
             params.set('limit', entriesPerPage.toString());
         }
         if (currentSortColumn) {
@@ -55,8 +67,6 @@ const Assignment: React.FC = () => {
         window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
     }, [currentFilters, currentPage, entriesPerPage, currentSortColumn, currentSortOrder]);
 
-
-    // Logic đọc trạng thái từ URL khi component được tải
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -95,7 +105,6 @@ const Assignment: React.FC = () => {
         };
     }, []);
 
-    // Logic tìm nạp dữ liệu
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -116,7 +125,6 @@ const Assignment: React.FC = () => {
                     : '',
             }));
 
-            console.log("Fetched assignments:", formattedAssignments);
             setAssignments(formattedAssignments);
             setTotalAssignments(response.total || 0);
             setLoading(false);
@@ -139,8 +147,8 @@ const Assignment: React.FC = () => {
             sortable: true
         },
         {
-            key: 'description',
-            label: t('assignmentPage.columns.description'),
+            key: 'assignmentCode',
+            label: t('assignmentPage.columns.assignmentCode'),
             sortable: true
         },
         {
@@ -162,19 +170,6 @@ const Assignment: React.FC = () => {
             type: 'text',
             placeholder: t('assignmentPage.search.namePlaceholder'),
             gridSpan: 1
-        },
-        {
-            key: 'startDate',
-            label: t('assignmentPage.search.startDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss' },
-        {
-            key: 'endDate',
-            label: t('assignmentPage.search.endDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss'
         },
         {
             key: 'globalSearch',
@@ -244,9 +239,11 @@ const Assignment: React.FC = () => {
         setCurrentPage(1);
     }, []);
 
+    const handleCreateNew = useCallback(() => {
+        navigate("/admin/content/assignments/create");
+    }, [t]);
 
     const handleEditAssignment = useCallback((rowData: IAssignment) => {
-        // console.log("Editing assignment:", rowData);
         navigate(`/admin/content/assignments/update/${rowData.id}`);
     }, [t]);
 
@@ -272,7 +269,7 @@ const Assignment: React.FC = () => {
                     setLoading(false);
                 }
             },
-            `${t('assignmentPage.confirmDelete')} ${rowData.name || rowData.id}?`
+            `${t('assignmentPage.confirmDelete')} ${rowData.title || rowData.id}?`
         );
     }, [t, fetchData, modal, message]);
 
@@ -280,10 +277,9 @@ const Assignment: React.FC = () => {
         if (!rowData.id) return;
         const newStatus = !rowData.isActive;
         const confirmMessage = newStatus
-            ? t('assignmentPage.confirmActivate', { name: rowData.name })
-            : t('assignmentPage.confirmDeactivate', { name: rowData.name });
+            ? t('assignmentPage.confirmActivate', { name: rowData.title })
+            : t('assignmentPage.confirmDeactivate', { name: rowData.title });
 
-        // Đã sửa lỗi: truyền một đối tượng cấu hình duy nhất
         modal.confirm({
             title: t('assignmentPage.confirmToggleTitle'),
             content: confirmMessage,
@@ -304,6 +300,13 @@ const Assignment: React.FC = () => {
         });
     }, [t, fetchData, modal, message]);
 
+    const handleShowClassModal = useCallback((rowData: IAssignment) => {
+        if (rowData.id) {
+            setSelectedAssignmentIds([rowData.id]);
+            setIsClassModalVisible(true);
+        }
+    }, []);
+
     const assignmentActions = React.useMemo(() => [
         {
             icon: (rowData: IAssignment) => rowData.isActive ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
@@ -311,6 +314,13 @@ const Assignment: React.FC = () => {
             className: (rowData: IAssignment) => rowData.isActive ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
             tooltip: (rowData: IAssignment) => rowData.isActive ? t('assignmentPage.deactivateTooltip') : t('assignmentPage.activateTooltip'),
             color: '#63782b'
+        },
+        {
+            icon: <FaTasks />,
+            onClick: handleShowClassModal,
+            className: 'text-gray-600 hover:text-gray-900 ml-2',
+            tooltip: t('classPage.viewDetailsTooltip'),
+            color: '#6c757d'
         },
         {
             icon: <FaEdit />,
@@ -326,7 +336,7 @@ const Assignment: React.FC = () => {
             tooltip: t('assignmentPage.deleteTooltip'),
             color: 'red'
         },
-    ], [handleEditAssignment, handleDeleteAssignment, handleToggleActiveStatus, t]);
+    ], [showClassModal, handleEditAssignment, handleDeleteAssignment, handleToggleActiveStatus, t]);
 
     if (loading && assignments.length === 0) {
         return <div>{t('common.loadingData')}</div>;
@@ -337,32 +347,42 @@ const Assignment: React.FC = () => {
     }
 
     return (
-        <ManagementTemplate
-            pageTitle={t('assignmentPage.title')}
-            breadcrumbItems={[
-                {label: t('common.breadcrumb.home'), path: '/'},
-                {label: t('common.breadcrumb.adminDashboard'), path: '/admin'},
-                {label: t('assignmentPage.breadcrumb')},
-            ]}
-            searchFields={searchFields}
-            sortFields={sortFields}
-            onSearch={handleSearch}
-            onClear={handleClear}
-            columns={dataTableColumns}
-            data={assignments}
-            totalEntries={totalAssignments}
-            entriesPerPage={entriesPerPage}
-            currentPage={currentPage}
-            onPageChange={handlePageChange}
-            onSort={handleTableSort}
-            currentSortColumn={currentSortColumn}
-            currentSortOrder={currentSortOrder}
-            onEntriesPerPageChange={handleEntriesPerPageChange}
-            actions={assignmentActions as ActionButton[]}
-            initialFilters={currentFilters}
-            initialSortBy={currentSortColumn}
-            initialSortOrder={currentSortOrder}
-        />
+        <>
+            <ManagementTemplate
+                pageTitle={t('assignmentPage.title')}
+                breadcrumbItems={[
+                    {label: t('common.breadcrumb.home'), path: '/'},
+                    {label: t('common.breadcrumb.adminDashboard'), path: '/admin'},
+                    {label: t('assignmentPage.breadcrumb')},
+                ]}
+                searchFields={searchFields}
+                sortFields={sortFields}
+                onSearch={handleSearch}
+                onClear={handleClear}
+                columns={dataTableColumns}
+                data={assignments}
+                totalEntries={totalAssignments}
+                entriesPerPage={entriesPerPage}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+                onSort={handleTableSort}
+                currentSortColumn={currentSortColumn}
+                currentSortOrder={currentSortOrder}
+                onCreateNew={handleCreateNew}
+                onEntriesPerPageChange={handleEntriesPerPageChange}
+                actions={assignmentActions as ActionButton[]}
+                initialFilters={currentFilters}
+                initialSortBy={currentSortColumn}
+                initialSortOrder={currentSortOrder}
+            />
+
+            <ClassListModal
+                visible={isClassModalVisible}
+                onClose={hideClassModal}
+                assignmentIds={selectedAssignmentIds}
+                onAssigned={fetchData}
+            />
+        </>
     );
 };
 

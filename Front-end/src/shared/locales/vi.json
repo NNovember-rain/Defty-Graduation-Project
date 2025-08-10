@@ -19,6 +19,7 @@
     "networkErrorRetryFetch": "Lỗi mạng khi thử lại yêu cầu.",
     "createSuccess": "Tạo mới thành công",
     "updateSuccess": "Cập nhật thành công",
+    "assignSuccess": "Gán thành công",
     "fail": "Thao tác thất bại."
   },
   "login": {
@@ -135,7 +136,10 @@
     "confirm": "Xác nhận",
     "delete": "Xóa",
     "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.",
-    "all": "Tất cả"
+    "all": "Tất cả",
+    "back": "Quay lại",
+    "noData": "Không có dữ liệu để hiển thị.",
+    "submit": "Nộp"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -205,6 +209,7 @@
 
     "validation": {
       "nameRequired": "Tên không được để trống.",
+      "descriptionRequired": "Mô tả là bắt buộc.",
       "nameInvalid": "Tên phải theo định dạng: chữ thường và có ít nhất một dấu chấm (ví dụ: class.diagram)."
     }
   },
@@ -215,7 +220,8 @@
     "columns": {
       "name": "Tên bài tập",
       "description": "Mô tả",
-      "creationDate": "Ngày tạo"
+      "creationDate": "Ngày tạo",
+      "assignmentCode": "Mã bài tập"
     },
     "search": {
       "name": "Tên bài tập",
@@ -243,6 +249,20 @@
     "confirmActivate": "Bạn có chắc muốn kích hoạt '{{name}}'?",
     "confirmDeactivate": "Bạn có chắc muốn vô hiệu hoá '{{name}}'?",
     "toggleSuccess": "Cập nhật trạng thái thành công: {{status}}"
+  },
+  "assignmentForm": {
+    "title": "Quản lý bài tập",
+    "titleLabel": "Tiêu đề",
+    "titlePlaceholder": "Nhập tiêu đề bài tập",
+    "descriptionLabel": "Mô tả",
+    "solutionCodeLabel": "Mã giải pháp",
+    "solutionCodePlaceholder": "Nhập mã giải pháp",
+    "typeUmlLabel": "Loại UML",
+    "validation": {
+      "titleRequired": "Tiêu đề là bắt buộc",
+      "descriptionRequired": "Mô tả là bắt buộc",
+      "typeUmlRequired": "Loại UML là bắt buộc"
+    }
   },
 
   "userPage": {
@@ -359,6 +379,21 @@
     "peopleTab": {
       "teachersTitle": "Giáo viên",
       "studentsTitle": "Học sinh"
+    },
+    "assignment": {
+      "inactive": "Không hoạt động",
+      "active": "Đang hoạt động",
+      "viewDetails": "Xem"
+    },
+    "sort": {
+      "newest": "Mới nhất",
+      "oldest": "Cũ nhất",
+      "titleAsc": "Tiêu đề A→Z",
+      "titleDesc": "Tiêu đề Z→A"
+    },
+    "view": {
+      "grid": "Dạng lưới",
+      "list": "Dạng danh sách"
     }
   },
   "rolePage": {

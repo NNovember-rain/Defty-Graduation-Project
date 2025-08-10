@@ -3,6 +3,7 @@ package com.defty.content_service.dto.request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -11,12 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AssignmentRequest {
-    Long userId;
-    String title;
-    String description;
-    Long typeUmlId;
+public class AssignRequest {
     List<Long> classIds;
-    String assignmentCode;
-    String solutionCode;
+    List<Long> assignmentIds;
+    Date startDate;
+    Date endDate;
 }

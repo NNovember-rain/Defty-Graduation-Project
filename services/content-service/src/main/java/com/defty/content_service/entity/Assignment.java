@@ -16,8 +16,14 @@ import java.util.Set;
 public class Assignment extends  BaseEntity{
     Long userId;
     String title;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
     String description;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     String solutionCode;
+
     String assignmentCode;
 
     @ManyToOne
