@@ -1,6 +1,6 @@
-package com.ai_feedback_service.repository;
+package com.submission_service.repository;
 
-import com.ai_feedback_service.model.entity.FeedbackAi;
+import com.submission_service.model.entity.FeedbackAi;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface IFeedBackAiRepository extends JpaRepository<FeedbackAi, Integer> {

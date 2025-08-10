@@ -3,10 +3,8 @@ package com.example.common_library.controllerAdvice;
 
 
 import com.example.common_library.dto.response.ErrorResponse;
-import com.example.common_library.exceptions.FieldRequiredException;
-import com.example.common_library.exceptions.JsonHandlerException;
-import com.example.common_library.exceptions.MediaUploadException;
-import com.example.common_library.exceptions.NotFoundException;
+import com.example.common_library.exceptions.*;
+import feign.FeignException;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -138,18 +136,33 @@ public class GlobalExceptionHandler {
 //    }
 
 
+    @ExceptionHandler(FeignClientException.class)
+    @ResponseStatus(HttpStatus.OK) // Có thể thay đổi thành HttpStatus.SERVICE_UNAVAILABLE nếu muốn
+    public ErrorResponse handleFeignException(FeignException e, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setTimestamp(new Date());
+        errorResponse.setPath(request.getDescription(false).replace("uri=", ""));
 
-    //TODO: thầy Hạnh viết
-//    @ExceptionHandler(UnauthorizedException.class)
-//    @ResponseStatus(UNAUTHORIZED)
-//    public ErrorResponse handleUnauthorizedException(UnauthorizedException e, WebRequest request) {
-//        ErrorResponse errorResponse = new ErrorResponse();
-//        errorResponse.setTimestamp(new Date());
-//        errorResponse.setPath(request.getDescription(false).replace("uri=", ""));
-//        errorResponse.setStatus(UNAUTHORIZED.value());
-//        errorResponse.setError("Unauthorized");
-//        errorResponse.setMessage(e.getMessage());
-//
-//        return errorResponse;
-//    }
+        // Xác định mã trạng thái dựa trên mã lỗi từ FeignException
+        int statusCode = e.status() >= 400 ? e.status() : HttpStatus.SERVICE_UNAVAILABLE.value();
+        errorResponse.setStatus(statusCode);
+
+        // Xác định lỗi cụ thể
+        String errorMessage;
+        if (e.status() == 404) {
+            errorMessage = "Resource not found on external service";
+        } else if (e.status() >= 500) {
+            errorMessage = "External service error";
+        } else if (e.status() == -1) {
+            errorMessage = "Unable to connect to external service";
+        } else {
+            errorMessage = "Error while communicating with external service";
+        }
+
+        errorResponse.setError(errorMessage);
+        List<String> detailMessage = new ArrayList<>();
+        errorResponse.setDetailMessage(detailMessage);
+
+        return errorResponse;
+    }
 }

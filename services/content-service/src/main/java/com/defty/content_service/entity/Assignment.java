@@ -16,7 +16,11 @@ import java.util.Set;
 public class Assignment extends  BaseEntity{
     Long userId;
     String title;
+
+    @Column(columnDefinition = "TEXT")
     String description;
+
+    @Column(columnDefinition = "TEXT")
     String solutionCode;
     String assignmentCode;
 
