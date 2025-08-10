@@ -19,4 +19,5 @@ public interface UserService {
     UserResponse toggleActiveStatus(Long userId);
     List<UserResponse> getAllUsersByRole(String fullName, Long roleId);
     UserExistenceCheckResult checkUsersExistByIds(List<Long> userIds);
+    List<UserResponse> getUsersByIds(List<Long> userIds);
 }
