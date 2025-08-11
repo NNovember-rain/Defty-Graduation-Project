@@ -1,8 +1,8 @@
-package com.ai_feedback_service.controller;
+package com.submission_service.controller;
 
-import com.ai_feedback_service.model.dto.request.FeedbackAiRequest;
-import com.ai_feedback_service.model.dto.response.ApiResponse;
-import com.ai_feedback_service.service.IFeedBackAIService;
+import com.example.common_library.response.ApiResponse;
+import com.submission_service.model.dto.request.FeedbackAiRequest;
+import com.submission_service.service.IFeedBackAIService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

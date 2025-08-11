@@ -7,9 +7,9 @@ import com.defty.class_management_service.mapper.ClassMapper;
 import com.defty.class_management_service.repository.IClassRepository;
 import com.defty.class_management_service.service.IClassService;
 import com.defty.class_management_service.validation.ClassValidation;
-import com.example.common_library.dto.response.ApiResponse;
 import com.example.common_library.dto.response.PageableResponse;
 import com.example.common_library.exceptions.NotFoundException;
+import com.example.common_library.response.ApiResponse;
 import com.example.common_library.utils.CopyUtil;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +55,7 @@ public class ClassService implements IClassService {
 
     }
     @Override
-    public Object getClassById(Long id) {
+    public ApiResponse getClassById(Long id) {
         Optional<ClassEntity> classEntity = classRepository.findActiveById(id);
         if(classEntity.isPresent()){
             ClassResponse classResponse = classMapper.toClassResponse(classEntity.get());

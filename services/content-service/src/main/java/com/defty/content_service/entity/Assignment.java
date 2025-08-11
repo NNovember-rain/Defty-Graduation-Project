@@ -17,13 +17,11 @@ public class Assignment extends  BaseEntity{
     Long userId;
     String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     String description;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     String solutionCode;
-
     String assignmentCode;
 
     @ManyToOne
