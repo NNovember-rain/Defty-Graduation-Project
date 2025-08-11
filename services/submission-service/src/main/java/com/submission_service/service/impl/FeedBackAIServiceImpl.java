@@ -1,9 +1,10 @@
-package com.ai_feedback_service.service.impl;
+package com.submission_service.service.impl;
 
-import com.ai_feedback_service.model.dto.request.FeedbackAiRequest;
-import com.ai_feedback_service.model.entity.FeedbackAi;
-import com.ai_feedback_service.repository.IFeedBackAiRepository;
-import com.ai_feedback_service.service.IFeedBackAIService;
+
+import com.submission_service.model.dto.request.FeedbackAiRequest;
+import com.submission_service.model.entity.FeedbackAi;
+import com.submission_service.repository.IFeedBackAiRepository;
+import com.submission_service.service.IFeedBackAIService;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

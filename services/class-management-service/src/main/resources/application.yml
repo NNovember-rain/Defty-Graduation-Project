@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: class-service
+    name: class-management-service
   datasource:
     url: jdbc:mysql://class-management-duduongvanptit.d.aivencloud.com:17141/class_management_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: avnadmin

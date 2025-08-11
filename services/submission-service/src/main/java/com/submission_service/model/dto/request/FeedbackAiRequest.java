@@ -1,4 +1,4 @@
-package com.ai_feedback_service.model.dto.request;
+package com.submission_service.model.dto.request;
 
 import lombok.AccessLevel;
 import lombok.Getter;

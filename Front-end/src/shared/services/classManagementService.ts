@@ -54,9 +54,9 @@ export interface GetClassesResult {
 
 // API Response chung từ Backend (để cast response)
 export interface ApiResponse<T> {
-    status: number;
+    code: number;
     message: string;
-    data: T;
+    result: T;
     errorCode?: string;
 }
 
@@ -98,7 +98,7 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
         page: currentPage - 1, // Backend dùng 0-indexed
         size: entriesPerPage,
         class_name: options.name,
-        teacher_name: options.teacherId,
+        teacher_id: options.teacherId,
         section: options.section,
         subject: options.subject,
         sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
@@ -122,14 +122,13 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
     const response = await handleRequest(getWithParams(`${CLASS_SERVICE_PREFIX}/class`, params));
     const apiResponse = await response.json() as ApiResponse<{ content: IClass[], totalElements: number }>; // Cast đúng với response backend
 
-    console.log(apiResponse);
 
-    if (apiResponse.status === 200 && apiResponse.data) {
-        const totalElements = apiResponse.data.totalElements || 0;
+    if (apiResponse.code === 200 && apiResponse.result) {
+        const totalElements = apiResponse.result.totalElements || 0;
         const totalPages = Math.ceil(totalElements / entriesPerPage);
 
         return {
-            content: apiResponse.data.content || [],
+            content: apiResponse.result.content || [],
             totalElements: totalElements,
             totalPages: totalPages,
             number: currentPage - 1, // Lưu trữ 0-indexed page number
@@ -146,7 +145,7 @@ export const getClassById = async (id: number): Promise<IClass> => {
     const data = await response.json();
     console.log("Dữ liệu trả về:", data);
 
-    return data.data as IClass;
+    return data.result as IClass;
 };
 
 export const deleteClass = async (ids: number | number[], teacherId: number): Promise<ApiResponse<void>> => {
@@ -166,7 +165,7 @@ export const toggleClassStatus = async (id: number, status: 0 | 1): Promise<ICla
         patchJsonData(`${CLASS_SERVICE_PREFIX}/class/${id}/toggle-status`, { status })
     );
     const updatedData = await response.json();
-    return updatedData.data as IClass;
+    return updatedData.result as IClass;
 };
 
 // ... Các hàm API cho Enrollment (addStudentsToClass, getStudentsInClass, getClassesByStudentId, leaveClass)
@@ -202,13 +201,13 @@ export const getStudentsInClass = async (classId: number, options: GetStudentsIn
     const response = await handleRequest(getWithParams(`${CLASS_SERVICE_PREFIX}/class/${classId}/enrollments/students`, params));
     const apiResponse = await response.json() as ApiResponse<any>;
 
-    if (apiResponse.success && apiResponse.data) {
+    if (apiResponse.code === 200 && apiResponse.result) {
         return {
-            content: apiResponse.data.content,
-            totalElements: apiResponse.data.totalElements,
-            totalPages: apiResponse.data.totalPages,
-            number: apiResponse.data.number,
-            size: apiResponse.data.size,
+            content: apiResponse.result.content,
+            totalElements: apiResponse.result.totalElements,
+            totalPages: apiResponse.result.totalPages,
+            number: apiResponse.result.number,
+            size: apiResponse.result.size,
         } as GetStudentsInClassResult;
     } else {
         throw new Error(apiResponse.message || "Failed to fetch students in class.");
@@ -225,13 +224,13 @@ export const getClassesByStudentId = async (studentId: number, options: GetClass
     const response = await handleRequest(getWithParams(`${CLASS_SERVICE_PREFIX}/enrollments/student/${studentId}/class`, params));
     const apiResponse = await response.json() as ApiResponse<any>;
 
-    if (apiResponse.success && apiResponse.data) {
+    if (apiResponse.code === 200 && apiResponse.result) {
         return {
-            content: apiResponse.data.content,
-            totalElements: apiResponse.data.totalElements,
-            totalPages: apiResponse.data.totalPages,
-            number: apiResponse.data.number,
-            size: apiResponse.data.size,
+            content: apiResponse.result.content,
+            totalElements: apiResponse.result.totalElements,
+            totalPages: apiResponse.result.totalPages,
+            number: apiResponse.result.number,
+            size: apiResponse.result.size,
         } as GetClassesResult;
     } else {
         throw new Error(apiResponse.message || "Failed to fetch classes for student.");

@@ -14,11 +14,13 @@ import java.util.Date;
 @NoArgsConstructor
 public class SubmissionDetailResponse {
     Long id;
-    String studentId;
+    String studentCode;
     String studentName;
     String assignmentTitle;
-    Long classId;
+    String typeUml;
+    String classCode;
     Date createdDate;
     SubmissionStatus submissionStatus;
     String studentPlantUMLCode;
+    String solutionCode;
 }

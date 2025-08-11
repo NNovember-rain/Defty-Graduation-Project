@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/enrollment")
 public class EnrollmentController {
-    IEnrollmentService enrollmentService;
+    private final IEnrollmentService enrollmentService;
 //    @PostMapping("/add-students")
 //    public ResponseEntity<ApiResponse<List<EnrollmentDto>>> addStudentsToClass(
 //            @PathVariable Long classId,
@@ -35,7 +35,8 @@ public class EnrollmentController {
     public Object getClassesByStudentId(Pageable pageable,
                                         @PathVariable Long studentId) {
         log.info("Request to get classes by student ID: {}", studentId);
-        return enrollmentService.getClassesByStudentId(pageable, studentId);
+        return null;
+//        return enrollmentService.getClassesByStudentId(pageable, studentId);
     }
 
 //    @DeleteMapping("/students/{studentId}/leave")
