@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TypeUMLRepository extends JpaRepository<TypeUML, Long>, JpaSpecificationExecutor<TypeUML> {
     boolean existsByName(String name);
+    boolean existsByNameAndIdNot(String name, Long id);
 }

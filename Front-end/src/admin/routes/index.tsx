@@ -23,6 +23,8 @@ import Assignment from "../pages/Assignment";
 import TypeUml from "../pages/TypeUml";
 import TypeUMlForm from "../pages/TypeUml/typeUmlForm.tsx";
 import ClassDetailPage from "../pages/ClassManagement/ClassDetailPage.tsx";
+import AssignmentDetail from "../pages/ClassManagement/tab/Assignment/AssignmentDetail.tsx";
+import AssignmentForm from "../pages/Assignment/assignmentForm.tsx";
 
 
 interface AppRoute {
@@ -142,18 +144,26 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         component: classForm,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
-
+    {
+        path: 'class/assignment/:id',
+        component: AssignmentDetail,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
     {
         path: 'content/assignments',
         component: Assignment,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
+        path: 'content/assignments/create',
+        component: AssignmentForm,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
         path: 'content/assignments/update/:id',
-        component: Assignment,
+        component: AssignmentForm,
         requiredAnyOfRoles: ['admin'],
     },
-
     {
         path: 'content/type-uml',
         component: TypeUml,
@@ -174,7 +184,6 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         component: TypeUMlForm,
         requiredAnyOfRoles: ['admin'],
     },
-
     {
         path: 'settings/prompts',
         component: Prompt,

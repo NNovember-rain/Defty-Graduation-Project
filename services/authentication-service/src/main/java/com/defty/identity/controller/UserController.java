@@ -48,7 +48,7 @@ public class UserController {
                 .build();
     }
 
-    @PreAuthorize("hasRole('admin')")
+//    @PreAuthorize("hasRole('admin')")
     @GetMapping("/by-role/{roleId}")
     ApiResponse<List<UserResponse>> getUsersByRole(@PathVariable Long roleId,
                                                    @RequestParam(required = false) String fullName) {
@@ -58,7 +58,7 @@ public class UserController {
                 .build();
     }
 
-    @PreAuthorize("hasRole('admin')")
+//    @PreAuthorize("hasRole('admin')")
     @GetMapping("/users-with-ids")
     ApiResponse<List<UserResponse>> getUsersWithIds(@RequestParam List<Long> userIds) {
         List<UserResponse> result = userService.getUsersByIds(userIds);
@@ -91,7 +91,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('admin')")
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request){
         return ApiResponse.<UserResponse>builder()
                 .result(userService.updateUser(id, request))

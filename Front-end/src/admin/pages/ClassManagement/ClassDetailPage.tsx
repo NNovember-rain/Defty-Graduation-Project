@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from 'react-bootstrap';
 import { getClassById, IClass } from '../../../shared/services/classManagementService.ts';
+import AssignmentTab from "./tab/Assignment/AssignmentTab.tsx";
 
 // Breadcrumb component
 interface BreadcrumbItem {
@@ -131,7 +132,7 @@ const ClassDetailPage: React.FC = () => {
                     </div>
                 );
             case 'classwork':
-                return <div style={{ padding: '1rem' }}>{t('classDetail.tabs.classworkContent')}</div>;
+                return <AssignmentTab classId={classData.id} />;
             case 'people':
                 return <ClassPeopleTab classId={classData.id} />;
             case 'marks':

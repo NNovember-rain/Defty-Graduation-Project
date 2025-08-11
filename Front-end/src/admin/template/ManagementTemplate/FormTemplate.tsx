@@ -9,11 +9,12 @@ import {useNotification} from "../../../shared/notification/useNotification.ts";
 
 import './FormTemplate.scss';
 import DualListBox from "../../components/DualListBox/DualListBox.tsx";
+import TextEditor from "../../components/TextEditor/TextEditor.tsx";
 
 export interface FormField {
     key: string;
     labelKey: string; // Key dịch thuật cho label
-    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'duallistbox';
+    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'duallistbox' | 'textEditor';
     placeholderKey?: string; // Key dịch thuật cho placeholder
     options?: { value: string; label: string; [key: string]: any };
     required?: boolean;
@@ -374,6 +375,15 @@ const FormTemplate = <T extends Record<string, any>>({
                                             ]}
 
                                             showSearch
+                                        />
+                                    )}
+
+                                    {field.type === 'textEditor' && (
+                                        <TextEditor
+                                            value={(formData && formData[field.key as keyof T]) ?? ''}
+                                            onChange={(content) => handleChange(field.key, content)}
+                                            disabled={loading}
+                                            placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
                                         />
                                     )}
 

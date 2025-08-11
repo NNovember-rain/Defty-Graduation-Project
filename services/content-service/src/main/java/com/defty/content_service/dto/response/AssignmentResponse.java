@@ -1,5 +1,6 @@
 package com.defty.content_service.dto.response;
 
+import com.defty.content_service.entity.AssignmentClass;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -23,4 +24,5 @@ public class AssignmentResponse {
     Integer isActive;
     List<Long> classIds;
     Date createdDate;
+    List<AssignmentClassResponse> assignmentClasses;
 }
