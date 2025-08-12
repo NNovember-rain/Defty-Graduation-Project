@@ -153,89 +153,75 @@
 }
 
 .code-editor {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    flex: 0 0 auto;
+  }
+
   &__toolbar {
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #383838;
-    border-bottom: 1px solid #404040;
     padding: 8px 12px;
+    border-radius: 8px 8px 0 0;
   }
 
-  &__left-controls {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  &__left-controls { display: flex; align-items: center; gap: 12px; }
+  &__language-label { color: #b0b0b0; font-size: 13px; font-weight: 500; }
 
-  &__language-label {
-    color: #b0b0b0;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  &__header--right-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  &__header--right-controls { display: flex; align-items: center; gap: 8px; }
 
   &__btn {
     position: relative;
     border: none;
-    font-size: 16px;
+    background: transparent;
+    color: #e0e0e0;
+    font-size: 20px;
     cursor: pointer;
-    font-weight: 500;
-    border-radius: 4px;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 6px;
+    padding: 4px 6px;
+    transition: background 0.2s ease, color 0.2s ease;
 
+    &:hover { background: #444; }
 
-    &--run {
-      background-color: transparent;
-      color: #02b128;
+    &--run { color: #02b128; &:hover { color: #02e634; }; font-size: 22px }
+    &--submit { color: #0277f6; &:hover { color: #007aff; } }
 
-      &:hover {
-        color: #02e634;
-      }
-    }
-
-    &--submit {
-      font-size: 20px;
-      background-color: transparent;
-      color: #0277f6;
-
-      &:hover {
-        color: #007aff;
-      }
-    }
-
+    /* tooltip */
     &:hover::after {
       content: attr(data-tooltip);
-      position: absolute;
-      top: 120%;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #404040;
-      color: #fff;
-      padding: 6px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 10;
+      position: absolute; top: 120%; left: 50%; transform: translateX(-50%);
+      background-color: #404040; color: #fff;
+      padding: 6px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 10;
     }
   }
 
-  &__textarea {
-    flex: 1;
-    padding: 16px;
-    background-color: transparent;
-    color: #e0e0e0;
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 14px;
-    border: none;
-    resize: none;
-    outline: none;
-    line-height: 1.5;
+  &__body {
+    flex: 1 1 auto;
+    min-height: 0; /* rất quan trọng để editor co giãn */
+    border-left: 1px solid #ffffff38;
+    border-right: 1px solid #ffffff38;
+    background: #1e1e1e;
+  }
+
+  &__statusbar {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #b0b0b0;
+    background: #2b2b2b;
+    border: 1px solid #ffffff38;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+
+    &--spacer { margin-left: auto; }
   }
 }
 
@@ -394,4 +380,18 @@
   color: #9aa3b2;
   border: 1px dashed #2f2f2f;
   border-radius: 8px;
+}
+
+.code-editor__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-left: 1px solid #ffffff38;
+  border-right: 1px solid #ffffff38;
+  background: #262626; /* đồng bộ với box */
+}
+
+.description,
+.code-editor,
+.result-container {
+  background-color: #262626; /* box tone */
 }
