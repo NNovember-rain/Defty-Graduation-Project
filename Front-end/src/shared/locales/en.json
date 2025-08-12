@@ -21,6 +21,12 @@
     "updateSuccess": "Updated successfully.",
     "fail": "Failed action."
   },
+  "notfound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has been moved.",
+    "back": "Go back",
+    "home": "Go to homepage"
+  },
   "login": {
     "adminLTE": "Admin",
     "defty": "DEFTY",
@@ -575,7 +581,10 @@
     },
     "result": {
       "title": "Test Result",
-      "placeholder": "Press \"Run\" to see the diagram."
+      "placeholder": "Press \"Run\" to see the diagram.",
+      "renderErrorWithStatus": "Render error ({{status}})",
+      "renderFailed": "Failed to render diagram",
+      "imageLoadError": "Cannot load diagram image"
     }
   }
 }

@@ -22,7 +22,8 @@ export interface GetAssignmentsResult {
 
 export interface IAssignment {
     id: number;
-    name: string;
+    name: string; // FIXME
+    title: string;
     description: string;
     createdDate: string;
     isActive: boolean;
