@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
 import { getAssignmentById, type IAssignment } from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
+import {createSubmission} from "../../../shared/services/submissionService.ts";
 
 /** ========= PlantUML helpers ========= */
 const plantUmlEncTable = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
@@ -113,9 +114,16 @@ const ProblemDetail: React.FC = () => {
     };
 
     const handleRunCode = () => renderWithKroki(code);
-    const handleSubmitCode = () => {
-        console.log(t("problemDetail.codeEditor.submitMessage"), code);
-        // TODO: submit
+    const handleSubmitCode = async () => {
+        const submissionData = {
+            studentId: 1, // Replace with actual student ID from authentication state
+            classId: Number(classId), // Convert URL param to a number
+            assignmentId: Number(problemId), // Convert URL param to a number
+            studentPlantUmlCode: code, // The PlantUML code from the editor state
+        };
+
+        const submissionResponse = await createSubmission(submissionData);
+        console.log("Submission successful:", submissionResponse);
     };
 
     // tách function fetch

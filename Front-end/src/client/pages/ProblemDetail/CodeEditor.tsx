@@ -1,5 +1,5 @@
 import React from "react";
-import Editor, {type OnMount, useMonaco } from "@monaco-editor/react";
+import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
 import { MdPlayArrow, MdSend } from "react-icons/md";
 import { useTranslation } from "react-i18next";
 
@@ -23,55 +23,33 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     const editorRef = React.useRef<import("monaco-editor").editor.IStandaloneCodeEditor | null>(null);
     const [cursor, setCursor] = React.useState<{ line: number; column: number }>({ line: 1, column: 1 });
 
-    // Đăng ký ngôn ngữ + theme tối cố định (không còn wrap/theme toggle)
     React.useEffect(() => {
         if (!monaco) return;
 
-        const langId = "plantuml";
-        const langs = (monaco.languages.getLanguages() || []).map((l) => l.id);
-        if (!langs.includes(langId)) {
-            monaco.languages.register({ id: langId });
-            monaco.languages.setMonarchTokensProvider(langId, {
-                tokenizer: {
-                    root: [
-                        [/^@startuml|@enduml\b/, "keyword"],
-                        [/'+.*/, "comment"],
-                        [/-{1,2}>{1}/, "operator"],       // ->, -->, -->> ...
-                        [/:[^$]*/, "string"],              // : message
-                        [/\b[A-Za-z_][\w-]*\b/, "identifier"],
-                    ],
-                },
-            });
-        }
-
+        // Chỉ định nghĩa theme dark, không custom tokenizer
         monaco.editor.defineTheme("uml-dark", {
             base: "vs-dark",
             inherit: true,
             rules: [
-                { token: "keyword", foreground: "7BD88F", fontStyle: "bold" },
-                { token: "comment", foreground: "8B949E" },
-                { token: "operator", foreground: "79C0FF" },
-                { token: "string", foreground: "E6CC77" },
-                { token: "identifier", foreground: "E5E7EB" },
+                // Giữ rules cơ bản của vs-dark
             ],
             colors: {
-                // đồng bộ màu với box (#262626)
                 "editor.background": "#262626",
                 "editorGutter.background": "#262626",
                 "editorLineNumber.foreground": "#6B7280",
                 "editorLineNumber.activeForeground": "#E5E7EB",
             },
         });
+
+        monaco.editor.setTheme("uml-dark");
     }, [monaco]);
 
     const onMount: OnMount = (editor, monacoApi) => {
         editorRef.current = editor;
 
-        // phím tắt
         editor.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.Enter, () => onRun());
         editor.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KeyS, () => onSubmit());
 
-        // cập nhật vị trí con trỏ
         editor.onDidChangeCursorPosition((e) => {
             setCursor({ line: e.position.lineNumber, column: e.position.column });
         });
@@ -79,7 +57,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
     return (
         <div className="code-editor">
-            {/* Header / Toolbar */}
             <div className="code-editor__header">
                 <div className="code-editor__toolbar">
                     <div className="code-editor__left-controls">
@@ -108,12 +85,11 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                 </div>
             </div>
 
-            {/* Editor */}
             <div className="code-editor__body">
                 <Editor
                     height="100%"
-                    language="plantuml"
-                    theme="uml-dark"         // theme cố định
+                    language="text"
+                    theme="uml-dark"
                     value={code}
                     onChange={(val) => onCodeChange(val ?? "")}
                     onMount={onMount}
@@ -124,7 +100,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                         fontLigatures: true,
                         minimap: { enabled: true },
                         scrollBeyondLastLine: false,
-                        wordWrap: "off",       // tắt wrap cố định
+                        wordWrap: "off",
                         renderWhitespace: "selection",
                         smoothScrolling: true,
                         cursorBlinking: "blink",
@@ -134,7 +110,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                 />
             </div>
 
-            {/* Status bar — giữ đơn giản */}
             <div className="code-editor__statusbar">
                 <span>Ln {cursor.line}, Col {cursor.column}</span>
                 <span> | </span>
