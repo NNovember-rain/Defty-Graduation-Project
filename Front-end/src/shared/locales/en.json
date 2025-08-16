@@ -19,6 +19,7 @@
     "networkErrorRetryFetch": "Network error during retry.",
     "createSuccess": "Created successfully.",
     "updateSuccess": "Updated successfully.",
+    "assignSuccess": "Assigned successfully.",
     "fail": "Failed action."
   },
   "notfound": {
@@ -141,7 +142,10 @@
     "confirm": "Confirm",
     "delete": "Delete",
     "confirmDeleteContent": "Are you sure you want to delete? This action cannot be undone.",
-    "all": "All"
+    "all": "All",
+    "back": "Back",
+    "submit": "Submit",
+    "noData": "No data available"
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -211,6 +215,7 @@
 
     "validation": {
       "nameRequired": "Name is required.",
+      "descriptionRequired": "Description is required.",
       "nameInvalid": "Name must be in format: lowercase with at least one dot (e.g. class.diagram)."
     }
   },
@@ -221,7 +226,8 @@
     "columns": {
       "name": "Assignment Name",
       "description": "Description",
-      "creationDate": "Creation Date"
+      "creationDate": "Creation Date",
+      "assignmentCode": "Assignment Code"
     },
     "search": {
       "name": "Assignment Name",
@@ -249,6 +255,22 @@
     "confirmActivate": "Are you sure you want to activate '{{name}}'?",
     "confirmDeactivate": "Are you sure you want to deactivate '{{name}}'?",
     "toggleSuccess": "Status updated successfully: {{status}}"
+  },
+  "assignmentForm": {
+    "title": "Assignment Management",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter assignment title",
+    "descriptionLabel": "Description",
+    "solutionCodeLabel": "Solution Code",
+    "solutionCodePlaceholder": "Enter solution code",
+    "typeUmlLabel": "UML Type",
+    "validation": {
+      "titleRequired": "Title is required",
+      "descriptionRequired": "Description is required",
+      "typeUmlRequired": "UML Type is required"
+    },
+    "startDate": "Start Date",
+    "endDate": "End Date"
   },
 
   "userPage": {
@@ -365,6 +387,21 @@
     "peopleTab": {
       "teachersTitle": "Teachers",
       "studentsTitle": "Students"
+    },
+    "assignment": {
+      "inactive": "Inactive",
+      "active": "Active",
+      "viewDetails": "View"
+    },
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "titleAsc": "Title A→Z",
+      "titleDesc": "Title Z→A"
+    },
+    "view": {
+      "grid": "Grid",
+      "list": "List"
     }
   },
   "rolePage": {

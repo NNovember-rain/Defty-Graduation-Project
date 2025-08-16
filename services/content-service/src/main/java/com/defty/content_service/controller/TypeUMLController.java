@@ -28,7 +28,7 @@ public class TypeUMLController {
                 .build();
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     ApiResponse<TypeUMLResponse> update(@PathVariable Long id, @RequestBody TypeUMLRequest request) {
         return ApiResponse.<TypeUMLResponse>builder()
                 .result(typeUMLService.update(id, request))

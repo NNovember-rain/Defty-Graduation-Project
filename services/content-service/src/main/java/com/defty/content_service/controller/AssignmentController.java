@@ -1,5 +1,6 @@
 package com.defty.content_service.controller;
 
+import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
 import com.defty.content_service.dto.response.ApiResponse;
 import com.defty.content_service.dto.response.AssignmentResponse;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/assignments")
 @RequiredArgsConstructor
@@ -23,8 +26,25 @@ public class AssignmentController {
     AssignmentService assignmentService;
 
     @PostMapping("/assign")
-    ApiResponse<AssignmentResponse> assignAssignment(@RequestBody AssignmentRequest request) {
-        AssignmentResponse response = assignmentService.assignAssignment(request);
+    ApiResponse<List<AssignmentResponse>> assignAssignment(@RequestBody AssignRequest assignRequest) {
+        List<AssignmentResponse> response = assignmentService.assignAssignment(assignRequest);
+        return ApiResponse.<List<AssignmentResponse>>builder()
+                .result(response)
+                .build();
+    }
+
+    @PostMapping("")
+    ApiResponse<AssignmentResponse> createAssignment(@RequestBody AssignmentRequest assignmentRequest) {
+        AssignmentResponse response = assignmentService.createAssignment(assignmentRequest);
+        return ApiResponse.<AssignmentResponse>builder()
+                .result(response)
+                .build();
+    }
+
+    @PatchMapping("/update/{id}")
+    ApiResponse<AssignmentResponse> updateAssignment(@PathVariable Long id,
+                                                     @RequestBody AssignmentRequest assignmentRequest) {
+        AssignmentResponse response = assignmentService.updateAssignment(id,assignmentRequest);
         return ApiResponse.<AssignmentResponse>builder()
                 .result(response)
                 .build();
@@ -39,15 +59,24 @@ public class AssignmentController {
     }
 
     @GetMapping
-    public ApiResponse<Page<AssignmentResponse>> getAllAssignments(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "classId", required = false) Long classId,
-            @RequestParam(value = "typeUmlId", required = false) Long typeUmlId,
-            @RequestParam(value = "title", required = false) String title
-    ) {
+    public ApiResponse<Page<AssignmentResponse>> getAllAssignments(@RequestParam(value = "page", defaultValue = "0") int page,
+                                                                   @RequestParam(value = "size", defaultValue = "10") int size,
+                                                                   @RequestParam(value = "classId", required = false) Long classId,
+                                                                   @RequestParam(value = "typeUmlId", required = false) Long typeUmlId,
+                                                                   @RequestParam(value = "title", required = false) String title) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<AssignmentResponse> responsePage = assignmentService.getAllAssignments(classId, typeUmlId, title, pageable);
+        return ApiResponse.<Page<AssignmentResponse>>builder()
+                .result(responsePage)
+                .build();
+    }
+
+    @GetMapping("/class/{classId}")
+    public ApiResponse<Page<AssignmentResponse>> getAllAssignmentsByClassId(@RequestParam(value = "page", defaultValue = "0") int page,
+                                                                            @RequestParam(value = "size", defaultValue = "10") int size,
+                                                                            @PathVariable Long classId) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<AssignmentResponse> responsePage = assignmentService.getAssignmentsByClassId(classId, pageable);
         return ApiResponse.<Page<AssignmentResponse>>builder()
                 .result(responsePage)
                 .build();

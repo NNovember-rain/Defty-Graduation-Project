@@ -159,19 +159,6 @@ const Permission: React.FC = () => {
             gridSpan: 1
         },
         {
-            key: 'startDate',
-            label: t('permissionPage.search.startDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss' },
-        {
-            key: 'endDate',
-            label: t('permissionPage.search.endDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss'
-        },
-        {
             key: 'globalSearch',
             label: t('permissionPage.search.global'),
             type: 'text',

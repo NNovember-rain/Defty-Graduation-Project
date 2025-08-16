@@ -21,6 +21,7 @@ const TypeUMlForm: React.FC = () => {
             labelKey: 'typeUmlForm.descriptionLabel',
             type: 'textarea',
             placeholderKey: 'typeUmlForm.descriptionPlaceholder',
+            required: true,
             gridSpan: 24,
         },
     ], []);
@@ -30,8 +31,8 @@ const TypeUMlForm: React.FC = () => {
             if (!value?.trim()) return t('typeUmlForm.validation.nameRequired');
             return null;
         },
-        type: (value: 'system' | 'user' | 'template', t: (key: string) => string) => {
-            if (!value) return t('typeUmlForm.validation.typeRequired');
+        description: (value: string, t: (key: string) => string) => {
+            if (!value?.trim()) return t('typeUmlForm.validation.descriptionRequired');
             return null;
         },
     }), []);
