@@ -10,7 +10,7 @@ const sendFeedBack = async (
     }
 
     try {
-        const url = 'http://localhost:8087/feedback';
+        const url = 'http://localhost:8086/feedback';
         const payload = {
             submissionsId: id,
             feedback: aiResponse

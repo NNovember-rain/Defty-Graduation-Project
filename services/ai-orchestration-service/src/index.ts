@@ -3,6 +3,7 @@ dotenv.config();
 import app from './app';
 import connectDB from './config/db';
 import runKafkaConsumer from './kafka/consumer';
+import {initPlantUmlController} from "./controllers/plantuml.controller";
 // import {initModels} from "./models/initModels";
 
 (async () => {
@@ -10,6 +11,7 @@ import runKafkaConsumer from './kafka/consumer';
         await connectDB();
         // await initModels();
         await runKafkaConsumer();
+        await initPlantUmlController();
 
         const PORT = process.env.PORT || 3000;
 

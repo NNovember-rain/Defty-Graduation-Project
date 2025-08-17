@@ -59,6 +59,8 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
         // Call the updated generateAIContent service
         const aiGeneratedText = await generateAIContent(finalPromptString, apiKey, aiModel);
 
+        console.log(aiGeneratedText);
+
         if (aiGeneratedText === undefined || aiGeneratedText.trim() === '') {
             logger.warn({
                 message: 'AI API returned no content for Use-Case diagram.',
