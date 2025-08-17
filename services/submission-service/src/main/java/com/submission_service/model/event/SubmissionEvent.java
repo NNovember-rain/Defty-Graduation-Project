@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 public class SubmissionEvent {
 
     Long id;
+    String acessToken;
     String typeUmlName;
     String contentAssignment;
     String solutionPlantUmlCode;

@@ -4,6 +4,7 @@ package com.submission_service.service.impl;
 import com.example.common_library.exceptions.FeignClientException;
 import com.example.common_library.exceptions.NotFoundException;
 import com.example.common_library.response.ApiResponse;
+import com.example.common_library.utils.GetTokenUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.submission_service.client.ContentServiceClient;
@@ -96,8 +97,11 @@ public class SubmissionServiceImpl implements SubmissionService {
                     .build();
             submissionRepository.save(submission);
 
+            String accessToken = GetTokenUtil.getToken();
+
             SubmissionEvent submissionEvent= SubmissionEvent.builder()
                     .id(submission.getId())
+                    .acessToken(accessToken)
                     .contentAssignment(assignmentResponse.getResult().getDescription())
                     .solutionPlantUmlCode(assignmentResponse.getResult().getSolutionCode())
                     .typeUmlName(assignmentResponse.getResult().getTypeUmlName())
