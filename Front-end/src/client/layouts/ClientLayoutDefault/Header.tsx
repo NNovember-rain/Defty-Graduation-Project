@@ -1,12 +1,16 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Dropdown, Menu, type MenuProps } from 'antd';
 import { FaUserCircle } from "react-icons/fa";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { useTranslation } from 'react-i18next';
-import {IoLanguageOutline} from "react-icons/io5";
+import { IoLanguageOutline } from "react-icons/io5";
 import i18n from "i18next";
+import { postLogout } from "../../../shared/services/authService";
+import { useUserStore } from "../../../shared/authentication/useUserStore";
+import { FaUser, FaSignOutAlt } from "react-icons/fa";
+import {useNotification} from "../../../shared/notification/useNotification.ts"; // Import thêm icon
 
 interface NavLinkItem {
     type: 'link';
@@ -31,7 +35,6 @@ const NAV_ITEMS: NavItem[] = [
         type: 'dropdown',
         labelKey: 'header.class',
         items: [
-            // Các khóa này chưa có trong file JSON của bạn, bạn cần thêm chúng.
             { key: '1', labelKey: 'classes.ise', linkTo: '/class/ise' },
             { key: '2', labelKey: 'classes.isad', linkTo: '/class/isad' },
             { key: '3', labelKey: 'classes.sad', linkTo: '/class/sad' },
@@ -41,7 +44,10 @@ const NAV_ITEMS: NavItem[] = [
 
 const Header: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { t } = useTranslation();
+    const { clearUser } = useUserStore();
+    const { notification } = useNotification();
 
     const renderDropdownMenu = (items: NavDropdownItem['items']) => {
         const menuItems: MenuProps['items'] = items.map(item => ({
@@ -84,7 +90,47 @@ const Header: React.FC = () => {
         items: languageMenuItems,
         selectedKeys: [currentLanguage],
         onClick: ({ key }: { key: string }) => changeLanguage(key as 'en' | 'vi'),
-        className: 'client__language-menu', // Thêm class riêng cho menu ngôn ngữ
+        className: 'client__language-menu',
+    };
+
+    const handleLogout = async () => {
+        try {
+            const response = await postLogout();
+            console.log("Đăng xuất thành công:", response);
+
+            clearUser();
+            localStorage.removeItem("token");
+            notification.success(
+                t('header.logoutSuccess'),
+                t('header.logoutSuccess'),
+                { duration: 5, placement: 'topRight' }
+            );
+            navigate("/");
+        } catch (error) {
+            console.error("Đăng xuất thất bại:", error);
+        }
+    };
+
+    const userMenuProps: MenuProps = {
+        items: [
+            {
+                key: 'profile',
+                label: (
+                    <Link to="/profile" className="profile-menu-item">
+                        <FaUser size={14} style={{ marginRight: '8px' }}/> Xem hồ sơ
+                    </Link>
+                ),
+            },
+            {
+                key: 'logout',
+                label: (
+                    <div onClick={handleLogout} className="logout-menu-item">
+                        <FaSignOutAlt size={14} style={{ marginRight: '8px' }}/> Đăng xuất
+                    </div>
+                ),
+            },
+        ],
+        className: 'user-dropdown-menu',
     };
 
     return (
@@ -115,7 +161,8 @@ const Header: React.FC = () => {
                             return (
                                 <Dropdown
                                     key={item.labelKey}
-                                    overlay={renderDropdownMenu(item.items)}
+                                    // @ts-ignore
+                                    menu={renderDropdownMenu(item.items)}
                                     trigger={['hover']}
                                     placement="bottomCenter"
                                 >
@@ -142,9 +189,15 @@ const Header: React.FC = () => {
                         <IoIosNotificationsOutline size={25} />
                         <span className="notification-badge">9</span>
                     </div>
-                    <div className="icon-wrapper">
-                        <FaUserCircle size={25} />
-                    </div>
+                    <Dropdown
+                        menu={userMenuProps}
+                        placement="bottomRight"
+                        trigger={['click']}
+                    >
+                        <div className="icon-wrapper user-avatar">
+                            <FaUserCircle size={25} style={{cursor: 'pointer'}} />
+                        </div>
+                    </Dropdown>
                 </div>
             </div>
         </header>

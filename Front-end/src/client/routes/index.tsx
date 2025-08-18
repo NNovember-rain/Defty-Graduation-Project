@@ -34,6 +34,10 @@ const ClientAuthRoutesConfig: AppRoute[] = [
         component: Login,
     },
     {
+        path: '',
+        component: Login,
+    },
+    {
         path: '*',
         component: Login,
     },
