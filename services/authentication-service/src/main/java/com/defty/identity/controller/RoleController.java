@@ -54,7 +54,7 @@ public class RoleController {
     }
 
     @PreAuthorize("hasRole('admin')")
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ApiResponse<RoleResponse> updateRole(@PathVariable Long id,
                                                 @RequestBody RoleRequest roleRequest) {
         RoleResponse updatedRole = roleService.updateRole(id, roleRequest);

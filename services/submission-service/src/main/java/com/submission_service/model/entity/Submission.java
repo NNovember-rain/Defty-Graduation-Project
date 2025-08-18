@@ -20,15 +20,29 @@ public class Submission extends BaseEntity {
     Long studentId;
 
     @Column(nullable = false)
+    String studentName;
+
+    @Column(nullable = false)
+    String studentCode;
+
+    @Column(nullable = false)
+    String assignmentTitle;
+
+    @Column(nullable = false)
     Long assignmentId;
+
+    @Column(nullable = false)
+    String umlType;
 
     @Column(nullable = false)
     Long classId;
 
+    @Column(nullable = false)
+    String classCode;
+
     @Column
     Double score;
 
-    @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     String studentPlantUMLCode;
 

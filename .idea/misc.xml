@@ -20,9 +20,14 @@
         <option value="$PROJECT_DIR$/services/discovery-service/pom.xml" />
         <option value="$PROJECT_DIR$/services/authentication-service/pom.xml" />
         <option value="$PROJECT_DIR$/services/content-service/pom.xml" />
+        <option value="$PROJECT_DIR$/documentation-app/pom.xml" />
       </list>
     </option>
-    <option name="workspaceImportForciblyTurnedOn" value="true" />
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/documentation-app/pom.xml" />
+      </set>
+    </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />

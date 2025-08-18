@@ -1,9 +1,9 @@
 package com.submission_service.controller;
 
+import com.example.common_library.response.ApiResponse;
 import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.buider.SubmissionSearchBuilder;
 import com.submission_service.model.dto.request.SubmissionRequest;
-import com.submission_service.model.dto.response.ApiResponse;
 import com.submission_service.model.dto.response.SubmissionDetailResponse;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.service.SubmissionService;
@@ -15,12 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
-import javax.swing.text.Document;
 import java.time.LocalDate;
 
 @RestController
@@ -40,27 +36,34 @@ public class SubmissionController {
     }
 
     @GetMapping({"/{id}"})
-    ApiResponse<?> getSubmissions(@PathVariable Long id) {
+    ApiResponse<SubmissionDetailResponse> getSubmissions(@PathVariable Long id) {
         SubmissionDetailResponse submissionResponses =submissionService.getSubmission(id);
-        return ApiResponse.builder()
+        return ApiResponse.<SubmissionDetailResponse>builder()
                 .result(submissionResponses)
                 .build();
     }
 
-    @GetMapping()
-    ApiResponse<?> getSubmissions(@RequestParam(required = false) String studentName,
-                                            @RequestParam(required = false) String assignmentTitle,
-                                            @RequestParam(required = false) SubmissionStatus submissionStatus,
-                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-                                            @RequestParam(required = false) String className,
-                                            @RequestParam(defaultValue = "0") int page,
-                                            @RequestParam(defaultValue = "10") int size) {
+    @GetMapping
+    public ApiResponse<Page<SubmissionResponse>> getSubmissions(
+            @RequestParam(required = false) String studentName,
+            @RequestParam(required = false) String studentCode,
+            @RequestParam(required = false) String assignmentTitle,
+            @RequestParam(required = false) String className,
+            @RequestParam(required = false) String classCode,
+            @RequestParam(required = false) String umlType,
+            @RequestParam(required = false) SubmissionStatus submissionStatus,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         SubmissionSearchBuilder criteria = SubmissionSearchBuilder.builder()
                 .studentName(studentName)
+                .studentCode(studentCode)
                 .assignmentTitle(assignmentTitle)
                 .className(className)
+                .classCode(classCode)
+                .umlType(umlType)
                 .submissionStatus(submissionStatus)
                 .fromDate(fromDate)
                 .toDate(toDate)

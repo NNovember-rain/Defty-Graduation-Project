@@ -26,6 +26,7 @@ public enum ErrorCode {
     PERMISSION_EXISTED(1015, "Permission existed", HttpStatus.BAD_REQUEST),
     ROLE_NOT_EXISTED(1016, "Role not existed", HttpStatus.NOT_FOUND),
     USER_CODE_EXISTED(1002, "User code existed", HttpStatus.BAD_REQUEST),
+    TYPE_UML_EXISTED(2001, "Type UML already exists", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

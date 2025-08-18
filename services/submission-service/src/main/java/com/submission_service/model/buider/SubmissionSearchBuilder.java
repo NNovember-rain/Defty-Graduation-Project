@@ -10,8 +10,11 @@ import java.time.LocalDate;
 @Builder
 public class SubmissionSearchBuilder {
     String studentName;
+    String studentCode;
     String assignmentTitle;
+    String umlType;
     String className;
+    String classCode;
     SubmissionStatus submissionStatus;
     LocalDate fromDate;
     LocalDate toDate;

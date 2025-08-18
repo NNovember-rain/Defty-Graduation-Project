@@ -54,7 +54,7 @@ public class PermissionController {
     }
 
     @PreAuthorize("hasRole('admin')")
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ApiResponse<PermissionResponse> updatePermission(@PathVariable Long id,
                                                             @RequestBody PermissionRequest request) {
         PermissionResponse response = permissionService.updatePermission(id, request);

@@ -169,19 +169,6 @@ const User: React.FC = () => {
             gridSpan: 1
         },
         {
-            key: 'startDate',
-            label: t('userPage.search.startDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss' },
-        {
-            key: 'endDate',
-            label: t('userPage.search.endDate'),
-            type: 'datetime',
-            gridSpan: 1,
-            format: 'YYYY-MM-DD HH:mm:ss'
-        },
-        {
             key: 'globalSearch',
             label: t('userPage.search.global'),
             type: 'text',
