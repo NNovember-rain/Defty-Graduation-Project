@@ -1,5 +1,5 @@
 .notfound {
-  min-height: 100vh;
+  height: calc(100vh - 50px);
   display: grid;
   place-items: center;
   background-color: #1e1e1e; // nền giống VSCode dark
@@ -63,10 +63,11 @@
     }
 
     &--secondary {
-      background-color: #333;
+      background-color: #444;
       color: #fff;
+      border: none;
       &:hover {
-        background-color: #444;
+        background-color: #555;
       }
     }
   }

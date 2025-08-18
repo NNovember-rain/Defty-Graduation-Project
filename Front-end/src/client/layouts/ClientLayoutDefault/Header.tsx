@@ -10,7 +10,7 @@ import i18n from "i18next";
 import { postLogout } from "../../../shared/services/authService";
 import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
-import {useNotification} from "../../../shared/notification/useNotification.ts"; // Import thêm icon
+import {useNotification} from "../../../shared/notification/useNotification.ts";
 
 interface NavLinkItem {
     type: 'link';
@@ -44,9 +44,9 @@ const NAV_ITEMS: NavItem[] = [
 
 const Header: React.FC = () => {
     const location = useLocation();
-    const navigate = useNavigate();
     const { t } = useTranslation();
     const { clearUser } = useUserStore();
+    const navigate = useNavigate();
     const { notification } = useNotification();
 
     const renderDropdownMenu = (items: NavDropdownItem['items']) => {
@@ -161,8 +161,7 @@ const Header: React.FC = () => {
                             return (
                                 <Dropdown
                                     key={item.labelKey}
-                                    // @ts-ignore
-                                    menu={renderDropdownMenu(item.items)}
+                                    overlay={renderDropdownMenu(item.items)} // SỬA LỖI TẠI ĐÂY
                                     trigger={['hover']}
                                     placement="bottomCenter"
                                 >
@@ -179,7 +178,8 @@ const Header: React.FC = () => {
             </div>
             <div className="header-right">
                 <div className="header-icons">
-                    <Dropdown className='client__language-dropdown' menu={languageMenuProps} placement="bottom" trigger={['hover']}>
+                    {/* SỬA LỖI TẠI ĐÂY */}
+                    <Dropdown className='client__language-dropdown' overlay={<Menu {...languageMenuProps} />} placement="bottom" trigger={['hover']}>
                         <button className="client__language-dropdown--icon-button">
                             <IoLanguageOutline />
                         </button>
@@ -189,8 +189,9 @@ const Header: React.FC = () => {
                         <IoIosNotificationsOutline size={25} />
                         <span className="notification-badge">9</span>
                     </div>
+                    {/* SỬA LỖI TẠI ĐÂY */}
                     <Dropdown
-                        menu={userMenuProps}
+                        overlay={<Menu {...userMenuProps} />}
                         placement="bottomRight"
                         trigger={['click']}
                     >
