@@ -4,6 +4,7 @@ import generateAIContent from "../../client/googleAiApi"; // Your updated servic
 import logger from "../../config/logger";
 import { getErrorMessage, getErrorStack } from "../../utils/errorHandler";
 import sendFeedBack from "../../client/feedbackServiceApi";
+import {checkToken} from "../../middlewares/auth.middleware";
 
 export interface UmlDiagramMessage {
     id: number;
@@ -11,6 +12,7 @@ export interface UmlDiagramMessage {
     contentAssignment: string;
     solutionPlantUmlCode: string;
     studentPlantUmlCode: string;
+    acessToken: string; // FIXME
 }
 
 const fillTemplate = (template: string, data: any): string => {
@@ -30,6 +32,9 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
             event_type: 'request_start',
             input: message,
         });
+
+        console.log("check token");
+        checkToken(message.acessToken); // FIXME
 
         const useCasePromptResult = await getPrompts({
             umlType: "use-case",
@@ -70,7 +75,7 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
                 prompt: finalPromptString
             });
             // Handle cases where AI doesn't return any text (e.g., send empty feedback or an error message).
-            await sendFeedBack(message.id, "AI could not generate content for this diagram.");
+            await sendFeedBack(message.id, "AI could not generate content for this diagram.", message.acessToken);
             return;
         }
 
@@ -90,7 +95,7 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
         });
 
         // Send feedback to your internal service
-        await sendFeedBack(message.id, aiGeneratedText);
+        await sendFeedBack(message.id, aiGeneratedText, message.acessToken);
         logger.info({
             message: `Feedback for Use-Case diagram ID ${message.id} sent successfully.`,
             event_type: 'feedback_sent_success',
@@ -106,7 +111,7 @@ export const handleUseCaseDiagram = async (message: UmlDiagramMessage) => {
             input: message,
         });
         // If an error occurs during AI generation, send a failure feedback
-        await sendFeedBack(message.id, "AI generation failed for this diagram.");
+        await sendFeedBack(message.id, "AI generation failed for this diagram.", message.acessToken);
     }
 };
 
@@ -117,6 +122,9 @@ export const handleClassDiagram = async (message: UmlDiagramMessage) => {
             event_type: 'request_start',
             input: message,
         });
+
+        console.log("check token");
+        checkToken(message.acessToken);
 
         const classPromptResult = await getPrompts({
             umlType: "class",
@@ -155,7 +163,7 @@ export const handleClassDiagram = async (message: UmlDiagramMessage) => {
                 prompt: finalPromptString
             });
             // Handle cases where AI doesn't return any text.
-            await sendFeedBack(message.id, "AI could not generate content for this diagram.");
+            await sendFeedBack(message.id, "AI could not generate content for this diagram.", message.acessToken);
             return;
         }
 
@@ -174,7 +182,7 @@ export const handleClassDiagram = async (message: UmlDiagramMessage) => {
         });
 
         // Send feedback to your internal service
-        await sendFeedBack(message.id, aiGeneratedText);
+        await sendFeedBack(message.id, aiGeneratedText, message.acessToken);
         logger.info({
             message: `Feedback for Class diagram ID ${message.id} sent successfully.`,
             event_type: 'feedback_sent_success',
@@ -190,6 +198,6 @@ export const handleClassDiagram = async (message: UmlDiagramMessage) => {
             input: message,
         });
         // If an error occurs during AI generation, send a failure feedback
-        await sendFeedBack(message.id, "AI generation failed for this diagram.");
+        await sendFeedBack(message.id, "AI generation failed for this diagram.", message.acessToken);
     }
 };
