@@ -57,12 +57,11 @@ public class ClassService implements IClassService {
     @Override
     public ApiResponse getClassById(Long id) {
         Optional<ClassEntity> classEntity = classRepository.findActiveById(id);
-        if(classEntity.isPresent()){
-            ClassResponse classResponse = classMapper.toClassResponse(classEntity.get());
-            return new ApiResponse<>(200, "get class successfully", classResponse);
+        if(!classEntity.isPresent()){
+            throw new NotFoundException("Class doesn't exist, " + "class id: " + id);
         }
-        return new ApiResponse<>(404, "Class doesn't exist", null);
-
+        ClassResponse classResponse = classMapper.toClassResponse(classEntity.get());
+        return new ApiResponse<>(200, "get class successfully", classResponse);
     }
 
     @Override
@@ -90,7 +89,7 @@ public class ClassService implements IClassService {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdDate").descending());
         Page<ClassEntity> classEntities = classRepository.findAllByTeacherId(teacherId, status, sortedPageable);
         if(classEntities.isEmpty()){
-            return new ApiResponse<>(404, "Class doesn't exist", null);
+            throw new NotFoundException("No class found");
         }
         List<ClassResponse> classResponses = new ArrayList<>();
 
@@ -119,7 +118,7 @@ public class ClassService implements IClassService {
             }
         }
         else{
-            return new ApiResponse<>(404, "Class doesn't exist | id: ", id);
+            throw new NotFoundException("Class doesn't exist" + ", class id: " + id);
         }
         return new ApiResponse<>(200, "update class successfully", id);
     }
@@ -128,7 +127,7 @@ public class ClassService implements IClassService {
     @Transactional
     public ApiResponse<List<Long>> deleteClass(List<Long> ids) {
         List<ClassEntity> classEntities = classRepository.findAllById(ids);
-        if(classEntities.size() == 0) return new ApiResponse<>(404, "Class doesn't exist | ids: ", ids);
+        if(classEntities.size() == 0) throw new NotFoundException("No class found for deleting");
         for(ClassEntity x : classEntities){
             x.setStatus(-1);
         }

@@ -19,4 +19,13 @@ public interface IEnrollmentRepository extends JpaRepository<ClassEnrollmentEnti
     Page<ClassEnrollmentEntity> findAllByStudentId(@Param("studentId") Long studentId,
                                                    Pageable pageable);
 
+    @Query(value = "SELECT c FROM ClassEnrollmentEntity c " +
+            "WHERE c.classroom.id = :classId AND c.status = 1",
+            countQuery = "SELECT count(c) FROM ClassEnrollmentEntity c " +
+                    "WHERE c.classroom.id = :classId AND c.status = 1")
+    Page<ClassEnrollmentEntity> findAllActiveByClassroom(@Param("classId") Long classId,
+                                                         Pageable pageable);
+
+
+
 }
