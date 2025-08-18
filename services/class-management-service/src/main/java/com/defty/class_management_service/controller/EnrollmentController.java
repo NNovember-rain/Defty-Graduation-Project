@@ -1,6 +1,10 @@
 package com.defty.class_management_service.controller;
 
+import com.defty.class_management_service.dto.response.ClassResponse;
 import com.defty.class_management_service.service.IEnrollmentService;
+import com.example.common_library.dto.response.PageableResponse;
+import com.example.common_library.response.ApiResponse;
+import com.example.common_library.service.ExternalServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -25,18 +29,17 @@ public class EnrollmentController {
 //            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 //        }
 //    }
-    @GetMapping("/students")
-    public Object getStudentsInClass(@PathVariable Long classId) {
+    @GetMapping("/class/{classId}/students")
+    public Object getStudentsInClass(@PathVariable Long classId,
+                                     Pageable pageable) {
         log.info("Request to get students in class: {}", classId);
-
-        return null;
+        return enrollmentService.getStudentsInClass(pageable, classId);
     }
     @GetMapping("/student/{studentId}/classes")
-    public Object getClassesByStudentId(Pageable pageable,
-                                        @PathVariable Long studentId) {
+    public ApiResponse<PageableResponse<ClassResponse>> getClassesByStudentId(Pageable pageable,
+                                                                              @PathVariable Long studentId) {
         log.info("Request to get classes by student ID: {}", studentId);
-        return null;
-//        return enrollmentService.getClassesByStudentId(pageable, studentId);
+        return enrollmentService.getClassesByStudentId(pageable, studentId);
     }
 
 //    @DeleteMapping("/students/{studentId}/leave")

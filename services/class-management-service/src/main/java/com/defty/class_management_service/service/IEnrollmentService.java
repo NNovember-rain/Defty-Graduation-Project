@@ -7,5 +7,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface IEnrollmentService {
     ApiResponse<PageableResponse<ClassResponse>> getClassesByStudentId(Pageable pageable, Long studentId);
-//    ApiResponse<PageableResponse<EnrollmentDto>> getStudentsInClass(Pageable pageable, Long classId);
+    ApiResponse<Object> getStudentsInClass(Pageable pageable, Long classId);
 }
