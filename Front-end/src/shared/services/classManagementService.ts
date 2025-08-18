@@ -24,6 +24,30 @@ export interface IClass {
     status: number; // Thêm trường status nếu có trong Entity của bạn
 }
 
+// Interface cho Student từ API response (dựa vào StudentInClassResponse từ backend)
+export interface StudentInClassResponse {
+    studentId: string;
+    username: string;
+    fullName: string;
+    email: string;
+    dob: string; // LocalDate từ backend
+    userCode: string;
+    createdDate: string; // Date từ backend
+    isActive: number; // 1 for active, 0 for inactive, -1 for deleted
+    enrolledAt: string; // LocalDateTime từ backend
+    enrollmentStatus: string;
+    roles: any[]; // Set<RoleResponse> từ backend
+}
+
+// Cập nhật interface GetStudentsInClassResult
+export interface GetStudentsInClassResult {
+    content: StudentInClassResponse[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+}
+
 // Request DTO cho việc tạo/cập nhật lớp
 export type CreateClassRequest = Omit<IClass, 'id' | 'createdDate' | 'createdBy' | 'modifiedDate' | 'modifiedBy' | 'status'>;
 export type UpdateClassRequest = Partial<CreateClassRequest>;
@@ -192,27 +216,40 @@ export interface GetStudentsInClassResult {
     size: number;
 }
 
+// Cập nhật hàm getStudentsInClass để gọi endpoint mới
 export const getStudentsInClass = async (classId: number, options: GetStudentsInClassOptions = {}): Promise<GetStudentsInClassResult> => {
     const params = {
-        page: options.page ? options.page - 1 : 0,
+        page: options.page ? options.page - 1 : 0, // Backend sử dụng 0-indexed
         size: options.limit || 10,
-        sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
+        // sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
     };
-    const response = await handleRequest(getWithParams(`${CLASS_SERVICE_PREFIX}/class/${classId}/enrollments/students`, params));
-    const apiResponse = await response.json() as ApiResponse<any>;
+
+    // Gọi endpoint mới: /enrollment/class/{classId}/students
+    const response = await handleRequest(
+        getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/class/${classId}/students`, params)
+    );
+
+    const apiResponse = await response.json() as ApiResponse<{
+        content: StudentInClassResponse[],
+        totalElements: number
+    }>;
 
     if (apiResponse.code === 200 && apiResponse.result) {
+        const totalElements = apiResponse.result.totalElements || 0;
+        const totalPages = Math.ceil(totalElements / (options.limit || 10));
+
         return {
-            content: apiResponse.result.content,
-            totalElements: apiResponse.result.totalElements,
-            totalPages: apiResponse.result.totalPages,
-            number: apiResponse.result.number,
-            size: apiResponse.result.size,
+            content: apiResponse.result.content || [],
+            totalElements: totalElements,
+            totalPages: totalPages,
+            number: options.page ? options.page - 1 : 0,
+            size: options.limit || 10,
         } as GetStudentsInClassResult;
     } else {
         throw new Error(apiResponse.message || "Failed to fetch students in class.");
     }
 };
+
 
 // API để lấy danh sách lớp theo ID sinh viên (GET /api/v1/enrollments/student/{studentId}/class)
 export const getClassesByStudentId = async (studentId: number, options: GetClassesOptions = {}): Promise<GetClassesResult> => {

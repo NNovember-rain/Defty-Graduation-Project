@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "class_enrollments")
@@ -26,5 +27,5 @@ public class ClassEnrollmentEntity extends BaseEntity{
     private Long studentId;
 
     @Column(name = "enrollment_date", nullable = false, updatable = false)
-    private LocalDateTime enrollmentDate;
+    private Date enrollmentDate;
 }

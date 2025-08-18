@@ -1,25 +1,37 @@
 package com.defty.class_management_service.service.impl;
 
+import com.defty.class_management_service.client.IdentityServiceClient;
 import com.defty.class_management_service.dto.response.ClassResponse;
+import com.defty.class_management_service.dto.response.EnrollmentResponse;
+import com.defty.class_management_service.dto.response.StudentInClassResponse;
 import com.defty.class_management_service.entity.ClassEnrollmentEntity;
 import com.defty.class_management_service.mapper.ClassMapper;
 import com.defty.class_management_service.repository.IClassRepository;
 import com.defty.class_management_service.repository.IEnrollmentRepository;
 import com.defty.class_management_service.service.IEnrollmentService;
 import com.example.common_library.dto.response.PageableResponse;
+import com.example.common_library.dto.response.UserResponse;
+import com.example.common_library.exceptions.NotFoundException;
 import com.example.common_library.response.ApiResponse;
+import com.example.common_library.response.ServiceResponse;
+import com.example.common_library.service.ExternalServiceClient;
+import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.service.spi.ServiceException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +41,10 @@ public class EnrollmentService implements IEnrollmentService {
     IClassRepository classRepository;
     IEnrollmentRepository enrollmentRepository;
     ClassMapper classMapper;
+    RestTemplate restTemplate;
+    ExternalServiceClient externalServiceClient;
+    IdentityServiceClient identityServiceClient;
+
     @Override
     public ApiResponse<PageableResponse<ClassResponse>> getClassesByStudentId(Pageable pageable, Long studentId) {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdDate").descending());
@@ -45,49 +61,78 @@ public class EnrollmentService implements IEnrollmentService {
         return apiResponse;
     }
 
-//    @Override
-//    public ApiResponse<PageableResponse<EnrollmentDto>> getStudentsInClass(Pageable pageable, Long classId) {
-//        return null;
-//    }
-//    @Override
-//    public ApiResponse<PageableResponse<StudentInClassDto>> getStudentsInClass(Pageable pageable, Long classId) {
-//        classRepository.findById(classId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
-//
-//        Page<ClassEnrollment> enrollmentPage = enrollmentRepository.findByClassroomId(classId, pageable);
-//
-//        // Bỏ qua nếu không có sinh viên nào
-//        if (enrollmentPage.isEmpty()) {
-//            // Trả về một Page rỗng với thông tin Pageable để frontend xử lý
-//            return ApiResponse.success(new PageableResponse<>(List.of(), 0L), "No students found in this class.");
-//        }
-//
-//        // 1. Lấy danh sách studentIds từ enrollmentPage
-//        List<Long> studentIds = enrollmentPage.getContent().stream()
-//                .map(ClassEnrollment::getStudentId)
-//                .collect(Collectors.toList());
-//
-//        // 2. GỌI USER-SERVICE ĐỂ LẤY THÔNG TIN CHI TIẾT TẤT CẢ SINH VIÊN
-//        // API mới này sẽ nhận danh sách IDs và trả về danh sách Users
-//        // Ví dụ: GET http://user-service/api/v1/users/in?ids=1,2,3
-//        String userApiUrl = "http://user-service/api/v1/users/in?ids=" + studentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-//        UserDto[] users = restTemplate.getForObject(userApiUrl, UserDto[].class);
-//        Map<Long, UserDto> userMap = Arrays.stream(users).collect(Collectors.toMap(UserDto::getId, user -> user));
-//
-//        // 3. Kết hợp dữ liệu và ánh xạ sang DTO
-//        List<StudentInClassDto> studentDtos = enrollmentPage.getContent().stream()
-//                .map(enrollment -> {
-//                    UserDto user = userMap.get(enrollment.getStudentId());
-//                    if (user == null) {
-//                        // Xử lý trường hợp không tìm thấy user
-//                        return new StudentInClassDto(enrollment.getId(), enrollment.getStudentId(), "Unknown User", "N/A", "N/A", enrollment.getEnrollmentDate());
-//                    }
-//                    return new StudentInClassDto(enrollment.getId(), user.getId(), user.getFullName(), user.getEmail(), user.getUserCode(), enrollment.getEnrollmentDate());
-//                })
-//                .collect(Collectors.toList());
-//
-//        PageableResponse<StudentInClassDto> pageableResponse = new PageableResponse<>(studentDtos, enrollmentPage.getTotalElements());
-//
-//        return ApiResponse.success(pageableResponse, "Students in class retrieved successfully.");
-//    }
+    @Override
+    public ApiResponse<Object> getStudentsInClass(Pageable pageable, Long classId) {
+        try {
+            // 1. Validate class exists
+            classRepository.findById(classId)
+                    .orElseThrow(() -> new NotFoundException("Class not found with id: " + classId));
+
+            // 2. Get enrollments
+            Page<ClassEnrollmentEntity> enrollmentPage = enrollmentRepository.findAllActiveByClassroom(classId, pageable);
+
+            if (enrollmentPage.isEmpty()) {
+                PageableResponse<StudentInClassResponse> emptyResponse =
+                        new PageableResponse<>(List.of(), 0L);
+                return new ApiResponse<>(200, "No students found in this class.", emptyResponse);
+            }
+
+            // 3. Extract student IDs
+            List<Long> studentIds = enrollmentPage.getContent().stream()
+                    .map(ClassEnrollmentEntity::getStudentId)
+                    .toList();
+
+            // 4. Call identity service to get user information
+            ApiResponse<List<UserResponse>> userResponse = identityServiceClient.getListUser(studentIds);
+
+            if (userResponse == null || userResponse.getResult() == null) {
+                throw new ServiceException("Failed to get user information from identity service");
+            }
+
+            List<UserResponse> users = userResponse.getResult();
+
+            // 5. Create map for quick lookup
+            Map<Long, UserResponse> userMap = users.stream()
+                    .collect(Collectors.toMap(UserResponse::getId, Function.identity()));
+
+            // 6. Combine enrollment and user data
+            List<StudentInClassResponse> studentResponses = enrollmentPage.getContent().stream()
+                    .map(enrollment -> {
+                        UserResponse user = userMap.get(enrollment.getStudentId());
+                        if (user != null) {
+                            return new StudentInClassResponse(
+                                    enrollment.getStudentId(),
+                                    user.getUsername(),
+                                    user.getFullName(),
+                                    user.getEmail(),
+//                                    user.getDob(),
+                                    user.getUserCode(),
+//                                    user.getCreatedDate(),
+                                    user.getIsActive(),
+                                    enrollment.getEnrollmentDate(),
+                                    enrollment.getStatus()
+//                                    user.getRoles()
+                            );
+                        }
+                        return null; // or create a default response
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            // 7. Create pageable response (sử dụng constructor hiện có của PageableResponse)
+            PageableResponse<StudentInClassResponse> pageableResponse = new PageableResponse<>(
+                    studentResponses,
+                    enrollmentPage.getTotalElements()
+            );
+
+            return new ApiResponse<>(200, "Students in class retrieved successfully.", pageableResponse);
+
+        } catch (FeignException e) {
+            log.error("Error calling identity service: {}", e.getMessage());
+            throw new ServiceException("Failed to get user information: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Error getting students in class: {}", e.getMessage());
+            throw new ServiceException("Failed to get students in class: " + e.getMessage());
+        }
+    }
 }
