@@ -15,7 +15,7 @@ import java.util.Map;
 public class FeedbackAi extends BaseEntity {
 
     @Column(nullable = false)
-    Long submissionsId;
+    Long submissionId;
 
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
