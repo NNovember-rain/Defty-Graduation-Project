@@ -2,7 +2,8 @@ import React from "react";
 import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
 import { MdPlayArrow, MdSend } from "react-icons/md";
 import { useTranslation } from "react-i18next";
-import { Spin } from "antd"; // Import Spin component
+import { Spin } from "antd";
+import {IoCodeSlashOutline} from "react-icons/io5"; // Import Spin component
 
 export type CodeEditorProps = {
     code: string;
@@ -61,6 +62,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             <div className="code-editor__header">
                 <div className="code-editor__toolbar">
                     <div className="code-editor__left-controls">
+                        <IoCodeSlashOutline fontSize={18} style={{"color": '#02B128'}} />
                         <span className="code-editor__language-label">PlantUML</span>
                     </div>
 
