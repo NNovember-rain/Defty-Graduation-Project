@@ -25,7 +25,9 @@ public class FeedBackAIServiceImpl implements IFeedBackAIService {
     @Override
     public Long addFeedback(FeedbackAiRequest feedbackAiRequest) {
         FeedbackAi feedbackAi=new FeedbackAi();
-        BeanUtils.copyProperties(feedbackAiRequest,feedbackAi);
+        feedbackAi.setSubmissionId(feedbackAiRequest.getSubmissionId());
+        feedbackAi.setFeedback(feedbackAiRequest.getFeedback());
+        feedbackAi.setAiModalName(feedbackAiRequest.getAiModalName());
         return feedBackAIRepository.save(feedbackAi).getId();
     }
 }
