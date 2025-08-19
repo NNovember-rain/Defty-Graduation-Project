@@ -17,90 +17,41 @@ const Login: React.FC = () => {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [loginLoading, setLoginLoading] = useState<boolean>(false);
-    const [emailError, setEmailError] = useState<string | null>(null);
-    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [loginError, setLoginError] = useState<string | null>(null);
 
     const toggleShowPassword = () => {
         setShowPassword(prev => !prev);
     };
 
-    // Hàm kiểm tra định dạng email
-    const validateEmail = (email: string): string | null => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!email) {
-            return "Email không được để trống";
-        } else if (!emailRegex.test(email)) {
-            return "Định dạng email không hợp lệ";
-        }
-        return null;
-    };
-
-    // Hàm kiểm tra định dạng mật khẩu
-    const validatePassword = (password: string): string | null => {
-        if (!password) {
-            return "Mật khẩu không được để trống";
-        }
-        if (password.length < 8) {
-            return "Mật khẩu phải có ít nhất 8 ký tự";
-        }
-        if (!/[a-z]/.test(password)) {
-            return "Mật khẩu phải chứa ít nhất một ký tự thường";
-        }
-        if (!/[A-Z]/.test(password)) {
-            return "Mật khẩu phải chứa ít nhất một ký tự hoa";
-        }
-        if (!/[0-9]/.test(password)) {
-            return "Mật khẩu phải chứa ít nhất một chữ số";
-        }
-        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-            return "Mật khẩu phải chứa ít nhất một ký tự đặc biệt";
-        }
-        return null;
-    };
-
-    // Xử lý thay đổi input, không validate ngay lập tức
+    // Xử lý thay đổi input
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(e.target.value);
-        // Xóa lỗi ngay khi người dùng bắt đầu gõ
-        if (emailError) setEmailError(null);
+        // Xóa lỗi khi người dùng bắt đầu gõ
+        setLoginError(null);
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPassword(e.target.value);
-        // Xóa lỗi ngay khi người dùng bắt đầu gõ
-        if (passwordError) setPasswordError(null);
+        // Xóa lỗi khi người dùng bắt đầu gõ
+        setLoginError(null);
     };
 
-    // Logic validate chỉ xảy ra khi bấm nút
+    // Logic xử lý đăng nhập
     const handleLogin = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
 
-        // Thực hiện validation cho cả hai trường
-        const emailValidationMessage = validateEmail(email);
-        const passwordValidationMessage = validatePassword(password);
-
-        // Cập nhật state lỗi
-        setEmailError(emailValidationMessage);
-        setPasswordError(passwordValidationMessage);
-
-        // Dừng lại nếu có lỗi
-        if (emailValidationMessage || passwordValidationMessage) {
-            if (emailValidationMessage) message.error(emailValidationMessage);
-            if (passwordValidationMessage) message.error(passwordValidationMessage);
+        // Kiểm tra xem email và mật khẩu có trống không
+        if (!email || !password) {
+            const errorMessage = "Vui lòng nhập đầy đủ email và mật khẩu.";
+            setLoginError(errorMessage);
+            message.error(errorMessage);
             return;
         }
 
-        // Nếu không có lỗi, tiến hành đăng nhập
         setLoginLoading(true);
+        debugger;
         try {
             const response = await postLogin({ email: email, password: password });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                setPasswordError(errorData.message || "Email hoặc mật khẩu không đúng.");
-                message.error(errorData.message || "Đăng nhập thất bại.");
-                return;
-            }
 
             const data = await response.json();
             const token = data.result.token;
@@ -131,8 +82,9 @@ const Login: React.FC = () => {
 
         } catch (error: any) {
             console.error("Lỗi đăng nhập:", error);
-            const errorMessage = error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.";
-            message.error(errorMessage);
+            const errorMessage = error.data.code === 1008 ? "Thông tin đăng nhập không chính xác" :
+                "Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau.";
+            setLoginError(errorMessage);
         } finally {
             setLoginLoading(false);
         }
@@ -173,7 +125,7 @@ const Login: React.FC = () => {
                                 id="email"
                                 name="email"
                                 required
-                                className={`client-form-field__input ${emailError ? 'is-invalid' : ''}`}
+                                className={`client-form-field__input ${loginError ? 'is-invalid' : ''}`}
                                 placeholder="Nhập email của bạn"
                                 value={email}
                                 onChange={handleEmailChange}
@@ -185,7 +137,6 @@ const Login: React.FC = () => {
                                 </span>
                             </div>
                         </div>
-                        {emailError && <div className="invalid-message">{emailError}</div>}
                     </div>
 
                     <div className="client-form-field">
@@ -196,7 +147,7 @@ const Login: React.FC = () => {
                                 id="password"
                                 name="password"
                                 required
-                                className={`client-form-field__input ${passwordError ? 'is-invalid' : ''}`}
+                                className={`client-form-field__input ${loginError ? 'is-invalid' : ''}`}
                                 placeholder="Nhập mật khẩu"
                                 value={password}
                                 onChange={handlePasswordChange}
@@ -212,8 +163,9 @@ const Login: React.FC = () => {
                                 </span>
                             </div>
                         </div>
-                        {passwordError && <div className="invalid-message">{passwordError}</div>}
                     </div>
+                    {loginError && <div className="invalid-message">{loginError}</div>}
+
 
                     <button
                         type="submit"
