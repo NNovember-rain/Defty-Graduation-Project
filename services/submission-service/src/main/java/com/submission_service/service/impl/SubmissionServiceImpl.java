@@ -101,7 +101,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             SubmissionEvent submissionEvent= SubmissionEvent.builder()
                     .id(submission.getId())
-                    .acessToken(accessToken)
+                    .accessToken(accessToken)
                     .contentAssignment(assignmentResponse.getResult().getDescription())
                     .solutionPlantUmlCode(assignmentResponse.getResult().getSolutionCode())
                     .typeUmlName(assignmentResponse.getResult().getTypeUmlName())

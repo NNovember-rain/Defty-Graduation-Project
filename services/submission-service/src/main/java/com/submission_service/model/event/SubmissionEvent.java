@@ -1,6 +1,5 @@
 package com.submission_service.model.event;
 
-import com.submission_service.model.entity.Submission;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 public class SubmissionEvent {
 
     Long id;
-    String acessToken;
+    String accessToken;
     String typeUmlName;
     String contentAssignment;
     String solutionPlantUmlCode;
