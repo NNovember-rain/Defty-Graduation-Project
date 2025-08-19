@@ -9,7 +9,8 @@ import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
 import { getAssignmentById, type IAssignment } from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
-import {createSubmission} from "../../../shared/services/submissionService.ts";
+import { createSubmission } from "../../../shared/services/submissionService.ts";
+import { useNotification } from "../../../shared/notification/useNotification.ts";
 
 /** ========= PlantUML helpers ========= */
 const plantUmlEncTable = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
@@ -48,6 +49,7 @@ Alice -> Bob : Hi
 @enduml`;
 
 const ProblemDetail: React.FC = () => {
+    const { message, notification } = useNotification();
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -62,6 +64,8 @@ const ProblemDetail: React.FC = () => {
 
     const [svgMarkup, setSvgMarkup] = useState<string | null>(null);
     const [renderErr, setRenderErr] = useState<string | null>(null);
+    const [isRendering, setIsRendering] = useState<boolean>(false);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     // responsive orientation
     const [isNarrow, setIsNarrow] = useState<boolean>(() => window.innerWidth < 1024);
@@ -84,9 +88,11 @@ const ProblemDetail: React.FC = () => {
         e?.response?.status ?? e?.status ?? e?.data?.status ?? e?.code;
 
     const renderWithKroki = async (uml: string) => {
+        setIsRendering(true);
         setRenderErr(null);
         setSvgMarkup(null);
         setImageUrl(null);
+        debugger;
 
         try {
             const res = await fetch("https://kroki.io/plantuml/svg", {
@@ -96,7 +102,6 @@ const ProblemDetail: React.FC = () => {
             });
 
             if (!res.ok) {
-                // TRƯỚC ĐÂY: setRenderErr(`Render error (${res.status})`);
                 setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }));
                 setImageUrl(plantUmlSvgUrl(uml)); // fallback để vẫn thấy ảnh lỗi
                 return;
@@ -106,24 +111,54 @@ const ProblemDetail: React.FC = () => {
             setSvgMarkup(svg);
             setImageUrl(null);
         } catch (e: any) {
-            // TRƯỚC ĐÂY: setRenderErr(e?.message || "Render failed");
             setRenderErr(t("problemDetail.result.renderFailed"));
             setSvgMarkup(null);
             setImageUrl(plantUmlSvgUrl(uml));
+        } finally {
+            setIsRendering(false);
         }
     };
 
     const handleRunCode = () => renderWithKroki(code);
     const handleSubmitCode = async () => {
-        const submissionData = {
-            studentId: 1, // Replace with actual student ID from authentication state
-            classId: Number(classId), // Convert URL param to a number
-            assignmentId: Number(problemId), // Convert URL param to a number
-            studentPlantUmlCode: code, // The PlantUML code from the editor state
-        };
+        setIsSubmitting(true);
+        try {
+            const submissionData = {
+                studentId: 1, // FIXME: bỏ khi backend lấy id từ context security
+                classId: Number(classId), // Chuyển đổi URL param sang số
+                assignmentId: Number(problemId), // Chuyển đổi URL param sang số
+                studentPlantUmlCode: code, // Code PlantUML từ editor
+            };
 
-        const submissionResponse = await createSubmission(submissionData);
-        console.log("Submission successful:", submissionResponse);
+            // Bước 1: Validate dữ liệu trước khi gửi đi
+            if (!submissionData.studentPlantUmlCode) {
+                // Hiển thị thông báo lỗi nếu code rỗng
+                message.error("Mã PlantUML không được để trống!");
+                return; // Dừng hàm lại, không gọi API
+            }
+
+            if (isNaN(submissionData.classId) || isNaN(submissionData.assignmentId)) {
+                // Hiển thị thông báo lỗi nếu classId hoặc assignmentId không hợp lệ
+                message.error("ID lớp học hoặc ID bài tập không hợp lệ!");
+                return; // Dừng hàm lại
+            }
+
+            // Bước 2: Gọi API nếu dữ liệu hợp lệ
+            await createSubmission(submissionData);
+
+            // Bước 3: Thông báo thành công nếu API trả về OK
+            notification.success(
+                "Nộp bài thành công",
+                `Hệ thống sẽ xử lý và thông báo kết quả cho bạn sớm!`,
+                { duration: 5, placement: 'topRight' }
+            );
+
+        } catch (error) {
+            // Xử lý lỗi từ phía server hoặc lỗi mạng
+            message.error("Nộp bài thất bại, hãy kiểm tra lại mạng và thử lại!");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // tách function fetch
@@ -227,12 +262,14 @@ const ProblemDetail: React.FC = () => {
                             onCodeChange={setCode}
                             onRun={handleRunCode}
                             onSubmit={handleSubmitCode}
+                            isRendering={isRendering}
+                            isSubmitting={isSubmitting}
                         />
                     </div>
 
                     {/* RESULT (BOTTOM) */}
                     <div className="panel panel--result scrollable">
-                        <Result imageUrl={imageUrl} svgMarkup={svgMarkup} error={renderErr} />
+                        <Result imageUrl={imageUrl} svgMarkup={svgMarkup} error={renderErr} isRendering={isRendering} />
                     </div>
                 </Split>
             </Split>

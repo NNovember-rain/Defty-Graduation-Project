@@ -62,6 +62,7 @@ const parseAiResponseToFeedback = (aiResponse: string): any => {
 const sendFeedBack = async (
     id: number,
     aiResponse: string,
+    aiModalName: string,
     token: string
 ) => {
     if (!id) {
@@ -69,14 +70,15 @@ const sendFeedBack = async (
     }
 
     try {
-        const url = 'http://localhost:8086/feedback';
+        const url = 'http://localhost:8086/submission/feedback/llm';
 
         // Parse AI response thành feedback object
         const feedbackObject = parseAiResponseToFeedback(aiResponse);
 
         const payload = {
-            submissionsId: id,
-            feedback: feedbackObject // Gửi object thay vì string
+            submissionId: id,
+            feedback: feedbackObject, // Gửi object thay vì string
+            aiModalName: aiModalName
         };
 
         const feedbackResponse = await fetch(url, {

@@ -2,12 +2,15 @@ import React from "react";
 import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
 import { MdPlayArrow, MdSend } from "react-icons/md";
 import { useTranslation } from "react-i18next";
+import { Spin } from "antd"; // Import Spin component
 
 export type CodeEditorProps = {
     code: string;
     onCodeChange: (value: string) => void;
     onRun: () => void;
     onSubmit: () => void;
+    isRendering: boolean; // Thêm prop này
+    isSubmitting: boolean; // Thêm prop này
     readOnly?: boolean;
 };
 
@@ -16,6 +19,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                                                    onCodeChange,
                                                    onRun,
                                                    onSubmit,
+                                                   isRendering, // Nhận prop
+                                                   isSubmitting, // Nhận prop
                                                    readOnly = false,
                                                }) => {
     const { t } = useTranslation();
@@ -26,13 +31,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     React.useEffect(() => {
         if (!monaco) return;
 
-        // Chỉ định nghĩa theme dark, không custom tokenizer
         monaco.editor.defineTheme("uml-dark", {
             base: "vs-dark",
             inherit: true,
-            rules: [
-                // Giữ rules cơ bản của vs-dark
-            ],
+            rules: [],
             colors: {
                 "editor.background": "#262626",
                 "editorGutter.background": "#262626",
@@ -48,7 +50,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         editorRef.current = editor;
 
         editor.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.Enter, () => onRun());
-        editor.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KeyS, () => onSubmit());
 
         editor.onDidChangeCursorPosition((e) => {
             setCursor({ line: e.position.lineNumber, column: e.position.column });
@@ -69,8 +70,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                             data-tooltip={t("problemDetail.codeEditor.runTooltip") || "Run (Ctrl/Cmd + Enter)"}
                             onClick={onRun}
                             type="button"
+                            disabled={isRendering || isSubmitting} // Vô hiệu hóa khi đang xử lý
                         >
-                            <MdPlayArrow/>
+                            {isRendering ? <Spin size="small" /> : <MdPlayArrow />}
                         </button>
 
                         <button
@@ -78,8 +80,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                             data-tooltip={t("problemDetail.codeEditor.submitTooltip") || "Submit (Ctrl/Cmd + S)"}
                             onClick={onSubmit}
                             type="button"
+                            disabled={isRendering || isSubmitting} // Vô hiệu hóa khi đang xử lý
                         >
-                            <MdSend />
+                            {isSubmitting ? <Spin size="small" /> : <MdSend />}
                         </button>
                     </div>
                 </div>
