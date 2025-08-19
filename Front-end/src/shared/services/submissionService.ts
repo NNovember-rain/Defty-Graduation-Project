@@ -36,10 +36,29 @@ export interface ISubmission {
     createdDate: string;
     submissionStatus: 'SUBMITTED' |'PROCESSING' |'COMPLETED' | 'REVIEWED' | 'FAILED';
 }
-export const createSubmission = async (data: Omit<ISubmission, 'id' | 'createdDate'>): Promise<ISubmission> => {
-    const response = await handleRequest(postJsonData(`/${PREFIX_SUBMISSIONS}`, data));
+
+export interface CreateSubmissionRequest {
+    studentId: number;
+    classId: number;
+    assignmentId: number;
+    studentPlantUmlCode: string;
+}
+
+export const createSubmission = async (data: CreateSubmissionRequest): Promise<ISubmission> => {
+    const response = await handleRequest(postJsonData(`${PREFIX_SUBMISSIONS}`, data));
     const result = await response.json();
-    return { id: result.result, ...data } as ISubmission; // Giả định API trả về ID
+
+    return {
+        id: result.result,
+        studentName: 'N/A', // Placeholder, as backend doesn't require this in request
+        studentCode: 'N/A', // Placeholder
+        assignmentTitle: 'N/A', // Placeholder
+        umlType: 'N/A', // Placeholder
+        classCode: String(data.classId),
+        createdDate: new Date().toISOString(), // Use current date as placeholder
+        submissionStatus: 'SUBMITTED',
+        ...data
+    } as ISubmission;
 };
 
 export const getSubmissions = async (options: GetSubmissionsOptions = {}): Promise<GetSubmissionsResult> => {

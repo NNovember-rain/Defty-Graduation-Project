@@ -1,4 +1,4 @@
-// src/components/Header.scss
+/* Header.scss */
 $header-bg-color: #282828;
 $text-color: #a7a7a7;
 $text-color-hover: #ffffff;
@@ -162,6 +162,7 @@ $active-underline-color: #ff9100;
   background-color: #2e2e2e !important;
   border-radius: 4px;
   border: 1px solid $border-color;
+  min-width: 120px;
 
   .ant-dropdown-menu-item {
     color: $text-color;
@@ -207,4 +208,42 @@ $active-underline-color: #ff9100;
   background-color: #1a1a1a;
   min-height: calc(100vh - 50px);
   color: #fff;
+}
+
+// Tùy chỉnh Ant Design Dropdown Menu cho user (giống menu ngôn ngữ)
+.ant-dropdown-menu.user-dropdown-menu {
+  background-color: #2e2e2e !important;
+  border-radius: 4px;
+  border: 1px solid $border-color;
+  min-width: 130px;
+  // Thêm đổ bóng
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+  .ant-dropdown-menu-item {
+    color: $text-color;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+
+    .profile-menu-item,
+    .logout-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: $text-color;
+      text-decoration: none;
+      transition: color 0.2s ease-in-out;
+    }
+
+    &:hover {
+      background-color: #3a3a3a !important;
+      color: $text-color-hover;
+
+      .profile-menu-item,
+      .logout-menu-item {
+        color: $text-color-hover;
+      }
+    }
+  }
 }

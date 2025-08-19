@@ -27,7 +27,7 @@ export interface UserState {
     isLoading: boolean;
     error: string | null;
 
-    setUser: (userData: UserProfile) => void;
+    setUser: (userData: UserProfile | null) => void;
     clearUser: () => void;
     setLoading: (status: boolean) => void;
     setError: (errorMessage: string | null) => void;

@@ -22,6 +22,12 @@
     "assignSuccess": "Gán thành công",
     "fail": "Thao tác thất bại."
   },
+  "notfound": {
+    "title": "Trang không tồn tại",
+    "description": "Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.",
+    "back": "Quay lại",
+    "home": "Về trang chủ"
+  },
   "login": {
     "adminLTE": "Admin",
     "defty": "DEFTY",
@@ -623,7 +629,10 @@
     },
     "result": {
       "title": "Kết quả",
-      "placeholder": "Nhấn \"Chạy\" để xem sơ đồ."
+      "placeholder": "Nhấn \"Chạy\" để xem sơ đồ.",
+      "renderErrorWithStatus": "Lỗi render ({{status}})",
+      "renderFailed": "Không thể render sơ đồ",
+      "imageLoadError": "Không tải được ảnh sơ đồ"
     }
   },
   "submissionPage": {

@@ -20,6 +20,13 @@ const PromptForm: React.FC = () => {
             placeholderKey: 'promptForm.namePlaceholder',
             required: true,
             gridSpan: 24,
+        },{
+            key: 'umlType',
+            labelKey: 'promptForm.umlType',
+            type: 'text',
+            placeholderKey: 'promptForm.umlType',
+            required: true,
+            gridSpan: 24,
         },
         {
             key: 'description',

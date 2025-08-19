@@ -6,8 +6,6 @@ const PREFIX_AUTH = import.meta.env.VITE_PREFIX_AUTH as string;
 const PREFIX_IDENTITY: string = import.meta.env.VITE_PREFIX_IDENTITY as string;
 const PREFIX_USER: string = import.meta.env.VITE_PREFIX_USER as string;
 
-const TEACHER_ROLE_ID: number = 3;
-
 export interface IUser {
     id: string;
     username: string;
@@ -41,6 +39,7 @@ export const postLogin = (option: Record<string, any>): Promise<Response> => {
 };
 
 export const postLogout = (): Promise<Response> => {
+    debugger;
     const token = getLocalStorageItem<string>("token");
     if (!token) {
         console.warn("Không tìm thấy token. Không thể gửi yêu cầu logout với token trong body.");

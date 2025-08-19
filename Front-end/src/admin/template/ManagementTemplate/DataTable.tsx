@@ -204,7 +204,9 @@ const DataTable: React.FC<DataTableProps> = ({
                         </td>
                         {columns.map((col) => (
                             <td key={col.key} className="data-table__cell">
-                                {col.render ? col.render(row[col.key], row) : row[col.key]}
+                                <div className="data-table__cell-content">
+                                    {col.render ? col.render(row[col.key], row) : row[col.key]}
+                                </div>
                             </td>
                         ))}
                         {actions && actions.length > 0 && (

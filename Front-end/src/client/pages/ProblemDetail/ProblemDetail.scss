@@ -38,18 +38,19 @@
 }
 
 .description {
-  margin-right: 4px;
+  margin-right: 0;
 }
 
-.problem-detail__code-section .code-editor {
-  margin-left: 4px;
-  margin-bottom: 4px;
+.code-editor {
+  margin-left: 0;
+  margin-bottom: 0;
   height: 100%;
 }
 
-.problem-detail__rendered-image-section .result-container {
-  margin-left: 4px;
-  margin-top: 8px;
+.result-container {
+  margin-left: 0;
+  margin-top: 0;
+  margin-bottom: 4px;
   height: 100%;
 }
 
@@ -152,89 +153,75 @@
 }
 
 .code-editor {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    flex: 0 0 auto;
+  }
+
   &__toolbar {
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #383838;
-    border-bottom: 1px solid #404040;
     padding: 8px 12px;
+    border-radius: 8px 8px 0 0;
   }
 
-  &__left-controls {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  &__left-controls { display: flex; align-items: center; gap: 12px; }
+  &__language-label { color: #b0b0b0; font-size: 13px; font-weight: 500; }
 
-  &__language-label {
-    color: #b0b0b0;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  &__header--right-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  &__header--right-controls { display: flex; align-items: center; gap: 8px; }
 
   &__btn {
     position: relative;
     border: none;
-    font-size: 16px;
+    background: transparent;
+    color: #e0e0e0;
+    font-size: 20px;
     cursor: pointer;
-    font-weight: 500;
-    border-radius: 4px;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 6px;
+    padding: 4px 6px;
+    transition: background 0.2s ease, color 0.2s ease;
 
+    &:hover { background: #444; }
 
-    &--run {
-      background-color: transparent;
-      color: #02b128;
+    &--run { color: #02b128; &:hover { color: #02e634; }; font-size: 22px }
+    &--submit { color: #0277f6; &:hover { color: #007aff; } }
 
-      &:hover {
-        color: #02e634;
-      }
-    }
-
-    &--submit {
-      font-size: 20px;
-      background-color: transparent;
-      color: #0277f6;
-
-      &:hover {
-        color: #007aff;
-      }
-    }
-
+    /* tooltip */
     &:hover::after {
       content: attr(data-tooltip);
-      position: absolute;
-      top: 120%;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #404040;
-      color: #fff;
-      padding: 6px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 10;
+      position: absolute; top: 120%; left: 50%; transform: translateX(-50%);
+      background-color: #404040; color: #fff;
+      padding: 6px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 10;
     }
   }
 
-  &__textarea {
-    flex: 1;
-    padding: 16px;
-    background-color: transparent;
-    color: #e0e0e0;
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-size: 14px;
-    border: none;
-    resize: none;
-    outline: none;
-    line-height: 1.5;
+  &__body {
+    flex: 1 1 auto;
+    min-height: 0; /* rất quan trọng để editor co giãn */
+    border-left: 1px solid #ffffff38;
+    border-right: 1px solid #ffffff38;
+    background: #1e1e1e;
+  }
+
+  &__statusbar {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #b0b0b0;
+    background: #2b2b2b;
+    border: 1px solid #ffffff38;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+
+    &--spacer { margin-left: auto; }
   }
 }
 
@@ -257,4 +244,154 @@
       font-style: italic;
     }
   }
+}
+
+/* ============== Layout root ============== */
+.problem-detail {
+  &__loading,
+  &__error {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: #e5e7eb;
+    font-weight: 600;
+  }
+}
+
+/* ============== Split containers ============== */
+.split-outer,
+.split-inner {
+  height: 100%;
+  display: flex; /* split.js vẫn hoạt động, giúp gutter nằm đúng trục */
+}
+
+/* Outer orientation: row by default, column on narrow */
+.split-horizontal {
+  flex-direction: row;
+}
+.split-vertical {
+  flex-direction: column;
+}
+
+/* ============== Panels ============== */
+.panel {
+  background: #1e1e1e;
+
+  &.scrollable {
+    overflow: auto;
+  }
+
+  &--left {
+  }
+
+  &--code,
+  &--result {
+    display: flex;
+    flex-direction: column;
+
+    > * {
+      flex: 1 1 auto;
+      min-height: 0;
+      min-width: 0;
+    }
+  }
+}
+
+/* ============== Gutter (handle kéo) ============== */
+.gutter {
+  background: #1e1e1e;
+  transition: background 0.15s ease;
+  border: none !important;
+}
+.split-horizontal > .gutter {
+  cursor: col-resize;
+  width: 4px !important;
+}
+.split-vertical > .gutter {
+  cursor: row-resize;
+  height: 4px !important;
+}
+.gutter:hover {
+  background: #3a3a3a;
+}
+
+/* ============== Optional: style cho các block con ============== */
+/* Nếu CodeEditor có class riêng .code-editor, ép nó fill luôn */
+.panel--code .code-editor {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Result area: đảm bảo ảnh co đúng */
+.panel--result .rendered-image,
+.panel--result .result-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.panel--result .rendered-image__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.panel--result .rendered-image__placeholder {
+  flex: 1;
+  border: 1px dashed #2f2f2f;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #9aa3b2;
+}
+
+/* Banner lỗi */
+.result__error {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #fecaca;
+  border-radius: 6px;
+}
+
+/* Vùng preview */
+.rendered-image {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+
+  /* Nếu SVG inline */
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.rendered-image__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.rendered-image__placeholder {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #9aa3b2;
+  border: 1px dashed #2f2f2f;
+  border-radius: 8px;
+}
+
+.code-editor__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-left: 1px solid #ffffff38;
+  border-right: 1px solid #ffffff38;
+  background: #262626; /* đồng bộ với box */
+}
+
+.description,
+.code-editor,
+.result-container {
+  background-color: #262626; /* box tone */
 }

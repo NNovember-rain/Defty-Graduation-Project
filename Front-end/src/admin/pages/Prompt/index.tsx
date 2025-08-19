@@ -133,8 +133,8 @@ const Prompt: React.FC = () => {
     const dataTableColumns = React.useMemo(() => [
         { key: 'name', label: t('promptPage.dataTableColumns.name'), sortable: true },
         { key: 'description', label: t('promptPage.dataTableColumns.description'), sortable: true },
-        { key: 'umlType', label: t('promptPage.dataTableColumns.type'), sortable: true },
-        // { key: 'templateString', label: t('promptPage.dataTableColumns.templateString'), sortable: true },
+        // { key: 'umlType', label: t('promptPage.dataTableColumns.type'), sortable: true },
+        { key: 'templateString', label: t('promptPage.dataTableColumns.templateString'), sortable: true },
         { key: 'version', label: t('promptPage.dataTableColumns.version'), sortable: true },
         {
             key: 'createdAt',

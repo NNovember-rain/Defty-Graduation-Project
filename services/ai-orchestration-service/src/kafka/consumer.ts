@@ -1,6 +1,6 @@
 import { Kafka, EachMessagePayload } from 'kafkajs';
 import kafkaConfig from '../config/kafkaConfig';
-import { handleUseCaseDiagram, handleClassDiagram } from './messageHandlers/umlDiagram.handler'; // NEW: Import handlers
+import {handleUseCaseDiagram, handleClassDiagram, UmlDiagramMessage} from './messageHandlers/umlDiagram.handler'; // NEW: Import handlers
 
 const kafka = new Kafka({
     clientId: kafkaConfig.clientId,
@@ -14,7 +14,10 @@ const runKafkaConsumer = async () => {
         await consumer.connect();
         console.log('Kafka Consumer Connected!');
 
-        await consumer.subscribe({ topic: 'umlDiagram', fromBeginning: false });
+        await consumer.subscribe({
+            topics: ['umlDiagram.submission'],
+            fromBeginning: false
+        });
 
         await consumer.run({
             eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
@@ -25,18 +28,23 @@ const runKafkaConsumer = async () => {
                 const messageValue = message.value.toString();
 
                 try {
-                    const parsedMessage = JSON.parse(messageValue);
+                    switch (topic) {
+                        case 'umlDiagram.submission':
+                            const parsedMessage: UmlDiagramMessage = JSON.parse(messageValue);
+                            switch (parsedMessage.typeUmlName) {
+                                case 'use-case':
+                                    await handleUseCaseDiagram(parsedMessage);
+                                    break;
+                                case 'class':
+                                    await handleClassDiagram(parsedMessage);
+                                    break;
+                                default:
+                                    console.warn(`No handler for umlType: ${parsedMessage.typeUmlName}`);
+                            }
+                            break;
 
-                    // CHỌN HANDLER PHÙ HỢP TẠI ĐÂY
-                    switch (parsedMessage.umlType) {
-                        case 'use-case':
-                            await handleUseCaseDiagram(parsedMessage);
-                            break;
-                        case 'class':
-                            await handleClassDiagram(parsedMessage);
-                            break;
                         default:
-                            console.warn(`No handler for umlType: ${parsedMessage.umlType}`);
+                            break;
                     }
                 } catch (error: any) {
                     console.error(`Error processing message from topic ${topic}: ${error.message}`);
