@@ -63,6 +63,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     KafkaTemplate<String, Object> kafkaTemplate;
 
+    // TODO: xem lai mapper, catch exception, trace log
     @Override
     public Long handleSubmission(SubmissionRequest submissionRequest) {
         // Kiểm tra dữ liệu đầu vào
@@ -146,9 +147,11 @@ public class SubmissionServiceImpl implements SubmissionService {
         SubmissionDetailResponse submissionResponse = new SubmissionDetailResponse();
 
         try {
+            // TODO: xem lai mapper
             ApiResponse<AssignmentResponse> assignmentResponse = contentServiceClient.getAssignment(submission.getAssignmentId());
             BeanUtils.copyProperties(submission, submissionResponse);
             submissionResponse.setSolutionCode(assignmentResponse.getResult().getSolutionCode());
+            submissionResponse.setTypeUml(submission.getUmlType());
             return submissionResponse;
         }catch (FeignException e){
             throw new FeignClientException("Fail to fecth data");

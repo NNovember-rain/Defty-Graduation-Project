@@ -219,7 +219,7 @@ const Submission: React.FC = () => {
     // }, [navigate]);
 
     const handleViewSubmission = useCallback((rowData: ISubmission) => {
-        navigate(`/admin/submissions/view/${rowData.id}`);
+        navigate(`/admin/submissions/detail/${rowData.id}`);
     }, [navigate]);
 
     const submissionActions = useMemo(() => [
