@@ -76,6 +76,14 @@ export interface GetClassesResult {
     size: number;   // Kích thước trang
 }
 
+export interface ClassInEnrollment {
+    classId: number;
+    className: string;
+    classCode: string;
+    teacherName: string;
+    newAssignments: number | null;
+}
+
 // API Response chung từ Backend (để cast response)
 export interface ApiResponse<T> {
     code: number;
@@ -254,20 +262,31 @@ export const getStudentsInClass = async (classId: number, options: GetStudentsIn
 // API để lấy danh sách lớp theo ID sinh viên (GET /api/v1/enrollments/student/{studentId}/class)
 export const getClassesByStudentId = async (studentId: number, options: GetClassesOptions = {}): Promise<GetClassesResult> => {
     const params = {
-        page: options.page ? options.page - 1 : 0,
+        page: options.page ? options.page - 1 : 0, // Backend sử dụng 0-indexed
         size: options.limit || 10,
         sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
     };
-    const response = await handleRequest(getWithParams(`${CLASS_SERVICE_PREFIX}/enrollments/student/${studentId}/class`, params));
-    const apiResponse = await response.json() as ApiResponse<any>;
+
+    // Sử dụng endpoint chính xác từ API response bạn cung cấp
+    const response = await handleRequest(
+        getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/student/${studentId}/classes`, params)
+    );
+
+    const apiResponse = await response.json() as ApiResponse<{
+        content: ClassInEnrollment[],
+        totalElements: number
+    }>;
 
     if (apiResponse.code === 200 && apiResponse.result) {
+        const totalElements = apiResponse.result.totalElements || 0;
+        const totalPages = Math.ceil(totalElements / (options.limit || 10));
+
         return {
-            content: apiResponse.result.content,
-            totalElements: apiResponse.result.totalElements,
-            totalPages: apiResponse.result.totalPages,
-            number: apiResponse.result.number,
-            size: apiResponse.result.size,
+            content: apiResponse.result.content || [],
+            totalElements: totalElements,
+            totalPages: totalPages,
+            number: options.page ? options.page - 1 : 0,
+            size: options.limit || 10,
         } as GetClassesResult;
     } else {
         throw new Error(apiResponse.message || "Failed to fetch classes for student.");
