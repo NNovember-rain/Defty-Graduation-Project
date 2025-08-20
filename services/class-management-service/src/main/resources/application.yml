@@ -3,6 +3,14 @@ server:
   servlet:
     context-path: /class-management-service
 
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
 spring:
   application:
     name: class-management-service
