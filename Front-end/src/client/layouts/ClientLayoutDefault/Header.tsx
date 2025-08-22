@@ -27,7 +27,7 @@ interface NavDropdownItem {
 type NavItem = NavLinkItem | NavDropdownItem;
 
 const NAV_ITEMS: NavItem[] = [
-    { type: 'link', labelKey: 'header.home', linkTo: '/home' },
+    { type: 'link', labelKey: 'header.home', linkTo: '' },
     { type: 'link', labelKey: 'header.assignments', linkTo: '/problems' },
     { type: 'link', labelKey: 'header.test', linkTo: '/test' },
     { type: 'link', labelKey: 'header.quiz', linkTo: '/quiz' },
