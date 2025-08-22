@@ -27,7 +27,7 @@ $shadow-color: rgba(0, 0, 0, 0.5);
 }
 
 // Sidebar
-.sidebar {
+.side-bar {
   width: 320px;
   flex-shrink: 0;
   position: sticky;
@@ -51,7 +51,7 @@ $shadow-color: rgba(0, 0, 0, 0.5);
 }
 
 // Main Content
-.main-content {
+.assignment-content {
   flex: 1;
 
   .header-controls {

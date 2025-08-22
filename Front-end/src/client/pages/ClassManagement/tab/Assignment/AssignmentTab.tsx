@@ -130,7 +130,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     return (
         <div className="assignment-tab-container">
             {/* Sidebar */}
-            <aside className="sidebar">
+            <aside className="side-bar">
                 <Card className="mb-4">
                     <Title level={5} style={{ marginBottom: 4, color: "#aaa" }}>
                         {t("classDetail.classCode") || "Class code"}
@@ -151,7 +151,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             </aside>
 
             {/* Main */}
-            <main className="main-content">
+            <main className="assignment-content">
                 {/* Header controls */}
                 <div className="header-controls">
                     <Title level={3} style={{ margin: 0, color: "#fff" }}>
