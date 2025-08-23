@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Spinner } from 'react-bootstrap';
 import { getClassById, IClass } from '../../../shared/services/classManagementService.ts';
 import AssignmentTab from "../../../admin/pages/ClassManagement/tab/Assignment/AssignmentTab.tsx";
+import AssignmentTabUser from "./tab/Assignment/AssignmentTab.tsx";
 
 interface BreadcrumbItem {
     label: string;
@@ -166,7 +167,7 @@ const StudentClassDetailPage: React.FC = () => {
                     </div>
                 );
             case 'classwork':
-                return <AssignmentTab classId={classData.id} />;
+                return <AssignmentTabUser classId={classData.id} />;
             case 'people':
                 return <ClassPeopleTab classId={classData.id} />;
             case 'marks':
@@ -202,7 +203,7 @@ const StudentClassDetailPage: React.FC = () => {
     }
 
     return (
-        <div style={{ padding: '1rem', backgroundColor: '#111827', minHeight: '100vh', color: '#f9fafb' }}>
+        <div style={{ padding: '1rem', backgroundColor: '#282828', minHeight: '100vh', color: '#f9fafb' }}>
             {/* Thông tin lớp học chỉ hiển thị khi activeTab là 'stream' */}
             {activeTab === 'stream' && (
                 <div style={{
