@@ -1,10 +1,11 @@
 package com.defty.class_management_service.service.impl;
 
 import com.defty.class_management_service.client.IdentityServiceClient;
+import com.defty.class_management_service.dto.response.ClassOfStudentResponse;
 import com.defty.class_management_service.dto.response.ClassResponse;
-import com.defty.class_management_service.dto.response.EnrollmentResponse;
 import com.defty.class_management_service.dto.response.StudentInClassResponse;
 import com.defty.class_management_service.entity.ClassEnrollmentEntity;
+import com.defty.class_management_service.entity.ClassEntity;
 import com.defty.class_management_service.mapper.ClassMapper;
 import com.defty.class_management_service.repository.IClassRepository;
 import com.defty.class_management_service.repository.IEnrollmentRepository;
@@ -13,7 +14,6 @@ import com.example.common_library.dto.response.PageableResponse;
 import com.example.common_library.dto.response.UserResponse;
 import com.example.common_library.exceptions.NotFoundException;
 import com.example.common_library.response.ApiResponse;
-import com.example.common_library.response.ServiceResponse;
 import com.example.common_library.service.ExternalServiceClient;
 import feign.FeignException;
 import lombok.AccessLevel;
@@ -22,13 +22,10 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,21 +42,93 @@ public class EnrollmentService implements IEnrollmentService {
     ExternalServiceClient externalServiceClient;
     IdentityServiceClient identityServiceClient;
 
+//    @Override
+//    public ApiResponse<PageableResponse<ClassResponse>> getClassesByStudentId(Pageable pageable, Long studentId) {
+//        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdDate").descending());
+//        Page<ClassEnrollmentEntity> classEnrollmentEntities = enrollmentRepository.findAllByStudentId(studentId, sortedPageable);
+//        if(classEnrollmentEntities.isEmpty()){
+//            return new ApiResponse<>(404, "Class doesn't exist", null);
+//        }
+//        List<ClassResponse> classResponses = new ArrayList<>();
+//        for(ClassEnrollmentEntity c : classEnrollmentEntities){
+//            classResponses.add(classMapper.toClassResponse(c.getClassroom()));
+//        }
+//        PageableResponse<ClassResponse> pageableResponse = new PageableResponse<>(classResponses, classEnrollmentEntities.getTotalElements());
+//        ApiResponse<PageableResponse<ClassResponse>> apiResponse = new ApiResponse<>(200, "OK", pageableResponse);
+//        return apiResponse;
+//    }
+
     @Override
-    public ApiResponse<PageableResponse<ClassResponse>> getClassesByStudentId(Pageable pageable, Long studentId) {
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdDate").descending());
-        Page<ClassEnrollmentEntity> classEnrollmentEntities = enrollmentRepository.findAllByStudentId(studentId, sortedPageable);
-        if(classEnrollmentEntities.isEmpty()){
-            return new ApiResponse<>(404, "Class doesn't exist", null);
+    public ApiResponse<PageableResponse<ClassOfStudentResponse>> getClassesByStudentId(Pageable pageable, Long studentId) {
+        try {
+            // 1. Validate student exists (gọi sang identity service)
+            ApiResponse<UserResponse> studentResponse = identityServiceClient.getUser(studentId);
+            if (studentResponse == null || studentResponse.getResult() == null) {
+                throw new NotFoundException("Student not found with id: " + studentId);
+            }
+
+            // 2. Get enrollments (tất cả lớp mà student này tham gia)
+            Page<ClassEnrollmentEntity> enrollmentPage = enrollmentRepository.findAllByStudentId(studentId, pageable);
+
+            if (enrollmentPage.isEmpty()) {
+                PageableResponse<ClassOfStudentResponse> emptyResponse =
+                        new PageableResponse<>(List.of(), 0L);
+//                return new ApiResponse<>(200, "No classes found for this student.", emptyResponse);
+                throw new NotFoundException("No classes found for this student, studentId: " + studentId);
+            }
+
+            // 3. Extract class IDs
+            List<Long> classIds = new ArrayList<>();
+            for (ClassEnrollmentEntity c : enrollmentPage){
+                classIds.add(c.getClassroom().getId());
+            }
+
+            // 4. Get classes info
+            List<ClassEntity> classes = classRepository.findAllById(classIds);
+
+            // 5. Extract teacherIds
+            List<Long> teacherIds = classes.stream()
+                    .map(ClassEntity::getTeacherId)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            // 6. Call identity service to get teachers info
+            ApiResponse<List<UserResponse>> teacherResponse = identityServiceClient.getListUser(teacherIds);
+            if (teacherResponse == null || teacherResponse.getResult() == null) {
+                throw new ServiceException("Failed to get teacher information from identity service");
+            }
+            Map<Long, UserResponse> teacherMap = teacherResponse.getResult().stream()
+                    .collect(Collectors.toMap(UserResponse::getId, Function.identity()));
+
+            // 7. Combine enrollment + class info + teacher info
+            List<ClassOfStudentResponse> classResponses = classes.stream()
+                    .map(c -> {
+                        UserResponse teacher = teacherMap.get(c.getTeacherId());
+                        return new ClassOfStudentResponse(
+                                c.getId(),
+                                c.getName(),
+                                c.getInviteCode(),
+                                teacher != null ? teacher.getFullName() : null, null
+//                                c.getNewAssignments()
+                        );
+                    })
+                    .toList();
+
+            // 8. Pageable response
+            PageableResponse<ClassOfStudentResponse> pageableResponse =
+                    new PageableResponse<>(classResponses, enrollmentPage.getTotalElements());
+
+            return new ApiResponse<>(200, "Classes retrieved successfully.", pageableResponse);
+
+        } catch (FeignException e) {
+            log.error("Error calling identity service: {}", e.getMessage());
+            throw new ServiceException("Failed to get teacher information: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Error getting classes by student: {}", e.getMessage());
+            throw new ServiceException("Failed to get classes by student: " + e.getMessage());
         }
-        List<ClassResponse> classResponses = new ArrayList<>();
-        for(ClassEnrollmentEntity c : classEnrollmentEntities){
-            classResponses.add(classMapper.toClassResponse(c.getClassroom()));
-        }
-        PageableResponse<ClassResponse> pageableResponse = new PageableResponse<>(classResponses, classEnrollmentEntities.getTotalElements());
-        ApiResponse<PageableResponse<ClassResponse>> apiResponse = new ApiResponse<>(200, "OK", pageableResponse);
-        return apiResponse;
     }
+
 
     @Override
     public ApiResponse<Object> getStudentsInClass(Pageable pageable, Long classId) {

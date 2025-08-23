@@ -8,6 +8,7 @@ import Home from "../pages/Home";
 import UnauthorizedPage from "../../shared/routes/UnauthorizedPage.tsx";
 import ProblemDetail from "../pages/ProblemDetail";
 import NotFound from "../pages/NotFound";
+import StudentClassDetailPage from "../pages/ClassManagement/StudentClassDetailPage.tsx";
 
 interface AppRoute {
     path: string;
@@ -51,6 +52,10 @@ const ProtectedClientRoutesConfig: AppRoute[] = [
     {
         path: '',
         component: Home
+    },
+    {
+        path: '/class/:classId',
+        component: StudentClassDetailPage
     },
     {
         path: '*',
