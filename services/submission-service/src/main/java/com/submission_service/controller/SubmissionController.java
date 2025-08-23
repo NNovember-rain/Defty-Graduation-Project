@@ -35,6 +35,14 @@ public class SubmissionController {
                 .build();
     }
 
+    @PutMapping("/score/{id}")
+    ApiResponse<String> addScore(@PathVariable Long id, @RequestParam(required = true) Double point) {
+        String response=submissionService.addScoreSubmission(id,point);
+        return ApiResponse.<String>builder()
+                .result(response)
+                .build();
+    }
+
     @GetMapping({"/{id}"})
     ApiResponse<SubmissionDetailResponse> getSubmissions(@PathVariable Long id) {
         SubmissionDetailResponse submissionResponses =submissionService.getSubmission(id);

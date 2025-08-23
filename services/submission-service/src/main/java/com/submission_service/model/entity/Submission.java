@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
-
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
@@ -51,5 +49,13 @@ public class Submission extends BaseEntity {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     SubmissionStatus submissionStatus=SubmissionStatus.PROCESSING;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "feedback_ai_id", referencedColumnName = "id")
+    private FeedbackAi feedbackAi;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "feedback_teacher_id", referencedColumnName = "id")
+    private FeedbackTeacher feedbackTeacher;
 
 }

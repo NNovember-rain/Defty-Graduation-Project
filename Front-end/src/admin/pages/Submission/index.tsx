@@ -4,14 +4,12 @@ import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getSubmissions, type GetSubmissionsOptions, type ISubmission } from "../../../shared/services/submissionService.ts";
 import { useNavigate } from "react-router-dom";
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaComments } from "react-icons/fa";
 import dayjs from 'dayjs';
-// import { useNotification } from "../../../shared/notification/useNotification.ts";
 
 const Submission: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    // const { message } = useNotification();
 
     const [submissions, setSubmissions] = useState<ISubmission[]>([]);
     const [totalSubmissions, setTotalSubmissions] = useState(0);
@@ -73,6 +71,7 @@ const Submission: React.FC = () => {
             setCurrentSortColumn(newParams.get('sortBy'));
             setCurrentSortOrder(newParams.get('sortOrder') as 'asc' | 'desc' || null);
         };
+
         window.addEventListener('popstate', handlePopState);
         return () => {
             window.removeEventListener('popstate', handlePopState);
@@ -103,6 +102,7 @@ const Submission: React.FC = () => {
                 ...submission,
                 createdDate: submission.createdDate ? dayjs(submission.createdDate).format('YYYY-MM-DD') : '',
             }));
+
             setSubmissions(formattedSubmissions);
             setTotalSubmissions(response.total || 0);
             setLoading(false);
@@ -129,11 +129,41 @@ const Submission: React.FC = () => {
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
-        { key: 'studentName', label: t('submissionPage.search.studentName'), type: 'text', placeholder: t('submissionPage.search.studentNamePlaceholder'), gridSpan: 1 },
-        { key: 'studentCode', label: t('submissionPage.search.studentCode'), type: 'text', placeholder: t('submissionPage.search.studentCodePlaceholder'), gridSpan: 1 },
-        { key: 'assignmentTitle', label: t('submissionPage.search.assignmentTitle'), type: 'text', placeholder: t('submissionPage.search.assignmentTitlePlaceholder'), gridSpan: 1 },
-        { key: 'umlType', label: t('submissionPage.search.umlType'), type: 'text', placeholder: t('submissionPage.search.umlTypePlaceholder'), gridSpan: 1 },
-        { key: 'classCode', label: t('submissionPage.search.classCode'), type: 'text', placeholder: t('submissionPage.search.classCodePlaceholder'), gridSpan: 1 },
+        {
+            key: 'studentName',
+            label: t('submissionPage.search.studentName'),
+            type: 'text',
+            placeholder: t('submissionPage.search.studentNamePlaceholder'),
+            gridSpan: 1
+        },
+        {
+            key: 'studentCode',
+            label: t('submissionPage.search.studentCode'),
+            type: 'text',
+            placeholder: t('submissionPage.search.studentCodePlaceholder'),
+            gridSpan: 1
+        },
+        {
+            key: 'assignmentTitle',
+            label: t('submissionPage.search.assignmentTitle'),
+            type: 'text',
+            placeholder: t('submissionPage.search.assignmentTitlePlaceholder'),
+            gridSpan: 1
+        },
+        {
+            key: 'umlType',
+            label: t('submissionPage.search.umlType'),
+            type: 'text',
+            placeholder: t('submissionPage.search.umlTypePlaceholder'),
+            gridSpan: 1
+        },
+        {
+            key: 'classCode',
+            label: t('submissionPage.search.classCode'),
+            type: 'text',
+            placeholder: t('submissionPage.search.classCodePlaceholder'),
+            gridSpan: 1
+        },
         {
             key: 'submissionStatus',
             label: t('submissionPage.search.submissionStatus'),
@@ -148,8 +178,20 @@ const Submission: React.FC = () => {
             placeholder: t('submissionPage.search.submissionStatusPlaceholder'),
             gridSpan: 1
         },
-        { key: 'fromDate', label: t('submissionPage.search.fromDate'), type: 'datetime', gridSpan: 1, format: 'YYYY-MM-DD' },
-        { key: 'toDate', label: t('submissionPage.search.toDate'), type: 'datetime', gridSpan: 1, format: 'YYYY-MM-DD' },
+        {
+            key: 'fromDate',
+            label: t('submissionPage.search.fromDate'),
+            type: 'datetime',
+            gridSpan: 1,
+            format: 'YYYY-MM-DD'
+        },
+        {
+            key: 'toDate',
+            label: t('submissionPage.search.toDate'),
+            type: 'datetime',
+            gridSpan: 1,
+            format: 'YYYY-MM-DD'
+        },
     ], [t]);
 
     const sortFields: SortField[] = useMemo(() => [
@@ -214,12 +256,12 @@ const Submission: React.FC = () => {
         setCurrentPage(1);
     }, []);
 
-    // const handleCreateNew = useCallback(() => {
-    //     navigate("/admin/submissions/create");
-    // }, [navigate]);
-
     const handleViewSubmission = useCallback((rowData: ISubmission) => {
         navigate(`/admin/submissions/detail/${rowData.id}`);
+    }, [navigate]);
+
+    const handleViewFeedback = useCallback((rowData: ISubmission) => {
+        navigate(`/admin/submissions/feedback/${rowData.id}`);
     }, [navigate]);
 
     const submissionActions = useMemo(() => [
@@ -228,9 +270,16 @@ const Submission: React.FC = () => {
             onClick: handleViewSubmission,
             className: 'text-blue-500 hover:text-blue-700',
             tooltip: t('submissionPage.viewTooltip'),
-            color: '#7600ff'
+            color: '#3b82f6'
         },
-    ], [handleViewSubmission, t]);
+        {
+            icon: <FaComments />,
+            onClick: handleViewFeedback,
+            className: 'text-green-500 hover:text-green-700',
+            tooltip: t('submissionPage.feedbackTooltip'),
+            color: '#059669'
+        },
+    ], [handleViewSubmission, handleViewFeedback, t]);
 
     if (loading && submissions.length === 0) {
         return <div>{t('common.loadingData')}</div>;
@@ -261,7 +310,6 @@ const Submission: React.FC = () => {
             onSort={handleTableSort}
             currentSortColumn={currentSortColumn}
             currentSortOrder={currentSortOrder}
-            // onCreateNew={handleCreateNew}
             onEntriesPerPageChange={handleEntriesPerPageChange}
             actions={submissionActions as ActionButton[]}
             initialFilters={currentFilters}

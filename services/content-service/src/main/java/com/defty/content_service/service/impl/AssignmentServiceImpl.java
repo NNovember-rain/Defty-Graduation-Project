@@ -66,6 +66,13 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw new IllegalArgumentException("No assignments found for given ids");
         }
 
+        List<AssignmentClass> existingAssignmentClasses = assignmentClassRepository
+                .findByAssignmentIdInAndClassIdIn(assignRequest.getAssignmentIds(), assignRequest.getClassIds());
+
+        if (!existingAssignmentClasses.isEmpty()) {
+            throw new IllegalArgumentException("Assignments already assigned to the specified classes");
+        }
+
         List<AssignmentClass> assignmentClasses = assignments.stream()
                 .flatMap(assignment -> assignRequest.getClassIds().stream()
                         .map(classId -> AssignmentClass.builder()

@@ -11,4 +11,5 @@ public interface SubmissionService {
     Long handleSubmission(SubmissionRequest submissionRequest);
     Page<SubmissionResponse> getAllSubmissions(Pageable pageable, SubmissionSearchBuilder criteria);
     SubmissionDetailResponse getSubmission(Long id);
+    String addScoreSubmission(Long id, Double point);
 }

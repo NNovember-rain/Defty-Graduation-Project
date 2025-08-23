@@ -23,4 +23,5 @@ public class SubmissionDetailResponse {
     SubmissionStatus submissionStatus;
     String studentPlantUMLCode;
     String solutionCode;
+    Double score;
 }

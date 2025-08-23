@@ -67,7 +67,7 @@ const ClassListModal: React.FC<ClassListModalProps> = ({ visible, onClose, assig
             onClose();
         } catch (error) {
             console.error(error);
-            message.error("Failed to assign assignment");
+            messageApi.error("Failed to assign assignment");
         }
     };
 

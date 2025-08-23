@@ -158,4 +158,13 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
     }
+
+    @Override
+    public String addScoreSubmission(Long id, Double point) {
+        Submission submission = submissionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Submission not found "));
+        submission.setScore(point);
+        submissionRepository.save(submission);
+        return "Score added successfully";
+    }
 }
