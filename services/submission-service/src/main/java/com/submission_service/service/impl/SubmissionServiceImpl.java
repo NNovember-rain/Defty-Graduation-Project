@@ -63,6 +63,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     KafkaTemplate<String, Object> kafkaTemplate;
 
+    // TODO: xem lai mapper, catch exception, trace log
     @Override
     public Long handleSubmission(SubmissionRequest submissionRequest) {
         // Kiểm tra dữ liệu đầu vào
@@ -146,13 +147,35 @@ public class SubmissionServiceImpl implements SubmissionService {
         SubmissionDetailResponse submissionResponse = new SubmissionDetailResponse();
 
         try {
+            // TODO: xem lai mapper
             ApiResponse<AssignmentResponse> assignmentResponse = contentServiceClient.getAssignment(submission.getAssignmentId());
             BeanUtils.copyProperties(submission, submissionResponse);
             submissionResponse.setSolutionCode(assignmentResponse.getResult().getSolutionCode());
+            submissionResponse.setTypeUml(submission.getUmlType());
             return submissionResponse;
         }catch (FeignException e){
             throw new FeignClientException("Fail to fecth data");
         }
 
+    }
+
+    @Override
+    public String addScoreSubmission(Long id, Double point) {
+        Submission submission = submissionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Submission not found "));
+        submission.setScore(point);
+        submissionRepository.save(submission);
+        return "Score added successfully";
+    }
+
+    @Override
+    public Page<SubmissionHistoryResponse> getAllSubmissionsForStudent(Pageable pageable, Long studentId) {
+        Page<Submission> submissions = submissionRepository.findByStudentId(studentId, pageable);
+        return submissions.map(submission -> {
+            SubmissionHistoryResponse response = new SubmissionHistoryResponse();
+            response.setId(submission.getId());
+            response.setCreatedDate(submission.getCreatedDate());
+            return response;
+        });
     }
 }

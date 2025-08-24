@@ -1,7 +1,5 @@
 server:
   port: 8086
-#  servlet:
-#    context-path: /submission
 
 api:
   prefix: /api/v1
@@ -54,11 +52,13 @@ spring:
 PLANTUML_SERVER_URL: http://localhost:8091/svg
 
 eureka:
+  client:
+    fetch-registry: true
   #  instance:
   #    prefer-ip-address: true
   #    ip-address: ${HOST_IP_ADDRESS}
-  client:
-    fetch-registry: true
     register-with-eureka: true
     service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
       defaultZone: http://localhost:8761/eureka
