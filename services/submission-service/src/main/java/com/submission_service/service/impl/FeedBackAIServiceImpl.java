@@ -1,6 +1,7 @@
 package com.submission_service.service.impl;
 
 
+import com.example.common_library.exceptions.NotFoundException;
 import com.submission_service.model.dto.request.FeedbackAiRequest;
 import com.submission_service.model.dto.request.FeedbackTeacherRequest;
 import com.submission_service.model.dto.response.FeedbackAIResponse;
@@ -44,7 +45,7 @@ public class FeedBackAIServiceImpl implements IFeedBackAIService {
     public Long addFeedbackAI(FeedbackAiRequest feedbackAiRequest) {
         FeedbackAi feedbackAi=new FeedbackAi();
         Submission submission = submissionRepository.findById(feedbackAiRequest.getSubmissionId())
-                .orElseThrow(() -> new RuntimeException("Submission not found"));
+                .orElseThrow(() -> new NotFoundException("Submission not found"));
         feedbackAi.setFeedback(feedbackAiRequest.getFeedback());
         feedbackAi.setAiModalName(feedbackAiRequest.getAiModalName());
         feedbackAi=feedBackAIRepository.save(feedbackAi);
@@ -56,14 +57,14 @@ public class FeedBackAIServiceImpl implements IFeedBackAIService {
     @Override
     public FeedbackAIResponse getFeedbackAI(Long submissionId) {
         Submission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new RuntimeException("Submission not found"));
+                .orElseThrow(() -> new NotFoundException("Submission not found"));
         FeedbackAi feedbackAi=submission.getFeedbackAi();
         if(feedbackAi != null) {
             FeedbackAIResponse feedbackAIResponse = new FeedbackAIResponse();
             BeanUtils.copyProperties(feedbackAi, feedbackAIResponse);
             feedbackAIResponse.setId(feedbackAi.getId());
             return feedbackAIResponse;
-        }else throw new RuntimeException("Feeback AI not found or not exist for this submission");
+        }else throw new NotFoundException("Feeback AI not found or not exist for this submission");
     }
 
 

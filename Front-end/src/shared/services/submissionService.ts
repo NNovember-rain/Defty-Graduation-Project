@@ -77,7 +77,7 @@ export interface FeedbackTeacherResponse {
 }
 
 export const createSubmission = async (data: Omit<ISubmission, "id" | "createdDate">): Promise<ISubmission> => {
-    const response = await handleRequest(postJsonData(`/${PREFIX_SUBMISSIONS}`, data))
+    const response = await handleRequest(postJsonData(`${PREFIX_SUBMISSIONS}`, data))
     const result = await response.json()
     return { id: result.result, ...data } as ISubmission
 }
@@ -155,4 +155,35 @@ export const addScore = async (submissionId: string | number, point: number): Pr
     )
     const data = await response.json()
     return data.result as string
+}
+
+export interface SubmissionHistoryResponse {
+    id: number
+    createdDate: Date
+}
+
+export interface GetSubmissionHistoryOptions {
+    page?: number
+    size?: number
+}
+
+export interface GetSubmissionHistoryResult {
+    content: SubmissionHistoryResponse[]
+    totalElements: number
+    number: number
+    size: number
+}
+
+export const getSubmissionHistory = async (
+    studentId: number,
+    options: GetSubmissionHistoryOptions = {}
+): Promise<GetSubmissionHistoryResult> => {
+    const params = {
+        page: options.page || 0,
+        size: options.size || 10,
+    }
+
+    const response = await handleRequest(getWithParams(`${PREFIX_SUBMISSIONS}/student/${studentId}`, params))
+    const data = await response.json()
+    return data.result as GetSubmissionHistoryResult
 }

@@ -167,4 +167,15 @@ public class SubmissionServiceImpl implements SubmissionService {
         submissionRepository.save(submission);
         return "Score added successfully";
     }
+
+    @Override
+    public Page<SubmissionHistoryResponse> getAllSubmissionsForStudent(Pageable pageable, Long studentId) {
+        Page<Submission> submissions = submissionRepository.findByStudentId(studentId, pageable);
+        return submissions.map(submission -> {
+            SubmissionHistoryResponse response = new SubmissionHistoryResponse();
+            response.setId(submission.getId());
+            response.setCreatedDate(submission.getCreatedDate());
+            return response;
+        });
+    }
 }

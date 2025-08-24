@@ -79,19 +79,6 @@ public class GlobalExceptionHandler {
 //        errorResponse.setMessage("A null value was encountered where it shouldn't have been.");
 //        return errorResponse;
 //    }
-//
-//    @ExceptionHandler({Exception.class, JsonHandlerException.class})
-//    @ResponseStatus(INTERNAL_SERVER_ERROR)
-//    public ErrorResponse handleGeneralException(Exception e, WebRequest request) {
-//        ErrorResponse errorResponse = new ErrorResponse();
-//        errorResponse.setTimestamp(new Date());
-//        errorResponse.setPath(request.getDescription(false).replace("uri=", ""));
-//        errorResponse.setStatus(INTERNAL_SERVER_ERROR.value());
-//        errorResponse.setError("Internal Server Error");
-//        errorResponse.setMessage(e.getMessage());
-//
-//        return errorResponse;
-//    }
 
     @ExceptionHandler(FieldRequiredException.class)
     @ResponseStatus(OK)
@@ -165,6 +152,20 @@ public class GlobalExceptionHandler {
         List<String> detailMessage = new ArrayList<>();
         errorResponse.setDetailMessage(detailMessage);
 
+        return errorResponse;
+    }
+
+    @ExceptionHandler({Exception.class})
+    @ResponseStatus(INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneralException(Exception e, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setTimestamp(new Date());
+        errorResponse.setPath(request.getDescription(false).replace("uri=", ""));
+        errorResponse.setStatus(INTERNAL_SERVER_ERROR.value());
+        errorResponse.setError("Internal Server Error");
+        List<String> detailMessage = new ArrayList<>();
+        detailMessage.add(e.getMessage());
+        errorResponse.setDetailMessage(detailMessage);
         return errorResponse;
     }
 }

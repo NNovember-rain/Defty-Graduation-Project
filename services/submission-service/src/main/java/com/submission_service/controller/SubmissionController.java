@@ -5,6 +5,7 @@ import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.buider.SubmissionSearchBuilder;
 import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.SubmissionDetailResponse;
+import com.submission_service.model.dto.response.SubmissionHistoryResponse;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.service.SubmissionService;
 import lombok.AccessLevel;
@@ -44,7 +45,7 @@ public class SubmissionController {
     }
 
     @GetMapping({"/{id}"})
-    ApiResponse<SubmissionDetailResponse> getSubmissions(@PathVariable Long id) {
+    ApiResponse<SubmissionDetailResponse> getSubmission(@PathVariable Long id) {
         SubmissionDetailResponse submissionResponses =submissionService.getSubmission(id);
         return ApiResponse.<SubmissionDetailResponse>builder()
                 .result(submissionResponses)
@@ -79,6 +80,18 @@ public class SubmissionController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<SubmissionResponse>submissionResponses =submissionService.getAllSubmissions(pageable,criteria);
         return ApiResponse.<Page<SubmissionResponse>>builder()
+                .result(submissionResponses)
+                .build();
+    }
+
+    @GetMapping("/student/{studentId}")
+    public ApiResponse<Page<SubmissionHistoryResponse>> getSubmissionsForStudent( @PathVariable Long studentId,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<SubmissionHistoryResponse>submissionResponses =submissionService.getAllSubmissionsForStudent(pageable,studentId);
+        return ApiResponse.<Page<SubmissionHistoryResponse>>builder()
                 .result(submissionResponses)
                 .build();
     }
