@@ -37,7 +37,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
     const handleViewAssignmentDetails = useCallback((rowData: IAssignment) => {
-        navigate(`/admin/class/assignment/${rowData.id}`);
+        navigate(`/admin/content/assignments/update/${rowData.id}`);
     }, [navigate]);
 
     const fetchData = useCallback(async () => {
@@ -52,10 +52,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             };
 
             const response = await getAssignmentsByClassId(classId, options);
-            const formatted = (response.assignments || []).map((a) => ({
-                ...a,
-                createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : ""
-            }));
+            const formatted = (response.assignments || []).map((a) => {
+                const classInfo = a.assignmentClasses?.find((ac: { classId: number; }) => ac.classId === classId);
+                return {
+                    ...a,
+                    createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
+                    startDate: classInfo?.startDate ? dayjs(classInfo.startDate).toISOString() : null,
+                    endDate: classInfo?.endDate ? dayjs(classInfo.endDate).toISOString() : null
+                };
+            });
             setAssignments(formatted);
             setTotal(response.total || 0);
         } catch (err) {
@@ -176,10 +181,18 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 onChange={onSortChange}
                                 style={{ minWidth: 180 }}
                             >
-                                <Option value="createdDate_desc">{t("classDetail.sort.newest") || "Newest"}</Option>
-                                <Option value="createdDate_asc">{t("classDetail.sort.oldest") || "Oldest"}</Option>
-                                <Option value="title_asc">{t("classDetail.sort.titleAsc") || "Title A→Z"}</Option>
-                                <Option value="title_desc">{t("classDetail.sort.titleDesc") || "Title Z→A"}</Option>
+                                <Option value="createdDate_desc">
+                                    {t("classDetail.sort.newest") || "Newest"}
+                                </Option>
+                                <Option value="createdDate_asc">
+                                    {t("classDetail.sort.oldest") || "Oldest"}
+                                </Option>
+                                <Option value="title_asc">
+                                    {t("classDetail.sort.titleAsc") || "Title A→Z"}
+                                </Option>
+                                <Option value="title_desc">
+                                    {t("classDetail.sort.titleDesc") || "Title Z→A"}
+                                </Option>
                             </Select>
 
                             <Tooltip title={t("classDetail.view.list") || "List"}>
@@ -233,15 +246,21 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                 </div>
                                                 <div style={{ flex: 1 }}>
                                                     <Title level={5} style={{ margin: 0 }}>{a.title}</Title>
-                                                    <Text type="secondary" style={{ fontSize: 13 }}>
-                                                        <IoCalendarOutline /> {a.createdDate ? dayjs(a.createdDate).format("DD/MM/YYYY HH:mm") : "-"}
+                                                    <Text type="secondary" style={{ display: "block"}}>
+                                                        {a.typeUmlName || t("common.noType") || "No UML type"}
+                                                    </Text>
+                                                    <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                        <IoCalendarOutline />
+                                                        {a.startDate && a.endDate
+                                                            ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
+                                                            : "-"}
                                                     </Text>
                                                 </div>
                                             </div>
                                         </Col>
 
                                         <Col xs={24} sm={6} style={{ textAlign: "right" }}>
-                                            <Button type="primary" onClick={(e) => {
+                                            <Button color="primary" variant="filled" onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleViewAssignmentDetails(a);
                                             }}>
@@ -276,22 +295,28 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                     <div>
                                         <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
                                             <div style={{
-                                                width: 36,
-                                                height: 36,
-                                                borderRadius: 8,
-                                                background: "#e6f7ff",
+                                                width: 44,
+                                                height: 44,
+                                                borderRadius: 10,
+                                                background: "#fff7e6",
                                                 display: "flex",
                                                 alignItems: "center",
                                                 justifyContent: "center",
-                                                color: "#1890ff",
-                                                fontSize: 18
+                                                color: "#fa8c16",
+                                                fontSize: 20
                                             }}>
                                                 <MdOutlineAssignment />
                                             </div>
                                             <div style={{ flex: 1 }}>
                                                 <Title level={5} style={{ margin: 0, lineHeight: 1.1 }}>{a.title}</Title>
-                                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                                    <IoCalendarOutline /> {a.createdDate ? dayjs(a.createdDate).format("DD/MM/YYYY") : "-"}
+                                                <Text type="secondary" style={{ display: "block"}}>
+                                                    {a.typeUmlName || t("common.noType") || "No UML type"}
+                                                </Text>
+                                                <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                    <IoCalendarOutline />
+                                                    {a.startDate && a.endDate
+                                                        ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
+                                                        : "-"}
                                                 </Text>
                                             </div>
                                         </div>
@@ -299,7 +324,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
                                     <div style={{ marginTop: 8 }}>
                                         <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                                            <Button size="small" type="primary"
+                                            <Button size="small" color="primary" variant="filled"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleViewAssignmentDetails(a);
