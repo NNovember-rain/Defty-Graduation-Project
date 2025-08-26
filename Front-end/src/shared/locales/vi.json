@@ -243,7 +243,11 @@
       "descending": "Giảm dần",
       "by": "Sắp xếp theo",
       "name": "Tên",
-      "creationDate": "Ngày tạo"
+      "creationDate": "Ngày tạo",
+      "startSoonest": "Sớm nhất",
+        "startLatest": "Muộn nhất",
+        "endSoonest": "Hạn sớm nhất",
+        "endLatest": "Hạn muộn nhất"
     },
     "editTooltip": "Chỉnh sửa bài tập",
     "deleteTooltip": "Xoá bài tập",
@@ -268,7 +272,8 @@
       "titleRequired": "Tiêu đề là bắt buộc",
       "descriptionRequired": "Mô tả là bắt buộc",
       "typeUmlRequired": "Loại UML là bắt buộc"
-    }
+    },
+    "assignmentLoading": "Đang tải bài tập..."
   },
 
   "userPage": {

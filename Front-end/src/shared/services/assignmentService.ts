@@ -22,11 +22,14 @@ export interface GetAssignmentsResult {
 
 export interface IAssignmentClass {
     id: number;
+    classId: number;
+    assignmentId: number;
     startDate: string;
     endDate: string;
 }
 
 export interface IAssignment {
+    assignmentClasses: any;
     id: number;
     title: string,
     description: string;
@@ -35,8 +38,8 @@ export interface IAssignment {
     assignmentCode: string;
     createdDate: string;
     isActive: number;
-    startDate: string;
-    endDate: string;
+    startDate: string | null;
+    endDate: string | null;
     // assignmentClasses: IAssignmentClass[]
 }
 

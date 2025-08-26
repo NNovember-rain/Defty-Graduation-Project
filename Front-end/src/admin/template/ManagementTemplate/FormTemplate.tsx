@@ -190,6 +190,7 @@ const FormTemplate = <T extends Record<string, any>>({
         try {
             if (isEditMode && serviceUpdate && id) {
                 await serviceUpdate(id, formData);
+                console.log("Updated data:", formData);
                 message.success(t('apiMessages.updateSuccess'));
             } else if (!isEditMode && serviceCreate) {
                 await serviceCreate(formData as Omit<T, '_id' | 'createdAt' | 'updatedAt'>);
@@ -357,26 +358,46 @@ const FormTemplate = <T extends Record<string, any>>({
                                     {field.type === 'duallistbox' && (
                                         <DualListBox
                                             dataSource={(field.options || []).map((opt) => ({
-                                                key: opt.value,
+                                                key: opt.value.toString(),
                                                 name: opt.name,
                                                 description: opt.description,
                                                 tag: opt.value,
                                             }))}
-                                            targetKeys={formData[field.key as keyof T] as string[] || []}
+                                            targetKeys={
+                                                Array.isArray(formData[field.key as keyof T])
+                                                    ? (formData[field.key as keyof T] as any[]).map((p) =>
+                                                        typeof p === "object" ? p.id.toString() : p.toString()
+                                                    )
+                                                    : []
+                                            }
                                             onChange={(nextKeys) => handleChange(field.key, nextKeys)}
                                             leftColumns={[
-                                                { dataIndex: 'name', title: t('roleForm.permissionsTable.name') },
-                                                { dataIndex: 'description', title: t('roleForm.permissionsTable.description'), render: (text: string) => <Tag color="blue">{text}</Tag> }
+                                                {
+                                                    dataIndex: 'name',
+                                                    title: t('roleForm.permissionsTable.name'),
+                                                    render: (text: string) => <Tag color="blue">{text}</Tag>,
+                                                },
+                                                {
+                                                    dataIndex: 'description',
+                                                    title: t('roleForm.permissionsTable.description'),
+                                                },
                                             ]}
-
                                             rightColumns={[
-                                                { dataIndex: 'name', title: t('roleForm.permissionsTable.name') },
-                                                { dataIndex: 'description', title: t('roleForm.permissionsTable.description'), render: (text: string) => <Tag color="green">{text}</Tag> }
+                                                {
+                                                    dataIndex: 'name',
+                                                    title: t('roleForm.permissionsTable.name'),
+                                                    render: (text: string) => <Tag color="green">{text}</Tag>,
+                                                },
+                                                {
+                                                    dataIndex: 'description',
+                                                    title: t('roleForm.permissionsTable.description'),
+                                                },
                                             ]}
 
                                             showSearch
                                         />
                                     )}
+
 
                                     {field.type === 'textEditor' && (
                                         <TextEditor

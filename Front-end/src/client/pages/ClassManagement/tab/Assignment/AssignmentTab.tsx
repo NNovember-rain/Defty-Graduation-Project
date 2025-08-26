@@ -7,27 +7,14 @@ import {
     type IAssignment
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
-import {
-    Button,
-    Card,
-    Col,
-    List,
-    Pagination,
-    Row,
-    Select,
-    Space,
-    Tooltip,
-    Typography
-} from "antd";
+import {Button, Card, Col, List, Pagination, Row, Select, Space, Tooltip, Typography} from "antd";
 import {IoCalendarOutline} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
 import {AppstoreOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
-
-// Import SCSS file
 import "./AssignmentTabUser.scss";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface AssignmentTabProps {
@@ -69,10 +56,20 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             };
 
             const response = await getAssignmentsByClassId(classId, options);
-            const formatted = (response.assignments || []).map((a) => ({
-                ...a,
-                createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : ""
-            }));
+
+            const formatted = (response.assignments || []).map((a) => {
+                // tìm assignmentClass theo classId hiện tại
+                const classInfo = a.assignmentClasses?.find((ac: { classId: number; }) => ac.classId === classId);
+
+                return {
+                    ...a,
+                    createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
+                    startDate: classInfo?.startDate ? dayjs(classInfo.startDate).toISOString() : null,
+                    endDate: classInfo?.endDate ? dayjs(classInfo.endDate).toISOString() : null
+                };
+            });
+
+            console.log(formatted);
             setAssignments(formatted);
             setTotal(response.total || 0);
         } catch (err) {
@@ -104,6 +101,37 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
         setView(v);
     };
 
+    const sortedAssignments = useMemo(() => {
+        return [...assignments].sort((a, b) => {
+            let valA: any, valB: any;
+
+            switch (sortBy) {
+                case "startDate":
+                    valA = a.startDate ? new Date(a.startDate).getTime() : 0;
+                    valB = b.startDate ? new Date(b.startDate).getTime() : 0;
+                    break;
+                case "endDate":
+                    valA = a.endDate ? new Date(a.endDate).getTime() : 0;
+                    valB = b.endDate ? new Date(b.endDate).getTime() : 0;
+                    break;
+                case "title":
+                    valA = a.title?.toLowerCase() || "";
+                    valB = b.title?.toLowerCase() || "";
+                    break;
+                case "createdDate":
+                default:
+                    valA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+                    valB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+                    break;
+            }
+
+            if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+            if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+        });
+    }, [assignments, sortBy, sortOrder]);
+
+
     const onSortChange = (value: string) => {
         const [field, order] = value.split("_");
         setSortBy(field);
@@ -113,8 +141,11 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-12">
+            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
                 <Spinner animation="border" />
+                <span style={{ marginLeft: '0.5rem' }}>
+                    {t('assignmentForm.assignmentLoading')}
+                </span>
             </div>
         );
     }
@@ -130,25 +161,25 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     return (
         <div className="assignment-tab-container">
             {/* Sidebar */}
-            <aside className="side-bar">
-                <Card className="mb-4">
-                    <Title level={5} style={{ marginBottom: 4, color: "#aaa" }}>
-                        {t("classDetail.classCode") || "Class code"}
-                    </Title>
-                    <Text style={{ fontSize: "1.3rem", fontWeight: 700, color: "#1890ff" }}>
-                        drbaoiun
-                    </Text>
-                </Card>
+            {/*<aside className="side-bar">*/}
+            {/*    <Card className="mb-4">*/}
+            {/*        <Title level={5} style={{ marginBottom: 4, color: "#aaa" }}>*/}
+            {/*            {t("classDetail.classCode") || "Class code"}*/}
+            {/*        </Title>*/}
+            {/*        <Text style={{ fontSize: "1.3rem", fontWeight: 700, color: "#1890ff" }}>*/}
+            {/*            drbaoiun*/}
+            {/*        </Text>*/}
+            {/*    </Card>*/}
 
-                <Card>
-                    <Title level={5} style={{ marginBottom: 8, color: "#aaa" }}>
-                        {t("classDetail.upcoming") || "Upcoming"}
-                    </Title>
-                    <Paragraph type="secondary" style={{ margin: 0, color: "#888" }}>
-                        {t("classDetail.noUpcomingWork") || "No upcoming work"}
-                    </Paragraph>
-                </Card>
-            </aside>
+            {/*    <Card>*/}
+            {/*        <Title level={5} style={{ marginBottom: 8, color: "#aaa" }}>*/}
+            {/*            {t("classDetail.upcoming") || "Upcoming"}*/}
+            {/*        </Title>*/}
+            {/*        <Paragraph type="secondary" style={{ margin: 0, color: "#888" }}>*/}
+            {/*            {t("classDetail.noUpcomingWork") || "No upcoming work"}*/}
+            {/*        </Paragraph>*/}
+            {/*    </Card>*/}
+            {/*</aside>*/}
 
             {/* Main */}
             <main className="assignment-content">
@@ -162,7 +193,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                         <Select
                             value={`${sortBy}_${sortOrder}`}
                             onChange={onSortChange}
-                            style={{ minWidth: 180 }}
+                            style={{ minWidth: 200 }}
                         >
                             <Option value="createdDate_desc">
                                 {t("classDetail.sort.newest") || "Newest"}
@@ -175,6 +206,18 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                             </Option>
                             <Option value="title_desc">
                                 {t("classDetail.sort.titleDesc") || "Title Z→A"}
+                            </Option>
+                            <Option value="startDate_asc">
+                                {t("assignmentPage.sort.startSoonest") || "Start date ↑"}
+                            </Option>
+                            <Option value="startDate_desc">
+                                {t("assignmentPage.sort.startLatest") || "Start date ↓"}
+                            </Option>
+                            <Option value="endDate_asc">
+                                {t("assignmentPage.sort.endSoonest") || "End date ↑"}
+                            </Option>
+                            <Option value="endDate_desc">
+                                {t("assignmentPage.sort.endLatest") || "End date ↓"}
                             </Option>
                         </Select>
 
@@ -200,7 +243,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                 {view === "list" ? (
                     <List
                         itemLayout="vertical"
-                        dataSource={assignments}
+                        dataSource={sortedAssignments}
                         renderItem={(a) => (
                             <List.Item key={a.id}>
                                 <Card
@@ -218,10 +261,13 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                     <Title level={5} className="assignment-title">
                                                         {a.title}
                                                     </Title>
-                                                    <Text className="assignment-date">
-                                                        <IoCalendarOutline />{" "}
-                                                        {a.createdDate
-                                                            ? dayjs(a.createdDate).format("DD/MM/YYYY HH:mm")
+                                                    <Text type="secondary" style={{ display: "block", color: "#aaa" }}>
+                                                        {a.typeUmlName || t("common.noType") || "No UML type"}
+                                                    </Text>
+                                                    <Text className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                        <IoCalendarOutline />
+                                                        {a.startDate && a.endDate
+                                                            ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
                                                             : "-"}
                                                     </Text>
                                                 </div>
@@ -248,7 +294,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                 ) : (
                     <List
                         grid={{ gutter: 16, column: gridColumns }}
-                        dataSource={assignments}
+                        dataSource={sortedAssignments}
                         locale={{ emptyText: t("common.noData") || "No assignments" }}
                         renderItem={(a) => (
                             <List.Item key={a.id}>
@@ -265,10 +311,13 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                             <Title level={5} className="assignment-title">
                                                 {a.title}
                                             </Title>
-                                            <Text className="assignment-date">
-                                                <IoCalendarOutline />{" "}
-                                                {a.createdDate
-                                                    ? dayjs(a.createdDate).format("DD/MM/YYYY")
+                                            <Text type="secondary" style={{ display: "block", color: "#aaa" }}>
+                                                {a.typeUmlName || t("common.noType") || "No UML type"}
+                                            </Text>
+                                            <Text className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                <IoCalendarOutline />
+                                                {a.startDate && a.endDate
+                                                    ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
                                                     : "-"}
                                             </Text>
                                         </div>

@@ -238,12 +238,16 @@
       "globalPlaceholder": "Search by name, description..."
     },
     "sort": {
-      "order": "Order",
-      "ascending": "Ascending",
-      "descending": "Descending",
-      "by": "Sort By",
-      "name": "Name",
-      "creationDate": "Creation Date"
+        "order": "Order",
+        "ascending": "Ascending",
+        "descending": "Descending",
+        "by": "Sort By",
+        "name": "Name",
+        "creationDate": "Creation Date",
+        "startSoonest": "Start Date",
+        "startLatest": "Start Date",
+        "endSoonest": "End Date",
+        "endLatest": "End Date"
     },
     "editTooltip": "Edit assignment",
     "deleteTooltip": "Delete assignment",
@@ -270,7 +274,8 @@
       "typeUmlRequired": "UML Type is required"
     },
     "startDate": "Start Date",
-    "endDate": "End Date"
+    "endDate": "End Date",
+    "assignmentLoading": "Loading assignment data..."
   },
 
   "userPage": {

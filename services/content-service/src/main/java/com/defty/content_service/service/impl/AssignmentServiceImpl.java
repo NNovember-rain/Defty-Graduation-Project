@@ -8,12 +8,15 @@ import com.defty.content_service.dto.response.AssignmentResponse;
 import com.defty.content_service.entity.Assignment;
 import com.defty.content_service.entity.AssignmentClass;
 import com.defty.content_service.entity.TypeUML;
+import com.defty.content_service.exception.AppException;
+import com.defty.content_service.exception.ErrorCode;
 import com.defty.content_service.repository.AssignmentClassRepository;
 import com.defty.content_service.repository.AssignmentRepository;
 import com.defty.content_service.repository.TypeUMLRepository;
 import com.defty.content_service.service.AssignmentService;
 import com.defty.content_service.specification.AssignmentSpecification;
 import com.example.common_library.exceptions.NotFoundException;
+import com.example.common_library.utils.UserUtils;
 import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -93,9 +96,14 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Override
     public AssignmentResponse unassignAssignment(AssignmentRequest request) {
         validateClassIds(request.getClassIds());
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        }
+        Long userId = currentUser.userId();
 
         Assignment assignment = assignmentRepository
-                .findByUserIdAndTitleAndTypeUML_Id(request.getUserId(), request.getTitle(), request.getTypeUmlId())
+                .findByUserIdAndTitleAndTypeUML_Id(userId, request.getTitle(), request.getTypeUmlId())
                 .orElseThrow(() -> new NotFoundException("Assignment not found"));
 
         List<AssignmentClass> assignmentClassesToDelete = assignmentClassRepository
@@ -174,8 +182,14 @@ public class AssignmentServiceImpl implements AssignmentService {
         TypeUML typeUML = typeUMLRepository.findById(request.getTypeUmlId())
                 .orElseThrow(() -> new NotFoundException("TypeUML not found"));
 
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalArgumentException("Only instructors can upload materials.");
+        }
+        Long userId = currentUser.userId();
+
         String prefix = typeUML.getName().replaceAll("\\s+", "").chars()
-                .filter(c -> Character.isUpperCase(c))
+                .filter(Character::isUpperCase)
                 .mapToObj(c -> String.valueOf((char) c))
                 .collect(Collectors.joining());
 
@@ -186,7 +200,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         int randomNum = (int) (Math.random() * 90000) + 10000;
         String assignmentCode = prefix + "-" + randomNum;
 
-        assignment.setUserId(request.getUserId());
+        assignment.setUserId(userId);
         assignment.setTitle(request.getTitle());
         assignment.setDescription(request.getDescription());
         assignment.setTypeUML(typeUML);
@@ -230,6 +244,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .description(assignment.getDescription())
                 .userId(assignment.getUserId())
                 .typeUmlName(assignment.getTypeUML() != null ? assignment.getTypeUML().getName() : null)
+                .typeUmlId(assignment.getTypeUML() != null ? assignment.getTypeUML().getId() : null)
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())
                 .createdDate(assignment.getCreatedDate())
@@ -238,5 +253,4 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .assignmentClasses(assignmentClassResponses)
                 .build();
     }
-
 }

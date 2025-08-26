@@ -26,7 +26,7 @@ export interface IRole {
     description: string;
     createdDate: string;
     isActive: boolean;
-    permissions?: string[];
+    permissions: Permissions[];
 }
 
 export const createRole = async (data: Omit<IRole, '_id' | 'createdAt' | 'updatedAt'>): Promise<IRole> => {
