@@ -19,6 +19,7 @@ public class AssignmentResponse {
     String description;
     Long userId;
     String typeUmlName;
+    Long typeUmlId;
     String solutionCode;
     String assignmentCode;
     Integer isActive;

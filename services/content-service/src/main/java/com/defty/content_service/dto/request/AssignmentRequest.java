@@ -12,7 +12,6 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AssignmentRequest {
-    Long userId;
     String title;
     String description;
     Long typeUmlId;
