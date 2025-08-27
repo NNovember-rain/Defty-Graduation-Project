@@ -4,6 +4,7 @@ import Split from "react-split";
 import Description from "./Description";
 import CodeEditor from "./CodeEditor.tsx";
 import Result from "./Result";
+import SubmissionHistory from "./SubmissionHistory";
 import "./ProblemDetail.scss";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
@@ -69,6 +70,10 @@ const ProblemDetail: React.FC = () => {
 
     // responsive orientation
     const [isNarrow, setIsNarrow] = useState<boolean>(() => window.innerWidth < 1024);
+
+    // submission history modal state
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+
     useEffect(() => {
         const onResize = () => setIsNarrow(window.innerWidth < 1024);
         window.addEventListener("resize", onResize);
@@ -120,6 +125,23 @@ const ProblemDetail: React.FC = () => {
     };
 
     const handleRunCode = () => renderWithKroki(code);
+
+    // Handle view submission history
+    const handleViewHistory = () => {
+        setShowHistoryModal(true);
+    };
+
+    const handleCloseHistoryModal = () => {
+        setShowHistoryModal(false);
+    };
+
+    const handleViewSubmission = (submissionId: number) => {
+        // This will be implemented later as requested
+        console.log("View submission:", submissionId);
+        // For now, just close the modal
+        setShowHistoryModal(false);
+    };
+
     const handleSubmitCode = async () => {
         setIsSubmitting(true);
         try {
@@ -262,6 +284,7 @@ const ProblemDetail: React.FC = () => {
                             onCodeChange={setCode}
                             onRun={handleRunCode}
                             onSubmit={handleSubmitCode}
+                            onViewHistory={handleViewHistory}
                             isRendering={isRendering}
                             isSubmitting={isSubmitting}
                         />
@@ -273,6 +296,14 @@ const ProblemDetail: React.FC = () => {
                     </div>
                 </Split>
             </Split>
+
+            {/* Submission History Modal */}
+            <SubmissionHistory
+                visible={showHistoryModal}
+                onClose={handleCloseHistoryModal}
+                studentId={1} // FIXME: Replace with actual student ID from context
+                onViewSubmission={handleViewSubmission}
+            />
         </div>
     );
 };

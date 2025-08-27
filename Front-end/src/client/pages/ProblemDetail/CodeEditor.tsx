@@ -1,6 +1,7 @@
 import React from "react";
 import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
 import { MdPlayArrow, MdSend } from "react-icons/md";
+import { HistoryOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { Spin } from "antd";
 import {IoCodeSlashOutline} from "react-icons/io5"; // Import Spin component
@@ -10,6 +11,7 @@ export type CodeEditorProps = {
     onCodeChange: (value: string) => void;
     onRun: () => void;
     onSubmit: () => void;
+    onViewHistory?: () => void; // Add new prop for history button
     isRendering: boolean; // Thêm prop này
     isSubmitting: boolean; // Thêm prop này
     readOnly?: boolean;
@@ -20,6 +22,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                                                    onCodeChange,
                                                    onRun,
                                                    onSubmit,
+                                                   onViewHistory, // Add new prop
                                                    isRendering, // Nhận prop
                                                    isSubmitting, // Nhận prop
                                                    readOnly = false,
@@ -67,6 +70,18 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                     </div>
 
                     <div className="code-editor__header--right-controls">
+                        {onViewHistory && (
+                            <button
+                                className="code-editor__btn code-editor__btn--history"
+                                data-tooltip="Xem lịch sử nộp bài"
+                                onClick={onViewHistory}
+                                type="button"
+                                disabled={isRendering || isSubmitting}
+                            >
+                                <HistoryOutlined />
+                            </button>
+                        )}
+
                         <button
                             className="code-editor__btn code-editor__btn--run"
                             data-tooltip={t("problemDetail.codeEditor.runTooltip") || "Run (Ctrl/Cmd + Enter)"}

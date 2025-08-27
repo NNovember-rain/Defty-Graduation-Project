@@ -25,6 +25,8 @@ import TypeUMlForm from "../pages/TypeUml/typeUmlForm.tsx";
 import ClassDetailPage from "../pages/ClassManagement/ClassDetailPage.tsx";
 import AssignmentDetail from "../pages/ClassManagement/tab/Assignment/AssignmentDetail.tsx";
 import AssignmentForm from "../pages/Assignment/assignmentForm.tsx";
+import SubmissionDetail from "../pages/Submission/SubmissionDetail.tsx";
+import SubmissionFeedback from "../pages/Submission/SubmissionFeedback.tsx";
 
 
 interface AppRoute {
@@ -224,6 +226,16 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         component: SubmissionForm,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
+    {
+        path: "/admin/submissions/detail/:id",
+        component: SubmissionDetail,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: "/admin/submissions/feedback/:id",
+        component: SubmissionFeedback,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    }
 ];
 
 function getAdminRoutes(isAuthenticated: boolean): AdminRoutesResult {

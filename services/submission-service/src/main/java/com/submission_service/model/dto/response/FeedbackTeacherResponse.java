@@ -1,20 +1,18 @@
 package com.submission_service.model.dto.response;
 
-
-import jakarta.persistence.Entity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Map;
+import java.util.Date;
 
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackAIResponse {
+public class FeedbackTeacherResponse {
     Long id;
-    Long submissionId;
-    Map<String, Object> feedback;
-    String aiModalName;
+    Date createdDate= new Date();
+    Date updatedDate=new Date();
+    String feedback;
 }

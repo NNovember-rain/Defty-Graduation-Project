@@ -14,13 +14,13 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeedbackAi extends BaseEntity {
 
-    @Column(nullable = false)
-    Long submissionId;
-
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
     Map<String, Object> feedback;
 
     String aiModalName;
+
+    @OneToOne(mappedBy = "feedbackAi")
+    private Submission submission;
 
 }

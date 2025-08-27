@@ -11,6 +11,8 @@ import java.util.Map;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeedbackTeacherRequest {
-    private Integer submissionsId;
-    private String feedback;
+    private Long teacherId;
+    private Long submissionId;
+    private Double grade;
+    private String content;
 }
