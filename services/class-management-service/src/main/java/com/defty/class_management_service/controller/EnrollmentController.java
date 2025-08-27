@@ -6,6 +6,7 @@ import com.defty.class_management_service.service.IEnrollmentService;
 import com.example.common_library.dto.response.PageableResponse;
 import com.example.common_library.response.ApiResponse;
 import com.example.common_library.service.ExternalServiceClient;
+import com.example.common_library.utils.UserUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +24,10 @@ public class EnrollmentController {
         log.info("Request to get students in class: {}", classId);
         return enrollmentService.getStudentsInClass(pageable, classId);
     }
-    @GetMapping("/student/{studentId}/classes")
-    public ApiResponse<PageableResponse<ClassOfStudentResponse>> getClassesByStudentId(Pageable pageable,
-                                                                                       @PathVariable Long studentId) {
+    @GetMapping("/student/classes")
+    public ApiResponse<PageableResponse<ClassOfStudentResponse>> getClassesByStudentId(Pageable pageable) {
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        Long studentId = currentUser.userId();
         log.info("Request to get classes by student ID: {}", studentId);
         return enrollmentService.getClassesByStudentId(pageable, studentId);
     }

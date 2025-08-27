@@ -260,7 +260,7 @@ export const getStudentsInClass = async (classId: number, options: GetStudentsIn
 
 
 // API để lấy danh sách lớp theo ID sinh viên (GET /api/v1/enrollments/student/{studentId}/class)
-export const getClassesByStudentId = async (studentId: number, options: GetClassesOptions = {}): Promise<GetClassesResult> => {
+export const getClassesByStudentId = async (options: GetClassesOptions = {}): Promise<GetClassesResult> => {
     const params = {
         page: options.page ? options.page - 1 : 0, // Backend sử dụng 0-indexed
         size: options.limit || 10,
@@ -269,7 +269,7 @@ export const getClassesByStudentId = async (studentId: number, options: GetClass
 
     // Sử dụng endpoint chính xác từ API response bạn cung cấp
     const response = await handleRequest(
-        getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/student/${studentId}/classes`, params)
+        getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/student/classes`, params)
     );
 
     const apiResponse = await response.json() as ApiResponse<{

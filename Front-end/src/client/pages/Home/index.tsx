@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate hook
 import {getClassesByStudentId} from "../../../shared/services/classManagementService.ts";
 import {getUserById} from "../../../shared/services/userService.ts";
+import {useUserStore} from "../../../shared/authentication/useUserStore.ts";
 
 interface Class {
     classId: number;
@@ -40,7 +41,14 @@ const Home: React.FC = () => {
     const navigate = useNavigate();
 
     // Get user ID from localStorage, context, or props - replace with your actual method
-    const userId = "13"; // This should come from your auth context or storage
+    // const userId = "13";
+    // This should come from your auth context or storage
+
+    const user = useUserStore.getState().user;
+    const userId = user?.id ?? null;
+
+    console.log("userId: " + userId);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -49,7 +57,7 @@ const Home: React.FC = () => {
 
                 // Fetch both APIs simultaneously using your existing API functions
                 const [classesResult, userData] = await Promise.all([
-                    getClassesByStudentId(Number(userId)),
+                    getClassesByStudentId(),
                     getUserById(userId)
                 ]);
 
