@@ -24,11 +24,6 @@ interface IStudent {
     roles: any[]; // Set<RoleResponse> từ backend
 }
 
-// Mock data cho teachers - Sẽ được thay thế bằng API call
-// const mockTeachers: ITeacher[] = [
-//     { id: 1, name: 'Michael John', avatarUrl: 'https://via.placeholder.com/40' }
-// ];
-
 interface ClassPeopleTabProps {
     classId: number;
 }
@@ -41,6 +36,13 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const [loading, setLoading] = useState(true);
     const [teacherLoading, setTeacherLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Modal states
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [studentsToRemove, setStudentsToRemove] = useState<string[]>([]);
+
+    // Dropdown states
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -56,6 +58,13 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         fetchPeople();
         fetchTeacher();
     }, [classId, currentPage, sortBy, sortOrder]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => setOpenDropdown(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     const fetchTeacher = async () => {
         setTeacherLoading(true);
@@ -163,6 +172,78 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         }
     };
 
+    // Handle bulk action
+    const handleBulkAction = (action: string) => {
+        if (selectedStudents.length === 0) return;
+
+        switch (action) {
+            case 'email':
+                handleEmailStudents(selectedStudents);
+                break;
+            case 'remove':
+                setStudentsToRemove(selectedStudents);
+                setShowConfirmModal(true);
+                break;
+        }
+    };
+
+    // Handle single student action
+    const handleSingleAction = (action: string, studentId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        setOpenDropdown(null);
+
+        switch (action) {
+            case 'email':
+                handleEmailStudents([studentId]);
+                break;
+            case 'remove':
+                setStudentsToRemove([studentId]);
+                setShowConfirmModal(true);
+                break;
+        }
+    };
+
+    // Email students function
+    const handleEmailStudents = (studentIds: string[]) => {
+        const selectedStudentsData = students.filter(student =>
+            studentIds.includes(student.studentId)
+        );
+        const emails = selectedStudentsData.map(student => student.email).join(',');
+
+        // Navigate to email page with pre-filled emails
+        // Replace this with your actual navigation logic
+        const emailUrl = `/compose-email?to=${encodeURIComponent(emails)}`;
+        window.location.href = emailUrl;
+        // Or using React Router: navigate(emailUrl);
+    };
+
+    // Remove students function
+    const handleRemoveStudents = async () => {
+        try {
+            // Replace with your actual API call
+            // await removeStudentsFromClass(classId, studentsToRemove);
+            console.log('Removing students:', studentsToRemove);
+
+            // Refresh the list after removal
+            await fetchPeople();
+            setSelectedStudents([]);
+            setShowConfirmModal(false);
+            setStudentsToRemove([]);
+
+            // Show success message
+            alert(t('classDetail.peopleTab.removeSuccess'));
+        } catch (error) {
+            console.error('Failed to remove students:', error);
+            alert(t('classDetail.peopleTab.removeError'));
+        }
+    };
+
+    // Toggle dropdown
+    const toggleDropdown = (studentId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        setOpenDropdown(openDropdown === studentId ? null : studentId);
+    };
+
     if (loading || teacherLoading) {
         return (
             <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
@@ -203,18 +284,6 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                 <h2 style={{ margin: 0, fontWeight: 500 }}>
                     {t('classDetail.peopleTab.teachersTitle')}
                 </h2>
-                {/*<div style={{*/}
-                {/*    width: '24px',*/}
-                {/*    height: '24px',*/}
-                {/*    backgroundColor: '#e0e0e0',*/}
-                {/*    borderRadius: '50%',*/}
-                {/*    display: 'flex',*/}
-                {/*    alignItems: 'center',*/}
-                {/*    justifyContent: 'center',*/}
-                {/*    cursor: 'pointer'*/}
-                {/*}}>*/}
-                {/*    <span style={{ fontSize: '1.2rem' }}>+</span>*/}
-                {/*</div>*/}
             </div>
 
             <div style={{ marginBottom: '2rem' }}>
@@ -275,18 +344,6 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                     <span style={{ color: '#6c757d' }}>
                         {totalElements} {t('classDetail.peopleTab.studentCount')}
                     </span>
-                    <div style={{
-                        width: '24px',
-                        height: '24px',
-                        backgroundColor: '#e0e0e0',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer'
-                    }}>
-                        <span style={{ fontSize: '1.2rem' }}>+</span>
-                    </div>
                 </div>
             </div>
 
@@ -303,32 +360,40 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                         checked={selectedStudents.length === students.length && students.length > 0}
                         onChange={handleSelectAllStudents}
                     />
-                    <select style={{
-                        padding: '0.5rem',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '4px'
-                    }}>
-                        <option value="">{t('classDetail.peopleTab.actions')}</option>
-                        <option value="remove">{t('classDetail.peopleTab.removeSelected')}</option>
-                        <option value="activate">{t('classDetail.peopleTab.activateSelected')}</option>
+                    <select
+                        style={{
+                            padding: '0.5rem',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '4px',
+                            backgroundColor: selectedStudents.length === 0 ? '#f8f9fa' : 'white',
+                            cursor: selectedStudents.length === 0 ? 'not-allowed' : 'pointer'
+                        }}
+                        disabled={selectedStudents.length === 0}
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                handleBulkAction(e.target.value);
+                                e.target.value = ''; // Reset selection
+                            }
+                        }}
+                    >
+                        <option value="">
+                            {selectedStudents.length === 0
+                                ? t('classDetail.peopleTab.selectStudentsFirst')
+                                : t('classDetail.peopleTab.actions')
+                            }
+                        </option>
+                        {selectedStudents.length > 0 && (
+                            <>
+                                <option value="email">{t('classDetail.peopleTab.emailStudents')}</option>
+                                <option value="remove">{t('classDetail.peopleTab.removeStudents')}</option>
+                            </>
+                        )}
                     </select>
                     {selectedStudents.length > 0 && (
                         <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>
                             {selectedStudents.length} {t('classDetail.peopleTab.selected')}
                         </span>
                     )}
-                </div>
-                <div
-                    style={{
-                        padding: '0.5rem',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        backgroundColor: sortOrder === 'desc' ? '#e9ecef' : 'white'
-                    }}
-                    onClick={handleSortChange}
-                >
-                    A-Z {sortOrder === 'desc' ? '↓' : '↑'}
                 </div>
             </div>
 
@@ -386,17 +451,59 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                     </div>
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <span style={{
-                                    padding: '0.2rem 0.5rem',
-                                    borderRadius: '12px',
-                                    fontSize: '0.8rem',
-                                    backgroundColor: getStatusColor(student.isActive) + '20',
-                                    color: getStatusColor(student.isActive)
-                                }}>
-                                    {getStatusText(student.isActive)}
-                                </span>
-                                <div style={{ cursor: 'pointer', fontSize: '1.2rem' }}>⋮</div>
+                            <div style={{ position: 'relative' }}>
+                                <div
+                                    style={{ cursor: 'pointer', fontSize: '1.2rem', padding: '0.5rem' }}
+                                    onClick={(e) => toggleDropdown(student.studentId, e)}
+                                >
+                                    ⋮
+                                </div>
+                                {openDropdown === student.studentId && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: '100%',
+                                        backgroundColor: 'white',
+                                        border: '1px solid #e0e0e0',
+                                        borderRadius: '4px',
+                                        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                                        zIndex: 1000,
+                                        minWidth: '150px'
+                                    }}>
+                                        <button
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.5rem 1rem',
+                                                border: 'none',
+                                                backgroundColor: 'transparent',
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid #e0e0e0'
+                                            }}
+                                            onClick={(e) => handleSingleAction('email', student.studentId, e)}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            {t('classDetail.peopleTab.emailStudent')}
+                                        </button>
+                                        <button
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.5rem 1rem',
+                                                border: 'none',
+                                                backgroundColor: 'transparent',
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                color: '#dc3545'
+                                            }}
+                                            onClick={(e) => handleSingleAction('remove', student.studentId, e)}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            {t('classDetail.peopleTab.removeStudent')}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))
@@ -463,6 +570,71 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                     >
                         {t('common.next')}
                     </button>
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1050
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        padding: '2rem',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                    }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>
+                            {t('classDetail.peopleTab.confirmRemoval')}
+                        </h3>
+                        <p style={{ marginBottom: '2rem', color: '#6c757d' }}>
+                            {studentsToRemove.length === 1
+                                ? t('classDetail.peopleTab.confirmRemoveOne')
+                                : t('classDetail.peopleTab.confirmRemoveMultiple', { count: studentsToRemove.length })
+                            }
+                        </p>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                            <button
+                                style={{
+                                    padding: '0.5rem 1.5rem',
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => {
+                                    setShowConfirmModal(false);
+                                    setStudentsToRemove([]);
+                                }}
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                style={{
+                                    padding: '0.5rem 1.5rem',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#dc3545',
+                                    color: 'white',
+                                    cursor: 'pointer'
+                                }}
+                                onClick={handleRemoveStudents}
+                            >
+                                {t('common.confirm')}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
