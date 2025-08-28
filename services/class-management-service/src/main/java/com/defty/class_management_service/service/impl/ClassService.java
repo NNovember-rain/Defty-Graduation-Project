@@ -47,7 +47,7 @@ public class ClassService implements IClassService {
         try {
             classRepository.save(classEntity);
         } catch (Exception e) {
-            log.error("Error saving classEntity: {}", e.getMessage(), e); // log đầy đủ stacktrace
+            log.error("Error saving classEntity: {}", e.getMessage(), e);
             throw e;
         }
 

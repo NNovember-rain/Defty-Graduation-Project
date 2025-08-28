@@ -105,8 +105,10 @@ export const updatePrompt = async (id: string, data: Partial<IPrompt>): Promise<
         if (updateData.templateString && updateData.templateString !== existingPrompt.templateString) {
             shouldIncrementVersion = true;
         }
+
         if (updateData.umlType && updateData.umlType !== existingPrompt.umlType) {
             shouldIncrementVersion = true;
+            updateData.isActive = false;
         }
 
         if (shouldIncrementVersion) {

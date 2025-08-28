@@ -165,8 +165,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
 
     if (loading || teacherLoading) {
         return (
-            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
-                <Spinner animation="border" />
+            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center', color: '#e0e0e0' }}>
+                <Spinner animation="border" style={{ color: '#0d6efd' }} />
                 <span style={{ marginLeft: '0.5rem' }}>
                     {teacherLoading ? t('classDetail.peopleTab.loadingTeacher') : t('classDetail.peopleTab.loading')}
                 </span>
@@ -178,9 +178,9 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         return (
             <div style={{
                 padding: '1rem',
-                color: '#dc3545',
-                backgroundColor: '#f8d7da',
-                border: '1px solid #f5c6cb',
+                color: '#f5c6cb',
+                backgroundColor: '#2d1b1e',
+                border: '1px solid #842029',
                 borderRadius: '4px',
                 margin: '1rem'
             }}>
@@ -190,30 +190,30 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     }
 
     return (
-        <div style={{ padding: '1rem' }}>
+        <div style={{ padding: '1rem', color: '#e0e0e0' }}>
             {/* Phần Giáo viên */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid #e0e0e0',
+                borderBottom: '1px solid #404040',
                 paddingBottom: '0.5rem',
                 marginBottom: '1.5rem'
             }}>
-                <h2 style={{ margin: 0, fontWeight: 500 }}>
+                <h2 style={{ margin: 0, fontWeight: 500, color: '#ffffff' }}>
                     {t('classDetail.peopleTab.teachersTitle')}
                 </h2>
                 {/*<div style={{*/}
                 {/*    width: '24px',*/}
                 {/*    height: '24px',*/}
-                {/*    backgroundColor: '#e0e0e0',*/}
+                {/*    backgroundColor: '#404040',*/}
                 {/*    borderRadius: '50%',*/}
                 {/*    display: 'flex',*/}
                 {/*    alignItems: 'center',*/}
                 {/*    justifyContent: 'center',*/}
                 {/*    cursor: 'pointer'*/}
                 {/*}}>*/}
-                {/*    <span style={{ fontSize: '1.2rem' }}>+</span>*/}
+                {/*    <span style={{ fontSize: '1.2rem', color: '#e0e0e0' }}>+</span>*/}
                 {/*</div>*/}
             </div>
 
@@ -222,8 +222,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                     <div style={{
                         padding: '1rem',
                         textAlign: 'center',
-                        color: '#6c757d',
-                        backgroundColor: '#f8f9fa',
+                        color: '#a0a0a0',
+                        backgroundColor: '#2a2a2a',
                         borderRadius: '4px'
                     }}>
                         {t('classDetail.peopleTab.noTeacher')}
@@ -247,10 +247,10 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                 {(teacher.fullName || teacher.username)?.charAt(0)?.toUpperCase() || 'T'}
                             </div>
                             <div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>
+                                <div style={{ fontSize: '1.1rem', fontWeight: '500', color: '#ffffff' }}>
                                     {teacher.fullName || teacher.username}
                                 </div>
-                                <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+                                <div style={{ fontSize: '0.9rem', color: '#a0a0a0' }}>
                                     {teacher.email}
                                 </div>
                             </div>
@@ -264,73 +264,22 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid #e0e0e0',
+                borderBottom: '1px solid #404040',
                 paddingBottom: '0.5rem',
                 marginBottom: '1.5rem'
             }}>
-                <h2 style={{ margin: 0, fontWeight: 500 }}>
+                <h2 style={{ margin: 0, fontWeight: 500, color: '#ffffff' }}>
                     {t('classDetail.peopleTab.studentsTitle')}
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: '#6c757d' }}>
+                    <span style={{ color: '#a0a0a0' }}>
                         {totalElements} {t('classDetail.peopleTab.studentCount')}
                     </span>
-                    <div style={{
-                        width: '24px',
-                        height: '24px',
-                        backgroundColor: '#e0e0e0',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer'
-                    }}>
-                        <span style={{ fontSize: '1.2rem' }}>+</span>
-                    </div>
+
                 </div>
             </div>
 
-            {/* Thanh hành động hàng loạt */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                        type="checkbox"
-                        checked={selectedStudents.length === students.length && students.length > 0}
-                        onChange={handleSelectAllStudents}
-                    />
-                    <select style={{
-                        padding: '0.5rem',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '4px'
-                    }}>
-                        <option value="">{t('classDetail.peopleTab.actions')}</option>
-                        <option value="remove">{t('classDetail.peopleTab.removeSelected')}</option>
-                        <option value="activate">{t('classDetail.peopleTab.activateSelected')}</option>
-                    </select>
-                    {selectedStudents.length > 0 && (
-                        <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>
-                            {selectedStudents.length} {t('classDetail.peopleTab.selected')}
-                        </span>
-                    )}
-                </div>
-                <div
-                    style={{
-                        padding: '0.5rem',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        backgroundColor: sortOrder === 'desc' ? '#e9ecef' : 'white'
-                    }}
-                    onClick={handleSortChange}
-                >
-                    A-Z {sortOrder === 'desc' ? '↓' : '↑'}
-                </div>
-            </div>
+
 
             {/* Danh sách học sinh */}
             <div>
@@ -338,8 +287,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                     <div style={{
                         padding: '2rem',
                         textAlign: 'center',
-                        color: '#6c757d',
-                        backgroundColor: '#f8f9fa',
+                        color: '#a0a0a0',
+                        backgroundColor: '#2a2a2a',
                         borderRadius: '4px'
                     }}>
                         {t('classDetail.peopleTab.noStudents')}
@@ -351,19 +300,14 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: '1rem 0',
-                            borderBottom: '1px solid #e0e0e0'
+                            borderBottom: '1px solid #404040'
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedStudents.includes(student.studentId)}
-                                    onChange={() => handleSelectStudent(student.studentId)}
-                                />
                                 <div style={{
                                     width: '48px',
                                     height: '48px',
                                     borderRadius: '50%',
-                                    backgroundColor: '#cccccc',
+                                    backgroundColor: '#505050',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -375,28 +319,16 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                     {student.fullName?.charAt(0)?.toUpperCase() || 'U'}
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: '500', color: '#ffffff' }}>
                                         {student.fullName || student.username}
                                     </div>
-                                    <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+                                    <div style={{ fontSize: '0.9rem', color: '#a0a0a0' }}>
                                         {student.email}
                                     </div>
-                                    <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                                    <div style={{ fontSize: '0.8rem', color: '#a0a0a0' }}>
                                         {student.userCode} • {t('classDetail.peopleTab.joined')}: {formatDate(student.enrolledAt)}
                                     </div>
                                 </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <span style={{
-                                    padding: '0.2rem 0.5rem',
-                                    borderRadius: '12px',
-                                    fontSize: '0.8rem',
-                                    backgroundColor: getStatusColor(student.isActive) + '20',
-                                    color: getStatusColor(student.isActive)
-                                }}>
-                                    {getStatusText(student.isActive)}
-                                </span>
-                                <div style={{ cursor: 'pointer', fontSize: '1.2rem' }}>⋮</div>
                             </div>
                         </div>
                     ))
@@ -418,9 +350,10 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                         onClick={() => handlePageChange(currentPage - 1)}
                         style={{
                             padding: '0.5rem 1rem',
-                            border: '1px solid #e0e0e0',
+                            border: '1px solid #404040',
                             borderRadius: '4px',
-                            backgroundColor: currentPage === 1 ? '#f8f9fa' : 'white',
+                            backgroundColor: currentPage === 1 ? '#2a2a2a' : '#404040',
+                            color: currentPage === 1 ? '#606060' : '#e0e0e0',
                             cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
                         }}
                     >
@@ -438,10 +371,10 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                 onClick={() => handlePageChange(pageNum)}
                                 style={{
                                     padding: '0.5rem 1rem',
-                                    border: '1px solid #e0e0e0',
+                                    border: '1px solid #404040',
                                     borderRadius: '4px',
-                                    backgroundColor: pageNum === currentPage ? '#0d6efd' : 'white',
-                                    color: pageNum === currentPage ? 'white' : '#333',
+                                    backgroundColor: pageNum === currentPage ? '#0d6efd' : '#404040',
+                                    color: pageNum === currentPage ? 'white' : '#e0e0e0',
                                     cursor: 'pointer'
                                 }}
                             >
@@ -455,9 +388,10 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                         onClick={() => handlePageChange(currentPage + 1)}
                         style={{
                             padding: '0.5rem 1rem',
-                            border: '1px solid #e0e0e0',
+                            border: '1px solid #404040',
                             borderRadius: '4px',
-                            backgroundColor: currentPage === totalPages ? '#f8f9fa' : 'white',
+                            backgroundColor: currentPage === totalPages ? '#2a2a2a' : '#404040',
+                            color: currentPage === totalPages ? '#606060' : '#e0e0e0',
                             cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
                         }}
                     >
