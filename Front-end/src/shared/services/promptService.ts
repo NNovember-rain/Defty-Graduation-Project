@@ -59,13 +59,13 @@ export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPr
     } as GetPromptsResult;
 };
 
-export const getPromptById = async (id: string): Promise<IPrompt> => {
+export const getPromptById = async (id: string | number): Promise<IPrompt> => {
     const response = await handleRequest(get(`${PREFIX_AI_ORCHESTRATION}/${PREFIX_PROMPT}/${id}`));
     const data = await response.json();
     return data.data as IPrompt;
 };
 
-export const updatePrompt = async (id: string, data: Partial<Omit<IPrompt, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IPrompt> => {
+export const updatePrompt = async (id: string | number, data: Partial<Omit<IPrompt, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IPrompt> => {
     const response = await handleRequest(patchJsonData(`${PREFIX_AI_ORCHESTRATION}/${PREFIX_PROMPT}/${id}`, data));
     const updatedData = await response.json();
     return updatedData.data as IPrompt;

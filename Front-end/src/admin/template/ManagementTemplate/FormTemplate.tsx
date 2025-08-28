@@ -190,7 +190,6 @@ const FormTemplate = <T extends Record<string, any>>({
         try {
             if (isEditMode && serviceUpdate && id) {
                 await serviceUpdate(id, formData);
-                console.log("Updated data:", formData);
                 message.success(t('apiMessages.updateSuccess'));
             } else if (!isEditMode && serviceCreate) {
                 await serviceCreate(formData as Omit<T, '_id' | 'createdAt' | 'updatedAt'>);
@@ -328,9 +327,9 @@ const FormTemplate = <T extends Record<string, any>>({
                                             className="form-template__input form-template__select"
                                             disabled={loading}
                                         >
-                                            {field.options?.map(option => (
+                                            {field.options?.map((option: any) => (
                                                 <option key={option.value} value={option.value}>
-                                                    {t(option.labelKey)}
+                                                    {t(option.label)}
                                                 </option>
                                             ))}
                                         </select>
