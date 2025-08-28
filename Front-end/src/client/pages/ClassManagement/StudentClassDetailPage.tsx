@@ -1,11 +1,11 @@
-import ClassPeopleTab from '../../../admin/pages/ClassManagement/tab/ClassPeopleTab.tsx';
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Spinner } from 'react-bootstrap';
-import { getClassById, IClass } from '../../../shared/services/classManagementService.ts';
-import AssignmentTab from "../../../admin/pages/ClassManagement/tab/Assignment/AssignmentTab.tsx";
+// import ClassPeopleTab from '../../../admin/pages/ClassManagement/tab/ClassPeopleTab.tsx';
+import React, {useEffect, useState} from 'react';
+import {Link, useParams} from 'react-router-dom';
+import {useTranslation} from 'react-i18next';
+import {Spinner} from 'react-bootstrap';
+import {getClassById, IClass} from '../../../shared/services/classManagementService.ts';
 import AssignmentTabUser from "./tab/Assignment/AssignmentTab.tsx";
+import ClassPeopleTab from "./Tab/ClassPeopleTab.tsx";
 
 interface BreadcrumbItem {
     label: string;

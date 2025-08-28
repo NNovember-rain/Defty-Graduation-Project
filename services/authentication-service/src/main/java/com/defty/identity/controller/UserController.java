@@ -35,7 +35,7 @@ public class UserController {
                 .build();
     }
 
-    @PreAuthorize("hasRole('admin')")
+//    @PreAuthorize("hasRole('admin')")
     @GetMapping
     ApiResponse<Page<UserResponse>> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
                                              @RequestParam(value = "size", defaultValue = "10") int size,
@@ -75,7 +75,7 @@ public class UserController {
                 .build();
     }
 
-    @PreAuthorize("hasRole('admin')")
+//    @PreAuthorize("hasRole('admin')")
     @GetMapping("/{id}")
     ApiResponse<UserResponse> getUser(@PathVariable("id") Long userId){
         return ApiResponse.<UserResponse>builder()

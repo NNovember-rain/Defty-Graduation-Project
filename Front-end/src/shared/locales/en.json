@@ -238,12 +238,16 @@
       "globalPlaceholder": "Search by name, description..."
     },
     "sort": {
-      "order": "Order",
-      "ascending": "Ascending",
-      "descending": "Descending",
-      "by": "Sort By",
-      "name": "Name",
-      "creationDate": "Creation Date"
+        "order": "Order",
+        "ascending": "Ascending",
+        "descending": "Descending",
+        "by": "Sort By",
+        "name": "Name",
+        "creationDate": "Creation Date",
+        "startSoonest": "Start Date",
+        "startLatest": "Start Date",
+        "endSoonest": "End Date",
+        "endLatest": "End Date"
     },
     "editTooltip": "Edit assignment",
     "deleteTooltip": "Delete assignment",
@@ -270,7 +274,8 @@
       "typeUmlRequired": "UML Type is required"
     },
     "startDate": "Start Date",
-    "endDate": "End Date"
+    "endDate": "End Date",
+    "assignmentLoading": "Loading assignment data..."
   },
 
   "userPage": {
@@ -416,7 +421,16 @@
       "errorLoading": "Error loading students",
       "confirmRemove": "Are you sure you want to remove selected students from this class?",
       "removeSuccess": "Students removed successfully",
-      "removeFailed": "Failed to remove students"
+      "removeFailed": "Failed to remove students",
+      "selectStudentsFirst": "Select students first",
+      "emailStudents": "Email Students",
+      "emailStudent": "Email Student",
+      "removeStudents": "Remove Students",
+      "removeStudent": "Remove Student",
+      "confirmRemoval": "Confirm Removal",
+      "confirmRemoveOne": "Are you sure you want to remove this student from the class?",
+      "confirmRemoveMultiple": "Are you sure you want to remove {{count}} students from the class?",
+      "removeError": "Failed to remove students. Please try again."
     },
     "assignment": {
       "inactive": "Inactive",

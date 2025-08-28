@@ -7,12 +7,15 @@ import com.defty.content_service.dto.response.MaterialResponse;
 import com.defty.content_service.dto.response.MaterialUploadResponse;
 import com.defty.content_service.entity.Material;
 import com.defty.content_service.entity.MaterialClass;
+import com.defty.content_service.exception.AppException;
+import com.defty.content_service.exception.ErrorCode;
 import com.defty.content_service.repository.MaterialClassRepository;
 import com.defty.content_service.repository.MaterialRepository;
 import com.defty.content_service.service.MaterialService;
 import com.defty.content_service.specification.MaterialSpecification;
 import com.defty.content_service.utils.UploadFile;
 import com.example.common_library.exceptions.NotFoundException;
+import com.example.common_library.utils.UserUtils;
 import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -39,10 +42,17 @@ public class MaterialServiceImpl implements MaterialService {
 
     @Override
     public MaterialUploadResponse uploadMaterial(MaterialUploadRequest request) throws IOException {
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        }
+        log.info("Current user: {}", currentUser);
+        Long userId = currentUser.userId();
+        String username = currentUser.username();
         try {
-            identityServiceClient.getUser(request.getUserId());
+            identityServiceClient.getUser(userId);
         } catch (FeignException.NotFound ex) {
-            throw new IllegalArgumentException("User not found with id: " + request.getUserId());
+            throw new IllegalArgumentException("User not found with id: " + username);
         }
 
         String url = uploadFile.upload(request.getFile());
@@ -54,7 +64,7 @@ public class MaterialServiceImpl implements MaterialService {
                 .url(url)
                 .size(request.getFile().getSize())
                 .format(getFileExtension(request.getFile().getOriginalFilename()))
-                .userId(request.getUserId())
+                .userId(userId)
                 .status(1)
                 .build();
 

@@ -14,6 +14,5 @@ public class MaterialUploadRequest {
     String description;
     String type;      // "image", "document", "video",...
 //    Long classId;
-    Long userId;
     MultipartFile file;
 }
