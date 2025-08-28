@@ -12,6 +12,7 @@ import {
 const PromptForm: React.FC = () => {
     const { t } = useTranslation();
 
+    // @ts-ignore
     const promptFormFields: FormField[] = React.useMemo(() => [
         {
             key: 'name',
@@ -19,14 +20,18 @@ const PromptForm: React.FC = () => {
             type: 'text',
             placeholderKey: 'promptForm.namePlaceholder',
             required: true,
-            gridSpan: 24,
-        },{
+            gridSpan: 12,
+        },
+        {
             key: 'umlType',
-            labelKey: 'promptForm.umlType',
-            type: 'text',
-            placeholderKey: 'promptForm.umlType',
+            labelKey: 'promptPage.dataTableColumns.type',
+            type: 'select',
+            options: [
+                { value: 'use-case', label: 'use-case' },
+                { value: 'class', label: 'class' },
+            ],
             required: true,
-            gridSpan: 24,
+            gridSpan: 12,
         },
         {
             key: 'description',

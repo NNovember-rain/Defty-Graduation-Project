@@ -327,9 +327,9 @@ const FormTemplate = <T extends Record<string, any>>({
                                             className="form-template__input form-template__select"
                                             disabled={loading}
                                         >
-                                            {field.options?.map(option => (
+                                            {field.options?.map((option: any) => (
                                                 <option key={option.value} value={option.value}>
-                                                    {t(option.labelKey)}
+                                                    {t(option.label)}
                                                 </option>
                                             ))}
                                         </select>
@@ -356,7 +356,7 @@ const FormTemplate = <T extends Record<string, any>>({
 
                                     {field.type === 'duallistbox' && (
                                         <DualListBox
-                                            dataSource={(field.options || []).map((opt) => ({
+                                            dataSource={(field.options || []).map((opt: any) => ({
                                                 key: opt.value,
                                                 name: opt.name,
                                                 description: opt.description,
