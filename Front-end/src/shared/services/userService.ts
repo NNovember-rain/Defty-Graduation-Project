@@ -1,6 +1,6 @@
 import handleRequest from "./handleRequest.ts";
 import {getWithParams} from "./getWithParams.ts";
-import {del, get, patchJsonData} from "./request.ts";
+import {del, get, patchJsonData, postJsonData} from "./request.ts";
 import type {IRole} from "./roleService.ts";
 
 const PREFIX_USER = import.meta.env.VITE_PREFIX_USER as string;
@@ -30,8 +30,15 @@ export interface IUser {
     dob: string | null;
     email: string;
     isActive: boolean;
+    userCode: string;
+    createdDate: string;
     roles: IRole[];
 }
+
+export const createUser = async (data: Omit<IUser, '_id' | 'createdAt' | 'updatedAt'>): Promise<IUser> => {
+    const response = await handleRequest(postJsonData(`${PREFIX_IDENTITY}/${PREFIX_USER}/registration`, data));
+    return await response.json() as Promise<IUser>;
+};
 
 export const getUsers = async (options: GetUsersOptions = {}): Promise<GetUsersResult> => {
     const params = {

@@ -10,16 +10,18 @@ import {useNotification} from "../../../shared/notification/useNotification.ts";
 import './FormTemplate.scss';
 import DualListBox from "../../components/DualListBox/DualListBox.tsx";
 import TextEditor from "../../components/TextEditor/TextEditor.tsx";
+import PasswordInput from "../../components/PasswordInput/PasswordInput.tsx";
 
 export interface FormField {
     key: string;
     labelKey: string; // Key dịch thuật cho label
-    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'duallistbox' | 'textEditor';
+    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'date' | 'password' | 'duallistbox' | 'textEditor';
     placeholderKey?: string; // Key dịch thuật cho placeholder
     options?: { value: string; label: string; [key: string]: any };
     required?: boolean;
     gridSpan?: number; // Cho layout grid
     format?: string;
+    hideOnEdit?: boolean;
 }
 
 interface BreadcrumbItem {
@@ -135,6 +137,8 @@ const FormTemplate = <T extends Record<string, any>>({
 
         const errors: Record<string, string> = {};
         for (const field of formFields) {
+            if (field.hideOnEdit) continue;
+
             if (field.required && (!formData[field.key as keyof T] || formData[field.key as keyof T]?.toString().trim() === '')) {
                 errors[field.key] = t(`${field.labelKey}Required`); // Sử dụng labelKey cho thông báo lỗi
             }
@@ -271,7 +275,9 @@ const FormTemplate = <T extends Record<string, any>>({
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-template__grid-layout">
-                            {formFields.map(field => (
+                            {formFields
+                                .filter(field => !(field.hideOnEdit && isEditMode))
+                                .map(field => (
                                 <div
                                     key={field.key}
                                     className={`form-template__form-group ${field.gridSpan ? `form-template__col-span-${field.gridSpan}` : ''} ${validationErrors[field.key] ? 'has-error' : ''}`}
@@ -397,7 +403,31 @@ const FormTemplate = <T extends Record<string, any>>({
                                             showSearch
                                         />
                                     )}
+                                    {field.type === 'password' && (
+                                        <PasswordInput
+                                            value={(formData && formData[field.key as keyof T]) ?? ''}
+                                            onChange={(val) => handleChange(field.key, val)}
+                                            placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
+                                            disabled={loading}
+                                        />
+                                    )}
 
+                                    {field.type === 'date' && (
+                                        <AntdDatePicker
+                                            id={field.key}
+                                            showTime={false}
+                                            format={field.format || 'YYYY-MM-DD'}
+                                            value={
+                                                formData[field.key as keyof T]
+                                                    ? dayjs(formData[field.key as keyof T] as string, field.format || 'YYYY-MM-DD')
+                                                    : null
+                                            }
+                                            onChange={(date, dateString) => handleDateChange(field.key, date, dateString)}
+                                            className="form-template__input form-template__date-picker"
+                                            disabled={loading}
+                                            placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
+                                        />
+                                    )}
 
                                     {field.type === 'textEditor' && (
                                         <TextEditor

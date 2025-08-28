@@ -12,11 +12,12 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    boolean existsByUserCode(String userCode);
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
     boolean existsByUsernameAndIdNot(String username, Long id);
     boolean existsByEmailAndIdNot(String email, Long id);
-    boolean existsByUserCode(String userCode);
+    boolean existsByUserCodeAndIdNot(String userCode, Long id);
     List<User> findAllByIdInAndIsActive(List<Long> userIds, Integer isActive);
 }
 
