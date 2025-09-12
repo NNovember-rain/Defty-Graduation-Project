@@ -2,6 +2,7 @@ package com.submission_service.service.impl;
 
 
 import com.example.common_library.exceptions.NotFoundException;
+import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.dto.request.FeedbackAiRequest;
 import com.submission_service.model.dto.request.FeedbackTeacherRequest;
 import com.submission_service.model.dto.response.FeedbackAIResponse;
@@ -50,6 +51,7 @@ public class FeedBackAIServiceImpl implements IFeedBackAIService {
         feedbackAi.setAiModalName(feedbackAiRequest.getAiModalName());
         feedbackAi=feedBackAIRepository.save(feedbackAi);
         submission.setFeedbackAi(feedbackAi);
+        submission.setSubmissionStatus(SubmissionStatus.COMPLETED);
         submissionRepository.save(submission);
         return feedbackAi.getId();
     }

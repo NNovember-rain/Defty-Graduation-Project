@@ -301,7 +301,7 @@ const ProblemDetail: React.FC = () => {
             <SubmissionHistory
                 visible={showHistoryModal}
                 onClose={handleCloseHistoryModal}
-                studentId={1} // FIXME: Replace with actual student ID from context
+                assignmentId={Number(problemId)}
                 onViewSubmission={handleViewSubmission}
             />
         </div>

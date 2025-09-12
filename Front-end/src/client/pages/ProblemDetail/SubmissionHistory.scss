@@ -53,12 +53,19 @@
 }
 
 .submission-history__content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
   .ant-list {
-    background-color: transparent;
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 16px;
 
     .ant-list-item {
       padding: 16px 0;
-      border-bottom: 1px solid #404040;
+      border-bottom: 1px solid #f0f0f0;
       background-color: transparent;
 
       &:last-child {
@@ -158,12 +165,15 @@
 }
 
 .submission-history__pagination {
-  margin-top: 24px;
-  text-align: center;
+  border-top: 1px solid #f0f0f0;
   padding-top: 16px;
-  border-top: 1px solid #404040;
+  text-align: center;
+  flex-shrink: 0;
 
   .ant-pagination {
+    display: flex;
+    justify-content: center;
+
     .ant-pagination-prev,
     .ant-pagination-next,
     .ant-pagination-item {
@@ -268,9 +278,11 @@
 
 .submission-history__loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 0;
+  height: 200px;
+  gap: 16px;
   color: #b0b0b0;
 
   .ant-spin {
@@ -291,7 +303,7 @@
 
 .submission-history__error {
   text-align: center;
-  padding: 60px 0;
+  padding: 40px 0;
   background-color: #2d2d2d;
   border-radius: 6px;
   margin: 20px 0;
@@ -304,35 +316,31 @@
 }
 
 .submission-history__empty {
-  text-align: center;
-  padding: 80px 20px;
-  background-color: #2d2d2d;
-  border-radius: 6px;
-  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #999;
 
   .anticon {
-    margin-bottom: 16px;
-    color: #555555;
     font-size: 48px;
+    margin-bottom: 16px;
+    color: #d9d9d9;
   }
 
-  .ant-typography {
-    &.ant-typography-h4 {
-      margin-bottom: 8px;
-      margin-top: 0;
-      color: #b0b0b0;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-      color: #888888;
-      font-size: 14px;
-    }
+  h4 {
+    color: #666;
+    margin-bottom: 8px;
   }
 }
 
 // Submission feedback view styles
 .submission-feedback {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
   &__back-btn {
     color: #02b128 !important;
     font-weight: 500;
@@ -343,7 +351,7 @@
     gap: 6px;
 
     &:hover {
-      color: #028a20 !important;
+      color: #01a023 !important;
     }
 
     .anticon {
@@ -353,9 +361,11 @@
 
   &__loading {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 0;
+    height: 200px;
+    gap: 16px;
     color: #b0b0b0;
 
     .ant-spin {
@@ -376,104 +386,149 @@
 
   &__error {
     text-align: center;
-    padding: 60px 0;
+    padding: 40px 0;
     background-color: #2d2d2d;
     border-radius: 6px;
     margin: 20px 0;
+  }
 
-    .ant-typography {
-      font-size: 14px;
-      color: #ff6b6b;
-      margin-bottom: 8px;
+  &__no-data {
+    text-align: center;
+    padding: 60px 0;
+    color: #999;
+  }
+
+  &__content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 10px;
+
+      &:hover {
+        background: #a8a8a8;
+      }
     }
   }
 }
 
 .submission-feedback-content {
-  padding: 16px 0;
-  color: #e0e0e0;
-
   .submission-feedback-section {
-    margin-bottom: 24px;
-    background-color: #2d2d2d;
-    border-radius: 6px;
-    padding: 16px;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    background: #2c2c2c; /* dark card */
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+
+    .submission-feedback-title {
+      color: #02b128;
+      font-weight: 600;
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      letter-spacing: .3px;
+    }
+
+    .submission-feedback-value {
+      padding: 4px 0 0 0;
+      border-left: 3px solid #02b128;
+      margin: 0;
+      color: #d6d6d6;
+      font-size: 13px;
+      line-height: 1.55;
+      padding-left: 10px;
+      background: transparent;
+    }
+
+    .submission-feedback-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .submission-feedback-item {
+        position: relative;
+        padding-left: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #c5c5c5;
+        word-break: break-word;
+
+        &:before {
+          content: '';
+          position: absolute;
+            left: 0;
+            top: 8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #02b128;
+        }
+      }
+    }
+
+    .submission-feedback-nested {
+      background: #232323;
+      border: 1px solid #3a3a3a;
+      border-left: 3px solid #02b128;
+      border-radius: 6px;
+      overflow: hidden;
+
+      .submission-feedback-code {
+        margin: 0;
+        padding: 10px 12px;
+        background: transparent;
+        color: #e0e0e0;
+        font-family: 'JetBrains Mono','Courier New',monospace;
+        font-size: 12px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    }
+  }
+}
+
+.submission-feedback-text {
+  .submission-feedback-raw {
+    background: #232323;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
     border-left: 4px solid #02b128;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  .submission-feedback-title {
-    color: #02b128;
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    margin-top: 0;
-  }
-
-  .submission-feedback-list {
     margin: 0;
-    padding-left: 20px;
-
-    .submission-feedback-item {
-      margin-bottom: 8px;
-      color: #e0e0e0;
-      line-height: 1.6;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      strong {
-        color: #02b128;
-        font-weight: 600;
-      }
-    }
-  }
-
-  .submission-feedback-nested {
-    .submission-feedback-code {
-      background-color: #1a1a1a;
-      border: 1px solid #404040;
-      border-radius: 4px;
-      padding: 12px;
-      color: #e0e0e0;
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 13px;
-      line-height: 1.4;
-      overflow-x: auto;
-      margin: 0;
-      white-space: pre-wrap;
-    }
-  }
-
-  .submission-feedback-value {
     color: #e0e0e0;
-    font-size: 14px;
-    line-height: 1.6;
-    padding: 12px;
-    background-color: #1a1a1a;
-    border-radius: 4px;
-    border: 1px solid #404040;
+    font-family: 'JetBrains Mono','Courier New',monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
+}
 
-  .submission-feedback-text {
-    .submission-feedback-raw {
-      background-color: #1a1a1a;
-      border: 1px solid #404040;
-      border-radius: 4px;
-      padding: 16px;
-      color: #e0e0e0;
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 13px;
-      line-height: 1.4;
-      overflow-x: auto;
-      margin: 0;
-      white-space: pre-wrap;
-    }
-  }
+// Tighter spacing for last section
+.submission-feedback-content .submission-feedback-section:last-child { margin-bottom: 0; }
+
+// Scrollbar tweak inside feedback content wrapper
+.submission-feedback__content-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #1e1e1e;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background:#1e1e1e; }
+  &::-webkit-scrollbar-thumb { background:#444; border-radius:3px; }
+  &::-webkit-scrollbar-thumb:hover { background:#555; }
 }
 
 // Responsive styles
