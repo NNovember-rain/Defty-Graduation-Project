@@ -5,6 +5,7 @@ import com.example.common_library.exceptions.FeignClientException;
 import com.example.common_library.exceptions.NotFoundException;
 import com.example.common_library.response.ApiResponse;
 import com.example.common_library.utils.GetTokenUtil;
+import com.example.common_library.utils.UserUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.submission_service.client.ContentServiceClient;
@@ -18,6 +19,7 @@ import com.submission_service.model.event.AssignmentEvent;
 import com.submission_service.model.event.SubmissionEvent;
 import com.submission_service.repository.ISubmissionRepository;
 import com.submission_service.repository.specification.SubmissionSpecification;
+import com.submission_service.service.IActionScheduler;
 import com.submission_service.service.SubmissionService;
 import feign.FeignException;
 import lombok.*;
@@ -55,6 +57,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     ContentServiceClient contentServiceClient;
     AuthServiceClient authServiceClient;
     ClassManagementServiceClient classManagementServiceClient;
+    IActionScheduler actionScheduler;
 
 
     @NonFinal
@@ -82,11 +85,14 @@ public class SubmissionServiceImpl implements SubmissionService {
                     String.class
             );
 
+            UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+            Long userId = currentUser.userId();
+
             ApiResponse<AssignmentResponse> assignmentResponse = contentServiceClient.getAssignment(submissionRequest.getAssignmentId());
-            ApiResponse<UserResponse> userResponse = authServiceClient.getUser(submissionRequest.getStudentId());
+            ApiResponse<UserResponse> userResponse = authServiceClient.getUser(userId);
             ApiResponse<ClassResponse> classResponse = classManagementServiceClient.getClassById(submissionRequest.getClassId());
             Submission submission = Submission.builder()
-                    .studentId(submissionRequest.getStudentId())
+                    .studentId(userId)
                     .studentCode(userResponse.getResult().getUserCode())
                     .studentName(userResponse.getResult().getFullName())
                     .assignmentId(submissionRequest.getAssignmentId())
@@ -111,6 +117,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             String message = objectMapper.writeValueAsString(submissionEvent);
             kafkaTemplate.send("umlDiagram.submission", message);
+            actionScheduler.checkSubmissionStatus(submission.getId());
             return submission.getId();
 
         } catch (HttpClientErrorException.BadRequest e) {
@@ -169,11 +176,14 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
-    public Page<SubmissionHistoryResponse> getAllSubmissionsForStudent(Pageable pageable, Long studentId) {
-        Page<Submission> submissions = submissionRepository.findByStudentId(studentId, pageable);
+    public Page<SubmissionHistoryResponse> getAllSubmissionsForStudent(Pageable pageable, Long assignmentId) {
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        Long userId = currentUser.userId();
+        Page<Submission> submissions = submissionRepository.findByStudentIdAndAssignmentId(userId, assignmentId, pageable);
         return submissions.map(submission -> {
             SubmissionHistoryResponse response = new SubmissionHistoryResponse();
             response.setId(submission.getId());
+            response.setSubmissionStatus(submission.getSubmissionStatus());
             response.setCreatedDate(submission.getCreatedDate());
             return response;
         });
