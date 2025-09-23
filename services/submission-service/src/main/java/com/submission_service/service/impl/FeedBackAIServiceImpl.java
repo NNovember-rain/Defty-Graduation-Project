@@ -44,14 +44,16 @@ public class FeedBackAIServiceImpl implements IFeedBackAIService {
     @Override
     @Transactional
     public Long addFeedbackAI(FeedbackAiRequest feedbackAiRequest) {
-        FeedbackAi feedbackAi=new FeedbackAi();
+        FeedbackAi feedbackAi = new FeedbackAi();
         Submission submission = submissionRepository.findById(feedbackAiRequest.getSubmissionId())
                 .orElseThrow(() -> new NotFoundException("Submission not found"));
         feedbackAi.setFeedback(feedbackAiRequest.getFeedback());
         feedbackAi.setAiModalName(feedbackAiRequest.getAiModalName());
-        feedbackAi=feedBackAIRepository.save(feedbackAi);
+        feedbackAi = feedBackAIRepository.save(feedbackAi);
         submission.setFeedbackAi(feedbackAi);
-        submission.setSubmissionStatus(SubmissionStatus.COMPLETED);
+        if (submission.getSubmissionStatus() != SubmissionStatus.FAILED) {
+            submission.setSubmissionStatus(SubmissionStatus.COMPLETED);
+        }
         submissionRepository.save(submission);
         return feedbackAi.getId();
     }

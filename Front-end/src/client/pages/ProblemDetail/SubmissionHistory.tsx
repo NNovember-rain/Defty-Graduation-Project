@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Modal, Button, List, Pagination, Spin, Typography } from "antd";
+import { Modal, Button, List, Pagination, Spin, Typography, Tag } from "antd";
 import { EyeOutlined, HistoryOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
@@ -8,15 +8,56 @@ import {
     type SubmissionHistoryResponse,
     type GetSubmissionHistoryResult,
     type FeedbackAIResponse,
-    JsonObject,
-    JsonValue
+    type JsonObject,
+    type JsonValue
 } from "../../../shared/services/submissionService";
-import { useTranslation } from "react-i18next";
 import "./SubmissionHistory.scss";
 
 const { Title, Text } = Typography;
 
-// Helper function to render AI feedback (two-level simple)
+// Helper function to get submission status color and text
+const getSubmissionStatusConfig = (status: string) => {
+    switch (status) {
+        case 'SUBMITTED':
+            return {
+                color: 'rgba(24, 144, 255, 0.12)',
+                textColor: '#4096ff',
+                text: 'Đã nộp'
+            };
+        case 'PROCESSING':
+            return {
+                color: 'rgba(13, 110, 253, 0.12)',
+                textColor: '#4096ff',
+                text: 'Đang xử lý'
+            };
+        case 'COMPLETED':
+            return {
+                color: 'rgba(82, 196, 26, 0.12)',
+                textColor: '#73d13d',
+                text: 'Hoàn thành'
+            };
+        case 'REVIEWED':
+            return {
+                color: 'rgba(114, 46, 209, 0.12)',
+                textColor: '#9254de',
+                text: 'Đã đánh giá'
+            };
+        case 'FAILED':
+            return {
+                color: 'rgba(255, 77, 79, 0.12)',
+                textColor: '#ff7875',
+                text: 'Thất bại'
+            };
+        default:
+            return {
+                color: 'rgba(128, 128, 128, 0.12)',
+                textColor: '#8c8c8c',
+                text: status
+            };
+    }
+};
+
+// Helper function to render AI feedback with full nested support
 const renderAIFeedback = (feedback: JsonObject | string) => {
     let raw: JsonObject | null = null;
     if (typeof feedback === 'string') {
@@ -40,28 +81,62 @@ const renderAIFeedback = (feedback: JsonObject | string) => {
     const isPrimitive = (v: JsonValue): v is string | number | boolean | null =>
         v === null || ['string', 'number', 'boolean'].includes(typeof v);
 
-    const summarize = (v: JsonValue): string => {
-        if (isPrimitive(v)) return String(v);
-        if (Array.isArray(v)) return `Array(${v.length})`;
-        if (v && typeof v === 'object') return `Object{${Object.keys(v).slice(0,3).join(', ')}${Object.keys(v).length>3?', …':''}}`;
-        return String(v);
-    };
+    // Recursive function to render any JSON value with proper nesting
+    const renderValue = (value: JsonValue, depth: number = 0): React.ReactNode => {
+        const indentClass = `depth-${Math.min(depth, 5)}`; // Limit depth classes for styling
 
-    const renderArray = (arr: JsonValue[]) => (
-        <ul className="submission-feedback-list">
-            {arr.map((item, idx) => (
-                <li key={idx} className="submission-feedback-item">{summarize(item)}</li>
-            ))}
-        </ul>
-    );
+        if (isPrimitive(value)) {
+            return (
+                <div className={`submission-feedback-value ${indentClass}`}>
+                    {value === null ? 'null' : String(value)}
+                </div>
+            );
+        }
 
-    const renderObjectSecondLevel = (obj: JsonObject) => {
-        // Show pretty JSON for second level object (do not go deeper visually)
-        return (
-            <div className="submission-feedback-nested">
-                <pre className="submission-feedback-code">{JSON.stringify(obj, null, 2)}</pre>
-            </div>
-        );
+        if (Array.isArray(value)) {
+            return (
+                <div className={`submission-feedback-array ${indentClass}`}>
+                    {value.length === 0 ? (
+                        <div className="submission-feedback-empty">Mảng rỗng</div>
+                    ) : (
+                        <ul className="submission-feedback-list">
+                            {value.map((item, idx) => (
+                                <li key={idx} className="submission-feedback-item">
+                                    <span className="submission-feedback-index">[{idx}]</span>
+                                    {renderValue(item, depth + 1)}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            );
+        }
+
+        if (value && typeof value === 'object') {
+            const obj = value as JsonObject;
+            const entries = Object.entries(obj);
+
+            if (entries.length === 0) {
+                return <div className={`submission-feedback-empty ${indentClass}`}>Object rỗng</div>;
+            }
+
+            return (
+                <div className={`submission-feedback-object ${indentClass}`}>
+                    {entries.map(([key, val]) => (
+                        <div key={key} className="submission-feedback-property">
+                            <div className="submission-feedback-key">
+                                {formatKey(key)}:
+                            </div>
+                            <div className="submission-feedback-property-value">
+                                {renderValue(val, depth + 1)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        return <div className={`submission-feedback-unknown ${indentClass}`}>{String(value)}</div>;
     };
 
     return (
@@ -69,9 +144,9 @@ const renderAIFeedback = (feedback: JsonObject | string) => {
             {Object.entries(raw).map(([k, v]) => (
                 <div key={k} className="submission-feedback-section">
                     <h4 className="submission-feedback-title">{formatKey(k)}</h4>
-                    {Array.isArray(v) && renderArray(v as JsonValue[])}
-                    {!Array.isArray(v) && v && typeof v === 'object' && renderObjectSecondLevel(v as JsonObject)}
-                    {isPrimitive(v as JsonValue) && <div className="submission-feedback-value">{String(v)}</div>}
+                    <div className="submission-feedback-section-content">
+                        {renderValue(v, 0)}
+                    </div>
                 </div>
             ))}
         </div>
@@ -91,7 +166,6 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
     onClose,
     assignmentId
 }) => {
-    const { t } = useTranslation();
     // List view states
     const [loading, setLoading] = useState(false);
     const [submissions, setSubmissions] = useState<SubmissionHistoryResponse[]>([]);
@@ -174,41 +248,67 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
     const handleBackToList = () => {
         setViewMode('list');
         setFeedbackData(null);
+        // Refresh lại data để cập nhật trạng thái mới nhất
+        fetchHistory(currentPage, pageSize);
     };
 
-    const renderSubmissionItem = (item: SubmissionHistoryResponse, index: number) => (
-        <List.Item
-            key={item.id}
-            actions={[
-                <Button
-                    key="view"
-                    type="primary"
-                    size="small"
-                    icon={<EyeOutlined />}
-                    onClick={() => handleViewSubmission(item.id)}
-                    className="submission-history__view-btn"
-                >
-                    Xem
-                </Button>
-            ]}
-        >
-            <List.Item.Meta
-                avatar={<HistoryOutlined className="submission-history__item-icon" />}
-                title={
-                    <div className="submission-history-item__header">
-                        <Text strong>Bài nộp #{(currentPage - 1) * pageSize + index + 1}</Text>
-                    </div>
-                }
-                description={
-                    <div className="submission-history-item__meta">
-                        <Text type="secondary">
-                            Thời gian nộp: {dayjs(item.createdDate).format("DD/MM/YYYY HH:mm:ss")}
-                        </Text>
-                    </div>
-                }
-            />
-        </List.Item>
-    );
+    const renderSubmissionItem = (item: SubmissionHistoryResponse, index: number) => {
+        const statusConfig = getSubmissionStatusConfig(item.submissionStatus);
+
+        return (
+            <List.Item
+                key={item.id}
+                actions={[
+                    <Button
+                        key="view"
+                        type="primary"
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => handleViewSubmission(item.id)}
+                        className="submission-history__view-btn"
+                    >
+                        Xem
+                    </Button>
+                ]}
+            >
+                <List.Item.Meta
+                    avatar={<HistoryOutlined className="submission-history__item-icon" />}
+                    title={
+                        <div className="submission-history-item__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                <Text strong>Bài nộp #{total - (currentPage - 1) * pageSize - index}</Text>
+                                <Tag
+                                    style={{
+                                        backgroundColor: statusConfig.color,
+                                        color: statusConfig.textColor,
+                                        border: `1px solid ${statusConfig.textColor}`,
+                                        borderRadius: '4px',
+                                        fontWeight: 500,
+                                        height: '20px',
+                                        lineHeight: '18px',
+                                        fontSize: '11px',
+                                        padding: '0 6px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        marginTop: '2px'
+                                    }}
+                                >
+                                    {statusConfig.text}
+                                </Tag>
+                            </div>
+                        </div>
+                    }
+                    description={
+                        <div className="submission-history-item__meta">
+                            <Text type="secondary">
+                                Thời gian nộp: {dayjs(item.createdDate).format("DD/MM/YYYY HH:mm:ss")}
+                            </Text>
+                        </div>
+                    }
+                />
+            </List.Item>
+        );
+    };
 
     return (
         <Modal

@@ -163,6 +163,7 @@ export const addScore = async (submissionId: string | number, point: number): Pr
 
 export interface SubmissionHistoryResponse {
     id: number
+    submissionStatus: "SUBMITTED" | "PROCESSING" | "COMPLETED" | "REVIEWED" | "FAILED"
     createdDate: Date
 }
 

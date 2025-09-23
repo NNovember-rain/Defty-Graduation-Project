@@ -183,6 +183,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         return submissions.map(submission -> {
             SubmissionHistoryResponse response = new SubmissionHistoryResponse();
             response.setId(submission.getId());
+            response.setSubmissionStatus(submission.getSubmissionStatus());
             response.setCreatedDate(submission.getCreatedDate());
             return response;
         });

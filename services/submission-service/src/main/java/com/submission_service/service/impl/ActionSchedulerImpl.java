@@ -33,7 +33,7 @@ public class ActionSchedulerImpl implements IActionScheduler {
                         submissionRepository.save(submission);
                     }
                 },
-                Instant.now().plusSeconds(30)
+                Instant.now().plusSeconds(120)
         );
     }
 }
