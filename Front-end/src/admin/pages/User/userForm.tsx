@@ -13,13 +13,13 @@ const UserForm: React.FC = () => {
     const [roles, setRoles] = useState<IRole[]>([]);
     const { id } = useParams<{ id?: string }>();
     const isEditMode = !!id;
-    console.log('UserForm mode:', isEditMode ? 'Edit' : 'Create');
 
     useEffect(() => {
         async function fetchRoles() {
             try {
                 const response = await getRoles();
                 const rolesArray = Array.isArray(response.roles) ? response.roles : [];
+                console.log('Fetched roles:', rolesArray);
                 setRoles(rolesArray);
             } catch (error) {
                 console.error('Error fetching roles:', error);
@@ -30,7 +30,7 @@ const UserForm: React.FC = () => {
     }, [t]);
 
     // Tạo form fields
-    const userFormFields: FormField[] = [
+    const userFormFields = React.useMemo<FormField[]>(() => [
         { key: 'fullName', labelKey: 'userForm.fullNameLabel', type: 'text', placeholderKey: 'userForm.fullNamePlaceholder', required: true, gridSpan: 12 },
         { key: 'email', labelKey: 'userForm.emailLabel', type: 'text', placeholderKey: 'userForm.emailPlaceholder', required: true, gridSpan: 12 },
         { key: 'username', labelKey: 'userForm.usernameLabel', type: 'text', placeholderKey: 'userForm.usernamePlaceholder', required: true, gridSpan: 12 },
@@ -51,9 +51,9 @@ const UserForm: React.FC = () => {
             placeholderKey: 'userForm.rolePlaceholder',
             gridSpan: 12,
             required: true,
-            options: roles.map(role => ({ value: String(role.id), labelKey: role.name })),
+            options: roles.map(role => ({ value: role.id, labelKey: role.name })),
         },
-    ];
+    ], [roles, isEditMode]);
 
     const userValidationSchema = React.useMemo(() => {
         const validatePassword = (password: string): string | null => {

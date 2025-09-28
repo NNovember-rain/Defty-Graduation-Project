@@ -91,7 +91,6 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
-
     @Override
     public void deleteUser(Long userId){
         User user = userRepository.findById(userId)
@@ -163,6 +162,17 @@ public class UserServiceImpl implements UserService {
                     .collect(Collectors.toList());
         }
         throw new NotFoundException("No users found with the provided IDs: " + userIds);
+    }
+
+    @Override
+    public List<UserResponse> getUsersByCodeUsers(List<String> codeUsers) {
+        List<User> users = userRepository.findAllByUserCodeInAndIsActive(codeUsers, 1);
+        if (!users.isEmpty()) {
+            return users.stream()
+                    .map(userMapper::toUserResponse)
+                    .collect(Collectors.toList());
+        }
+        throw new NotFoundException("No users found with the provided IDs: " + codeUsers);
     }
 
     @Override
