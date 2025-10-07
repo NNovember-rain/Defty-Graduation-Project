@@ -26,6 +26,6 @@ public interface IEnrollmentRepository extends JpaRepository<ClassEnrollmentEnti
     Page<ClassEnrollmentEntity> findAllActiveByClassroom(@Param("classId") Long classId,
                                                          Pageable pageable);
 
-
+    boolean existsByClassroomAndStudentId(ClassEntity classEntity, Long studentId);
 
 }

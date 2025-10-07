@@ -12,6 +12,7 @@ import {
     toggleUserActiveStatus
 } from "../../../shared/services/userService.ts";
 import {useNotification} from "../../../shared/notification/useNotification.ts";
+import dayjs from "dayjs";
 
 const User: React.FC = () => {
     const { t } = useTranslation();
@@ -110,8 +111,14 @@ const User: React.FC = () => {
             };
 
             const response = await getUsers(options);
+            const formattedUsers = (response.users || []).map(user => ({
+                ...user,
+                createdDate: user.createdDate
+                    ? dayjs(user.createdDate).format('YYYY-MM-DD HH:mm:ss')
+                    : '',
+            }));
             // console.log("Fetched users:", response);
-            setUsers(response.users || []);
+            setUsers(formattedUsers);
             setTotalUsers(response.total || 0);
             setLoading(false);
         } catch (err) {
@@ -252,12 +259,12 @@ const User: React.FC = () => {
             return;
         }
         modal.deleteConfirm(
-            t('userPage.deleteTooltip'),
+            t('common.confirm'),
             async () => {
                 try {
                     setLoading(true);
                     await deleteUser(rowData.id as number);
-                    message.success(t('userPage.deleteSuccess'));
+                    message.success(t('common.deleteSuccess'));
                     await fetchData();
                 } catch (error) {
                     setError(t('common.errorDeletingData'));
@@ -267,7 +274,7 @@ const User: React.FC = () => {
                     setLoading(false);
                 }
             },
-            `${t('userPage.confirmDelete')} ${rowData.username || rowData.id}?`
+            `${t('common.confirmDeleteContent')} ${rowData.username || rowData.id}?`
         );
     }, [t, fetchData, modal, message]);
 

@@ -20,4 +20,5 @@ public interface UserService {
     List<UserResponse> getAllUsersByRole(String fullName, Long roleId);
     UserExistenceCheckResult checkUsersExistByIds(List<Long> userIds);
     List<UserResponse> getUsersByIds(List<Long> userIds);
+    List<UserResponse> getUsersByCodeUsers(List<String> codeUsers);
 }

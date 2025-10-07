@@ -3,6 +3,7 @@ package com.defty.class_management_service.service.impl;
 import com.defty.class_management_service.client.IdentityServiceClient;
 import com.defty.class_management_service.dto.response.ClassOfStudentResponse;
 import com.defty.class_management_service.dto.response.ClassResponse;
+import com.defty.class_management_service.dto.response.StudentImportRequest;
 import com.defty.class_management_service.dto.response.StudentInClassResponse;
 import com.defty.class_management_service.entity.ClassEnrollmentEntity;
 import com.defty.class_management_service.entity.ClassEntity;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -204,4 +206,39 @@ public class EnrollmentService implements IEnrollmentService {
             throw new ServiceException("Failed to get students in class: " + e.getMessage());
         }
     }
+
+    @Override
+    public void importStudentsToClass(Long classId, List<StudentImportRequest> students) throws Exception {
+        ClassEntity classEntity = classRepository.findById(classId)
+                .orElseThrow(() -> new Exception("Class not found with id: " + classId));
+
+        List<String> codeUsers = students.stream()
+                .map(StudentImportRequest::getUserCode)
+                .toList();
+
+        ApiResponse<List<UserResponse>> userResponse = identityServiceClient.getListUserWithCodeUsers(codeUsers);
+        if (userResponse == null || userResponse.getResult() == null || userResponse.getResult().isEmpty()) {
+            throw new ServiceException("Failed to get user information from identity service");
+        }
+
+        Map<String, Long> userCodeToId = userResponse.getResult().stream()
+                .collect(Collectors.toMap(UserResponse::getUserCode, UserResponse::getId));
+
+        for (StudentImportRequest student : students) {
+            if (!userCodeToId.containsKey(student.getUserCode())) {
+                continue;
+            }
+
+            Long userId = userCodeToId.get(student.getUserCode());
+            boolean exists = enrollmentRepository.existsByClassroomAndStudentId(classEntity, userId);
+            if (exists) continue;
+
+            ClassEnrollmentEntity enrollment = new ClassEnrollmentEntity();
+            enrollment.setStudentId(userId);
+            enrollment.setClassroom(classEntity);
+            enrollment.setEnrollmentDate(new Date());
+            enrollmentRepository.save(enrollment);
+        }
+    }
+
 }

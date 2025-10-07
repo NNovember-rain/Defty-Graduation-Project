@@ -51,11 +51,15 @@ export interface SubmissionDetailResponse {
     score?: number // Thêm điểm số để hiển thị
 }
 
+// JSON helper types for AI feedback
+export type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
+export interface JsonObject { [key: string]: JsonValue }
+
 // Updated interfaces to match backend structure
 export interface FeedbackAIResponse {
     id: number
     submissionId: number
-    feedback: { [key: string]: any } // Map<String, Object> từ backend
+    feedback: JsonObject // Map<String, Object> từ backend
     aiModalName: string
     // Removed: content, score, strengths, weaknesses, suggestions, createdDate
 }
@@ -159,6 +163,7 @@ export const addScore = async (submissionId: string | number, point: number): Pr
 
 export interface SubmissionHistoryResponse {
     id: number
+    submissionStatus: "SUBMITTED" | "PROCESSING" | "COMPLETED" | "REVIEWED" | "FAILED"
     createdDate: Date
 }
 
@@ -175,7 +180,7 @@ export interface GetSubmissionHistoryResult {
 }
 
 export const getSubmissionHistory = async (
-    studentId: number,
+    assignmentId: number,
     options: GetSubmissionHistoryOptions = {}
 ): Promise<GetSubmissionHistoryResult> => {
     const params = {
@@ -183,7 +188,7 @@ export const getSubmissionHistory = async (
         size: options.size || 10,
     }
 
-    const response = await handleRequest(getWithParams(`${PREFIX_SUBMISSIONS}/student/${studentId}`, params))
+    const response = await handleRequest(getWithParams(`${PREFIX_SUBMISSIONS}/student/${assignmentId}`, params))
     const data = await response.json()
     return data.result as GetSubmissionHistoryResult
 }

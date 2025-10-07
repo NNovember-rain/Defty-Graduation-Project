@@ -1,0 +1,24 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  line-height: 1;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+.status-badge--submitted { background:#f1f5f9; color:#475569; border-color:#e2e8f0; }
+.status-badge--processing { background:#dbeafe; color:#1e40af; border-color:#bfdbfe; }
+.status-badge--completed { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+.status-badge--reviewed { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+.status-badge--failed { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+
+/* Improve table cell layout for badges */
+.data-table__cell .status-badge { min-width: 108px; justify-content:center; }

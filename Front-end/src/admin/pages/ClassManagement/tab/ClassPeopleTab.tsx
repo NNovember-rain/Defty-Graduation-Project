@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from 'react-bootstrap';
-import { getStudentsInClass, GetStudentsInClassOptions, getClassById } from '../../../../shared/services/classManagementService';
+import {
+    getStudentsInClass,
+    GetStudentsInClassOptions,
+    getClassById,
+    importStudentsToClass, type StudentImportRequest
+} from '../../../../shared/services/classManagementService';
 import { getUserById, IUser } from '../../../../shared/services/userService';
+import * as XLSX from 'xlsx';
+import {Button, Upload } from 'antd';
+import {useNotification} from "../../../../shared/notification/useNotification.ts";
 
 // Interface cho Teacher (sử dụng IUser từ userService)
 interface ITeacher extends IUser {
@@ -30,6 +38,7 @@ interface ClassPeopleTabProps {
 
 const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const { t } = useTranslation();
+    const { message } = useNotification();
     const [teachers, setTeachers] = useState<ITeacher[]>([]);
     const [students, setStudents] = useState<IStudent[]>([]);
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -65,6 +74,44 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
+
+    const handleFileUpload = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = evt.target?.result;
+            if (!data) return;
+
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+            const studentsToImport = jsonData.map(item => ({
+                username: item['Username'] || '',
+                fullName: item['Full Name'] || '',
+                email: item['Email'] || '',
+                dob: item['Date of Birth'] || '',
+                userCode: item['Student Code'] || '',
+            }));
+
+            handleImport(studentsToImport);
+        };
+        reader.readAsBinaryString(file);
+    };
+
+    const handleImport = async (students: StudentImportRequest[]) => {
+        setLoading(true);
+        try {
+            await importStudentsToClass(classId, students);
+            message.success('Import thành công!');
+            fetchPeople();
+        } catch (err) {
+            console.error(err);
+            message.error('Import thất bại!');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchTeacher = async () => {
         setTeacherLoading(true);
@@ -337,13 +384,23 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                 paddingBottom: '0.5rem',
                 marginBottom: '1.5rem'
             }}>
-                <h2 style={{ margin: 0, fontWeight: 500 }}>
+                <h2 style={{margin: 0, fontWeight: 500}}>
                     {t('classDetail.peopleTab.studentsTitle')}
                 </h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: '#6c757d' }}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                    <span style={{color: '#6c757d'}}>
                         {totalElements} {t('classDetail.peopleTab.studentCount')}
                     </span>
+                    <Upload
+                        accept=".xlsx,.xls"
+                        showUploadList={false} // ẩn danh sách file
+                        beforeUpload={(file) => {
+                            handleFileUpload(file); // gọi function đọc file
+                            return false; // để ngăn AntD tự upload
+                        }}
+                    >
+                        <Button icon={<Upload/>}>Upload File</Button>
+                    </Upload>
                 </div>
             </div>
 
@@ -354,7 +411,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                 alignItems: 'center',
                 marginBottom: '1rem'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                     <input
                         type="checkbox"
                         checked={selectedStudents.length === students.length && students.length > 0}
