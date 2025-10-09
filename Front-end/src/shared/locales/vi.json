@@ -146,7 +146,8 @@
     "all": "Tất cả",
     "back": "Quay lại",
     "noData": "Không có dữ liệu để hiển thị.",
-    "submit": "Nộp"
+    "submit": "Nộp",
+    "add": "Thêm"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -265,14 +266,19 @@
     "title": "Quản lý bài tập",
     "titleLabel": "Tiêu đề",
     "titlePlaceholder": "Nhập tiêu đề bài tập",
-    "descriptionLabel": "Mô tả",
+    "commonDescriptionLabel": "Mô tả",
     "solutionCodeLabel": "Mã giải pháp",
     "solutionCodePlaceholder": "Nhập mã giải pháp",
     "typeUmlLabel": "Loại UML",
+    "moduleDescriptionsLabel": "Mô tả Module",
+    "moduleName": "Tên Module",
+    "descriptionLabel": "Mô tả Module",
     "validation": {
       "titleRequired": "Tiêu đề là bắt buộc",
       "descriptionRequired": "Mô tả là bắt buộc",
-      "typeUmlRequired": "Loại UML là bắt buộc"
+      "typeUmlRequired": "Loại UML là bắt buộc",
+      "moduleRequired": "Module là bắt buộc",
+      "moduleDescriptionRequired": "Mô tả module là bắt buộc"
     },
     "assignmentLoading": "Đang tải bài tập..."
   },
@@ -471,7 +477,10 @@
     "assignment": {
       "inactive": "Không hoạt động",
       "active": "Đang hoạt động",
-      "viewDetails": "Xem"
+      "viewDetails": "Xem",
+      "create": "Tạo",
+      "createNew": "Tạo bài tập mới",
+      "assign": "Giao bài tập"
     },
     "sort": {
       "newest": "Mới nhất",

@@ -152,11 +152,6 @@ const Assignment: React.FC = () => {
             sortable: true
         },
         {
-            key: 'typeUmlName',
-            label: t('assignmentPage.columns.description'),
-            sortable: true
-        },
-        {
             key: 'createdDate',
             label: t('assignmentPage.columns.creationDate'),
             sortable: true
