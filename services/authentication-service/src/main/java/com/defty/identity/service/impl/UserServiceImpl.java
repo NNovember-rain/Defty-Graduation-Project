@@ -4,6 +4,7 @@ import com.defty.identity.dto.request.UserCreationRequest;
 import com.defty.identity.dto.request.UserUpdateRequest;
 import com.defty.identity.dto.response.UserExistenceCheckResult;
 import com.defty.identity.dto.response.UserResponse;
+import com.defty.identity.entity.BaseEntity;
 import com.defty.identity.entity.Role;
 import com.defty.identity.entity.User;
 import com.defty.identity.exception.AppException;
@@ -73,16 +74,22 @@ public class UserServiceImpl implements UserService {
             throw new AlreadyExitException("Email '" + request.getEmail() + "' already exists");
         }
 
+        if (userRepository.existsByUserCodeAndIdNot(request.getUserCode(), userId)) {
+            throw new AlreadyExitException("User code '" + request.getUserCode() + "' already exists");
+        }
+
         userMapper.updateUser(user, request);
 
         if (request.getRoles() != null) {
-            var roles = roleRepository.findAllById(request.getRoles());
+            List<Long> roleIds = request.getRoles().stream()
+                    .map(BaseEntity::getId)
+                    .toList();
+            var roles = roleRepository.findAllById(roleIds);
             user.setRoles(new HashSet<>(roles));
         }
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
-
 
     @Override
     public void deleteUser(Long userId){
@@ -155,6 +162,17 @@ public class UserServiceImpl implements UserService {
                     .collect(Collectors.toList());
         }
         throw new NotFoundException("No users found with the provided IDs: " + userIds);
+    }
+
+    @Override
+    public List<UserResponse> getUsersByCodeUsers(List<String> codeUsers) {
+        List<User> users = userRepository.findAllByUserCodeInAndIsActive(codeUsers, 1);
+        if (!users.isEmpty()) {
+            return users.stream()
+                    .map(userMapper::toUserResponse)
+                    .collect(Collectors.toList());
+        }
+        throw new NotFoundException("No users found with the provided IDs: " + codeUsers);
     }
 
     @Override

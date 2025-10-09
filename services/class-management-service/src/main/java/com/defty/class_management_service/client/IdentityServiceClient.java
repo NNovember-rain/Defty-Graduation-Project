@@ -19,4 +19,7 @@ public interface IdentityServiceClient {
 
     @GetMapping("/identity/users/users-with-ids")
     ApiResponse<List<UserResponse>> getListUser(@RequestParam("userIds") List<Long> userIds);
+
+    @GetMapping("/identity/users/users-with-codeUsers")
+    ApiResponse<List<UserResponse>> getListUserWithCodeUsers(@RequestParam("codeUsers") List<String> codeUsers);
 }

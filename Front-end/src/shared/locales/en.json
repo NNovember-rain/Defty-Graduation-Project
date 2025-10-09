@@ -306,6 +306,43 @@
       "creationDate": "Creation Date"
     }
   },
+  "userForm" : {
+    "title": "User Management",
+    "breadcrumb": "Users",
+    "fullNameLabel": "Full Name",
+    "fullNamePlaceholder": "Enter full name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter email",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Enter username",
+    "dobLabel": "Date of Birth",
+    "dobPlaceholder": "Select date of birth",
+    "userCodePlaceholder": "Enter user code",
+    "userCodeLabel": "User Code",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter password",
+    "retypePasswordLabel": "Retype Password",
+    "retypePasswordPlaceholder": "Retype password",
+    "roleLabel": "Role",
+    "rolePlaceholder": "Select role",
+    "userCode": "User Code",
+    "validation": {
+      "dobLabelRequired": "Date of birth is required",
+      "userCodeRequired": "User code is required",
+      "fullNameRequired": "Full name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email format",
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "passwordLowercase": "Password must contain a lowercase letter",
+      "passwordUppercase": "Password must contain an uppercase letter",
+      "passwordNumber": "Password must contain a number",
+      "passwordSpecialChar": "Password must contain a special character",
+      "retypePasswordRequired": "Please retype your password",
+      "passwordsNotMatch": "Passwords do not match"
+  }
+  },
   "classPage": {
     "title": "Class Management",
     "breadcrumb": {

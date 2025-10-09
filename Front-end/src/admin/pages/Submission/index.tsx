@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getSubmissions, type GetSubmissionsOptions, type ISubmission } from "../../../shared/services/submissionService.ts";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaComments } from "react-icons/fa";
+import { FaEye } from "react-icons/fa";
 import dayjs from 'dayjs';
+import './SubmissionList.scss';
 
 const Submission: React.FC = () => {
     const { t } = useTranslation();
@@ -100,7 +101,8 @@ const Submission: React.FC = () => {
             const response = await getSubmissions(options);
             const formattedSubmissions = (response.submissions || []).map(submission => ({
                 ...submission,
-                createdDate: submission.createdDate ? dayjs(submission.createdDate).format('YYYY-MM-DD') : '',
+                // Keep original createdDate (no truncation) for precise time rendering
+                createdDate: submission.createdDate,
             }));
 
             setSubmissions(formattedSubmissions);
@@ -124,8 +126,18 @@ const Submission: React.FC = () => {
         { key: 'assignmentTitle', label: t('submissionPage.columns.assignmentTitle'), sortable: true },
         { key: 'umlType', label: t('submissionPage.columns.umlType'), sortable: true },
         { key: 'classCode', label: t('submissionPage.columns.classCode'), sortable: true },
-        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true },
-        { key: 'submissionStatus', label: t('submissionPage.columns.submissionStatus'), sortable: true },
+        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' },
+        { key: 'submissionStatus', label: t('submissionPage.columns.submissionStatus'), sortable: true, render: (value) => {
+            const v = String(value) as 'SUBMITTED'|'PROCESSING'|'COMPLETED'|'REVIEWED'|'FAILED';
+            const map: Record<typeof v, string> = {
+                SUBMITTED: 'submitted',
+                PROCESSING: 'processing',
+                COMPLETED: 'completed',
+                REVIEWED: 'reviewed',
+                FAILED: 'failed'
+            };
+            return <span className={`status-badge status-badge--${map[v]}`}>{v}</span>;
+        } },
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
@@ -260,10 +272,6 @@ const Submission: React.FC = () => {
         navigate(`/admin/submissions/detail/${rowData.id}`);
     }, [navigate]);
 
-    const handleViewFeedback = useCallback((rowData: ISubmission) => {
-        navigate(`/admin/submissions/feedback/${rowData.id}`);
-    }, [navigate]);
-
     const submissionActions = useMemo(() => [
         {
             icon: <FaEye />,
@@ -271,15 +279,8 @@ const Submission: React.FC = () => {
             className: 'text-blue-500 hover:text-blue-700',
             tooltip: t('submissionPage.viewTooltip'),
             color: '#3b82f6'
-        },
-        {
-            icon: <FaComments />,
-            onClick: handleViewFeedback,
-            className: 'text-green-500 hover:text-green-700',
-            tooltip: t('submissionPage.feedbackTooltip'),
-            color: '#059669'
-        },
-    ], [handleViewSubmission, handleViewFeedback, t]);
+        }
+    ], [handleViewSubmission, t]);
 
     if (loading && submissions.length === 0) {
         return <div>{t('common.loadingData')}</div>;

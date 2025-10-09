@@ -9,9 +9,12 @@ spring:
     name: submission-service
 
   datasource:
-    url: jdbc:postgresql://pg-2544ba05-hiephh6663-27d2.d.aivencloud.com:21433/submission-feedback-service?sslMode=require
-    username: avnadmin
-    password: AVNS_RXm8azDD_dmGVpRndg6
+    url: jdbc:postgresql://ep-cold-waterfall-a1ofxb6e-pooler.ap-southeast-1.aws.neon.tech/neondb?user=neondb_owner&password=npg_cGsM9EZjo0Of&sslmode=require&channelBinding=require
+
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/defty_db
+#    username: defty_user
+#    password: 123456
   jpa:
     hibernate:
       ddl-auto: update

@@ -84,13 +84,13 @@ public class SubmissionController {
                 .build();
     }
 
-    @GetMapping("/student/{studentId}")
-    public ApiResponse<Page<SubmissionHistoryResponse>> getSubmissionsForStudent( @PathVariable Long studentId,
+    @GetMapping("/student/{assignmentId}")
+    public ApiResponse<Page<SubmissionHistoryResponse>> getSubmissionsForStudent( @PathVariable Long assignmentId,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<SubmissionHistoryResponse>submissionResponses =submissionService.getAllSubmissionsForStudent(pageable,studentId);
+        Page<SubmissionHistoryResponse>submissionResponses =submissionService.getAllSubmissionsForStudent(pageable,assignmentId);
         return ApiResponse.<Page<SubmissionHistoryResponse>>builder()
                 .result(submissionResponses)
                 .build();

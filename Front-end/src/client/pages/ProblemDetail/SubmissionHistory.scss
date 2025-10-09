@@ -53,12 +53,19 @@
 }
 
 .submission-history__content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
   .ant-list {
-    background-color: transparent;
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 16px;
 
     .ant-list-item {
       padding: 16px 0;
-      border-bottom: 1px solid #404040;
+      border-bottom: 1px solid #f0f0f0;
       background-color: transparent;
 
       &:last-child {
@@ -158,12 +165,15 @@
 }
 
 .submission-history__pagination {
-  margin-top: 24px;
-  text-align: center;
+  border-top: 1px solid #f0f0f0;
   padding-top: 16px;
-  border-top: 1px solid #404040;
+  text-align: center;
+  flex-shrink: 0;
 
   .ant-pagination {
+    display: flex;
+    justify-content: center;
+
     .ant-pagination-prev,
     .ant-pagination-next,
     .ant-pagination-item {
@@ -268,9 +278,11 @@
 
 .submission-history__loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 0;
+  height: 200px;
+  gap: 16px;
   color: #b0b0b0;
 
   .ant-spin {
@@ -291,7 +303,7 @@
 
 .submission-history__error {
   text-align: center;
-  padding: 60px 0;
+  padding: 40px 0;
   background-color: #2d2d2d;
   border-radius: 6px;
   margin: 20px 0;
@@ -304,35 +316,31 @@
 }
 
 .submission-history__empty {
-  text-align: center;
-  padding: 80px 20px;
-  background-color: #2d2d2d;
-  border-radius: 6px;
-  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #999;
 
   .anticon {
-    margin-bottom: 16px;
-    color: #555555;
     font-size: 48px;
+    margin-bottom: 16px;
+    color: #d9d9d9;
   }
 
-  .ant-typography {
-    &.ant-typography-h4 {
-      margin-bottom: 8px;
-      margin-top: 0;
-      color: #b0b0b0;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-      color: #888888;
-      font-size: 14px;
-    }
+  h4 {
+    color: #666;
+    margin-bottom: 8px;
   }
 }
 
 // Submission feedback view styles
 .submission-feedback {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
   &__back-btn {
     color: #02b128 !important;
     font-weight: 500;
@@ -343,7 +351,7 @@
     gap: 6px;
 
     &:hover {
-      color: #028a20 !important;
+      color: #01a023 !important;
     }
 
     .anticon {
@@ -353,9 +361,11 @@
 
   &__loading {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 0;
+    height: 200px;
+    gap: 16px;
     color: #b0b0b0;
 
     .ant-spin {
@@ -376,102 +386,376 @@
 
   &__error {
     text-align: center;
-    padding: 60px 0;
+    padding: 40px 0;
     background-color: #2d2d2d;
     border-radius: 6px;
     margin: 20px 0;
+  }
 
-    .ant-typography {
-      font-size: 14px;
-      color: #ff6b6b;
-      margin-bottom: 8px;
+  &__no-data {
+    text-align: center;
+    padding: 60px 0;
+    color: #999;
+  }
+
+  &__content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 10px;
+
+      &:hover {
+        background: #a8a8a8;
+      }
     }
   }
 }
 
 .submission-feedback-content {
   padding: 16px 0;
-  color: #e0e0e0;
 
   .submission-feedback-section {
     margin-bottom: 24px;
-    background-color: #2d2d2d;
-    border-radius: 6px;
     padding: 16px;
+    background-color: #2d2d2d;
+    border-radius: 8px;
     border-left: 4px solid #02b128;
 
     &:last-child {
       margin-bottom: 0;
     }
-  }
 
-  .submission-feedback-title {
-    color: #02b128;
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    margin-top: 0;
+    .submission-feedback-title {
+      margin: 0 0 12px 0;
+      color: #02b128;
+      font-size: 16px;
+      font-weight: 600;
+      border-bottom: 1px solid #404040;
+      padding-bottom: 8px;
+    }
+
+    .submission-feedback-section-content {
+      margin-top: 8px;
+    }
+  }
+}
+
+.submission-feedback-value {
+  padding: 8px 12px;
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  border: 1px solid #404040;
+  color: #e0e0e0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-word;
+
+  &.depth-0 {
+    margin-left: 0;
+  }
+  &.depth-1 {
+    margin-left: 16px;
+  }
+  &.depth-2 {
+    margin-left: 32px;
+  }
+  &.depth-3 {
+    margin-left: 48px;
+  }
+  &.depth-4 {
+    margin-left: 64px;
+  }
+  &.depth-5 {
+    margin-left: 80px;
+  }
+}
+
+.submission-feedback-array {
+  &.depth-0 {
+    margin-left: 0;
+  }
+  &.depth-1 {
+    margin-left: 16px;
+  }
+  &.depth-2 {
+    margin-left: 32px;
+  }
+  &.depth-3 {
+    margin-left: 48px;
+  }
+  &.depth-4 {
+    margin-left: 64px;
+  }
+  &.depth-5 {
+    margin-left: 80px;
   }
 
   .submission-feedback-list {
-    margin: 0;
-    padding-left: 20px;
+    margin: 8px 0;
+    padding: 0;
+    list-style: none;
 
     .submission-feedback-item {
       margin-bottom: 8px;
-      color: #e0e0e0;
-      line-height: 1.6;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
 
       &:last-child {
         margin-bottom: 0;
       }
 
-      strong {
-        color: #02b128;
+      .submission-feedback-index {
+        background-color: #555555;
+        color: #ffffff;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
         font-weight: 600;
+        min-width: 24px;
+        text-align: center;
+        flex-shrink: 0;
+        margin-top: 4px;
       }
     }
   }
+}
 
-  .submission-feedback-nested {
-    .submission-feedback-code {
-      background-color: #1a1a1a;
-      border: 1px solid #404040;
-      border-radius: 4px;
-      padding: 12px;
-      color: #e0e0e0;
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 13px;
-      line-height: 1.4;
-      overflow-x: auto;
-      margin: 0;
-      white-space: pre-wrap;
+.submission-feedback-object {
+  &.depth-0 {
+    margin-left: 0;
+  }
+  &.depth-1 {
+    margin-left: 16px;
+  }
+  &.depth-2 {
+    margin-left: 32px;
+  }
+  &.depth-3 {
+    margin-left: 48px;
+  }
+  &.depth-4 {
+    margin-left: 64px;
+  }
+  &.depth-5 {
+    margin-left: 80px;
+  }
+
+  .submission-feedback-property {
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .submission-feedback-key {
+      font-weight: 600;
+      color: #4096ff;
+      margin-bottom: 4px;
+      font-size: 14px;
+
+      &::after {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(to right, #404040, transparent);
+        margin-top: 4px;
+      }
+    }
+
+    .submission-feedback-property-value {
+      margin-top: 8px;
+    }
+  }
+}
+
+.submission-feedback-empty {
+  padding: 12px;
+  background-color: #1a1a1a;
+  border: 1px dashed #555555;
+  border-radius: 4px;
+  color: #888888;
+  font-style: italic;
+  text-align: center;
+
+  &.depth-0 {
+    margin-left: 0;
+  }
+  &.depth-1 {
+    margin-left: 16px;
+  }
+  &.depth-2 {
+    margin-left: 32px;
+  }
+  &.depth-3 {
+    margin-left: 48px;
+  }
+  &.depth-4 {
+    margin-left: 64px;
+  }
+  &.depth-5 {
+    margin-left: 80px;
+  }
+}
+
+.submission-feedback-unknown {
+  padding: 8px 12px;
+  background-color: #4a2c2a;
+  border: 1px solid #ff7875;
+  border-radius: 4px;
+  color: #ff7875;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+
+  &.depth-0 {
+    margin-left: 0;
+  }
+  &.depth-1 {
+    margin-left: 16px;
+  }
+  &.depth-2 {
+    margin-left: 32px;
+  }
+  &.depth-3 {
+    margin-left: 48px;
+  }
+  &.depth-4 {
+    margin-left: 64px;
+  }
+  &.depth-5 {
+    margin-left: 80px;
+  }
+}
+
+// Existing feedback styles
+.submission-feedback {
+  .submission-feedback__back-btn {
+    color: #02b128;
+    padding: 0;
+    margin-bottom: 16px;
+
+    &:hover {
+      color: #028a20;
+    }
+
+    .anticon {
+      margin-right: 4px;
     }
   }
 
-  .submission-feedback-value {
-    color: #e0e0e0;
-    font-size: 14px;
-    line-height: 1.6;
-    padding: 12px;
-    background-color: #1a1a1a;
-    border-radius: 4px;
-    border: 1px solid #404040;
+  .submission-feedback__header {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #404040;
   }
 
-  .submission-feedback-text {
-    .submission-feedback-raw {
-      background-color: #1a1a1a;
-      border: 1px solid #404040;
-      border-radius: 4px;
-      padding: 16px;
-      color: #e0e0e0;
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 13px;
-      line-height: 1.4;
-      overflow-x: auto;
-      margin: 0;
-      white-space: pre-wrap;
+  .submission-feedback__loading,
+  .submission-feedback__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+
+    .anticon {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #02b128;
+    }
+  }
+
+  .submission-feedback__no-data {
+    padding: 40px 20px;
+    text-align: center;
+    background-color: #2d2d2d;
+    border-radius: 8px;
+    border: 1px dashed #555555;
+  }
+}
+
+// Loading and Error states
+.submission-history__loading,
+.submission-history__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+
+  .anticon {
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: #02b128;
+  }
+
+  .ant-typography {
+    margin-top: 8px;
+    color: #b0b0b0;
+  }
+}
+
+.submission-history__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  .anticon {
+    font-size: 48px;
+    color: #555555;
+    margin-bottom: 16px;
+  }
+
+  .ant-typography h4 {
+    color: #e0e0e0;
+    margin-bottom: 8px;
+  }
+
+  .ant-typography {
+    color: #b0b0b0;
+  }
+}
+
+// Tighter spacing for last section
+.submission-feedback-content .submission-feedback-section:last-child {
+  margin-bottom: 0;
+}
+
+// Scrollbar tweak inside feedback content wrapper
+.submission-feedback__content-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #1e1e1e;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #1e1e1e;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+
+    &:hover {
+      background: #555;
     }
   }
 }
