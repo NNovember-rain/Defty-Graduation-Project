@@ -145,7 +145,8 @@
     "all": "All",
     "back": "Back",
     "submit": "Submit",
-    "noData": "No data available"
+    "noData": "No data available",
+    "add": "Add"
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",
@@ -264,14 +265,19 @@
     "title": "Assignment Management",
     "titleLabel": "Title",
     "titlePlaceholder": "Enter assignment title",
-    "descriptionLabel": "Description",
+    "commonDescriptionLabel": "Description",
+    "moduleDescriptionsLabel": "Module",
     "solutionCodeLabel": "Solution Code",
     "solutionCodePlaceholder": "Enter solution code",
     "typeUmlLabel": "UML Type",
+    "moduleLabel": "Module Name",
+    "descriptionLabel": "Module Description",
     "validation": {
       "titleRequired": "Title is required",
       "descriptionRequired": "Description is required",
-      "typeUmlRequired": "UML Type is required"
+      "typeUmlRequired": "UML Type is required",
+      "moduleRequired": "Module is required",
+      "moduleDescriptionRequired": "Module description is required"
     },
     "startDate": "Start Date",
     "endDate": "End Date",
@@ -472,7 +478,10 @@
     "assignment": {
       "inactive": "Inactive",
       "active": "Active",
-      "viewDetails": "View"
+      "viewDetails": "View",
+      "create": "Create",
+      "createNew": "Create new assignment",
+      "assigned": "Assign"
     },
     "sort": {
       "newest": "Newest",

@@ -7,11 +7,25 @@ import {
     type IAssignment
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
-import {Button, Card, Col, List, Pagination, Row, Select, Space, Tooltip, Typography} from "antd";
+import {
+    Button,
+    Card,
+    Col,
+    Dropdown,
+    List,
+    type MenuProps,
+    Pagination,
+    Row,
+    Select,
+    Space,
+    Tooltip,
+    Typography
+} from "antd";
 import {IoCalendarOutline} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
-import {AppstoreOutlined, UnorderedListOutlined} from "@ant-design/icons";
+import {AppstoreOutlined, DownOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
+import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -35,10 +49,45 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [view, setView] = useState<"grid" | "list">("list");
     const [sortBy, setSortBy] = useState<string | undefined>("createdDate");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
+    const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
 
-    const handleViewAssignmentDetails = useCallback((rowData: IAssignment) => {
-        navigate(`/admin/content/assignments/update/${rowData.id}`);
-    }, [navigate]);
+    const [expandedAssignments, setExpandedAssignments] = useState<number[]>([]);
+
+    const toggleExpand = (id: number) => {
+        setExpandedAssignments(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    const handleViewAssignmentDetails = useCallback(
+        (rowData: IAssignment) => {
+            navigate(`/admin/content/assignments/update/${rowData.id}`);
+        },
+        [navigate]
+    );
+
+    // Dropdown menu
+    const menuItems: MenuProps["items"] = [
+        {
+            key: "create",
+            label: t("classDetail.assignment.createNew") || "Create New",
+            onClick: () => navigate(`/admin/content/assignments/create?classId=${classId}`)
+        },
+        {
+            key: "assign",
+            label: t("classDetail.assignment.assign") || "Assign Assignment",
+            onClick: () => showAssignmentModal()
+        }
+    ];
+
+    const showAssignmentModal = React.useCallback(() => {
+        setIsAssignmentModalVisible(true);
+    }, []);
+
+    const hideAssignmentModal = () => {
+        setIsAssignmentModalVisible(false);
+    };
+
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -53,7 +102,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
             const response = await getAssignmentsByClassId(classId, options);
             const formatted = (response.assignments || []).map((a) => {
-                const classInfo = a.assignmentClasses?.find((ac: { classId: number; }) => ac.classId === classId);
+                const classInfo = a.assignmentClasses?.find((ac: { classId: number }) => ac.classId === classId);
                 return {
                     ...a,
                     createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
@@ -81,7 +130,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         if (size <= 8) return 3;
         return 3;
     }, [view, size]);
-
 
     const onChangePage = (p: number, pageSize?: number) => {
         setPage(p);
@@ -210,11 +258,19 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                     onClick={() => onToggleView("grid")}
                                 />
                             </Tooltip>
+
+                            {/* Dropdown Create / Assign */}
+                            <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={["click"]}>
+                                <Button type="primary">
+                                    {t("classDetail.assignment.create") || "Create Assignment"} <DownOutlined />
+                                </Button>
+                            </Dropdown>
                         </Space>
                     </div>
                 </div>
 
-                {view === "list" ? (
+                {/* List / Grid */}
+                {/*{view === "list" ? (*/}
                     <List
                         itemLayout="vertical"
                         dataSource={assignments}
@@ -228,43 +284,65 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                         boxShadow: "0 6px 18px rgba(0,0,0,0.04)"
                                     }}
                                 >
+
                                     <Row gutter={[16, 16]} align="middle">
-                                        <Col xs={24} sm={18}>
-                                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                                                <div style={{
-                                                    width: 56,
-                                                    height: 56,
-                                                    borderRadius: 10,
-                                                    background: "#fff7e6",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    color: "#fa8c16",
-                                                    fontSize: 24
-                                                }}>
-                                                    <MdOutlineAssignment />
+                                        <Col xs={24} sm={21}>
+                                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: "column" }}>
+                                                <div style={{ display: "flex", gap: 12, width: "100%" }}>
+                                                    <div style={{
+                                                        width: 56,
+                                                        height: 56,
+                                                        borderRadius: 10,
+                                                        background: "#fff7e6",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        color: "#fa8c16",
+                                                        fontSize: 24
+                                                    }}>
+                                                        <MdOutlineAssignment />
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <Title level={5} style={{ margin: 0 }}>{a.title}</Title>
+                                                        <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                            <IoCalendarOutline />
+                                                            {a.startDate && a.endDate
+                                                                ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
+                                                                : "-"}
+                                                        </Text>
+                                                    </div>
                                                 </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <Title level={5} style={{ margin: 0 }}>{a.title}</Title>
-                                                    <Text type="secondary" style={{ display: "block"}}>
-                                                        {a.typeUmlName || t("common.noType") || "No UML type"}
-                                                    </Text>
-                                                    <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                        <IoCalendarOutline />
-                                                        {a.startDate && a.endDate
-                                                            ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
-                                                            : "-"}
-                                                    </Text>
-                                                </div>
+
+                                                {expandedAssignments.includes(a.id) && (
+                                                    <div style={{ marginTop: 12, padding: 12, background: "#f6f6f6", borderRadius: 8, width: "100%" }}>
+                                                        <Text strong>Số bài đã giao: {a.totalAssigned || 0}</Text><br/>
+                                                        <Text strong>Số bài đã nộp: {a.totalSubmitted || 0}</Text>
+                                                    </div>
+                                                )}
                                             </div>
                                         </Col>
 
-                                        <Col xs={24} sm={6} style={{ textAlign: "right" }}>
-                                            <Button color="primary" variant="filled" onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleViewAssignmentDetails(a);
-                                            }}>
+                                        <Col xs={28} sm={3} style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 8 }}>
+                                            <Button
+                                                type="primary"
+                                                size="small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewAssignmentDetails(a);
+                                                }}
+                                            >
                                                 {t("classDetail.assignment.viewDetails") || "View"}
+                                            </Button>
+                                            <Button
+                                                size="small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleExpand(a.id);
+                                                }}
+                                            >
+                                                {expandedAssignments.includes(a.id)
+                                                    ? "Hide"
+                                                    : "Quick"}
                                             </Button>
                                         </Col>
                                     </Row>
@@ -273,71 +351,74 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         )}
                         locale={{ emptyText: t("common.noData") || "No assignments" }}
                     />
-                ) : (
-                    <List
-                        grid={{ gutter: 16, column: gridColumns }}
-                        dataSource={assignments}
-                        locale={{ emptyText: t("common.noData") || "No assignments" }}
-                        renderItem={(a) => (
-                            <List.Item key={a.id}>
-                                <Card
-                                    hoverable
-                                    style={{
-                                        borderRadius: 12,
-                                        transition: "transform .12s ease, box-shadow .12s ease",
-                                        height: "100%",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "space-between"
-                                    }}
-                                    onClick={() => console.log("Open assignment", a.id)}
-                                >
-                                    <div>
-                                        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
-                                            <div style={{
-                                                width: 44,
-                                                height: 44,
-                                                borderRadius: 10,
-                                                background: "#fff7e6",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                color: "#fa8c16",
-                                                fontSize: 20
-                                            }}>
-                                                <MdOutlineAssignment />
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <Title level={5} style={{ margin: 0, lineHeight: 1.1 }}>{a.title}</Title>
-                                                <Text type="secondary" style={{ display: "block"}}>
-                                                    {a.typeUmlName || t("common.noType") || "No UML type"}
-                                                </Text>
-                                                <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                    <IoCalendarOutline />
-                                                    {a.startDate && a.endDate
-                                                        ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
-                                                        : "-"}
-                                                </Text>
-                                            </div>
-                                        </div>
-                                    </div>
+                {/*) : (*/}
+                {/*    <List*/}
+                {/*        grid={{ gutter: 16, column: gridColumns }}*/}
+                {/*        dataSource={assignments}*/}
+                {/*        locale={{ emptyText: t("common.noData") || "No assignments" }}*/}
+                {/*        renderItem={(a) => (*/}
+                {/*            <List.Item key={a.id}>*/}
+                {/*                <Card*/}
+                {/*                    hoverable*/}
+                {/*                    style={{*/}
+                {/*                        borderRadius: 12,*/}
+                {/*                        transition: "transform .12s ease, box-shadow .12s ease",*/}
+                {/*                        height: "100%",*/}
+                {/*                        display: "flex",*/}
+                {/*                        flexDirection: "column",*/}
+                {/*                        justifyContent: "space-between"*/}
+                {/*                    }}*/}
+                {/*                    onClick={() => console.log("Open assignment", a.id)}*/}
+                {/*                >*/}
+                {/*                    <div>*/}
+                {/*                        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>*/}
+                {/*                            <div style={{*/}
+                {/*                                width: 44,*/}
+                {/*                                height: 44,*/}
+                {/*                                borderRadius: 10,*/}
+                {/*                                background: "#fff7e6",*/}
+                {/*                                display: "flex",*/}
+                {/*                                alignItems: "center",*/}
+                {/*                                justifyContent: "center",*/}
+                {/*                                color: "#fa8c16",*/}
+                {/*                                fontSize: 20*/}
+                {/*                            }}>*/}
+                {/*                                <MdOutlineAssignment />*/}
+                {/*                            </div>*/}
+                {/*                            <div style={{ flex: 1 }}>*/}
+                {/*                                <Title level={5} style={{ margin: 0, lineHeight: 1.1 }}>{a.title}</Title>*/}
+                {/*                                <Text type="secondary" style={{ display: "block" }}>*/}
+                {/*                                    {a.typeUmlName || t("common.noType") || "No UML type"}*/}
+                {/*                                </Text>*/}
+                {/*                                <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>*/}
+                {/*                                    <IoCalendarOutline />*/}
+                {/*                                    {a.startDate && a.endDate*/}
+                {/*                                        ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`*/}
+                {/*                                        : "-"}*/}
+                {/*                                </Text>*/}
+                {/*                            </div>*/}
+                {/*                        </div>*/}
+                {/*                    </div>*/}
 
-                                    <div style={{ marginTop: 8 }}>
-                                        <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                                            <Button size="small" color="primary" variant="filled"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleViewAssignmentDetails(a);
-                                                    }}>
-                                                {t("classDetail.assignment.viewDetails") || "View"}
-                                            </Button>
-                                        </Space>
-                                    </div>
-                                </Card>
-                            </List.Item>
-                        )}
-                    />
-                )}
+                {/*                    <div style={{ marginTop: 8 }}>*/}
+                {/*                        <Space style={{ width: "100%", justifyContent: "space-between" }}>*/}
+                {/*                            <Button*/}
+                {/*                                size="small"*/}
+                {/*                                type="primary"*/}
+                {/*                                onClick={(e) => {*/}
+                {/*                                    e.stopPropagation();*/}
+                {/*                                    handleViewAssignmentDetails(a);*/}
+                {/*                                }}*/}
+                {/*                            >*/}
+                {/*                                {t("classDetail.assignment.viewDetails") || "View"}*/}
+                {/*                            </Button>*/}
+                {/*                        </Space>*/}
+                {/*                    </div>*/}
+                {/*                </Card>*/}
+                {/*            </List.Item>*/}
+                {/*        )}*/}
+                {/*    />*/}
+                {/*)}*/}
 
                 {/* Pagination */}
                 <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
@@ -354,6 +435,12 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         }
                     />
                 </div>
+                <AssignAssignmentModal
+                    visible={isAssignmentModalVisible}
+                    onClose={hideAssignmentModal}
+                    classIds={[classId]}
+                    onAssigned={fetchData}
+                />
             </main>
         </div>
     );

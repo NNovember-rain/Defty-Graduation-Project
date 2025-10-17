@@ -9,5 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface AssignmentRepository extends JpaRepository<Assignment, Long>, JpaSpecificationExecutor<Assignment> {
-    Optional<Assignment> findByUserIdAndTitleAndTypeUML_Id(Long userId, String title, Long typeUmlId);
+    Optional<Assignment> findByUserIdAndTitle(Long userId, String title);
 }

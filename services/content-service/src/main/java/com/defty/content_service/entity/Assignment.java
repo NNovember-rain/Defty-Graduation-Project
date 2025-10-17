@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -24,10 +25,9 @@ public class Assignment extends  BaseEntity{
     String solutionCode;
     String assignmentCode;
 
-    @ManyToOne
-    @JoinColumn(name = "type_uml_id")
-    TypeUML typeUML;
-
     @OneToMany(mappedBy = "assignment", fetch = FetchType.LAZY)
     Set<AssignmentClass> assignmentClasses;
+
+    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<ModuleEntity> modules;
 }

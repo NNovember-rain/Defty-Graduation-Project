@@ -3,10 +3,13 @@ package com.defty.content_service.service.impl;
 import com.defty.content_service.client.ClassServiceClient;
 import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
+import com.defty.content_service.dto.request.ModuleRequest;
 import com.defty.content_service.dto.response.AssignmentClassResponse;
 import com.defty.content_service.dto.response.AssignmentResponse;
+import com.defty.content_service.dto.response.ModuleResponse;
 import com.defty.content_service.entity.Assignment;
 import com.defty.content_service.entity.AssignmentClass;
+import com.defty.content_service.entity.ModuleEntity;
 import com.defty.content_service.entity.TypeUML;
 import com.defty.content_service.exception.AppException;
 import com.defty.content_service.exception.ErrorCode;
@@ -28,7 +31,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -103,7 +109,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         Long userId = currentUser.userId();
 
         Assignment assignment = assignmentRepository
-                .findByUserIdAndTitleAndTypeUML_Id(userId, request.getTitle(), request.getTypeUmlId())
+                .findByUserIdAndTitle(userId, request.getTitle())
                 .orElseThrow(() -> new NotFoundException("Assignment not found"));
 
         List<AssignmentClass> assignmentClassesToDelete = assignmentClassRepository
@@ -174,40 +180,77 @@ public class AssignmentServiceImpl implements AssignmentService {
     public AssignmentResponse updateAssignment(Long id, AssignmentRequest request) {
         Assignment assignment = assignmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Assignment not found with ID: " + id));
+
         Assignment updatedAssignment = createOrUpdateAssignment(assignment, request);
         return toAssignmentResponse(updatedAssignment);
     }
 
-    private Assignment createOrUpdateAssignment(Assignment assignment, AssignmentRequest request) {
-        TypeUML typeUML = typeUMLRepository.findById(request.getTypeUmlId())
-                .orElseThrow(() -> new NotFoundException("TypeUML not found"));
 
+    private Assignment createOrUpdateAssignment(Assignment assignment, AssignmentRequest request) {
         UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
         if (currentUser == null) {
             throw new IllegalArgumentException("Only instructors can upload materials.");
         }
         Long userId = currentUser.userId();
 
-        String prefix = typeUML.getName().replaceAll("\\s+", "").chars()
+        assignment.setUserId(userId);
+        assignment.setTitle(request.getTitle());
+        assignment.setDescription(request.getDescription());
+
+        if (request.getModules() == null || request.getModules().isEmpty()) {
+            throw new IllegalArgumentException("Modules cannot be empty");
+        }
+
+        // Lấy TypeUML đầu tiên của module đầu tiên để sinh assignmentCode
+        ModuleRequest firstModuleReq = request.getModules().get(0);
+        if (firstModuleReq.getTypeUmlIds() == null || firstModuleReq.getTypeUmlIds().isEmpty()) {
+            throw new IllegalArgumentException("Module must have at least one TypeUML");
+        }
+        TypeUML firstTypeUML = typeUMLRepository.findById(firstModuleReq.getTypeUmlIds().get(0))
+                .orElseThrow(() -> new NotFoundException("TypeUML not found"));
+
+        String prefix = firstTypeUML.getName().replaceAll("\\s+", "").chars()
                 .filter(Character::isUpperCase)
                 .mapToObj(c -> String.valueOf((char) c))
                 .collect(Collectors.joining());
-
         if (prefix.isEmpty()) {
-            prefix = typeUML.getName().substring(0, Math.min(typeUML.getName().length(), 3)).toUpperCase();
+            prefix = firstTypeUML.getName().substring(0, Math.min(firstTypeUML.getName().length(), 3)).toUpperCase();
         }
 
         int randomNum = (int) (Math.random() * 90000) + 10000;
         String assignmentCode = prefix + "-" + randomNum;
-
-        assignment.setUserId(userId);
-        assignment.setTitle(request.getTitle());
-        assignment.setDescription(request.getDescription());
-        assignment.setTypeUML(typeUML);
         assignment.setAssignmentCode(assignmentCode);
-        assignment.setSolutionCode(request.getSolutionCode());
+
+        // Mapping các Module từ request
+        List<ModuleEntity> modules = new ArrayList<>();
+        for (ModuleRequest moduleReq : request.getModules()) {
+            ModuleEntity module = new ModuleEntity();
+            module.setModuleName(moduleReq.getModuleName());
+            module.setModuleDescription(moduleReq.getModuleDescription());
+            module.setAssignment(assignment); // không lỗi
+            module.setSolutionCode(moduleReq.getSolutionCode());
+
+            // Mapping TypeUMLs
+            Set<TypeUML> typeUMLs = new HashSet<>();
+            for (Long typeId : moduleReq.getTypeUmlIds()) {
+                TypeUML typeUML = typeUMLRepository.findById(typeId)
+                        .orElseThrow(() -> new NotFoundException("TypeUML not found: " + typeId));
+                typeUMLs.add(typeUML);
+            }
+            module.setTypeUMLs(typeUMLs);
+
+            modules.add(module);
+        }
+
+        assignment.setModules(modules);
+        assignment = assignmentRepository.save(assignment);
+        assignment.getModules().forEach(module -> {
+            module.setModuleCode(assignmentCode + "-" + module.getId());
+        });
+
         return assignmentRepository.save(assignment);
     }
+
 
     private void validateClassIds(List<Long> classIds) {
         if (classIds != null) {
@@ -238,19 +281,35 @@ public class AssignmentServiceImpl implements AssignmentService {
                         .build())
                 .toList();
 
+        List<ModuleResponse> moduleResponses = assignment.getModules() != null
+                ? assignment.getModules().stream()
+                .map(m -> ModuleResponse.builder()
+                        .id(m.getId())
+                        .moduleName(m.getModuleName())
+                        .moduleDescription(m.getModuleDescription())
+                        .solutionCode(m.getSolutionCode())
+                        .typeUmlIds(
+                                m.getTypeUMLs() != null
+                                        ? m.getTypeUMLs().stream()
+                                        .map(TypeUML::getId)
+                                        .toList()
+                                        : List.of()
+                        )
+                        .build())
+                .toList()
+                : List.of();
+
         return AssignmentResponse.builder()
                 .id(assignment.getId())
                 .title(assignment.getTitle())
-                .description(assignment.getDescription())
+                .commonDescription(assignment.getDescription())
                 .userId(assignment.getUserId())
-                .typeUmlName(assignment.getTypeUML() != null ? assignment.getTypeUML().getName() : null)
-                .typeUmlId(assignment.getTypeUML() != null ? assignment.getTypeUML().getId() : null)
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())
                 .createdDate(assignment.getCreatedDate())
-                .solutionCode(assignment.getSolutionCode())
                 .classIds(classIds)
                 .assignmentClasses(assignmentClassResponses)
+                .modules(moduleResponses)
                 .build();
     }
 }
