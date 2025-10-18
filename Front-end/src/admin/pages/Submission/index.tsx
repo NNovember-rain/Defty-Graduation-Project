@@ -91,7 +91,6 @@ const Submission: React.FC = () => {
                 studentName: currentFilters.studentName || undefined,
                 studentCode: currentFilters.studentCode || undefined,
                 assignmentTitle: currentFilters.assignmentTitle || undefined,
-                umlType: currentFilters.umlType || undefined,
                 classCode: currentFilters.classCode || undefined,
                 submissionStatus: currentFilters.submissionStatus as 'SUBMITTED' | 'PROCESSING' | 'COMPLETED' | 'REVIEWED' | 'FAILED' || undefined,
                 fromDate: currentFilters.fromDate || undefined,
@@ -124,7 +123,6 @@ const Submission: React.FC = () => {
         { key: 'studentName', label: t('submissionPage.columns.studentName'), sortable: true },
         { key: 'studentCode', label: t('submissionPage.columns.studentCode'), sortable: true },
         { key: 'assignmentTitle', label: t('submissionPage.columns.assignmentTitle'), sortable: true },
-        { key: 'umlType', label: t('submissionPage.columns.umlType'), sortable: true },
         { key: 'classCode', label: t('submissionPage.columns.classCode'), sortable: true },
         { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' },
         { key: 'submissionStatus', label: t('submissionPage.columns.submissionStatus'), sortable: true, render: (value) => {
@@ -160,13 +158,6 @@ const Submission: React.FC = () => {
             label: t('submissionPage.search.assignmentTitle'),
             type: 'text',
             placeholder: t('submissionPage.search.assignmentTitlePlaceholder'),
-            gridSpan: 1
-        },
-        {
-            key: 'umlType',
-            label: t('submissionPage.search.umlType'),
-            type: 'text',
-            placeholder: t('submissionPage.search.umlTypePlaceholder'),
             gridSpan: 1
         },
         {

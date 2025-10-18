@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/submission/feedback")
 @RequiredArgsConstructor
@@ -54,11 +56,11 @@ public class FeedBackController {
                 .build();
     }
 
-    @GetMapping("/teacher/{id}")
-    public ApiResponse<FeedbackTeacherResponse> getFeedbackTeacher(@PathVariable Long id) {
-        FeedbackTeacherResponse feedbackTeacherResponse= feedBackTeacherService.getFeedbackTeacher(id);
-        return ApiResponse.<FeedbackTeacherResponse>builder()
-                .result(feedbackTeacherResponse)
+    @GetMapping("/teacher/{submissionId}")
+    public ApiResponse<List<FeedbackTeacherResponse>> getFeedbackTeacher(@PathVariable Long submissionId) {
+        List<FeedbackTeacherResponse> feedbackTeacherResponses= feedBackTeacherService.getFeedbackTeacher(submissionId);
+        return ApiResponse.<List<FeedbackTeacherResponse>>builder()
+                .result(feedbackTeacherResponses)
                 .build();
     }
 }

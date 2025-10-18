@@ -15,6 +15,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Getter
 @Setter
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
         FeedbackTeacher feedbackTeacher = new FeedbackTeacher();
         BeanUtils.copyProperties(feedbackTeacherRequest, feedbackTeacher);
         feedbackTeacher=feedbackTeacherRepository.save(feedbackTeacher);
-        submission.setFeedbackTeacher(feedbackTeacher);
+        submission.getFeedbackTeachers().add(feedbackTeacher);
         submissionRepository.save(submission);
         return feedbackTeacher.getId();
     }
@@ -47,15 +49,17 @@ public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
     }
 
     @Override
-    public FeedbackTeacherResponse getFeedbackTeacher(Long submissionId) {
+    public List<FeedbackTeacherResponse> getFeedbackTeacher(Long submissionId) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
-        FeedbackTeacher feedbackTeacher=submission.getFeedbackTeacher();
-        FeedbackTeacherResponse feedbackTeacherResponse = new FeedbackTeacherResponse();
-        feedbackTeacherResponse.setFeedback(feedbackTeacher.getContent());
-        feedbackTeacherResponse.setId(feedbackTeacher.getId());
-        return feedbackTeacherResponse;
-
+        List<FeedbackTeacher> feedbackTeacher=submission.getFeedbackTeachers();
+        return feedbackTeacher.stream().map(ft -> {
+            FeedbackTeacherResponse response = new FeedbackTeacherResponse();
+            response.setId(ft.getId());
+            response.setTeacherId(ft.getTeacherId());
+            response.setContent(ft.getContent());
+            return response;
+        }).toList();
     }
 
 }

@@ -12,7 +12,8 @@ import java.util.Date;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeedbackTeacherResponse {
     Long id;
-    Date createdDate= new Date();
-    Date updatedDate=new Date();
-    String feedback;
+    String content;
+    Long teacherId;
+    Date createdDate;
+    Date updatedDate;
 }

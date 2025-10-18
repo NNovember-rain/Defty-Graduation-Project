@@ -20,7 +20,6 @@ import java.time.Instant;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Service
 public class ActionSchedulerImpl implements IActionScheduler {
-
     TaskScheduler taskScheduler;
     ISubmissionRepository submissionRepository;
 

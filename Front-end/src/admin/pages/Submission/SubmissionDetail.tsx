@@ -8,7 +8,7 @@ import {
     addFeedbackTeacher,
     updateFeedbackTeacher,
     addScore,
-    type SubmissionDetailResponse,
+    type ISubmission,
     type FeedbackAIResponse,
     type FeedbackTeacherResponse,
     type FeedbackTeacherRequest,
@@ -18,7 +18,7 @@ import {
 import "./SubmissionDetail.scss";
 
 const STATUS_CLASS: Record<
-    SubmissionDetailResponse["submissionStatus"],
+    ISubmission["submissionStatus"],
     "gray" | "blue" | "green" | "orange" | "red"
 > = {
     SUBMITTED: "gray",
@@ -196,7 +196,7 @@ const SubmissionDetail: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'overview' | 'code' | 'feedback'>(initialTab);
 
     // Data states
-    const [data, setData] = useState<SubmissionDetailResponse | null>(null);
+    const [data, setData] = useState<ISubmission | null>(null);
     const [aiFeedback, setAiFeedback] = useState<FeedbackAIResponse | null>(null);
     const [teacherFeedback, setTeacherFeedback] = useState<FeedbackTeacherResponse | null>(null);
 
