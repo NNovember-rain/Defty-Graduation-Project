@@ -4,8 +4,6 @@ import com.example.common_library.response.ApiResponse;
 import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.buider.SubmissionSearchBuilder;
 import com.submission_service.model.dto.request.SubmissionRequest;
-import com.submission_service.model.dto.response.SubmissionDetailResponse;
-import com.submission_service.model.dto.response.SubmissionHistoryResponse;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.service.SubmissionService;
 import lombok.AccessLevel;
@@ -16,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -23,6 +22,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/submission")
 @RequiredArgsConstructor
+@Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SubmissionController {
 
@@ -45,9 +45,9 @@ public class SubmissionController {
     }
 
     @GetMapping({"/{id}"})
-    ApiResponse<SubmissionDetailResponse> getSubmission(@PathVariable Long id) {
-        SubmissionDetailResponse submissionResponses =submissionService.getSubmission(id);
-        return ApiResponse.<SubmissionDetailResponse>builder()
+    ApiResponse<SubmissionResponse> getSubmission(@PathVariable Long id) {
+        SubmissionResponse submissionResponses =submissionService.getSubmission(id);
+        return ApiResponse.<SubmissionResponse>builder()
                 .result(submissionResponses)
                 .build();
     }
@@ -85,13 +85,13 @@ public class SubmissionController {
     }
 
     @GetMapping("/student/{assignmentId}")
-    public ApiResponse<Page<SubmissionHistoryResponse>> getSubmissionsForStudent( @PathVariable Long assignmentId,
+    public ApiResponse<Page<SubmissionResponse>> getSubmissionsForStudent( @PathVariable Long assignmentId,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<SubmissionHistoryResponse>submissionResponses =submissionService.getAllSubmissionsForStudent(pageable,assignmentId);
-        return ApiResponse.<Page<SubmissionHistoryResponse>>builder()
+        Page<SubmissionResponse>submissionResponses =submissionService.getAllSubmissionsForStudent(pageable,assignmentId);
+        return ApiResponse.<Page<SubmissionResponse>>builder()
                 .result(submissionResponses)
                 .build();
     }

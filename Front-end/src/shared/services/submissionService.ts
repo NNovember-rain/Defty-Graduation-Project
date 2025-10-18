@@ -1,6 +1,6 @@
 import handleRequest from "./handleRequest.ts"
 import { getWithParams } from "./getWithParams.ts"
-import { get, postJsonData, patchJsonData, putJsonData } from "./request.ts"
+import { get, postJsonData, patchJsonData} from "./request.ts"
 
 const PREFIX_SUBMISSIONS = import.meta.env.VITE_PREFIX_SUBMISSIONS as string
 
@@ -35,21 +35,11 @@ export interface ISubmission {
     classCode: string
     createdDate: string
     submissionStatus: "SUBMITTED" | "PROCESSING" | "COMPLETED" | "REVIEWED" | "FAILED"
-}
-
-export interface SubmissionDetailResponse {
-    id: number
-    studentCode: string
-    studentName: string
-    assignmentTitle: string
-    typeUml: string
-    classCode: string
-    createdDate: Date
-    submissionStatus: "SUBMITTED" | "PROCESSING" | "COMPLETED" | "REVIEWED" | "FAILED"
     studentPlantUMLCode: string
     solutionCode: string
     score?: number // Thêm điểm số để hiển thị
 }
+
 
 // JSON helper types for AI feedback
 export type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
@@ -93,7 +83,6 @@ export const getSubmissions = async (options: GetSubmissionsOptions = {}): Promi
         studentName: options.studentName,
         studentCode: options.studentCode,
         assignmentTitle: options.assignmentTitle,
-        umlType: options.umlType,
         classCode: options.classCode,
         submissionStatus: options.submissionStatus,
         fromDate: options.fromDate,
@@ -112,10 +101,10 @@ export const getSubmissions = async (options: GetSubmissionsOptions = {}): Promi
     } as GetSubmissionsResult
 }
 
-export const getSubmissionDetail = async (id: string | number): Promise<SubmissionDetailResponse> => {
+export const getSubmissionDetail = async (id: string | number): Promise<ISubmission> => {
     const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/${id}`))
     const data = await response.json()
-    return data.result as SubmissionDetailResponse
+    return data.result as ISubmission
 }
 
 // Fixed feedback API functions to match your backend endpoints

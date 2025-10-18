@@ -1,12 +1,14 @@
 package com.submission_service.model.dto.response;
 
 import com.submission_service.enums.SubmissionStatus;
+import com.submission_service.model.entity.FeedbackTeacher;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,13 +16,19 @@ import java.util.Date;
 @NoArgsConstructor
 public class SubmissionResponse {
     Long id;
+    Long studentId;
+    Long assignmentId;
+    Long classId;
     String studentName;
     String studentCode;
     String classCode;
     String assignmentTitle;
     String descriptionAssignment;
-    String solutionCode;
-    String umlType;
-    Date createdDate;
+    String typeUml;
     SubmissionStatus submissionStatus;
+    String studentPlantUMLCode;
+    String solutionCode;
+    Double score;
+    Date createdDate;
+    boolean isfeedbackTeacher;
 }

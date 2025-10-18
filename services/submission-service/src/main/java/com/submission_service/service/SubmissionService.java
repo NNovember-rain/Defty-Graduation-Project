@@ -11,8 +11,8 @@ import org.springframework.data.domain.Pageable;
 public interface SubmissionService {
     Long handleSubmission(SubmissionRequest submissionRequest);
     Page<SubmissionResponse> getAllSubmissions(Pageable pageable, SubmissionSearchBuilder criteria);
-    SubmissionDetailResponse getSubmission(Long id);
+    SubmissionResponse getSubmission(Long id);
     String addScoreSubmission(Long id, Double point);
-    Page<SubmissionHistoryResponse> getAllSubmissionsForStudent(Pageable pageable, Long studentId);
+    Page<SubmissionResponse> getAllSubmissionsForStudent(Pageable pageable, Long studentId);
 
 }
