@@ -1,66 +1,132 @@
 package com.submission_service.repository.specification;
 
-import com.submission_service.model.buider.SubmissionSearchBuilder;
 import com.submission_service.model.entity.Submission;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SubmissionSpecification {
 
-    public static Specification<Submission> withCriteria(SubmissionSearchBuilder criteria) {
+    public static Specification<Submission> hasStudentName(String name) {
         return (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-
-            if (criteria.getStudentName() != null && !criteria.getStudentName().isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("studentName")),
-                        "%" + criteria.getStudentName().toLowerCase() + "%"));
+            if (name == null || name.isEmpty()) {
+                return cb.conjunction();
             }
+            return cb.like(cb.lower(root.get("studentName")), "%" + name.toLowerCase() + "%");
+        };
+    }
 
-            if (criteria.getStudentCode() != null && !criteria.getStudentCode().isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("studentCode")),
-                        "%" + criteria.getStudentCode().toLowerCase() + "%"));
+    public static Specification<Submission> hasStudentCode(String code) {
+        return (root, query, cb) -> {
+            if (code == null || code.isEmpty()) {
+                return cb.conjunction();
             }
+            return cb.like(cb.lower(root.get("studentCode")), "%" + code.toLowerCase() + "%");
+        };
+    }
 
-            if (criteria.getAssignmentTitle() != null && !criteria.getAssignmentTitle().isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("assignmentTitle")),
-                        "%" + criteria.getAssignmentTitle().toLowerCase() + "%"));
+    public static Specification<Submission> hasAssignmentTitle(String title) {
+        return (root, query, cb) -> {
+            if (title == null || title.isEmpty()) {
+                return cb.conjunction();
             }
+            return cb.like(cb.lower(root.get("assignmentTitle")), "%" + title.toLowerCase() + "%");
+        };
+    }
 
-            if (criteria.getClassName() != null && !criteria.getClassName().isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("className")),
-                        "%" + criteria.getClassName().toLowerCase() + "%"));
+    public static Specification<Submission> hasClassName(String className) {
+        return (root, query, cb) -> {
+            if (className == null || className.isEmpty()) {
+                return cb.conjunction();
             }
+            return cb.like(cb.lower(root.get("className")), "%" + className.toLowerCase() + "%");
+        };
+    }
 
-            if (criteria.getClassCode() != null && !criteria.getClassCode().isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("classCode")),
-                        "%" + criteria.getClassCode().toLowerCase() + "%"));
+    public static Specification<Submission> hasClassCode(String code) {
+        return (root, query, cb) -> {
+            if (code == null || code.isEmpty()) {
+                return cb.conjunction();
             }
+            return cb.like(cb.lower(root.get("classCode")), "%" + code.toLowerCase() + "%");
+        };
+    }
 
-            if (criteria.getUmlType() != null && !criteria.getUmlType().isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("umlType")),
-                        "%" + criteria.getUmlType().toLowerCase() + "%"));
+    public static Specification<Submission> hasCreatedDateAfter(LocalDateTime startDate) {
+        return (root, query, cb) -> {
+            if (startDate == null) {
+                return cb.conjunction();
             }
+            return cb.greaterThanOrEqualTo(root.get("createdDate"), startDate);
+        };
+    }
 
-            // Sửa tên trường từ "status" thành "submissionStatus"
-            if (criteria.getSubmissionStatus() != null) {
-                predicates.add(cb.equal(root.get("submissionStatus"), criteria.getSubmissionStatus()));
+    public static Specification<Submission> hasCreatedDateBefore(LocalDateTime endDate) {
+        return (root, query, cb) -> {
+            if (endDate == null) {
+                return cb.conjunction();
             }
+            return cb.lessThanOrEqualTo(root.get("createdDate"), endDate);
+        };
+    }
 
-            if (criteria.getFromDate() != null) {
-                LocalDateTime fromDateTime = criteria.getFromDate().atStartOfDay();
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createdDate"), fromDateTime));
+    public static Specification<Submission> hasCreatedDateBetween(LocalDateTime startDate, LocalDateTime endDate) {
+        return (root, query, cb) -> {
+            if (startDate == null && endDate == null) {
+                return cb.conjunction();
             }
-
-            if (criteria.getToDate() != null) {
-                LocalDateTime toDateTime = criteria.getToDate().atTime(23, 59, 59);
-                predicates.add(cb.lessThanOrEqualTo(root.get("createdDate"), toDateTime));
+            if (startDate != null && endDate != null) {
+                return cb.between(root.get("createdDate"), startDate, endDate);
             }
+            if (startDate != null) {
+                return cb.greaterThanOrEqualTo(root.get("createdDate"), startDate);
+            }
+            return cb.lessThanOrEqualTo(root.get("createdDate"), endDate);
+        };
+    }
 
-            return cb.and(predicates.toArray(new Predicate[0]));
+    public static Specification<Submission> hasStudentId(Long studentId) {
+        return (root, query, cb) -> {
+            if (studentId == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("studentId"), studentId);
+        };
+    }
+
+    public static Specification<Submission> hasClassId(Long classId) {
+        return (root, query, cb) -> {
+            if (classId == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("classId"), classId);
+        };
+    }
+
+    public static Specification<Submission> hasAssignmentId(Long assignmentId) {
+        return (root, query, cb) -> {
+            if (assignmentId == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("assignmentId"), assignmentId);
+        };
+    }
+
+    public static Specification<Submission> isLatestSubmissionPerStudent() {
+        return (root, query, cb) -> {
+            Subquery<LocalDateTime> subquery = query.subquery(LocalDateTime.class);
+            Root<Submission> subRoot = subquery.from(Submission.class);
+
+            subquery.select(cb.greatest(subRoot.get("createdDate").as(LocalDateTime.class)))
+                    .where(
+                            cb.equal(subRoot.get("studentId"), root.get("studentId")),
+                            cb.equal(subRoot.get("classId"), root.get("classId")),
+                            cb.equal(subRoot.get("assignmentId"), root.get("assignmentId"))
+                    );
+
+            return cb.equal(root.get("createdDate"), subquery);
         };
     }
 }

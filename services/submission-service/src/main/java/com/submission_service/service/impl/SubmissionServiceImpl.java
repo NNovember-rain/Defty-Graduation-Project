@@ -13,9 +13,11 @@ import com.submission_service.client.AuthServiceClient;
 import com.submission_service.client.ClassManagementServiceClient;
 import com.submission_service.client.ContentServiceClient;
 import com.submission_service.mapper.SubmissionMapper;
-import com.submission_service.model.buider.SubmissionSearchBuilder;
 import com.submission_service.model.dto.request.SubmissionRequest;
-import com.submission_service.model.dto.response.*;
+import com.submission_service.model.dto.response.AssignmentResponse;
+import com.submission_service.model.dto.response.ClassResponse;
+import com.submission_service.model.dto.response.SubmissionResponse;
+import com.submission_service.model.dto.response.UserResponse;
 import com.submission_service.model.entity.Submission;
 import com.submission_service.model.event.SubmissionEvent;
 import com.submission_service.repository.ISubmissionRepository;
@@ -33,13 +35,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.KafkaException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -107,7 +114,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .accessToken(accessToken)
                 .contentAssignment(assignmentResponse.getResult().getDescription())
                 .solutionPlantUmlCode(assignmentResponse.getResult().getSolutionCode())
-                .typeUmlName(assignmentResponse.getResult().getTypeUmlName())
+                .typeUmlName("class")
                 .studentPlantUmlCode(submissionRequest.getStudentPlantUmlCode())
                 .build();
 
@@ -126,13 +133,27 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
-    public Page<SubmissionResponse> getAllSubmissions(Pageable pageable, SubmissionSearchBuilder criteria) {
+    public Page<SubmissionResponse> getSubmissions(int page, int size, String sortBy, String sortOrder, String studentName, String studentCode, String assignmentTitle, String className, String classCode, LocalDateTime fromDate, LocalDateTime toDate){
+        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = switch (sortBy) {
+            default -> Sort.by(direction, "createdDate");
+        };
 
-        Specification<Submission> spec = SubmissionSpecification.withCriteria(criteria);
-        Page<Submission> pageResult = submissionRepository.findAll(spec, pageable);
-        log.info("get all submissions");
-        return pageResult.map(submissionMapper::toSubmissionResponse);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Specification<Submission> spec = Specification
+                .where(SubmissionSpecification.hasStudentName(studentName))
+                .and(SubmissionSpecification.hasStudentCode(studentCode))
+                .and(SubmissionSpecification.hasAssignmentTitle(assignmentTitle))
+                .and(SubmissionSpecification.hasClassName(className))
+                .and(SubmissionSpecification.hasClassCode(classCode))
+                .and(SubmissionSpecification.hasCreatedDateBetween(fromDate, toDate));
+
+        Page<Submission> result = submissionRepository.findAll(spec, pageable);
+        log.info("Get all submissions with criteria");
+        return result.map(submissionMapper::toSubmissionResponse);
     }
+
 
     @Override
     public SubmissionResponse getSubmission(Long id) {
@@ -168,12 +189,56 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
-    public Page<SubmissionResponse> getAllSubmissionsForStudent(Pageable pageable, Long assignmentId) {
+    public Page<SubmissionResponse> getAllSubmissionsForStudent(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId, Long studentId){
+
+        if (classId == null || assignmentId == null || studentId == null) {
+            throw new FieldRequiredException("ClassId, AssignmentId and StudentId are required");
+        }
+
+        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, "createdDate");
+        Pageable pageable = PageRequest.of(page, size, sort);
+
         UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
-        log.info("Get userId from context for student submissions");
-        Long userId = currentUser.userId();
-        Page<Submission> submissions = submissionRepository.findByStudentIdAndAssignmentId(userId, assignmentId, pageable);
-        log.info("get all submissions");
+        if(currentUser.roles().contains("ROLE_student") && !Objects.equals(currentUser.userId(), studentId)){
+                throw new NotFoundException("You are not authorized to view other student's submission history");
+        }
+        Specification<Submission> spec = Specification
+                .where(SubmissionSpecification.hasClassId(classId))
+                .and(SubmissionSpecification.hasAssignmentId(assignmentId))
+                .and(SubmissionSpecification.hasStudentId(studentId));
+
+        Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
+        log.info("Get all submissions history for student ID: {} in class ID: {} and assignment ID: {}",
+                studentId, classId, assignmentId);
+
         return submissions.map(submissionMapper::toSubmissionResponse);
     }
+
+    @Override
+    public Page<SubmissionResponse> getSubmissionsForClass(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId) {
+
+        if (classId == null || assignmentId == null) {
+            throw new FieldRequiredException("ClassId and AssignmentId are required");
+        }
+
+        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = switch (sortBy) {
+            case "studentName" -> Sort.by(direction, "studentName");
+            default -> Sort.by(direction, "createdDate");
+        };
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Specification<Submission> spec = Specification
+                .where(SubmissionSpecification.hasClassId(classId))
+                .and(SubmissionSpecification.hasAssignmentId(assignmentId))
+                .and(SubmissionSpecification.isLatestSubmissionPerStudent());
+
+        Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
+        log.info("Get all submissions for class ID: {} and assignment ID: {}", classId, assignmentId);
+
+        return submissions.map(submissionMapper::toSubmissionResponse);
+    }
+
+
 }
