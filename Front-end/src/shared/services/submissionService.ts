@@ -34,7 +34,6 @@ export interface ISubmission {
     umlType?: string
     classCode: string
     createdDate: string
-    submissionStatus: "SUBMITTED" | "PROCESSING" | "COMPLETED" | "REVIEWED" | "FAILED"
     studentPlantUMLCode: string
     solutionCode: string
     score?: number // Thêm điểm số để hiển thị

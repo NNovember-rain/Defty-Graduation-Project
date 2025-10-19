@@ -124,18 +124,7 @@ const Submission: React.FC = () => {
         { key: 'studentCode', label: t('submissionPage.columns.studentCode'), sortable: true },
         { key: 'assignmentTitle', label: t('submissionPage.columns.assignmentTitle'), sortable: true },
         { key: 'classCode', label: t('submissionPage.columns.classCode'), sortable: true },
-        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' },
-        { key: 'submissionStatus', label: t('submissionPage.columns.submissionStatus'), sortable: true, render: (value) => {
-            const v = String(value) as 'SUBMITTED'|'PROCESSING'|'COMPLETED'|'REVIEWED'|'FAILED';
-            const map: Record<typeof v, string> = {
-                SUBMITTED: 'submitted',
-                PROCESSING: 'processing',
-                COMPLETED: 'completed',
-                REVIEWED: 'reviewed',
-                FAILED: 'failed'
-            };
-            return <span className={`status-badge status-badge--${map[v]}`}>{v}</span>;
-        } },
+        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' }
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
@@ -165,20 +154,6 @@ const Submission: React.FC = () => {
             label: t('submissionPage.search.classCode'),
             type: 'text',
             placeholder: t('submissionPage.search.classCodePlaceholder'),
-            gridSpan: 1
-        },
-        {
-            key: 'submissionStatus',
-            label: t('submissionPage.search.submissionStatus'),
-            type: 'select',
-            options: [
-                { value: 'SUBMITTED', label: t('submissionPage.status.submitted') },
-                { value: 'PROCESSING', label: t('submissionPage.status.processing') },
-                { value: 'COMPLETED', label: t('submissionPage.status.completed') },
-                { value: 'REVIEWED', label: t('submissionPage.status.reviewed') },
-                { value: 'FAILED', label: t('submissionPage.status.failed') },
-            ],
-            placeholder: t('submissionPage.search.submissionStatusPlaceholder'),
             gridSpan: 1
         },
         {

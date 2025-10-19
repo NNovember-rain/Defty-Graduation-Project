@@ -43,9 +43,9 @@ public class FeedBackAIServiceImpl implements IFeedBackAIService {
         feedbackAi.setAiModalName(feedbackAiRequest.getAiModalName());
         feedbackAi = feedBackAIRepository.save(feedbackAi);
         submission.setFeedbackAi(feedbackAi);
-        if (submission.getSubmissionStatus() != SubmissionStatus.FAILED) {
-            submission.setSubmissionStatus(SubmissionStatus.COMPLETED);
-        }
+//        if (submission.getSubmissionStatus() != SubmissionStatus.FAILED) {
+//            submission.setSubmissionStatus(SubmissionStatus.COMPLETED);
+//        }
         submissionRepository.save(submission);
         return feedbackAi.getId();
     }
