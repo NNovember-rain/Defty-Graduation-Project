@@ -11,7 +11,7 @@ interface AdvancedRichTextEditorProps {
 const TextEditor: React.FC<AdvancedRichTextEditorProps> = ({ value, onChange, disabled, placeholder }) => {
     return (
         <Editor
-            apiKey="5b0xyzqgac6a8zuzo0h1u9dj8e8uz6shthlqr6me5ialne6i"
+            apiKey="wzzc5fhduwmmxr6wph6lzh7mh2rajmzbv6yp27bkrc1sea3r"
             value={value}
             onEditorChange={onChange}
             init={{
