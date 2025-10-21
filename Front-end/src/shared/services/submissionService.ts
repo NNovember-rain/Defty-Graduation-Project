@@ -69,6 +69,33 @@ export interface FeedbackTeacherResponse {
     // Removed: submissionId, content, comments, teacherName
 }
 
+export const getSubmissionsByClassAndAssignment = async (
+    classId: number,
+    assignmentId: number,
+    options: GetSubmissionsOptions = {}
+): Promise<GetSubmissionsResult> => {
+    const params = {
+        page: (options.page || 1) - 1,
+        size: options.limit || 10,
+        sortBy: options.sortBy || "createdDate",
+        sortOrder: options.sortOrder || "desc",
+    }
+
+    const response = await handleRequest(
+        getWithParams(`${PREFIX_SUBMISSIONS}/class/${classId}/assignment/${assignmentId}`, params)
+    )
+
+    const data = await response.json()
+
+    return {
+        submissions: data.result.content,
+        total: data.result.totalElements,
+        page: data.result.number + 1,
+        limit: data.result.size,
+    } as GetSubmissionsResult
+}
+
+
 export const createSubmission = async (data: Omit<ISubmission, "id" | "createdDate">): Promise<ISubmission> => {
     const response = await handleRequest(postJsonData(`${PREFIX_SUBMISSIONS}`, data))
     const result = await response.json()

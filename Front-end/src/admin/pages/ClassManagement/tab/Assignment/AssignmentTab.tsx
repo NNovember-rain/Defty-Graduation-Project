@@ -21,7 +21,7 @@ import {
     Tooltip,
     Typography
 } from "antd";
-import {IoCalendarOutline} from "react-icons/io5";
+import {IoCalendarOutline, IoFileTrayFull} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
 import {AppstoreOutlined, DownOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
@@ -51,12 +51,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
 
-    const [expandedAssignments, setExpandedAssignments] = useState<number[]>([]);
-
-    const toggleExpand = (id: number) => {
-        setExpandedAssignments(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-        );
+    const goToAssignmentDetails = (assignmentId) => {
+        navigate(`/admin/class/${classId}/assignment/${assignmentId}/detail`);
     };
 
     const handleViewAssignmentDetails = useCallback(
@@ -268,7 +264,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         </Space>
                     </div>
                 </div>
-
                 {/* List / Grid */}
                 {/*{view === "list" ? (*/}
                     <List
@@ -312,44 +307,92 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                         </Text>
                                                     </div>
                                                 </div>
-
-                                                {expandedAssignments.includes(a.id) && (
-                                                    <div style={{ marginTop: 12, padding: 12, background: "#f6f6f6", borderRadius: 8, width: "100%" }}>
-                                                        <Text strong>Số bài đã giao: {a.totalAssigned || 0}</Text><br/>
-                                                        <Text strong>Số bài đã nộp: {a.totalSubmitted || 0}</Text>
-                                                    </div>
-                                                )}
                                             </div>
                                         </Col>
 
-                                        <Col xs={28} sm={3} style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 8 }}>
-                                            <Button
-                                                type="primary"
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleViewAssignmentDetails(a);
-                                                }}
-                                            >
-                                                {t("classDetail.assignment.viewDetails") || "View"}
-                                            </Button>
-                                            <Button
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleExpand(a.id);
-                                                }}
-                                            >
-                                                {expandedAssignments.includes(a.id)
-                                                    ? "Hide"
-                                                    : "Quick"}
-                                            </Button>
+                                        <Col
+                                            xs={28}
+                                            sm={3}
+                                            style={{
+                                                textAlign: "center",
+                                                display: "flex",
+                                                flexDirection: "row",
+                                                justifyContent: "flex-end",
+                                                alignItems: "center",
+                                                gap: 12,
+                                            }}
+                                        >
+                                            {/* Icon xem chi tiết bài tập */}
+                                            <Tooltip title="Xem thông tin bài tập">
+                                                <span
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewAssignmentDetails(a);
+                                                    }}
+                                                    style={{
+                                                        cursor: "pointer",
+                                                        fontSize: "20px",
+                                                        color: "#1677ff",
+                                                        backgroundColor: "rgba(22, 119, 255, 0.1)",
+                                                        padding: "8px",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        justifyContent: "center",
+                                                        alignItems: "center",
+                                                        transition: "all 0.25s ease",
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.2)";
+                                                        e.currentTarget.style.color = "#0958d9";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.1)";
+                                                        e.currentTarget.style.color = "#1677ff";
+                                                    }}
+                                                >
+                                                  <MdOutlineAssignment />
+                                                </span>
+                                                                                        </Tooltip>
+
+                                                                                        {/* Icon xem danh sách bài nộp */}
+                                                                                        <Tooltip title="Xem chi tiết bài nộp">
+                                                <span
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        goToAssignmentDetails(a.id);
+                                                    }}
+                                                    style={{
+                                                        cursor: "pointer",
+                                                        fontSize: "20px",
+                                                        color: "#1890ff",
+                                                        backgroundColor: "rgba(24, 144, 255, 0.1)",
+                                                        padding: "8px",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        justifyContent: "center",
+                                                        alignItems: "center",
+                                                        transition: "all 0.25s ease",
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.2)";
+                                                        e.currentTarget.style.color = "#0958d9";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.1)";
+                                                        e.currentTarget.style.color = "#1890ff";
+                                                    }}
+                                                >
+                                                  <IoFileTrayFull />
+                                                </span>
+                                            </Tooltip>
                                         </Col>
+
+
                                     </Row>
                                 </Card>
                             </List.Item>
                         )}
-                        locale={{ emptyText: t("common.noData") || "No assignments" }}
+                        locale={{emptyText: t("common.noData") || "No assignments"}}
                     />
                 {/*) : (*/}
                 {/*    <List*/}
