@@ -11,6 +11,6 @@ import java.util.Optional;
 
 public interface ISubmissionRepository extends JpaRepository<Submission, Long>, JpaSpecificationExecutor<Submission> {
     Optional<Submission> findByIdAndStatus(Long id, Integer status);
-    Page<Submission> findByStudentIdAndAssignmentId(Long studentId, Long assignmentId, Pageable pageable);
+    Optional<Submission> findTopByClassIdAndAssignmentIdAndStudentIdAndExamModeOrderByCreatedDateDesc(Long classId, Long assignmentId, Long studentId, Boolean examMode);
 }
 

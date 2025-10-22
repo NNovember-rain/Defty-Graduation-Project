@@ -190,8 +190,7 @@ const Submission: React.FC = () => {
                 { value: 'studentCode', label: t('submissionPage.sort.studentCode') },
                 { value: 'assignmentTitle', label: t('submissionPage.sort.assignmentTitle') },
                 { value: 'classCode', label: t('submissionPage.sort.classCode') },
-                { value: 'createdDate', label: t('submissionPage.sort.createdDate') },
-                { value: 'submissionStatus', label: t('submissionPage.sort.submissionStatus') },
+                { value: 'createdDate', label: t('submissionPage.sort.createdDate')},
             ],
             gridSpan: 1
         },

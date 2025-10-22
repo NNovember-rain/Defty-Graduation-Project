@@ -39,7 +39,10 @@ const StudentAssignmentManagerAntD = () => {
         const fetchData = async () => {
             setLoading(true)
             try {
-                const result = await getSubmissionsByClassAndAssignment(classId, assignmentId)
+                if (!classId || !assignmentId) {
+                    throw new Error('Missing classId or assignmentId');
+                }
+                const result = await getSubmissionsByClassAndAssignment(Number(classId), Number(assignmentId))
                 // console.log(result)
                 const submissions = result.submissions.map((s) => ({
                     id: s.id.toString(),
@@ -71,7 +74,7 @@ const StudentAssignmentManagerAntD = () => {
     const selectedStudent = students.find((s) => s.id === selectedStudentId)
 
     const goToAssignmentDetails = (submissionId: string) => {
-        navigate(`/assignments/${submissionId}/details`)
+        navigate(`/admin/assignments/${submissionId}/details`)
     }
 
     const sortMenu = (

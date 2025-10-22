@@ -7,6 +7,7 @@ import com.submission_service.model.entity.Submission;
 import com.submission_service.repository.IFeedbackTeacherRepository;
 import com.submission_service.repository.ISubmissionRepository;
 import com.submission_service.service.IFeedBackTeacherService;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +29,15 @@ public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
     ISubmissionRepository submissionRepository;
 
     @Override
+    @Transactional
     public Long addFeedbackTeacher(FeedbackTeacherRequest feedbackTeacherRequest) {
         Submission submission = submissionRepository.findById(feedbackTeacherRequest.getSubmissionId())
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
         FeedbackTeacher feedbackTeacher = new FeedbackTeacher();
         BeanUtils.copyProperties(feedbackTeacherRequest, feedbackTeacher);
+        feedbackTeacher.setSubmission(submission);
         feedbackTeacher=feedbackTeacherRepository.save(feedbackTeacher);
-        submission.getFeedbackTeachers().add(feedbackTeacher);
-        submissionRepository.save(submission);
+        feedbackTeacher.setSubmission(submission);
         return feedbackTeacher.getId();
     }
 
@@ -58,6 +60,7 @@ public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
             response.setId(ft.getId());
             response.setTeacherId(ft.getTeacherId());
             response.setContent(ft.getContent());
+            response.setCreatedDate(ft.getCreatedDate());
             return response;
         }).toList();
     }
