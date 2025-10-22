@@ -12,6 +12,7 @@ import {IoCalendarOutline} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
 import {AppstoreOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
+import SubmissionModal from "./SubmissionModal";
 import "./AssignmentTabUser.scss";
 
 const { Title, Text } = Typography;
@@ -37,12 +38,26 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [sortBy, setSortBy] = useState<string | undefined>("createdDate");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
+    // Submission modal state
+    const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
+    const [selectedAssignment, setSelectedAssignment] = useState<IAssignment | null>(null);
+
     const handleViewAssignmentDetails = useCallback(
         (rowData: IAssignment) => {
             navigate(`/class/${classId}/problem/${rowData.id}`);
         },
         [navigate, classId]
     );
+
+    const handleOpenSubmissionModal = useCallback((assignment: IAssignment) => {
+        setSelectedAssignment(assignment);
+        setSubmissionModalVisible(true);
+    }, []);
+
+    const handleCloseSubmissionModal = useCallback(() => {
+        setSubmissionModalVisible(false);
+        setSelectedAssignment(null);
+    }, []);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -275,15 +290,25 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                         </Col>
 
                                         <Col xs={24} sm={6} style={{ textAlign: "right" }}>
-                                            <Button
-                                                type="primary"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleViewAssignmentDetails(a);
-                                                }}
-                                            >
-                                                {t("classDetail.assignment.viewDetails") || "View"}
-                                            </Button>
+                                            <Space>
+                                                <Button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewAssignmentDetails(a);
+                                                    }}
+                                                >
+                                                    {t("classDetail.assignment.practice") || "Luyện tập"}
+                                                </Button>
+                                                <Button
+                                                    type="primary"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenSubmissionModal(a);
+                                                    }}
+                                                >
+                                                    {t("classDetail.assignment.submit") || "Nộp bài"}
+                                                </Button>
+                                            </Space>
                                         </Col>
                                     </Row>
                                 </Card>
@@ -301,7 +326,6 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 <Card
                                     hoverable
                                     className="assignment-card"
-                                    onClick={() => handleViewAssignmentDetails(a)}
                                 >
                                     <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
                                         <div className="assignment-icon" style={{ width: "36px", height: "36px", fontSize: "1.25rem" }}>
@@ -322,16 +346,27 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                             </Text>
                                         </div>
                                     </div>
-                                    <Button
-                                        size="small"
-                                        type="primary"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleViewAssignmentDetails(a);
-                                        }}
-                                    >
-                                        {t("classDetail.assignment.viewDetails") || "View"}
-                                    </Button>
+                                    <Space>
+                                        <Button
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewAssignmentDetails(a);
+                                            }}
+                                        >
+                                            {t("classDetail.assignment.practice") || "Luyện tập"}
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            type="primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenSubmissionModal(a);
+                                            }}
+                                        >
+                                            {t("classDetail.assignment.submit") || "Nộp bài"}
+                                        </Button>
+                                    </Space>
                                 </Card>
                             </List.Item>
                         )}
@@ -354,6 +389,16 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                     />
                 </div>
             </main>
+
+            {/* Submission Modal */}
+            {selectedAssignment && (
+                <SubmissionModal
+                    visible={submissionModalVisible}
+                    onCancel={handleCloseSubmissionModal}
+                    assignment={selectedAssignment}
+                    classId={classId}
+                />
+            )}
         </div>
     );
 };

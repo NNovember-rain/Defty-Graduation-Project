@@ -11,9 +11,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -79,15 +76,25 @@ public class SubmissionController {
                 .build();
     }
 
+    @GetMapping("/class/{classId}/assignment/{assignmentId}/last")
+    public ApiResponse<SubmissionResponse> getLastSubmissionExamMode(
+            @PathVariable Long classId,
+            @PathVariable Long assignmentId){
+        SubmissionResponse submissionResponse =submissionService.getLastSubmissionsExamMode(classId,assignmentId);
+        return ApiResponse.<SubmissionResponse>builder()
+                .result(submissionResponse)
+                .build();
+    }
+
     @GetMapping("/class/{classId}/assignment/{assignmentId}")
-    public ApiResponse<Page<SubmissionResponse>> getSubmissions(
+    public ApiResponse<Page<SubmissionResponse>> getLastSubmissionsExamMode(
             @PathVariable Long classId,
             @PathVariable Long assignmentId,
             @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
             @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(value = "sortBy", defaultValue = "createdDate") String sortBy,
             @RequestParam(value = "sortOrder", defaultValue = "desc") String sortOrder) {
-        Page<SubmissionResponse>submissionResponses =submissionService.getSubmissionsForClass(page, size, sortBy, sortOrder, classId,assignmentId);
+        Page<SubmissionResponse>submissionResponses =submissionService.getLastSubmissionsExamMode(page, size, sortBy, sortOrder, classId,assignmentId);
         return ApiResponse.<Page<SubmissionResponse>>builder()
                 .result(submissionResponses)
                 .build();
@@ -97,12 +104,13 @@ public class SubmissionController {
     public ApiResponse<Page<SubmissionResponse>> getSubmissionsForStudent(@PathVariable Long classId,
                                                                           @PathVariable Long assignmentId,
                                                                           @PathVariable Long studentId,
+                                                                          @RequestParam(value = "examMode") Boolean examMode,
                                                                           @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
                                                                           @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
                                                                           @RequestParam(value = "sortBy", defaultValue = "createdDate") String sortBy,
                                                                           @RequestParam(value = "sortOrder", defaultValue = "desc") String sortOrder){
 
-        Page<SubmissionResponse>submissionResponses =submissionService.getAllSubmissionsForStudent(page, size, sortBy, sortOrder, classId,assignmentId, studentId);
+        Page<SubmissionResponse>submissionResponses =submissionService.getSubmissionsHistoryExerciseMode(page, size, sortBy, sortOrder, classId,assignmentId, studentId, examMode);
         return ApiResponse.<Page<SubmissionResponse>>builder()
                 .result(submissionResponses)
                 .build();

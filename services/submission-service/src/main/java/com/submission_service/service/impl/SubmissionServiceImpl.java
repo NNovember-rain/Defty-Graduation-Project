@@ -188,8 +188,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         return "Score added successfully";
     }
 
+
     @Override
-    public Page<SubmissionResponse> getAllSubmissionsForStudent(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId, Long studentId){
+    public Page<SubmissionResponse> getSubmissionsHistoryExerciseMode(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId, Long studentId, Boolean examMode){
 
         if (classId == null || assignmentId == null || studentId == null) {
             throw new FieldRequiredException("ClassId, AssignmentId and StudentId are required");
@@ -206,7 +207,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         Specification<Submission> spec = Specification
                 .where(SubmissionSpecification.hasClassId(classId))
                 .and(SubmissionSpecification.hasAssignmentId(assignmentId))
-                .and(SubmissionSpecification.hasStudentId(studentId));
+                .and(SubmissionSpecification.hasStudentId(studentId))
+                .and(SubmissionSpecification.hasExamMode(examMode));
+
 
         Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
         log.info("Get all submissions history for student ID: {} in class ID: {} and assignment ID: {}",
@@ -216,7 +219,27 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
-    public Page<SubmissionResponse> getSubmissionsForClass(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId) {
+    public SubmissionResponse getLastSubmissionsExamMode(Long classId, Long assignmentId) {
+        if (classId == null || assignmentId == null) {
+            throw new FieldRequiredException("ClassId and AssignmentId are required");
+        }
+
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        Long userId = currentUser.userId();
+        Optional<Submission> submissionOptional = submissionRepository
+                .findTopByClassIdAndAssignmentIdAndStudentIdAndExamModeOrderByCreatedDateDesc(classId, assignmentId, userId, true);
+
+        if (!submissionOptional.isPresent()) {
+            throw new NotFoundException("No exam mode submission found for the given class and assignment");
+        } else {
+            log.info("Get last exam mode submission for student ID: {} in class ID: {} and assignment ID: {}",
+                    userId, classId, assignmentId);
+            return submissionMapper.toSubmissionResponse(submissionOptional.get());
+        }
+    }
+
+    @Override
+    public Page<SubmissionResponse> getLastSubmissionsExamMode(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId) {
 
         if (classId == null || assignmentId == null) {
             throw new FieldRequiredException("ClassId and AssignmentId are required");
@@ -232,13 +255,12 @@ public class SubmissionServiceImpl implements SubmissionService {
         Specification<Submission> spec = Specification
                 .where(SubmissionSpecification.hasClassId(classId))
                 .and(SubmissionSpecification.hasAssignmentId(assignmentId))
-                .and(SubmissionSpecification.isLatestSubmissionPerStudent());
+                .and(SubmissionSpecification.isLatestSubmissionPerWithExamMode());
 
         Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
         log.info("Get all submissions for class ID: {} and assignment ID: {}", classId, assignmentId);
 
         return submissions.map(submissionMapper::toSubmissionResponse);
     }
-
 
 }

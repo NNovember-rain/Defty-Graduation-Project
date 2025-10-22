@@ -479,6 +479,8 @@
       "inactive": "Inactive",
       "active": "Active",
       "viewDetails": "View",
+      "practice": "Practice",
+      "submit": "Submit",
       "create": "Create",
       "createNew": "Create new assignment",
       "assigned": "Assign"

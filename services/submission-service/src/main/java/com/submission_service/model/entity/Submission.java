@@ -40,6 +40,10 @@ public class Submission extends BaseEntity {
     @Column
     Double score;
 
+    @Column
+    @Builder.Default
+    Boolean examMode=false;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     String studentPlantUMLCode;
 
