@@ -114,7 +114,7 @@ public class SubmissionSpecification {
         };
     }
 
-    public static Specification<Submission> isLatestSubmissionPerStudent() {
+    public static Specification<Submission> isLatestSubmissionPerWithExamMode() {
         return (root, query, cb) -> {
             Subquery<LocalDateTime> subquery = query.subquery(LocalDateTime.class);
             Root<Submission> subRoot = subquery.from(Submission.class);
@@ -123,10 +123,24 @@ public class SubmissionSpecification {
                     .where(
                             cb.equal(subRoot.get("studentId"), root.get("studentId")),
                             cb.equal(subRoot.get("classId"), root.get("classId")),
-                            cb.equal(subRoot.get("assignmentId"), root.get("assignmentId"))
+                            cb.equal(subRoot.get("assignmentId"), root.get("assignmentId")),
+                            cb.equal(subRoot.get("examMode"), true)
                     );
 
-            return cb.equal(root.get("createdDate"), subquery);
+            return cb.and(
+                    cb.equal(root.get("createdDate"), subquery),
+                    cb.equal(root.get("examMode"), true)
+            );
         };
     }
+
+    public static Specification<Submission> hasExamMode(Boolean examMode) {
+        return (root, query, cb) -> {
+            if (examMode == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("examMode"), examMode);
+        };
+    }
+
 }

@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Getter
@@ -15,6 +16,6 @@ public class FeedbackTeacherResponse {
     Long id;
     String content;
     Long teacherId;
-    LocalDate createdDate;
-    LocalDate updatedDate;
+    LocalDateTime createdDate;
+    LocalDateTime updatedDate;
 }
