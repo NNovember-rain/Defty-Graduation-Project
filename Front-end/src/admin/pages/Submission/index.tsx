@@ -91,7 +91,6 @@ const Submission: React.FC = () => {
                 studentName: currentFilters.studentName || undefined,
                 studentCode: currentFilters.studentCode || undefined,
                 assignmentTitle: currentFilters.assignmentTitle || undefined,
-                umlType: currentFilters.umlType || undefined,
                 classCode: currentFilters.classCode || undefined,
                 submissionStatus: currentFilters.submissionStatus as 'SUBMITTED' | 'PROCESSING' | 'COMPLETED' | 'REVIEWED' | 'FAILED' || undefined,
                 fromDate: currentFilters.fromDate || undefined,
@@ -124,20 +123,8 @@ const Submission: React.FC = () => {
         { key: 'studentName', label: t('submissionPage.columns.studentName'), sortable: true },
         { key: 'studentCode', label: t('submissionPage.columns.studentCode'), sortable: true },
         { key: 'assignmentTitle', label: t('submissionPage.columns.assignmentTitle'), sortable: true },
-        { key: 'umlType', label: t('submissionPage.columns.umlType'), sortable: true },
         { key: 'classCode', label: t('submissionPage.columns.classCode'), sortable: true },
-        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' },
-        { key: 'submissionStatus', label: t('submissionPage.columns.submissionStatus'), sortable: true, render: (value) => {
-            const v = String(value) as 'SUBMITTED'|'PROCESSING'|'COMPLETED'|'REVIEWED'|'FAILED';
-            const map: Record<typeof v, string> = {
-                SUBMITTED: 'submitted',
-                PROCESSING: 'processing',
-                COMPLETED: 'completed',
-                REVIEWED: 'reviewed',
-                FAILED: 'failed'
-            };
-            return <span className={`status-badge status-badge--${map[v]}`}>{v}</span>;
-        } },
+        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' }
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
@@ -163,31 +150,10 @@ const Submission: React.FC = () => {
             gridSpan: 1
         },
         {
-            key: 'umlType',
-            label: t('submissionPage.search.umlType'),
-            type: 'text',
-            placeholder: t('submissionPage.search.umlTypePlaceholder'),
-            gridSpan: 1
-        },
-        {
             key: 'classCode',
             label: t('submissionPage.search.classCode'),
             type: 'text',
             placeholder: t('submissionPage.search.classCodePlaceholder'),
-            gridSpan: 1
-        },
-        {
-            key: 'submissionStatus',
-            label: t('submissionPage.search.submissionStatus'),
-            type: 'select',
-            options: [
-                { value: 'SUBMITTED', label: t('submissionPage.status.submitted') },
-                { value: 'PROCESSING', label: t('submissionPage.status.processing') },
-                { value: 'COMPLETED', label: t('submissionPage.status.completed') },
-                { value: 'REVIEWED', label: t('submissionPage.status.reviewed') },
-                { value: 'FAILED', label: t('submissionPage.status.failed') },
-            ],
-            placeholder: t('submissionPage.search.submissionStatusPlaceholder'),
             gridSpan: 1
         },
         {
@@ -224,8 +190,7 @@ const Submission: React.FC = () => {
                 { value: 'studentCode', label: t('submissionPage.sort.studentCode') },
                 { value: 'assignmentTitle', label: t('submissionPage.sort.assignmentTitle') },
                 { value: 'classCode', label: t('submissionPage.sort.classCode') },
-                { value: 'createdDate', label: t('submissionPage.sort.createdDate') },
-                { value: 'submissionStatus', label: t('submissionPage.sort.submissionStatus') },
+                { value: 'createdDate', label: t('submissionPage.sort.createdDate')},
             ],
             gridSpan: 1
         },

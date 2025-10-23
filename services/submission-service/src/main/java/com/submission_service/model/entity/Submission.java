@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
@@ -18,6 +20,12 @@ public class Submission extends BaseEntity {
     Long studentId;
 
     @Column(nullable = false)
+    Long assignmentId;
+
+    @Column(nullable = false)
+    Long classId;
+
+    @Column(nullable = false)
     String studentName;
 
     @Column(nullable = false)
@@ -26,25 +34,18 @@ public class Submission extends BaseEntity {
     @Column(nullable = false)
     String assignmentTitle;
 
-    @Column(nullable = false)
-    Long assignmentId;
-
-    @Column(nullable = false)
-    String umlType;
-
-    @Column(nullable = false)
-    Long classId;
-
-    @Column(nullable = false)
+    @Column
     String classCode;
 
     @Column
     Double score;
 
+    @Column
+    @Builder.Default
+    Boolean examMode=false;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     String studentPlantUMLCode;
-
-//    String submissionFile;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -54,8 +55,7 @@ public class Submission extends BaseEntity {
     @JoinColumn(name = "feedback_ai_id", referencedColumnName = "id")
     private FeedbackAi feedbackAi;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "feedback_teacher_id", referencedColumnName = "id")
-    private FeedbackTeacher feedbackTeacher;
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<FeedbackTeacher> feedbackTeachers;
 
 }

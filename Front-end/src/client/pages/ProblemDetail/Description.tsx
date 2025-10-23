@@ -14,9 +14,9 @@ const Description: React.FC<Props> = ({ assignment, isLoading, error }) => {
     const { t } = useTranslation();
 
     const safeHtml = React.useMemo(() => {
-        const html = assignment?.description ?? "";
+        const html = assignment?.commonDescription ?? "";
         return DOMPurify.sanitize(html);
-    }, [assignment?.description]);
+    }, [assignment?.commonDescription]);
 
     return (
         <div className="description">
@@ -44,7 +44,7 @@ const Description: React.FC<Props> = ({ assignment, isLoading, error }) => {
                         <h2>{assignment.title}</h2>
                     )}
 
-                    {assignment.description && (
+                    {assignment.commonDescription && (
                         <div className="description__assignment-text">
                             <div
                                 className="description__assignment-html"

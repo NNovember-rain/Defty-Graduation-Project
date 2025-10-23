@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
 import { getAssignmentById, type IAssignment } from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
-import { createSubmission } from "../../../shared/services/submissionService.ts";
+import { createSubmission, type SubmissionRequest } from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
 
 /** ========= PlantUML helpers ========= */
@@ -145,11 +145,11 @@ const ProblemDetail: React.FC = () => {
     const handleSubmitCode = async () => {
         setIsSubmitting(true);
         try {
-            const submissionData = {
-                studentId: 1, // FIXME: bỏ khi backend lấy id từ context security
+            const submissionData: SubmissionRequest = {
                 classId: Number(classId), // Chuyển đổi URL param sang số
                 assignmentId: Number(problemId), // Chuyển đổi URL param sang số
                 studentPlantUmlCode: code, // Code PlantUML từ editor
+                examMode: false // Set examMode = false cho trang nộp bài thường
             };
 
             // Bước 1: Validate dữ liệu trước khi gửi đi

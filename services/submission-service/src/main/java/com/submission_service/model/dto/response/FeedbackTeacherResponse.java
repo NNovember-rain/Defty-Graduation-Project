@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Getter
@@ -12,7 +14,8 @@ import java.util.Date;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeedbackTeacherResponse {
     Long id;
-    Date createdDate= new Date();
-    Date updatedDate=new Date();
-    String feedback;
+    String content;
+    Long teacherId;
+    LocalDateTime createdDate;
+    LocalDateTime updatedDate;
 }

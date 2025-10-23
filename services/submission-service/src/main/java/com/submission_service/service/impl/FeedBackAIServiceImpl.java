@@ -4,11 +4,8 @@ package com.submission_service.service.impl;
 import com.example.common_library.exceptions.NotFoundException;
 import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.dto.request.FeedbackAiRequest;
-import com.submission_service.model.dto.request.FeedbackTeacherRequest;
 import com.submission_service.model.dto.response.FeedbackAIResponse;
-import com.submission_service.model.dto.response.FeedbackTeacherResponse;
 import com.submission_service.model.entity.FeedbackAi;
-import com.submission_service.model.entity.FeedbackTeacher;
 import com.submission_service.model.entity.Submission;
 import com.submission_service.repository.IFeedBackAiRepository;
 import com.submission_service.repository.IFeedbackTeacherRepository;
@@ -22,11 +19,6 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -51,9 +43,9 @@ public class FeedBackAIServiceImpl implements IFeedBackAIService {
         feedbackAi.setAiModalName(feedbackAiRequest.getAiModalName());
         feedbackAi = feedBackAIRepository.save(feedbackAi);
         submission.setFeedbackAi(feedbackAi);
-        if (submission.getSubmissionStatus() != SubmissionStatus.FAILED) {
-            submission.setSubmissionStatus(SubmissionStatus.COMPLETED);
-        }
+//        if (submission.getSubmissionStatus() != SubmissionStatus.FAILED) {
+//            submission.setSubmissionStatus(SubmissionStatus.COMPLETED);
+//        }
         submissionRepository.save(submission);
         return feedbackAi.getId();
     }

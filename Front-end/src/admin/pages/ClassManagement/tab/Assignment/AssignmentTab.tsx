@@ -7,11 +7,25 @@ import {
     type IAssignment
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
-import {Button, Card, Col, List, Pagination, Row, Select, Space, Tooltip, Typography} from "antd";
-import {IoCalendarOutline} from "react-icons/io5";
+import {
+    Button,
+    Card,
+    Col,
+    Dropdown,
+    List,
+    type MenuProps,
+    Pagination,
+    Row,
+    Select,
+    Space,
+    Tooltip,
+    Typography
+} from "antd";
+import {IoCalendarOutline, IoFileTrayFull} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
-import {AppstoreOutlined, UnorderedListOutlined} from "@ant-design/icons";
+import {AppstoreOutlined, DownOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
+import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -35,10 +49,41 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [view, setView] = useState<"grid" | "list">("list");
     const [sortBy, setSortBy] = useState<string | undefined>("createdDate");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
+    const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
 
-    const handleViewAssignmentDetails = useCallback((rowData: IAssignment) => {
-        navigate(`/admin/content/assignments/update/${rowData.id}`);
-    }, [navigate]);
+    const goToAssignmentDetails = (assignmentId) => {
+        navigate(`/admin/class/${classId}/assignment/${assignmentId}/detail`);
+    };
+
+    const handleViewAssignmentDetails = useCallback(
+        (rowData: IAssignment) => {
+            navigate(`/admin/content/assignments/update/${rowData.id}`);
+        },
+        [navigate]
+    );
+
+    // Dropdown menu
+    const menuItems: MenuProps["items"] = [
+        {
+            key: "create",
+            label: t("classDetail.assignment.createNew") || "Create New",
+            onClick: () => navigate(`/admin/content/assignments/create?classId=${classId}`)
+        },
+        {
+            key: "assign",
+            label: t("classDetail.assignment.assign") || "Assign Assignment",
+            onClick: () => showAssignmentModal()
+        }
+    ];
+
+    const showAssignmentModal = React.useCallback(() => {
+        setIsAssignmentModalVisible(true);
+    }, []);
+
+    const hideAssignmentModal = () => {
+        setIsAssignmentModalVisible(false);
+    };
+
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -53,7 +98,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
             const response = await getAssignmentsByClassId(classId, options);
             const formatted = (response.assignments || []).map((a) => {
-                const classInfo = a.assignmentClasses?.find((ac: { classId: number; }) => ac.classId === classId);
+                const classInfo = a.assignmentClasses?.find((ac: { classId: number }) => ac.classId === classId);
                 return {
                     ...a,
                     createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
@@ -81,7 +126,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         if (size <= 8) return 3;
         return 3;
     }, [view, size]);
-
 
     const onChangePage = (p: number, pageSize?: number) => {
         setPage(p);
@@ -210,11 +254,18 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                     onClick={() => onToggleView("grid")}
                                 />
                             </Tooltip>
+
+                            {/* Dropdown Create / Assign */}
+                            <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={["click"]}>
+                                <Button type="primary">
+                                    {t("classDetail.assignment.create") || "Create Assignment"} <DownOutlined />
+                                </Button>
+                            </Dropdown>
                         </Space>
                     </div>
                 </div>
-
-                {view === "list" ? (
+                {/* List / Grid */}
+                {/*{view === "list" ? (*/}
                     <List
                         itemLayout="vertical"
                         dataSource={assignments}
@@ -228,116 +279,189 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                         boxShadow: "0 6px 18px rgba(0,0,0,0.04)"
                                     }}
                                 >
+
                                     <Row gutter={[16, 16]} align="middle">
-                                        <Col xs={24} sm={18}>
-                                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                                                <div style={{
-                                                    width: 56,
-                                                    height: 56,
-                                                    borderRadius: 10,
-                                                    background: "#fff7e6",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    color: "#fa8c16",
-                                                    fontSize: 24
-                                                }}>
-                                                    <MdOutlineAssignment />
-                                                </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <Title level={5} style={{ margin: 0 }}>{a.title}</Title>
-                                                    <Text type="secondary" style={{ display: "block"}}>
-                                                        {a.typeUmlName || t("common.noType") || "No UML type"}
-                                                    </Text>
-                                                    <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                        <IoCalendarOutline />
-                                                        {a.startDate && a.endDate
-                                                            ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
-                                                            : "-"}
-                                                    </Text>
+                                        <Col xs={24} sm={21}>
+                                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: "column" }}>
+                                                <div style={{ display: "flex", gap: 12, width: "100%" }}>
+                                                    <div style={{
+                                                        width: 56,
+                                                        height: 56,
+                                                        borderRadius: 10,
+                                                        background: "#fff7e6",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        color: "#fa8c16",
+                                                        fontSize: 24
+                                                    }}>
+                                                        <MdOutlineAssignment />
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <Title level={5} style={{ margin: 0 }}>{a.title}</Title>
+                                                        <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                            <IoCalendarOutline />
+                                                            {a.startDate && a.endDate
+                                                                ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
+                                                                : "-"}
+                                                        </Text>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </Col>
 
-                                        <Col xs={24} sm={6} style={{ textAlign: "right" }}>
-                                            <Button color="primary" variant="filled" onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleViewAssignmentDetails(a);
-                                            }}>
-                                                {t("classDetail.assignment.viewDetails") || "View"}
-                                            </Button>
+                                        <Col
+                                            xs={28}
+                                            sm={3}
+                                            style={{
+                                                textAlign: "center",
+                                                display: "flex",
+                                                flexDirection: "row",
+                                                justifyContent: "flex-end",
+                                                alignItems: "center",
+                                                gap: 12,
+                                            }}
+                                        >
+                                            {/* Icon xem chi tiết bài tập */}
+                                            <Tooltip title="Xem thông tin bài tập">
+                                                <span
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewAssignmentDetails(a);
+                                                    }}
+                                                    style={{
+                                                        cursor: "pointer",
+                                                        fontSize: "20px",
+                                                        color: "#1677ff",
+                                                        backgroundColor: "rgba(22, 119, 255, 0.1)",
+                                                        padding: "8px",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        justifyContent: "center",
+                                                        alignItems: "center",
+                                                        transition: "all 0.25s ease",
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.2)";
+                                                        e.currentTarget.style.color = "#0958d9";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.1)";
+                                                        e.currentTarget.style.color = "#1677ff";
+                                                    }}
+                                                >
+                                                  <MdOutlineAssignment />
+                                                </span>
+                                                                                        </Tooltip>
+
+                                                                                        {/* Icon xem danh sách bài nộp */}
+                                                                                        <Tooltip title="Xem chi tiết bài nộp">
+                                                <span
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        goToAssignmentDetails(a.id);
+                                                    }}
+                                                    style={{
+                                                        cursor: "pointer",
+                                                        fontSize: "20px",
+                                                        color: "#1890ff",
+                                                        backgroundColor: "rgba(24, 144, 255, 0.1)",
+                                                        padding: "8px",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        justifyContent: "center",
+                                                        alignItems: "center",
+                                                        transition: "all 0.25s ease",
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.2)";
+                                                        e.currentTarget.style.color = "#0958d9";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.1)";
+                                                        e.currentTarget.style.color = "#1890ff";
+                                                    }}
+                                                >
+                                                  <IoFileTrayFull />
+                                                </span>
+                                            </Tooltip>
                                         </Col>
+
+
                                     </Row>
                                 </Card>
                             </List.Item>
                         )}
-                        locale={{ emptyText: t("common.noData") || "No assignments" }}
+                        locale={{emptyText: t("common.noData") || "No assignments"}}
                     />
-                ) : (
-                    <List
-                        grid={{ gutter: 16, column: gridColumns }}
-                        dataSource={assignments}
-                        locale={{ emptyText: t("common.noData") || "No assignments" }}
-                        renderItem={(a) => (
-                            <List.Item key={a.id}>
-                                <Card
-                                    hoverable
-                                    style={{
-                                        borderRadius: 12,
-                                        transition: "transform .12s ease, box-shadow .12s ease",
-                                        height: "100%",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "space-between"
-                                    }}
-                                    onClick={() => console.log("Open assignment", a.id)}
-                                >
-                                    <div>
-                                        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
-                                            <div style={{
-                                                width: 44,
-                                                height: 44,
-                                                borderRadius: 10,
-                                                background: "#fff7e6",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                color: "#fa8c16",
-                                                fontSize: 20
-                                            }}>
-                                                <MdOutlineAssignment />
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <Title level={5} style={{ margin: 0, lineHeight: 1.1 }}>{a.title}</Title>
-                                                <Text type="secondary" style={{ display: "block"}}>
-                                                    {a.typeUmlName || t("common.noType") || "No UML type"}
-                                                </Text>
-                                                <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                    <IoCalendarOutline />
-                                                    {a.startDate && a.endDate
-                                                        ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
-                                                        : "-"}
-                                                </Text>
-                                            </div>
-                                        </div>
-                                    </div>
+                {/*) : (*/}
+                {/*    <List*/}
+                {/*        grid={{ gutter: 16, column: gridColumns }}*/}
+                {/*        dataSource={assignments}*/}
+                {/*        locale={{ emptyText: t("common.noData") || "No assignments" }}*/}
+                {/*        renderItem={(a) => (*/}
+                {/*            <List.Item key={a.id}>*/}
+                {/*                <Card*/}
+                {/*                    hoverable*/}
+                {/*                    style={{*/}
+                {/*                        borderRadius: 12,*/}
+                {/*                        transition: "transform .12s ease, box-shadow .12s ease",*/}
+                {/*                        height: "100%",*/}
+                {/*                        display: "flex",*/}
+                {/*                        flexDirection: "column",*/}
+                {/*                        justifyContent: "space-between"*/}
+                {/*                    }}*/}
+                {/*                    onClick={() => console.log("Open assignment", a.id)}*/}
+                {/*                >*/}
+                {/*                    <div>*/}
+                {/*                        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>*/}
+                {/*                            <div style={{*/}
+                {/*                                width: 44,*/}
+                {/*                                height: 44,*/}
+                {/*                                borderRadius: 10,*/}
+                {/*                                background: "#fff7e6",*/}
+                {/*                                display: "flex",*/}
+                {/*                                alignItems: "center",*/}
+                {/*                                justifyContent: "center",*/}
+                {/*                                color: "#fa8c16",*/}
+                {/*                                fontSize: 20*/}
+                {/*                            }}>*/}
+                {/*                                <MdOutlineAssignment />*/}
+                {/*                            </div>*/}
+                {/*                            <div style={{ flex: 1 }}>*/}
+                {/*                                <Title level={5} style={{ margin: 0, lineHeight: 1.1 }}>{a.title}</Title>*/}
+                {/*                                <Text type="secondary" style={{ display: "block" }}>*/}
+                {/*                                    {a.typeUmlName || t("common.noType") || "No UML type"}*/}
+                {/*                                </Text>*/}
+                {/*                                <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>*/}
+                {/*                                    <IoCalendarOutline />*/}
+                {/*                                    {a.startDate && a.endDate*/}
+                {/*                                        ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`*/}
+                {/*                                        : "-"}*/}
+                {/*                                </Text>*/}
+                {/*                            </div>*/}
+                {/*                        </div>*/}
+                {/*                    </div>*/}
 
-                                    <div style={{ marginTop: 8 }}>
-                                        <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                                            <Button size="small" color="primary" variant="filled"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleViewAssignmentDetails(a);
-                                                    }}>
-                                                {t("classDetail.assignment.viewDetails") || "View"}
-                                            </Button>
-                                        </Space>
-                                    </div>
-                                </Card>
-                            </List.Item>
-                        )}
-                    />
-                )}
+                {/*                    <div style={{ marginTop: 8 }}>*/}
+                {/*                        <Space style={{ width: "100%", justifyContent: "space-between" }}>*/}
+                {/*                            <Button*/}
+                {/*                                size="small"*/}
+                {/*                                type="primary"*/}
+                {/*                                onClick={(e) => {*/}
+                {/*                                    e.stopPropagation();*/}
+                {/*                                    handleViewAssignmentDetails(a);*/}
+                {/*                                }}*/}
+                {/*                            >*/}
+                {/*                                {t("classDetail.assignment.viewDetails") || "View"}*/}
+                {/*                            </Button>*/}
+                {/*                        </Space>*/}
+                {/*                    </div>*/}
+                {/*                </Card>*/}
+                {/*            </List.Item>*/}
+                {/*        )}*/}
+                {/*    />*/}
+                {/*)}*/}
 
                 {/* Pagination */}
                 <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
@@ -354,6 +478,12 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         }
                     />
                 </div>
+                <AssignAssignmentModal
+                    visible={isAssignmentModalVisible}
+                    onClose={hideAssignmentModal}
+                    classIds={[classId]}
+                    onAssigned={fetchData}
+                />
             </main>
         </div>
     );

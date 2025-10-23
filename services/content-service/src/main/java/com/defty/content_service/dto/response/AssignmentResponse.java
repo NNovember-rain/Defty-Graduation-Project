@@ -1,6 +1,5 @@
 package com.defty.content_service.dto.response;
 
-import com.defty.content_service.entity.AssignmentClass;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,14 +15,15 @@ import java.util.List;
 public class AssignmentResponse {
     Long id;
     String title;
-    String description;
+    String commonDescription;
     Long userId;
-    String typeUmlName;
-    Long typeUmlId;
-    String solutionCode;
+//    String typeUmlName;
+//    Long typeUmlId;
+//    String solutionCode;
     String assignmentCode;
     Integer isActive;
     List<Long> classIds;
     Date createdDate;
     List<AssignmentClassResponse> assignmentClasses;
+    List<ModuleResponse> modules;
 }

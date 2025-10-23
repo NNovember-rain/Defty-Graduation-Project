@@ -13,6 +13,5 @@ public class SubmissionRequest {
     Long classId;
     Long assignmentId;
     String studentPlantUmlCode;
-
-//    private MultipartFile plantUmlFile;
+    Boolean examMode;
 }
