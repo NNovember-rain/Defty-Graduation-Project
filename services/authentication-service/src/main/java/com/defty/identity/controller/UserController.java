@@ -35,8 +35,8 @@ public class UserController {
                 .build();
     }
 
-//    @PreAuthorize("hasRole('admin')")
-    @GetMapping
+
+    @GetMapping//    @PreAuthorize("hasRole('admin')")
     ApiResponse<Page<UserResponse>> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
                                              @RequestParam(value = "size", defaultValue = "10") int size,
                                              @RequestParam(required = false) String username,

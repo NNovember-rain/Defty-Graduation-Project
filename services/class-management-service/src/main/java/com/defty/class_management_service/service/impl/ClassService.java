@@ -22,9 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -147,6 +145,24 @@ public class ClassService implements IClassService {
         classRepository.save(classEntity);
         return new ApiResponse<>(200, "update class status successfully", classEntity.getId());
     }
+
+    @Override
+    public ApiResponse<Map<Long, ClassResponse>> getClassesByIds(List<Long> ids) {
+        List<ClassEntity> classEntities = classRepository.findAllActiveByIdIn(ids);
+
+        if (classEntities.isEmpty()) {
+            throw new NotFoundException("No active classes found for given IDs: " + ids);
+        }
+
+        Map<Long, ClassResponse> resultMap = new HashMap<>();
+        for (ClassEntity entity : classEntities) {
+            resultMap.put(entity.getId(), classMapper.toClassResponse(entity));
+        }
+
+        return new ApiResponse<>(200, "Get active classes by IDs successfully", resultMap);
+    }
+
+
 
 //    @Transactional
 //    public ApiResponse<List<EnrollmentDto>> addStudentsToClass(Long classId, List<Long> studentIds) {
