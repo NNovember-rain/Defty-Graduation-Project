@@ -1,7 +1,6 @@
 import { Job } from 'bull';
 import logger from '../config/logger';
 import umlProcessingQueue from '../queues/uml-processing.queue';
-// import { processPdfWithAI, AIValidationError, FileProcessingError, parseStructuredError } from '../services/pdf-processor.service';
 import { publishMessage } from '../kafka/producer';
 import { UmlInput } from '../types/uml.types';
 import {processUmlWithAI} from "../services/plantuml-processor.service";
@@ -21,7 +20,6 @@ umlProcessingQueue.process(
         try {
             const data = await processUmlWithAI(job.data);
 
-            // Publish result to Kafka
             await publishMessage(KAFKA_TOPIC_UML_SUBMISSION_PROCESSED, {
                 submissionId: job.data.id,
                 status: 'success',
@@ -83,6 +81,7 @@ umlProcessingQueue.process(
             logger.error({
                 message: 'Worker failed job',
                 event_type: 'worker_job_failed',
+                jobId: job.data.id,
                 submissionId: job.data.id,
                 error_message: error.message
             });
