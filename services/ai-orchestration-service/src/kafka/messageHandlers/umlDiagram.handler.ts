@@ -1,6 +1,6 @@
 import { getPrompts } from "../../services/prompt.service";
 import { IPrompt } from "../../models/prompt.model";
-import generateAIContent from "../../client/googleAiApi"; // Your updated service
+import generateAIContent from "../../client/googleAiApi";
 import logger from "../../config/logger";
 import { getErrorMessage, getErrorStack } from "../../utils/errorHandler";
 import sendFeedBack from "../../client/feedbackServiceApi";
