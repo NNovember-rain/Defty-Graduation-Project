@@ -31,10 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -185,6 +182,20 @@ public class AssignmentServiceImpl implements AssignmentService {
         return toAssignmentResponse(updatedAssignment);
     }
 
+    @Override
+    public Map<Long, AssignmentResponse> getAssignmentsByIds(List<Long> assignmentIds) {
+        if (assignmentIds == null || assignmentIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Assignment> assignments = assignmentRepository.findAllById(assignmentIds);
+
+        return assignments.stream()
+                .collect(Collectors.toMap(
+                        Assignment::getId,
+                        this::toAssignmentResponse
+                ));
+    }
 
     private Assignment createOrUpdateAssignment(Assignment assignment, AssignmentRequest request) {
         UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
@@ -201,34 +212,43 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw new IllegalArgumentException("Modules cannot be empty");
         }
 
-        // Lấy TypeUML đầu tiên của module đầu tiên để sinh assignmentCode
-        ModuleRequest firstModuleReq = request.getModules().get(0);
-        if (firstModuleReq.getTypeUmlIds() == null || firstModuleReq.getTypeUmlIds().isEmpty()) {
-            throw new IllegalArgumentException("Module must have at least one TypeUML");
+        // Lấy TypeUML đầu tiên để sinh assignmentCode (nếu assignment mới)
+        if (assignment.getAssignmentCode() == null || assignment.getAssignmentCode().isEmpty()) {
+            ModuleRequest firstModuleReq = request.getModules().get(0);
+            if (firstModuleReq.getTypeUmlIds() == null || firstModuleReq.getTypeUmlIds().isEmpty()) {
+                throw new IllegalArgumentException("Module must have at least one TypeUML");
+            }
+
+            TypeUML firstTypeUML = typeUMLRepository.findById(firstModuleReq.getTypeUmlIds().get(0))
+                    .orElseThrow(() -> new NotFoundException("TypeUML not found"));
+
+            String prefix = firstTypeUML.getName().replaceAll("\\s+", "").chars()
+                    .filter(Character::isUpperCase)
+                    .mapToObj(c -> String.valueOf((char) c))
+                    .collect(Collectors.joining());
+            if (prefix.isEmpty()) {
+                prefix = firstTypeUML.getName()
+                        .substring(0, Math.min(firstTypeUML.getName().length(), 3))
+                        .toUpperCase();
+            }
+
+            int randomNum = (int) (Math.random() * 90000) + 10000;
+            assignment.setAssignmentCode(prefix + "-" + randomNum);
         }
-        TypeUML firstTypeUML = typeUMLRepository.findById(firstModuleReq.getTypeUmlIds().get(0))
-                .orElseThrow(() -> new NotFoundException("TypeUML not found"));
 
-        String prefix = firstTypeUML.getName().replaceAll("\\s+", "").chars()
-                .filter(Character::isUpperCase)
-                .mapToObj(c -> String.valueOf((char) c))
-                .collect(Collectors.joining());
-        if (prefix.isEmpty()) {
-            prefix = firstTypeUML.getName().substring(0, Math.min(firstTypeUML.getName().length(), 3)).toUpperCase();
+        // 🧩 Xử lý modules
+        if (assignment.getModules() == null) {
+            assignment.setModules(new ArrayList<>());
+        } else {
+            assignment.getModules().clear(); // xóa modules cũ
         }
 
-        int randomNum = (int) (Math.random() * 90000) + 10000;
-        String assignmentCode = prefix + "-" + randomNum;
-        assignment.setAssignmentCode(assignmentCode);
-
-        // Mapping các Module từ request
-        List<ModuleEntity> modules = new ArrayList<>();
         for (ModuleRequest moduleReq : request.getModules()) {
             ModuleEntity module = new ModuleEntity();
             module.setModuleName(moduleReq.getModuleName());
             module.setModuleDescription(moduleReq.getModuleDescription());
-            module.setAssignment(assignment); // không lỗi
             module.setSolutionCode(moduleReq.getSolutionCode());
+            module.setAssignment(assignment);
 
             // Mapping TypeUMLs
             Set<TypeUML> typeUMLs = new HashSet<>();
@@ -239,17 +259,19 @@ public class AssignmentServiceImpl implements AssignmentService {
             }
             module.setTypeUMLs(typeUMLs);
 
-            modules.add(module);
+            assignment.getModules().add(module);
         }
 
-        assignment.setModules(modules);
         assignment = assignmentRepository.save(assignment);
-        assignment.getModules().forEach(module -> {
-            module.setModuleCode(assignmentCode + "-" + module.getId());
-        });
+
+        // Gán code cho từng module sau khi đã có ID
+        for (ModuleEntity module : assignment.getModules()) {
+            module.setModuleCode(assignment.getAssignmentCode() + "-" + module.getId());
+        }
 
         return assignmentRepository.save(assignment);
     }
+
 
 
     private void validateClassIds(List<Long> classIds) {

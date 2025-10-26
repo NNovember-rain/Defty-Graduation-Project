@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -64,6 +65,15 @@ public class UserController {
         List<UserResponse> result = userService.getUsersByIds(userIds);
         return ApiResponse.<List<UserResponse>>builder()
                 .result(result)
+                .build();
+    }
+
+    @GetMapping("/list")
+    public ApiResponse<Map<Long, UserResponse>> getExerciseMap(@RequestParam List<Long> userIds) {
+        Map<Long, UserResponse> result = userService.getUsersDtoByIds(userIds);
+        return ApiResponse.<Map<Long, UserResponse>>builder()
+                .result(result)
+                .message("Fetched user successfully")
                 .build();
     }
 

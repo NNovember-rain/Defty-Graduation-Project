@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/assignments")
@@ -106,4 +107,14 @@ public class AssignmentController {
                 .message("Assignment deleted successfully")
                 .build();
     }
+
+    @GetMapping("/list")
+    public ApiResponse<Map<Long, AssignmentResponse>> getExerciseMap(@RequestParam List<Long> assignmentIds) {
+        Map<Long, AssignmentResponse> result = assignmentService.getAssignmentsByIds(assignmentIds);
+        return ApiResponse.<Map<Long, AssignmentResponse>>builder()
+                .result(result)
+                .message("Fetched assignment successfully")
+                .build();
+    }
+
 }
