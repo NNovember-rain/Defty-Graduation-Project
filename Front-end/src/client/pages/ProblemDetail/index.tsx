@@ -6,6 +6,7 @@ import CodeEditor from "./CodeEditor.tsx";
 import Result from "./Result";
 import SubmissionHistory from "./SubmissionHistory";
 import "./ProblemDetail.scss";
+import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
 import { getAssignmentById, type IAssignment } from "../../../shared/services/assignmentService";
@@ -73,6 +74,9 @@ const ProblemDetail: React.FC = () => {
 
     // submission history modal state
     const [showHistoryModal, setShowHistoryModal] = useState(false);
+    
+    // Get current user info
+    const { user } = useUserStore();
 
     useEffect(() => {
         const onResize = () => setIsNarrow(window.innerWidth < 1024);
@@ -128,17 +132,16 @@ const ProblemDetail: React.FC = () => {
 
     // Handle view submission history
     const handleViewHistory = () => {
+        console.log('📖 handleViewHistory clicked');
+        console.log('Props that will be passed:', {
+            classId: Number(classId),
+            problemId: Number(problemId), 
+            studentId: Number(user?.id) || 1
+        });
         setShowHistoryModal(true);
     };
 
     const handleCloseHistoryModal = () => {
-        setShowHistoryModal(false);
-    };
-
-    const handleViewSubmission = (submissionId: number) => {
-        // This will be implemented later as requested
-        console.log("View submission:", submissionId);
-        // For now, just close the modal
         setShowHistoryModal(false);
     };
 
@@ -302,7 +305,9 @@ const ProblemDetail: React.FC = () => {
                 visible={showHistoryModal}
                 onClose={handleCloseHistoryModal}
                 assignmentId={Number(problemId)}
-                onViewSubmission={handleViewSubmission}
+                classId={Number(classId)}
+                studentId={Number(user?.id) || 1} // Use actual student ID from auth context
+                examMode={false}
             />
         </div>
     );

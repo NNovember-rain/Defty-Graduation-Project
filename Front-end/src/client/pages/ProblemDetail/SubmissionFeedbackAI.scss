@@ -1,0 +1,21 @@
+// SubmissionFeedbackAI component styles
+.submission-feedback-ai {
+  position: relative;
+
+  &__back-btn {
+    position: absolute;
+    top: -5px;
+    left: 0px;
+    z-index: 10;
+    padding: 0;
+    color: #02b128 !important;
+
+    &:hover {
+      color: #01a023 !important;
+    }
+  }
+
+  &__content {
+    padding-top: 40px;
+  }
+}

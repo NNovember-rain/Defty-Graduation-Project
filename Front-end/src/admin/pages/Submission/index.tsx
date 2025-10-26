@@ -92,7 +92,6 @@ const Submission: React.FC = () => {
                 studentCode: currentFilters.studentCode || undefined,
                 assignmentTitle: currentFilters.assignmentTitle || undefined,
                 classCode: currentFilters.classCode || undefined,
-                submissionStatus: currentFilters.submissionStatus as 'SUBMITTED' | 'PROCESSING' | 'COMPLETED' | 'REVIEWED' | 'FAILED' || undefined,
                 fromDate: currentFilters.fromDate || undefined,
                 toDate: currentFilters.toDate || undefined,
             };

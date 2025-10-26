@@ -178,9 +178,34 @@ $shadow-color: rgba(0, 0, 0, 0.5);
   }
 }
 
+.submission-status-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: $text-light;
+  
+  .submission-status-header {
+    color: $text-light;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .submission-status-content {
+    text-align: center;
+    
+    .ant-typography {
+      margin: 0;
+    }
+  }
+}
+
 .score-section {
-  background: $card-bg-light;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: $border-radius;
   padding: 16px;
   text-align: center;
@@ -189,8 +214,8 @@ $shadow-color: rgba(0, 0, 0, 0.5);
   .score-label {
     font-size: 0.9rem;
     margin-bottom: 8px;
-    opacity: 0.8;
-    color: $text-secondary;
+    opacity: 0.9;
+    color: rgba(255, 255, 255, 0.8);
   }
   
   .score-value {
@@ -203,7 +228,7 @@ $shadow-color: rgba(0, 0, 0, 0.5);
   .score-divider {
     font-size: 1.2rem;
     opacity: 0.8;
-    color: $text-secondary;
+    color: rgba(255, 255, 255, 0.7);
   }
 }
 
@@ -215,20 +240,20 @@ $shadow-color: rgba(0, 0, 0, 0.5);
     font-weight: 600;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   }
   
   .comments-content {
-    background: $card-bg-light;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     padding: 12px;
     max-height: 200px;
     overflow-y: auto;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     
     &.no-comments {
       text-align: center;
-      color: $text-secondary;
+      color: rgba(255, 255, 255, 0.6);
       font-style: italic;
     }
     

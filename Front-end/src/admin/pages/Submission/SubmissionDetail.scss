@@ -1,6 +1,6 @@
 /* Submission Detail Styles */
 .submission-detail-container {
-  padding: 1rem 2rem;
+  padding: 0.5rem 2rem;
   max-width: 1400px;
   margin: 0 auto;
   background-color: #f5f5f5;
@@ -8,11 +8,12 @@
 }
 
 .submission-detail-header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  margin-top: 8px;
 }
 
 .submission-detail-header .ant-btn {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .submission-detail-info {
@@ -27,14 +28,23 @@
 
 .submission-detail-info-left .ant-typography-title {
   margin: 0;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .submission-detail-meta {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+.submission-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0;
 }
 
 .submission-detail-score-display {

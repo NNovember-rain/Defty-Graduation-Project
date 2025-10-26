@@ -12,7 +12,6 @@ export interface GetSubmissionsOptions {
     assignmentTitle?: string
     umlType?: string
     classCode?: string
-    submissionStatus?: "SUBMITTED" | "PROCESSING" | "COMPLETED" | "REVIEWED" | "FAILED"
     fromDate?: string
     toDate?: string
     sortBy?: string
@@ -35,8 +34,8 @@ export interface ISubmission {
     classCode: string
     createdDate: string
     studentPlantUMLCode: string
-    solutionCode: string
-    score?: number // Thêm điểm số để hiển thị
+    solutionCode?: string // Make optional since not all responses have this
+    score?: number
 }
 
 export interface SubmissionRequest {
@@ -57,7 +56,6 @@ export interface FeedbackAIResponse {
     submissionId: number
     feedback: JsonObject // Map<String, Object> từ backend
     aiModalName: string
-    // Removed: content, score, strengths, weaknesses, suggestions, createdDate
 }
 
 export interface FeedbackTeacherRequest {
@@ -119,7 +117,6 @@ export const getSubmissions = async (options: GetSubmissionsOptions = {}): Promi
         studentCode: options.studentCode,
         assignmentTitle: options.assignmentTitle,
         classCode: options.classCode,
-        submissionStatus: options.submissionStatus,
         fromDate: options.fromDate,
         toDate: options.toDate,
         sortBy: options.sortBy,
@@ -144,14 +141,12 @@ export const getSubmissionDetail = async (id: string | number): Promise<ISubmiss
 
 // Fixed feedback API functions to match your backend endpoints
 export const getFeedbackAI = async (submissionId: string | number): Promise<FeedbackAIResponse> => {
-    // Fixed: Changed from `/llm/${submissionId}` to `/feedback/llm/${submissionId}`
     const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/feedback/llm/${submissionId}`))
     const data = await response.json()
     return data.result as FeedbackAIResponse
 }
 
 export const addFeedbackTeacher = async (feedbackData: FeedbackTeacherRequest): Promise<number> => {
-    // Fixed: Changed from `/teacher` to `/feedback/teacher`
     const response = await handleRequest(postJsonData(`${PREFIX_SUBMISSIONS}/feedback/teacher`, feedbackData))
     const data = await response.json()
     return data.result as number
@@ -161,21 +156,18 @@ export const updateFeedbackTeacher = async (
     feedbackId: number,
     feedbackData: FeedbackTeacherRequest
 ): Promise<string> => {
-    // Fixed: Changed from `/teacher/${feedbackId}` to `/feedback/teacher/${feedbackId}`
     const response = await handleRequest(patchJsonData(`${PREFIX_SUBMISSIONS}/feedback/teacher/${feedbackId}`, feedbackData))
     const data = await response.json()
     return data.result as string
 }
 
 export const getFeedbackTeacher = async (submissionId: string | number): Promise<FeedbackTeacherResponse[]> => {
-    // Fixed: Changed from `/teacher/${submissionId}` to `/feedback/teacher/${submissionId}`
     const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/feedback/teacher/${submissionId}`))
     const data = await response.json()
     return data.result as FeedbackTeacherResponse[]
 }
 
 export const addScore = async (submissionId: string | number, point: number): Promise<string> => {
-    // Sử dụng pattern nhất quán với các API khác trong file
     const response = await handleRequest(
         get(`${PREFIX_SUBMISSIONS}/score/${submissionId}?point=${point}`, {
             method: 'PUT'
@@ -185,34 +177,45 @@ export const addScore = async (submissionId: string | number, point: number): Pr
     return data.result as string
 }
 
-export interface SubmissionHistoryResponse {
-    id: number
-    submissionStatus: "SUBMITTED" | "PROCESSING" | "COMPLETED" | "REVIEWED" | "FAILED"
-    createdDate: Date
-}
-
-export interface GetSubmissionHistoryOptions {
-    page?: number
-    size?: number
-}
-
-export interface GetSubmissionHistoryResult {
-    content: SubmissionHistoryResponse[]
-    totalElements: number
-    number: number
-    size: number
-}
-
+// Updated to match new backend endpoint
 export const getSubmissionHistory = async (
+    classId: number,
     assignmentId: number,
-    options: GetSubmissionHistoryOptions = {}
-): Promise<GetSubmissionHistoryResult> => {
+    studentId: number,
+    examMode: boolean = false,
+    options: GetSubmissionsOptions = {}
+): Promise<GetSubmissionsResult> => {
     const params = {
-        page: options.page || 0,
-        size: options.size || 10,
+        page: (options.page || 1) - 1,
+        size: options.limit || 10,
+        sortBy: options.sortBy || "createdDate",
+        sortOrder: options.sortOrder || "desc",
+        examMode: examMode.toString()
     }
 
-    const response = await handleRequest(getWithParams(`${PREFIX_SUBMISSIONS}/student/${assignmentId}`, params))
+    const response = await handleRequest(
+        getWithParams(`${PREFIX_SUBMISSIONS}/class/${classId}/assignment/${assignmentId}/student/${studentId}`, params)
+    )
     const data = await response.json()
-    return data.result as GetSubmissionHistoryResult
+    
+    return {
+        submissions: data.result.content,
+        total: data.result.totalElements,
+        page: data.result.number + 1,
+        limit: data.result.size,
+    } as GetSubmissionsResult
+}
+
+export const getLastSubmissionExamMode = async (
+    classId: number,
+    assignmentId: number
+): Promise<ISubmission | null> => {
+    try {
+        const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/class/${classId}/assignment/${assignmentId}/last`))
+        const data = await response.json()
+        return data.result as ISubmission
+    } catch (error) {
+        console.log('No submission found:', error)
+        return null
+    }
 }
