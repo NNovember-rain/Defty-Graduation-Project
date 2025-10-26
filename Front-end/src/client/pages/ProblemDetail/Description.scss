@@ -1,0 +1,25 @@
+.description__header {
+  .ant-select-selector {
+    background: none !important;
+    border-color: #d9d9d9 !important;
+  }
+
+  .ant-select-selection-item,
+  .ant-select-selection-placeholder {
+    color: #e6f7ff !important;
+  }
+
+  .ant-select-arrow {
+    color: #e6f7ff !important;
+  }
+
+  & ~ .ant-select-dropdown {
+    .ant-select-item-option {
+      background-color: #ffffff38;
+      color: #1a1a1a;
+    }
+    .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+      background-color: #ffffff38;
+    }
+  }
+}

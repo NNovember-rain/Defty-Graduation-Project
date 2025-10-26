@@ -125,7 +125,7 @@ const StudentAssignmentManagerAntD = () => {
 
     const goToAssignmentDetails = (submissionId: string | null) => {
         if (submissionId) {
-            navigate(`/assignments/${submissionId}/details`)
+            navigate(`/admin/assignments/${submissionId}/details`)
         } else {
             console.warn('Cannot view details: Student has not submitted yet.')
         }

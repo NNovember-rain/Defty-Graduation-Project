@@ -1,19 +1,20 @@
 import React from "react";
-import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
-import { MdPlayArrow, MdSend } from "react-icons/md";
-import { HistoryOutlined } from "@ant-design/icons";
-import { useTranslation } from "react-i18next";
-import { Spin } from "antd";
-import {IoCodeSlashOutline} from "react-icons/io5"; // Import Spin component
+import Editor, {type OnMount, useMonaco} from "@monaco-editor/react";
+import {MdPlayArrow, MdSend} from "react-icons/md";
+import {HistoryOutlined} from "@ant-design/icons";
+import {useTranslation} from "react-i18next";
+import {Spin} from "antd";
+import {IoCodeSlashOutline} from "react-icons/io5";
+
 
 export type CodeEditorProps = {
     code: string;
     onCodeChange: (value: string) => void;
     onRun: () => void;
     onSubmit: () => void;
-    onViewHistory?: () => void; // Add new prop for history button
-    isRendering: boolean; // Thêm prop này
-    isSubmitting: boolean; // Thêm prop này
+    onViewHistory?: () => void;
+    isRendering: boolean;
+    isSubmitting: boolean;
     readOnly?: boolean;
 };
 
@@ -22,10 +23,11 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                                                    onCodeChange,
                                                    onRun,
                                                    onSubmit,
-                                                   onViewHistory, // Add new prop
-                                                   isRendering, // Nhận prop
-                                                   isSubmitting, // Nhận prop
+                                                   onViewHistory,
+                                                   isRendering,
+                                                   isSubmitting,
                                                    readOnly = false,
+
                                                }) => {
     const { t } = useTranslation();
     const monaco = useMonaco();
@@ -66,17 +68,19 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                 <div className="code-editor__toolbar">
                     <div className="code-editor__left-controls">
                         <IoCodeSlashOutline fontSize={18} style={{"color": '#02B128'}} />
-                        <span className="code-editor__language-label">PlantUML</span>
+                        <span className="code-editor__language-label" style={{ marginLeft: 4 }}>
+                            PlantUML Editor
+                        </span>
                     </div>
 
                     <div className="code-editor__header--right-controls">
                         {onViewHistory && (
                             <button
                                 className="code-editor__btn code-editor__btn--history"
-                                data-tooltip="Xem lịch sử nộp bài"
+                                data-tooltip={t("problemDetail.codeEditor.historyTooltip") || "Xem lịch sử nộp bài"}
                                 onClick={onViewHistory}
                                 type="button"
-                                disabled={isRendering || isSubmitting}
+                                disabled={isRendering || isSubmitting || readOnly}
                             >
                                 <HistoryOutlined />
                             </button>
@@ -87,7 +91,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                             data-tooltip={t("problemDetail.codeEditor.runTooltip") || "Run (Ctrl/Cmd + Enter)"}
                             onClick={onRun}
                             type="button"
-                            disabled={isRendering || isSubmitting} // Vô hiệu hóa khi đang xử lý
+                            disabled={isRendering || isSubmitting || readOnly}
                         >
                             {isRendering ? <Spin size="small" /> : <MdPlayArrow />}
                         </button>
@@ -97,7 +101,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                             data-tooltip={t("problemDetail.codeEditor.submitTooltip") || "Submit (Ctrl/Cmd + S)"}
                             onClick={onSubmit}
                             type="button"
-                            disabled={isRendering || isSubmitting} // Vô hiệu hóa khi đang xử lý
+                            disabled={isRendering || isSubmitting || readOnly}
                         >
                             {isSubmitting ? <Spin size="small" /> : <MdSend />}
                         </button>

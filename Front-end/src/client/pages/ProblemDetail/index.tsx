@@ -14,7 +14,7 @@ import { deflate } from "pako";
 import { createSubmission, type SubmissionRequest } from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
 
-/** ========= PlantUML helpers ========= */
+/** ========= PlantUML helpers (Giữ nguyên) ========= */
 const plantUmlEncTable = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
 function _append3bytes(b1: number, b2: number, b3: number) {
     const c1 = b1 >> 2;
@@ -50,6 +50,15 @@ Bob -> Alice : Hello
 Alice -> Bob : Hi
 @enduml`;
 
+// Định nghĩa các loại UML được hỗ trợ bởi Kroki
+// Chúng ta sẽ chỉ sử dụng một số loại phổ biến cho PlantUML
+const UML_TYPES = [
+    { key: "plantuml", label: "PlantUML (Default)" },
+    { key: "mermaid", label: "Mermaid" },
+    { key: "graphviz", label: "Graphviz" },
+    { key: "ditaa", label: "Ditaa" },
+];
+
 const ProblemDetail: React.FC = () => {
     const { message, notification } = useNotification();
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
@@ -62,19 +71,24 @@ const ProblemDetail: React.FC = () => {
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
-    const [, setClassInfo] = useState<IClass | null>(null); // chỉ để verify class tồn tại
+    const [, setClassInfo] = useState<IClass | null>(null);
 
     const [svgMarkup, setSvgMarkup] = useState<string | null>(null);
     const [renderErr, setRenderErr] = useState<string | null>(null);
     const [isRendering, setIsRendering] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+    // NEW STATES cho Type UML và Module (Module ở đây tạm bỏ qua, vì Kroki dùng UML type trực tiếp)
+    // Nếu bạn chỉ muốn PlantUML, bạn chỉ cần một state duy nhất cho UML Type.
+    const [umlType, setUmlType] = useState<string>("plantuml"); // Mặc định là PlantUML
+    const [module, setModule] = useState<string>("default"); // Module: có thể là 'default' hoặc 'server-side'
+
     // responsive orientation
     const [isNarrow, setIsNarrow] = useState<boolean>(() => window.innerWidth < 1024);
 
     // submission history modal state
     const [showHistoryModal, setShowHistoryModal] = useState(false);
-    
+
     // Get current user info
     const { user } = useUserStore();
 
@@ -96,12 +110,15 @@ const ProblemDetail: React.FC = () => {
     const getHttpStatus = (e: any): number | undefined =>
         e?.response?.status ?? e?.status ?? e?.data?.status ?? e?.code;
 
-    const renderWithKroki = async (uml: string) => {
+    // Cập nhật hàm renderWithKroki để sử dụng umlType
+    const renderWithKroki = async (uml: string, type: string) => {
         setIsRendering(true);
         setRenderErr(null);
         setSvgMarkup(null);
         setImageUrl(null);
-        debugger;
+
+        // Sử dụng type (ví dụ: plantuml, mermaid) trong endpoint của Kroki
+        const krokiUrl = `https://kroki.io/${type}/svg`;
 
         try {
             const res = await fetch("https://kroki.io/plantuml/svg", {
@@ -112,7 +129,14 @@ const ProblemDetail: React.FC = () => {
 
             if (!res.ok) {
                 setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }));
-                setImageUrl(plantUmlSvgUrl(uml)); // fallback để vẫn thấy ảnh lỗi
+                // Fallback chỉ dùng được cho PlantUML, các loại khác sẽ hiện PlantUML lỗi.
+                if (type === 'plantuml') {
+                    setImageUrl(plantUmlSvgUrl(uml));
+                } else {
+                    // Đối với các loại khác, hiển thị lỗi API text
+                    const errorText = await res.text();
+                    setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }) + `: ${errorText.substring(0, 100)}`);
+                }
                 return;
             }
 
@@ -122,20 +146,24 @@ const ProblemDetail: React.FC = () => {
         } catch (e: any) {
             setRenderErr(t("problemDetail.result.renderFailed"));
             setSvgMarkup(null);
-            setImageUrl(plantUmlSvgUrl(uml));
+            // Fallback chỉ dùng được cho PlantUML
+            if (type === 'plantuml') {
+                setImageUrl(plantUmlSvgUrl(uml));
+            }
         } finally {
             setIsRendering(false);
         }
     };
 
-    const handleRunCode = () => renderWithKroki(code);
+    // Truyền umlType vào hàm run
+    const handleRunCode = () => renderWithKroki(code, umlType);
 
-    // Handle view submission history
+    // Handle view submission history (giữ nguyên)
     const handleViewHistory = () => {
         console.log('📖 handleViewHistory clicked');
         console.log('Props that will be passed:', {
             classId: Number(classId),
-            problemId: Number(problemId), 
+            problemId: Number(problemId),
             studentId: Number(user?.id) || 1
         });
         setShowHistoryModal(true);
@@ -145,6 +173,12 @@ const ProblemDetail: React.FC = () => {
         setShowHistoryModal(false);
     };
 
+    const handleViewSubmission = (submissionId: number) => {
+        console.log("View submission:", submissionId);
+        setShowHistoryModal(false);
+    };
+
+    // Handle submit code (giữ nguyên)
     const handleSubmitCode = async () => {
         setIsSubmitting(true);
         try {
@@ -157,15 +191,13 @@ const ProblemDetail: React.FC = () => {
 
             // Bước 1: Validate dữ liệu trước khi gửi đi
             if (!submissionData.studentPlantUmlCode) {
-                // Hiển thị thông báo lỗi nếu code rỗng
                 message.error("Mã PlantUML không được để trống!");
-                return; // Dừng hàm lại, không gọi API
+                return;
             }
 
             if (isNaN(submissionData.classId) || isNaN(submissionData.assignmentId)) {
-                // Hiển thị thông báo lỗi nếu classId hoặc assignmentId không hợp lệ
                 message.error("ID lớp học hoặc ID bài tập không hợp lệ!");
-                return; // Dừng hàm lại
+                return;
             }
 
             // Bước 2: Gọi API nếu dữ liệu hợp lệ
@@ -179,14 +211,13 @@ const ProblemDetail: React.FC = () => {
             );
 
         } catch (error) {
-            // Xử lý lỗi từ phía server hoặc lỗi mạng
             message.error("Nộp bài thất bại, hãy kiểm tra lại mạng và thử lại!");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // tách function fetch
+    // Tách function fetch (giữ nguyên)
     const fetchClassInfo = async (cid: number) => {
         try {
             const cls = await getClassById(cid);
@@ -205,6 +236,7 @@ const ProblemDetail: React.FC = () => {
     const fetchAssignmentInfo = async (pid: number) => {
         try {
             const asg = await getAssignmentById(pid);
+            console.log("Fetched assignment:", asg);
             setAssignment(asg);
             return true;
         } catch (e: any) {
@@ -290,6 +322,11 @@ const ProblemDetail: React.FC = () => {
                             onViewHistory={handleViewHistory}
                             isRendering={isRendering}
                             isSubmitting={isSubmitting}
+                            umlType={umlType}
+                            onUmlTypeChange={setUmlType}
+                            module={module}
+                            onModuleChange={setModule}
+                            umlTypes={UML_TYPES}
                         />
                     </div>
 
