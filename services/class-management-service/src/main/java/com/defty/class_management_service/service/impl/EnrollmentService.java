@@ -72,18 +72,18 @@ public class EnrollmentService implements IEnrollmentService {
             // 2. Get enrollments (tất cả lớp mà student này tham gia)
             Page<ClassEnrollmentEntity> enrollmentPage = enrollmentRepository.findAllByStudentId(studentId, pageable);
 
+            // Nếu student chưa tham gia lớp nào -> trả về list rỗng
             if (enrollmentPage.isEmpty()) {
                 PageableResponse<ClassOfStudentResponse> emptyResponse =
                         new PageableResponse<>(List.of(), 0L);
-//                return new ApiResponse<>(200, "No classes found for this student.", emptyResponse);
-                throw new NotFoundException("No classes found for this student, studentId: " + studentId);
+                return new ApiResponse<>(200, "No classes found for this student.", emptyResponse);
             }
 
             // 3. Extract class IDs
-            List<Long> classIds = new ArrayList<>();
-            for (ClassEnrollmentEntity c : enrollmentPage){
-                classIds.add(c.getClassroom().getId());
-            }
+            List<Long> classIds = enrollmentPage.getContent().stream()
+                    .map(e -> e.getClassroom().getId())
+                    .filter(Objects::nonNull)
+                    .toList();
 
             // 4. Get classes info
             List<ClassEntity> classes = classRepository.findAllById(classIds);
@@ -92,6 +92,7 @@ public class EnrollmentService implements IEnrollmentService {
             List<Long> teacherIds = classes.stream()
                     .map(ClassEntity::getTeacherId)
                     .filter(Objects::nonNull)
+                    .distinct() // tránh duplicate gây lỗi Collectors.toMap
                     .toList();
 
             // 6. Call identity service to get teachers info
@@ -110,8 +111,8 @@ public class EnrollmentService implements IEnrollmentService {
                                 c.getId(),
                                 c.getName(),
                                 c.getInviteCode(),
-                                teacher != null ? teacher.getFullName() : null, null
-//                                c.getNewAssignments()
+                                teacher != null ? teacher.getFullName() : null,
+                                null // TODO: có thể map thêm assignment nếu cần
                         );
                     })
                     .toList();
@@ -123,13 +124,18 @@ public class EnrollmentService implements IEnrollmentService {
             return new ApiResponse<>(200, "Classes retrieved successfully.", pageableResponse);
 
         } catch (FeignException e) {
-            log.error("Error calling identity service: {}", e.getMessage());
-            throw new ServiceException("Failed to get teacher information: " + e.getMessage());
+            log.error("Error calling identity service", e);
+            throw new ServiceException("Failed to get teacher information: " + e.getMessage(), e);
+        } catch (NotFoundException e) {
+            // Giữ nguyên NotFoundException để global handler trả về 404
+            log.warn("Not found: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("Error getting classes by student: {}", e.getMessage());
-            throw new ServiceException("Failed to get classes by student: " + e.getMessage());
+            log.error("Error getting classes by student", e);
+            throw new ServiceException("Failed to get classes by student: " + e.getMessage(), e);
         }
     }
+
 
 
     @Override

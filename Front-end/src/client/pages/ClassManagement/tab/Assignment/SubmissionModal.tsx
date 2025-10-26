@@ -8,8 +8,8 @@ import {
   type SubmissionRequest,
   getFeedbackTeacher,
   type FeedbackTeacherResponse,
-  getSubmissionHistory,
-  type SubmissionHistoryResponse
+  getLastSubmissionExamMode,
+  type ISubmission
 } from '../../../../../shared/services/submissionService';
 import { useNotification } from '../../../../../shared/notification/useNotification';
 import type { IAssignment } from '../../../../../shared/services/assignmentService';
@@ -88,50 +88,12 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
   
   // State for feedback and score
   const [feedback, setFeedback] = useState<FeedbackTeacherResponse[]>([]);
-  const [submissionHistory, setSubmissionHistory] = useState<SubmissionHistoryResponse[]>([]);
+  const [lastSubmission, setLastSubmission] = useState<ISubmission | null>(null);
   const [loadingFeedback, setLoadingFeedback] = useState<boolean>(false);
   
-  // Current score from feedback
-  const currentScore = feedback.length > 0 ? feedback[0]?.score : undefined;
-
-  // Generate preview like in ProblemDetail
-  const renderWithKroki = useCallback(async (uml: string) => {
-    if (!uml.trim()) {
-      setSvgMarkup(null);
-      setImageUrl(null);
-      setPreviewError('');
-      return;
-    }
-
-    setPreviewLoading(true);
-    setPreviewError('');
-    setSvgMarkup(null);
-    setImageUrl(null);
-
-    try {
-      const res = await fetch("https://kroki.io/plantuml/svg", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: uml,
-      });
-
-      if (!res.ok) {
-        setPreviewError(`Lỗi render: ${res.status}`);
-        setImageUrl(plantUmlSvgUrl(uml)); // fallback
-        return;
-      }
-
-      const svg = await res.text();
-      setSvgMarkup(svg);
-      setImageUrl(null);
-    } catch (error: any) {
-      setPreviewError('Render thất bại');
-      setSvgMarkup(null);
-      setImageUrl(plantUmlSvgUrl(uml)); // fallback
-    } finally {
-      setPreviewLoading(false);
-    }
-  }, []);
+  // Current score from feedback or last submission
+  const currentScore = lastSubmission?.score !== undefined ? lastSubmission.score : 
+                      (feedback.length > 0 ? feedback[0]?.score : undefined);
 
   // Handle run preview - show image in modal
   const handleRunPreview = async () => {
@@ -179,22 +141,37 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
     
     setLoadingFeedback(true);
     try {
-      // Get submission history
-      const historyResponse = await getSubmissionHistory(assignment.id, { page: 0, size: 1 });
-      setSubmissionHistory(historyResponse.content);
+      // Get last submission in exam mode
+      const lastSubmission = await getLastSubmissionExamMode(classId, assignment.id);
+      setLastSubmission(lastSubmission);
       
       // If there's a submission, get feedback
-      if (historyResponse.content.length > 0) {
-        const latestSubmission = historyResponse.content[0];
-        const feedbackResponse = await getFeedbackTeacher(latestSubmission.id);
-        setFeedback(feedbackResponse);
+      if (lastSubmission?.id) {
+        try {
+          const feedbackResponse = await getFeedbackTeacher(lastSubmission.id);
+          setFeedback(feedbackResponse);
+        } catch (error) {
+          console.log('No feedback found for submission:', error);
+          setFeedback([]);
+        }
+        
+        // Set initial code to last submission code if available
+        if (lastSubmission.studentPlantUMLCode) {
+          setCode(lastSubmission.studentPlantUMLCode);
+        }
+      } else {
+        // No submission found, clear feedback
+        setFeedback([]);
       }
+      
     } catch (error) {
       console.error('Error loading submission data:', error);
+      setFeedback([]);
+      setLastSubmission(null);
     } finally {
       setLoadingFeedback(false);
     }
-  }, [assignment?.id]);
+  }, [assignment?.id, classId]);
 
   // Load data when modal opens
   useEffect(() => {
@@ -239,7 +216,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
     setShowPreview(false);
     setPreviewError('');
     setFeedback([]);
-    setSubmissionHistory([]);
+    setLastSubmission(null);
     onCancel();
   };
 
@@ -304,6 +281,26 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
               </div>
             ) : (
               <>
+                {/* Submission Status */}
+                {lastSubmission ? (
+                  <div className="submission-status-section">
+                    <div className="submission-status-header">Trạng thái nộp bài</div>
+                    <div className="submission-status-content">
+                      <Text style={{ color: '#52c41a' }}>✅ Đã nộp bài</Text>
+                      <Text style={{ display: 'block', fontSize: '12px', color: '#aaa', marginTop: 4 }}>
+                        Nộp lúc: {new Date(lastSubmission.createdDate).toLocaleString('vi-VN')}
+                      </Text>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="submission-status-section">
+                    <div className="submission-status-header">Trạng thái nộp bài</div>
+                    <div className="submission-status-content">
+                      <Text style={{ color: '#faad14' }}>⏳ Chưa nộp bài</Text>
+                    </div>
+                  </div>
+                )}
+
                 {/* Score Section */}
                 <div className="score-section">
                   <div className="score-label">Điểm số</div>

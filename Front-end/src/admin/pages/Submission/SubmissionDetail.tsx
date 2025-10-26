@@ -34,7 +34,8 @@ const SubmissionDetail: React.FC = () => {
     const [isEditingFeedback, setIsEditingFeedback] = useState(false);
     const [feedbackText, setFeedbackText] = useState("");
     const [score, setScore] = useState<number | null>(null);
-    const [submitting, setSubmitting] = useState(false);
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
+    const [submittingScore, setSubmittingScore] = useState(false);
 
     useEffect(() => {
         if (actualSubmissionId) {
@@ -83,7 +84,7 @@ const SubmissionDetail: React.FC = () => {
         }
 
         try {
-            setSubmitting(true);
+            setSubmittingFeedback(true);
             const feedbackData: FeedbackTeacherRequest = {
                 submissionId: parseInt(actualSubmissionId),
                 content: feedbackText
@@ -111,7 +112,7 @@ const SubmissionDetail: React.FC = () => {
             console.error("Error saving feedback:", err);
             message.error("Không thể lưu phản hồi");
         } finally {
-            setSubmitting(false);
+            setSubmittingFeedback(false);
         }
     };
 
@@ -122,7 +123,7 @@ const SubmissionDetail: React.FC = () => {
         }
 
         try {
-            setSubmitting(true);
+            setSubmittingScore(true);
             await addScore(actualSubmissionId, score);
             message.success("Cập nhật điểm số thành công");
             
@@ -132,7 +133,7 @@ const SubmissionDetail: React.FC = () => {
             console.error("Error saving score:", err);
             message.error("Không thể lưu điểm số");
         } finally {
-            setSubmitting(false);
+            setSubmittingScore(false);
         }
     };
 
@@ -197,25 +198,6 @@ const SubmissionDetail: React.FC = () => {
                                 Nộp lúc: {dayjs(submission.createdDate).format("DD/MM/YYYY HH:mm")}
                             </Text>
                         </div>
-                    </div>
-                    
-                    {/* Score Display */}
-                    <div className="submission-detail-score-display">
-                        {submission.score !== null && submission.score !== undefined ? (
-                            <div>
-                                <div className="submission-detail-score-number" style={{ 
-                                    color: getScoreColor(submission.score)
-                                }}>
-                                    {submission.score}
-                                </div>
-                                <Text type="secondary" className="submission-detail-score-label">/ 10 điểm</Text>
-                            </div>
-                        ) : (
-                            <div>
-                                <div className="submission-detail-score-number" style={{ color: "#d9d9d9" }}>--</div>
-                                <Text type="secondary" className="submission-detail-score-label">Chưa chấm</Text>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
@@ -303,7 +285,7 @@ const SubmissionDetail: React.FC = () => {
                                             type="primary"
                                             size="small"
                                             onClick={handleSaveScore}
-                                            loading={submitting}
+                                            loading={submittingScore}
                                             disabled={score === null || score < 0 || score > 10}
                                         >
                                             Lưu điểm
@@ -354,7 +336,7 @@ const SubmissionDetail: React.FC = () => {
                                             type="primary"
                                             size="small"
                                             onClick={handleSaveFeedback}
-                                            loading={submitting}
+                                            loading={submittingFeedback}
                                         >
                                             Lưu nhận xét
                                         </Button>
