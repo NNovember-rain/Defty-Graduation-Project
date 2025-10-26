@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -61,5 +62,12 @@ public class ClassController {
     @PatchMapping("/{id}/toggle-status")
     ApiResponse<Long> toggleActiveStatus(@PathVariable Long id) {
         return classService.toggleActiveStatus(id);
+    }
+
+    @GetMapping("/by-ids")
+    public ApiResponse<Map<Long, ClassResponse>> getClassesByIds(
+            @RequestParam List<Long> ids) {
+        log.info("Request to get classes by IDs: {}", ids);
+        return classService.getClassesByIds(ids);
     }
 }

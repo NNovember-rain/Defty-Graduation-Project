@@ -250,18 +250,27 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         }
     };
 
-    // Email students function
+    // Email students function - Link to Gmail
     const handleEmailStudents = (studentIds: string[]) => {
         const selectedStudentsData = students.filter(student =>
             studentIds.includes(student.studentId)
         );
         const emails = selectedStudentsData.map(student => student.email).join(',');
 
-        // Navigate to email page with pre-filled emails
-        // Replace this with your actual navigation logic
-        const emailUrl = `/compose-email?to=${encodeURIComponent(emails)}`;
-        window.location.href = emailUrl;
-        // Or using React Router: navigate(emailUrl);
+        console.log('Sending email to:', emails);
+
+        // Tạo nội dung email mặc định
+        const defaultSubject = 'Thông báo từ lớp học';
+        const defaultBody = 'Xin chào các em,\n\nTôi có thông báo quan trọng muốn chia sẻ với các em.\n\nTrân trọng,\nGiáo viên';
+
+        // Tạo URL Gmail với thông tin được điền sẵn
+        const gmailUrl = `https://mail.google.com/mail/u/0/?view=cm&to=${encodeURIComponent(emails)}&su=${encodeURIComponent(defaultSubject)}&body=${encodeURIComponent(defaultBody)}`;
+
+        // Mở Gmail trong tab mới
+        window.open(gmailUrl, '_blank');
+
+        // Optional: Hiển thị thông báo thành công
+        // alert(`Đã mở Gmail để gửi email cho ${selectedStudentsData.length} học sinh`);
     };
 
     // Remove students function
