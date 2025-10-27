@@ -23,15 +23,60 @@ const PromptForm: React.FC = () => {
             gridSpan: 12,
         },
         {
-            key: 'umlType',
+            key: 'type',
             labelKey: 'promptPage.dataTableColumns.type',
             type: 'select',
             options: [
-                { value: 'use-case', label: 'use-case' },
-                { value: 'class', label: 'class' },
+                // Step 1: Domain Analysis
+                {
+                    value: 'uml-domain-extractor',
+                    label: 'Domain Context Extractor',
+                    description: 'Extract keywords and requirements from assignment'
+                },
+
+                // Step 2: PlantUML Parsing
+                {
+                    value: 'uml-plantuml-extractor',
+                    label: 'PlantUML to JSON Parser',
+                    description: 'Parse PlantUML code into structured JSON'
+                },
+
+                // Step 3: Semantic Normalization
+                {
+                    value: 'uml-semantic-normalizer',
+                    label: 'Semantic Normalizer',
+                    description: 'Normalize element names to canonical forms'
+                },
+
+                // Step 5: Error Classification
+                {
+                    value: 'uml-error-classifier',
+                    label: 'Error Detector & Classifier',
+                    description: 'Detect and classify UML errors'
+                },
+
+                // Step 7: Feedback Generation
+                {
+                    value: 'uml-feedback-generator',
+                    label: 'Feedback Generator',
+                    description: 'Generate personalized student feedback'
+                },
+
+                // Legacy/Old analyzer (if still needed)
+                {
+                    value: 'uml-use-case-analyzer',
+                    label: '[Legacy] Use Case Analyzer',
+                    description: 'Old single-step analyzer (deprecated)'
+                },
+                {
+                    value: 'uml-class-analyzer',
+                    label: '[Legacy] Class Diagram Analyzer',
+                    description: 'Old single-step analyzer (deprecated)'
+                },
             ],
             required: true,
             gridSpan: 12,
+            groupBy: 'category' // Optional: if your UI supports grouping
         },
         {
             key: 'description',

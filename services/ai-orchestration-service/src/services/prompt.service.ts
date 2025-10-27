@@ -6,7 +6,7 @@ interface GetPromptsOptions {
     page?: number;
     limit?: number;
     name?: string;
-    umlType?: 'use-case' | 'class';
+    type?: string;
     isActive?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
@@ -49,7 +49,7 @@ export const getPromptById = async (id: string): Promise<IPrompt> => {
 };
 
 export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPromptsResult> => {
-    const { page = 1, limit = 10, name, umlType, isActive, sortBy, sortOrder } = options;
+    const { page = 1, limit = 10, name, type, isActive, sortBy, sortOrder } = options;
     const skip = (page - 1) * limit;
 
     const query: FilterQuery<IPrompt> = {
@@ -58,8 +58,8 @@ export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPr
     if (name) {
         query.name = new RegExp(name, 'i');
     }
-    if (umlType) {
-        query.umlType = umlType;
+    if (type) {
+        query.type = type;
     }
     if (isActive !== undefined) {
         query.isActive = isActive;
@@ -89,7 +89,6 @@ export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPr
 
 export const updatePrompt = async (id: string, data: Partial<IPrompt>): Promise<IPrompt> => {
     try {
-        // Find the existing prompt to compare values
         const existingPrompt = await Prompt.findById(id);
         if (!existingPrompt) {
             throw new HttpError('Prompt not found for update', 404);
@@ -97,16 +96,14 @@ export const updatePrompt = async (id: string, data: Partial<IPrompt>): Promise<
 
         const updateData: Partial<IPrompt> = { ...data };
 
-        // Prevent manual version updates
         delete updateData.version;
 
-        // Check if templateString or umlType has changed to increment version
         let shouldIncrementVersion = false;
         if (updateData.templateString && updateData.templateString !== existingPrompt.templateString) {
             shouldIncrementVersion = true;
         }
 
-        if (updateData.umlType && updateData.umlType !== existingPrompt.umlType) {
+        if (updateData.type && updateData.type !== existingPrompt.type) {
             shouldIncrementVersion = true;
             updateData.isActive = false;
         }
@@ -115,14 +112,12 @@ export const updatePrompt = async (id: string, data: Partial<IPrompt>): Promise<
             updateData.version = incrementVersion(existingPrompt.version || '0.0');
         }
 
-        // Perform the update
         const updatedPrompt = await Prompt.findByIdAndUpdate(id, updateData, {
             new: true,
             runValidators: true
         });
 
         if (!updatedPrompt) {
-            // This case should be rare since we already found the prompt, but good practice to check
             throw new HttpError('Prompt not found for update', 404);
         }
 
@@ -170,21 +165,18 @@ export const togglePromptActiveStatus = async (id: string, isActive: boolean): P
     }
 
     try {
-        // Find the prompt to update to get its umlType
         const promptToUpdate = await Prompt.findById(id);
         if (!promptToUpdate) {
             throw new HttpError('Prompt not found', 404);
         }
 
         if (isActive) {
-            // Deactivate all other prompts with the same umlType
             await Prompt.updateMany(
-                { umlType: promptToUpdate.umlType, _id: { $ne: id } },
+                { type: promptToUpdate.type, _id: { $ne: id } },
                 { isActive: false }
             );
         }
 
-        // Update the requested prompt
         const updatedPrompt = await Prompt.findByIdAndUpdate(
             id,
             { isActive: isActive },
@@ -204,12 +196,10 @@ export const togglePromptActiveStatus = async (id: string, isActive: boolean): P
     }
 };
 
-// Utility function to validate ObjectId
 export const isValidObjectId = (id: string): boolean => {
     return /^[0-9a-fA-F]{24}$/.test(id);
 };
 
-// Enhanced version with validation
 export const getPromptByIdSafe = async (id: string): Promise<IPrompt> => {
     if (!isValidObjectId(id)) {
         throw new HttpError('Invalid prompt ID format', 400);
@@ -234,7 +224,6 @@ export const deletePromptSafe = async (id: string): Promise<IPrompt> => {
     return deletePrompt(id);
 };
 
-// Function to increment the version number in major.minor format
 const incrementVersion = (currentVersion: string): string => {
     const parts = currentVersion.split('.').map(Number);
     let major = parts[0] || 0;

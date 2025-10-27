@@ -5,7 +5,7 @@ import {useTranslation} from 'react-i18next';
 import {Spinner} from 'react-bootstrap';
 import {getClassById, IClass} from '../../../shared/services/classManagementService.ts';
 import AssignmentTabUser from "./tab/Assignment/AssignmentTab.tsx";
-import ClassPeopleTab from "./Tab/ClassPeopleTab.tsx";
+import ClassPeopleTab from "./tab/ClassPeopleTab.tsx";
 
 interface BreadcrumbItem {
     label: string;
