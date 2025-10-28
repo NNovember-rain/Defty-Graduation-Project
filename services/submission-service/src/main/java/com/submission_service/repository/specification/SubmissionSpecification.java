@@ -9,51 +9,6 @@ import java.time.LocalDateTime;
 
 public class SubmissionSpecification {
 
-    public static Specification<Submission> hasStudentName(String name) {
-        return (root, query, cb) -> {
-            if (name == null || name.isEmpty()) {
-                return cb.conjunction();
-            }
-            return cb.like(cb.lower(root.get("studentName")), "%" + name.toLowerCase() + "%");
-        };
-    }
-
-    public static Specification<Submission> hasStudentCode(String code) {
-        return (root, query, cb) -> {
-            if (code == null || code.isEmpty()) {
-                return cb.conjunction();
-            }
-            return cb.like(cb.lower(root.get("studentCode")), "%" + code.toLowerCase() + "%");
-        };
-    }
-
-    public static Specification<Submission> hasAssignmentTitle(String title) {
-        return (root, query, cb) -> {
-            if (title == null || title.isEmpty()) {
-                return cb.conjunction();
-            }
-            return cb.like(cb.lower(root.get("assignmentTitle")), "%" + title.toLowerCase() + "%");
-        };
-    }
-
-    public static Specification<Submission> hasClassName(String className) {
-        return (root, query, cb) -> {
-            if (className == null || className.isEmpty()) {
-                return cb.conjunction();
-            }
-            return cb.like(cb.lower(root.get("className")), "%" + className.toLowerCase() + "%");
-        };
-    }
-
-    public static Specification<Submission> hasClassCode(String code) {
-        return (root, query, cb) -> {
-            if (code == null || code.isEmpty()) {
-                return cb.conjunction();
-            }
-            return cb.like(cb.lower(root.get("classCode")), "%" + code.toLowerCase() + "%");
-        };
-    }
-
     public static Specification<Submission> hasCreatedDateAfter(LocalDateTime startDate) {
         return (root, query, cb) -> {
             if (startDate == null) {

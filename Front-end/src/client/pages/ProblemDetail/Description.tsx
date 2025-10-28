@@ -8,6 +8,14 @@ import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {getTypeUmls, type ITypeUml} from "../../../shared/services/typeUmlService.ts";
 import "./Description.scss";
 
+// Định nghĩa các loại UML được hỗ trợ bởi Kroki
+const UML_TYPES = [
+    { key: "plantuml", label: "PlantUML (Default)" },
+    { key: "mermaid", label: "Mermaid" },
+    { key: "graphviz", label: "Graphviz" },
+    { key: "ditaa", label: "Ditaa" },
+];
+
 export type UmlTypeOption = {
     value: string;
     label: string;
@@ -23,10 +31,6 @@ interface IModuleResponse {
 interface IAssignmentClassModule {
     moduleName: string;
     moduleDescription: string;
-}
-
-interface IAssignmentData extends IAssignment {
-    modules: IModuleResponse[];
 }
 
 const MODULE_OPTIONS: UmlTypeOption[] = [
@@ -47,6 +51,8 @@ type Props = {
     mode: 'practice' | 'test';
     assignmentClassModule: IAssignmentClassModule | null;
     classId: number | null;
+    onTypeUmlNameChange: (name: string) => void;
+    onModuleNameChange: (name: string) => void;
 };
 
 const Description: React.FC<Props> = ({
@@ -58,7 +64,9 @@ const Description: React.FC<Props> = ({
                                           onModuleChange,
                                           isRenderingOrSubmitting,
                                           classId,
-                                          mode
+                                          mode,
+                                          onTypeUmlNameChange,
+                                          onModuleNameChange
                                       }) => {
     const { t } = useTranslation();
     const { message } = useNotification();
@@ -78,13 +86,18 @@ const Description: React.FC<Props> = ({
                     }))
                     : [];
                 setTypeUMLs(typeUmlsArray);
+                // Set initial typeUmlName if umlType matches
+                const initialType = typeUmlsArray.find(t => t.value === umlType);
+                if (initialType) {
+                    onTypeUmlNameChange(initialType.label);
+                }
             } catch (error) {
                 console.error('Error fetching Type UMLs:', error);
                 message.error(t('common.errorFetchingData'));
             }
         }
         fetchTypeUMLs();
-    }, [t]);
+    }, [t, onTypeUmlNameChange]);
 
 
     useEffect(() => {
@@ -141,12 +154,33 @@ const Description: React.FC<Props> = ({
         if (modules.length > 0 && !module) {
             const firstModuleId = String(modules[0].id);
             onModuleChange(firstModuleId);
+            onModuleNameChange(modules[0].moduleName);
         }
-    }, [modules, module, onModuleChange]);
+    }, [modules, module, onModuleChange, onModuleNameChange]);
 
     const handleModuleChange = (value: string) => { // Sửa IModuleResponse thành string
         setModule(value);
         onModuleChange(value);
+        // Gọi callback để set moduleName
+        const selectedModule = modules.find(m => String(m.id) === value);
+        if (selectedModule) {
+            onModuleNameChange(selectedModule.moduleName);
+        }
+    };
+
+    const handleUmlTypeChange = (value: string) => {
+        onUmlTypeChange(value);
+        // Gọi callback để set typeUmlName
+        const selectedType = typeUMLs.find(t => t.value === value);
+        if (selectedType) {
+            onTypeUmlNameChange(selectedType.label);
+        } else {
+            // Fallback to UML_TYPES
+            const fallback = UML_TYPES.find((t: any) => t.key === value);
+            if (fallback) {
+                onTypeUmlNameChange(fallback.label);
+            }
+        }
     };
 
     const selectUmlTypeOptions = [
@@ -238,7 +272,7 @@ const Description: React.FC<Props> = ({
                         <Select
                             value={umlType || undefined}
                             style={{ width: 180 }}
-                            onChange={onUmlTypeChange}
+                            onChange={handleUmlTypeChange}
                             options={selectUmlTypeOptions}
                             disabled={isDisabled}
                             size="middle"

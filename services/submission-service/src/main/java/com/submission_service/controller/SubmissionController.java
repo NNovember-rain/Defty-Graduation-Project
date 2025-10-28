@@ -53,11 +53,9 @@ public class SubmissionController {
 
     @GetMapping
     public ApiResponse<Page<SubmissionResponse>> getSubmissions(
-            @RequestParam(required = false) String studentName,
-            @RequestParam(required = false) String studentCode,
-            @RequestParam(required = false) String assignmentTitle,
-            @RequestParam(required = false) String className,
-            @RequestParam(required = false) String classCode,
+            @RequestParam(required = false) Long studentId,
+            @RequestParam(required = false) Long assignmentId,
+            @RequestParam(required = false) Long classId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime toDate,
             @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
@@ -67,8 +65,7 @@ public class SubmissionController {
     ) {
         Page<SubmissionResponse> submissions = submissionService.getSubmissions(
                 page, size, sortBy, sortOrder,
-                studentName, studentCode, assignmentTitle,
-                className, classCode,
+                studentId, assignmentId, classId,
                 fromDate, toDate
         );
         return ApiResponse.<Page<SubmissionResponse>>builder()

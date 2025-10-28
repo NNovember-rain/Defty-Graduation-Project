@@ -9,10 +9,10 @@ import lombok.Setter;
 @Setter
 public class FeedbackTeacher extends BaseEntity {
 
-    @Column
+    @Column(nullable = false)
     private Long teacherId;
 
-    @Column
+    @Column(nullable = false)
     private String content;
 
     @ManyToOne

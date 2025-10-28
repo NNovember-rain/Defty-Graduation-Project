@@ -26,16 +26,10 @@ public class Submission extends BaseEntity {
     Long classId;
 
     @Column(nullable = false)
-    String studentName;
+    Long moduleId;
 
     @Column(nullable = false)
-    String studentCode;
-
-    @Column(nullable = false)
-    String assignmentTitle;
-
-    @Column
-    String classCode;
+    Long typeUmlId;
 
     @Column
     Double score;

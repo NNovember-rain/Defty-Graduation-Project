@@ -5,6 +5,7 @@ import com.defty.content_service.dto.request.AssignmentRequest;
 import com.defty.content_service.dto.response.ApiResponse;
 import com.defty.content_service.dto.response.AssignmentResponse;
 import com.defty.content_service.dto.response.MaterialUploadResponse;
+import com.defty.content_service.dto.response.ModuleResponse;
 import com.defty.content_service.service.AssignmentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -122,6 +123,15 @@ public class AssignmentController {
         Map<Long, AssignmentResponse> result = assignmentService.getAssignmentsByIds(assignmentIds);
         return ApiResponse.<Map<Long, AssignmentResponse>>builder()
                 .result(result)
+                .message("Fetched assignment successfully")
+                .build();
+    }
+
+    @GetMapping("/module/{id}")
+    public ApiResponse<ModuleResponse> getModule(@PathVariable Long id) {
+        ModuleResponse response = assignmentService.getAssignmentModule(id);
+        return ApiResponse.<ModuleResponse>builder()
+                .result(response)
                 .message("Fetched assignment successfully")
                 .build();
     }

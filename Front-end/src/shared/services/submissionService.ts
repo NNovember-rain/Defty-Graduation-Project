@@ -7,11 +7,9 @@ const PREFIX_SUBMISSIONS = import.meta.env.VITE_PREFIX_SUBMISSIONS as string
 export interface GetSubmissionsOptions {
     page?: number
     limit?: number
-    studentName?: string
-    studentCode?: string
-    assignmentTitle?: string
-    umlType?: string
-    classCode?: string
+    studentId?: number
+    assignmentId?: number
+    classId?: number
     fromDate?: string
     toDate?: string
     sortBy?: string
@@ -43,6 +41,9 @@ export interface SubmissionRequest {
     assignmentId: number
     studentPlantUmlCode: string
     examMode: boolean
+    moduleId: number
+    typeUmlId: number
+    typeUmlName: string
 }
 
 
@@ -113,10 +114,9 @@ export const getSubmissions = async (options: GetSubmissionsOptions = {}): Promi
     const params = {
         page: (options.page || 1) - 1,
         size: options.limit,
-        studentName: options.studentName,
-        studentCode: options.studentCode,
-        assignmentTitle: options.assignmentTitle,
-        classCode: options.classCode,
+        studentId: options.studentId,
+        assignmentId: options.assignmentId,
+        classId: options.classId,
         fromDate: options.fromDate,
         toDate: options.toDate,
         sortBy: options.sortBy,

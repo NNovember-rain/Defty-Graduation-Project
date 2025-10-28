@@ -50,6 +50,11 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                 "editorGutter.background": "#262626",
                 "editorLineNumber.foreground": "#6B7280",
                 "editorLineNumber.activeForeground": "#E5E7EB",
+                "editorWidget.border": "#404040",
+                "editorWidget.background": "#262626",
+                "editorSuggestWidget.background": "#262626",
+                "editorSuggestWidget.border": "#404040",
+                "focusBorder": "#404040"
             },
         });
 

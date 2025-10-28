@@ -376,7 +376,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                 handleOpenSubmissionModal(a);
                                             }}
                                         >
-                                            {t("classDetail.assignment.submit") || "Nộp bài"}
+                                            {t("Test nộp bài 1") || "Nộp bài"}
                                         </Button>
                                         <Button
                                             size="small"
@@ -385,7 +385,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                 handleViewAssignmentDetails(a, 'test');
                                             }}
                                         >
-                                            {t("classDetail.assignment.test") || "Test"}
+                                            {t("Test nộp bài 2") || "Test"}
                                         </Button>
                                     </Space>
                                 </Card>
