@@ -21,6 +21,8 @@ public class SubmissionResponse {
     Long studentId;
     Long assignmentId;
     Long classId;
+    Long moduleId;
+    String moduleCode; // check trường này hiển thị ra
     String studentName;
     String studentCode;
     String classCode;

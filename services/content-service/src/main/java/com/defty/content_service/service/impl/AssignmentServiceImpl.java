@@ -461,4 +461,24 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .modules(moduleResponses)
                 .build();
     }
+
+    @Override
+    public ModuleResponse getAssignmentModule(Long moduleId) {
+        ModuleEntity module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new NotFoundException("Module not found with ID: " + moduleId));
+
+        return ModuleResponse.builder()
+                .id(module.getId())
+                .moduleName(module.getModuleName())
+                .moduleDescription(module.getModuleDescription())
+                .solutionCode(module.getSolutionCode())
+                .typeUmlIds(
+                        module.getTypeUMLs() != null
+                                ? module.getTypeUMLs().stream()
+                                .map(TypeUML::getId)
+                                .toList()
+                                : List.of()
+                )
+                .build();
+    }
 }

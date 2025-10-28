@@ -9,10 +9,11 @@ import "./ProblemDetail.scss";
 import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
-import { getAssignmentById, type IAssignment } from "../../../shared/services/assignmentService";
+import { getAssignmentById, getAssignmentByClassId, type IAssignment } from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
 import { createSubmission, type SubmissionRequest } from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
+import { getTypeUmls } from "../../../shared/services/typeUmlService.ts";
 
 // KHAI BÁO INTERFACE ĐỂ DÙNG TRONG STATE VÀ LOGIC
 interface IAssignmentClass {
@@ -20,9 +21,7 @@ interface IAssignmentClass {
     moduleName: string;
     moduleDescription: string;
 }
-interface IAssignmentWithClasses extends IAssignment {
-    assignmentClasses?: IAssignmentClass[];
-}
+type IAssignmentWithClasses = IAssignment & { assignmentClasses?: IAssignmentClass[] };
 // END KHAI BÁO
 
 /** ========= PlantUML helpers (Giữ nguyên) ========= */
@@ -101,6 +100,8 @@ const ProblemDetail: React.FC = () => {
     // NEW STATES cho Type UML và Module
     const [umlType, setUmlType] = useState<string>("plantuml");
     const [module, setModule] = useState<string>("default"); // Module được chọn
+    const [typeUmlName, setTypeUmlName] = useState<string>("PlantUML (Default)");
+    const [moduleName, setModuleName] = useState<string>("Default");
 
     // === BƯỚC SỬA CHỮA LỖI VÒNG LẶP: DÙNG useCallback ĐỂ ỔN ĐỊNH CÁC HÀM SETTER ===
 
@@ -112,6 +113,16 @@ const ProblemDetail: React.FC = () => {
     // 2. Ổn định hàm setUmlType (prop onUmlTypeChange)
     const handleUmlTypeChange = useCallback((value: string) => {
         setUmlType(value);
+    }, []);
+
+    // 3. Callback cho typeUmlName
+    const handleTypeUmlNameChange = useCallback((name: string) => {
+        setTypeUmlName(name);
+    }, []);
+
+    // 4. Callback cho moduleName
+    const handleModuleNameChange = useCallback((name: string) => {
+        setModuleName(name);
     }, []);
 
     // =========================================================================
@@ -228,7 +239,10 @@ const ProblemDetail: React.FC = () => {
                 classId: currentClassId, // Chuyển đổi URL param sang số
                 assignmentId: Number(problemId), // Chuyển đổi URL param sang số
                 studentPlantUmlCode: code, // Code PlantUML từ editor
-                examMode: isTestMode // Dùng isTestMode cho examMode
+                examMode: isTestMode, // Dùng isTestMode cho examMode
+                moduleId: Number(module),
+                typeUmlId: Number(umlType),
+                typeUmlName: typeUmlName
             };
 
             // Bước 1: Validate dữ liệu trước khi gửi đi
@@ -239,6 +253,11 @@ const ProblemDetail: React.FC = () => {
 
             if (isNaN(submissionData.classId) || isNaN(submissionData.assignmentId)) {
                 message.error("ID lớp học hoặc ID bài tập không hợp lệ!");
+                return;
+            }
+
+            if (module === "default" || umlType === "plantuml") {
+                message.error("Vui lòng chọn Module và UML Type trước khi nộp bài!");
                 return;
             }
 
@@ -361,6 +380,8 @@ const ProblemDetail: React.FC = () => {
                                  onModuleChange={handleModuleChange} // SỬ DỤNG HÀM ĐÃ BỌC
                                  classId={currentClassId}
                                  isRenderingOrSubmitting={isRendering || isSubmitting}
+                                 onTypeUmlNameChange={handleTypeUmlNameChange}
+                                 onModuleNameChange={handleModuleNameChange}
                     />
                 </div>
 
@@ -386,11 +407,6 @@ const ProblemDetail: React.FC = () => {
                             onViewHistory={handleViewHistory}
                             isRendering={isRendering}
                             isSubmitting={isSubmitting}
-                            umlType={umlType}
-                            onUmlTypeChange={handleUmlTypeChange} // SỬ DỤNG HÀM ĐÃ BỌC
-                            module={module}
-                            onModuleChange={handleModuleChange} // SỬ DỤNG HÀM ĐÃ BỌC
-                            umlTypes={UML_TYPES}
                             isTestMode={isTestMode}
                             onNewButtonClick={handleNewButtonClick}
                         />

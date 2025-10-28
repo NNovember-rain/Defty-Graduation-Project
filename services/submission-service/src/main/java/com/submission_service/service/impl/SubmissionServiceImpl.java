@@ -14,10 +14,7 @@ import com.submission_service.client.ClassManagementServiceClient;
 import com.submission_service.client.ContentServiceClient;
 import com.submission_service.mapper.SubmissionMapper;
 import com.submission_service.model.dto.request.SubmissionRequest;
-import com.submission_service.model.dto.response.AssignmentResponse;
-import com.submission_service.model.dto.response.ClassResponse;
-import com.submission_service.model.dto.response.SubmissionResponse;
-import com.submission_service.model.dto.response.UserResponse;
+import com.submission_service.model.dto.response.*;
 import com.submission_service.model.entity.Submission;
 import com.submission_service.model.event.SubmissionEvent;
 import com.submission_service.repository.ISubmissionRepository;
@@ -44,10 +41,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Getter
@@ -81,30 +76,37 @@ public class SubmissionServiceImpl implements SubmissionService {
         Long userId = currentUser.userId();
         log.info("Get userId from context");
 
-        ApiResponse<AssignmentResponse> assignmentResponse;
-        ApiResponse<UserResponse> userResponse;
-        ApiResponse<ClassResponse> classResponse;
+        AssignmentResponse assignmentResponse;
+        UserResponse userResponse;
+        ClassResponse classResponse;
+        ModuleResponse moduleResponse;
 
         try {
-            assignmentResponse = contentServiceClient.getAssignment(submissionRequest.getAssignmentId());
+            assignmentResponse = contentServiceClient.getAssignment(submissionRequest.getAssignmentId()).getResult();
             log.info("Fetched assignment with ID: {}", submissionRequest.getAssignmentId());
         }catch (FeignException e){
             throw new FeignClientException("Failed to fetch assignment with ID: " + submissionRequest.getAssignmentId());
         }
         try {
-            userResponse = authServiceClient.getUser(userId);
+            userResponse = authServiceClient.getUser(userId).getResult();
             log.info("Fetched user with ID: {}", userId);
         }catch (FeignClientException e){
             throw new FeignClientException("Failed to fetch user with ID: " + userId);
         }
         try {
-            classResponse = classManagementServiceClient.getClassById(submissionRequest.getClassId());
+            classResponse = classManagementServiceClient.getClassById(submissionRequest.getClassId()).getResult();
             log.info("Fetched class with ID: {}", submissionRequest.getClassId());
         }catch (FeignClientException e){
             throw new FeignClientException("Failed to fetch class with ID: " + submissionRequest.getClassId());
         }
+        try {
+            moduleResponse = contentServiceClient.getModule(submissionRequest.getModuleId()).getResult();
+            log.info("Fetched module with ID: {}", submissionRequest.getModuleId());
+        }catch (FeignClientException e){
+            throw new FeignClientException("Failed to fetch module with ID: " + submissionRequest.getModuleId());
+        }
 
-        Submission submission = submissionMapper.submissionRequestToSubmission(submissionRequest, userResponse.getResult(), assignmentResponse.getResult(), classResponse.getResult());
+        Submission submission = submissionMapper.submissionRequestToSubmission(submissionRequest, userResponse, assignmentResponse, classResponse, moduleResponse);
         submissionRepository.save(submission);
         log.info("Submission saved");
 
@@ -112,9 +114,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         SubmissionEvent submissionEvent= SubmissionEvent.builder()
                 .id(submission.getId())
                 .accessToken(accessToken)
-                .contentAssignment(assignmentResponse.getResult().getDescription())
-                .solutionPlantUmlCode(assignmentResponse.getResult().getSolutionCode())
-                .typeUmlName("class")
+                .contentAssignment(assignmentResponse.getCommonDescription()+moduleResponse.getModuleDescription())
+                .solutionPlantUmlCode(moduleResponse.getSolutionCode())
+                .typeUmlName(submissionRequest.getTypeUmlName())
                 .studentPlantUmlCode(submissionRequest.getStudentPlantUmlCode())
                 .build();
 
@@ -133,7 +135,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
-    public Page<SubmissionResponse> getSubmissions(int page, int size, String sortBy, String sortOrder, String studentName, String studentCode, String assignmentTitle, String className, String classCode, LocalDateTime fromDate, LocalDateTime toDate){
+    public Page<SubmissionResponse> getSubmissions(int page, int size, String sortBy, String sortOrder, Long studentId, Long assignmentId, Long classId, LocalDateTime fromDate, LocalDateTime toDate){
         Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Sort sort = switch (sortBy) {
             default -> Sort.by(direction, "createdDate");
@@ -142,39 +144,57 @@ public class SubmissionServiceImpl implements SubmissionService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Specification<Submission> spec = Specification
-                .where(SubmissionSpecification.hasStudentName(studentName))
-                .and(SubmissionSpecification.hasStudentCode(studentCode))
-                .and(SubmissionSpecification.hasAssignmentTitle(assignmentTitle))
-                .and(SubmissionSpecification.hasClassName(className))
-                .and(SubmissionSpecification.hasClassCode(classCode))
+                .where(SubmissionSpecification.hasStudentId(studentId))
+                .and(SubmissionSpecification.hasAssignmentId(assignmentId))
+                .and(SubmissionSpecification.hasClassId(classId))
                 .and(SubmissionSpecification.hasCreatedDateBetween(fromDate, toDate));
 
         Page<Submission> result = submissionRepository.findAll(spec, pageable);
+        Set<Long> studentIds = new HashSet<>();
+        Set<Long> assignmentIds = new HashSet<>();
+        Set<Long> classIds = new HashSet<>();
+
+        result.forEach(comment -> {
+            studentIds.add(comment.getStudentId());
+            assignmentIds.add(comment.getAssignmentId());
+            classIds.add(comment.getClassId());
+        });
+        Map<Long, UserResponse> userMap = authServiceClient.getExerciseMap(new ArrayList<>(studentIds)).getResult();
+        Map<Long, AssignmentResponse> assignmentMap = contentServiceClient.getExerciseMap(new ArrayList<>(assignmentIds)).getResult();
+        Map<Long, ClassResponse> classMap = classManagementServiceClient.getClassesByIds(new ArrayList<>(classIds)).getResult();
+
         log.info("Get all submissions with criteria");
-        return result.map(submissionMapper::toSubmissionResponse);
+        return result.map(submission -> {
+            UserResponse user = userMap.get(submission.getStudentId());
+            AssignmentResponse assignment = assignmentMap.get(submission.getAssignmentId());
+            ClassResponse classResponse = classMap.get(submission.getClassId());
+
+            return submissionMapper.toSubmissionResponse(submission, user, assignment, classResponse);
+        });
     }
 
 
     @Override
     public SubmissionResponse getSubmission(Long id) {
-        Optional<Submission> submissionOptional = submissionRepository.findByIdAndStatus(id, 1);
-        if (!submissionOptional.isPresent()) {
-            throw new NotFoundException("Submission not found with ID: " + id);
-        }
-        ApiResponse<AssignmentResponse> assignmentResponse = null;
-        Submission submission = submissionOptional.get();
-        try {
-            assignmentResponse = contentServiceClient.getAssignment(1L);
-            log.info("Fetched assignment data for submission id: {}", id);
-        }catch (FeignException e){
-            log.info("Fail to fecth assignment data for submission id: {}", id);
-        }
-        SubmissionResponse submissionResponse=submissionMapper.toSubmissionResponse(submission);
-        if(assignmentResponse!=null){
-            submissionResponse.setSolutionCode(assignmentResponse.getResult().getSolutionCode());
-            submissionResponse.setTypeUml(assignmentResponse.getResult().getTypeUmlName());
-        }
-        return submissionResponse;
+//        Optional<Submission> submissionOptional = submissionRepository.findByIdAndStatus(id, 1);
+//        if (!submissionOptional.isPresent()) {
+//            throw new NotFoundException("Submission not found with ID: " + id);
+//        }
+//        ApiResponse<AssignmentResponse> assignmentResponse = null;
+//        Submission submission = submissionOptional.get();
+//        try {
+//            assignmentResponse = contentServiceClient.getAssignment(1L);
+//            log.info("Fetched assignment data for submission id: {}", id);
+//        }catch (FeignException e){
+//            log.info("Fail to fecth assignment data for submission id: {}", id);
+//        }
+//        SubmissionResponse submissionResponse=submissionMapper.toSubmissionResponse(submission);
+//        if(assignmentResponse!=null){
+//            submissionResponse.setSolutionCode(assignmentResponse.getResult().getSolutionCode());
+//            submissionResponse.setTypeUml(assignmentResponse.getResult().getTypeUmlName());
+//        }
+//        return submissionResponse;
+        return null;
 
     }
 
@@ -210,57 +230,74 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .and(SubmissionSpecification.hasStudentId(studentId))
                 .and(SubmissionSpecification.hasExamMode(examMode));
 
+        Page<Submission> result = submissionRepository.findAll(spec, pageable);
+        Set<Long> studentIds = new HashSet<>();
+        Set<Long> assignmentIds = new HashSet<>();
+        Set<Long> classIds = new HashSet<>();
+        result.forEach(comment -> {
+            studentIds.add(comment.getStudentId());
+            assignmentIds.add(comment.getAssignmentId());
+            classIds.add(comment.getClassId());
+        });
+        Map<Long, UserResponse> userMap = authServiceClient.getExerciseMap(new ArrayList<>(studentIds)).getResult();
+        Map<Long, AssignmentResponse> assignmentMap = contentServiceClient.getExerciseMap(new ArrayList<>(assignmentIds)).getResult();
+        Map<Long, ClassResponse> classMap = classManagementServiceClient.getClassesByIds(new ArrayList<>(classIds)).getResult();
 
-        Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
-        log.info("Get all submissions history for student ID: {} in class ID: {} and assignment ID: {}",
-                studentId, classId, assignmentId);
+        log.info("Get all submissions history for student");
+        return result.map(submission -> {
+            UserResponse user = userMap.get(submission.getStudentId());
+            AssignmentResponse assignment = assignmentMap.get(submission.getAssignmentId());
+            ClassResponse classResponse = classMap.get(submission.getClassId());
 
-        return submissions.map(submissionMapper::toSubmissionResponse);
+            return submissionMapper.toSubmissionResponse(submission, user, assignment, classResponse);
+        });
     }
 
     @Override
     public SubmissionResponse getLastSubmissionsExamMode(Long classId, Long assignmentId) {
-        if (classId == null || assignmentId == null) {
-            throw new FieldRequiredException("ClassId and AssignmentId are required");
-        }
-
-        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
-        Long userId = currentUser.userId();
-        Optional<Submission> submissionOptional = submissionRepository
-                .findTopByClassIdAndAssignmentIdAndStudentIdAndExamModeOrderByCreatedDateDesc(classId, assignmentId, userId, true);
-
-        if (!submissionOptional.isPresent()) {
-            throw new NotFoundException("No exam mode submission found for the given class and assignment");
-        } else {
-            log.info("Get last exam mode submission for student ID: {} in class ID: {} and assignment ID: {}",
-                    userId, classId, assignmentId);
-            return submissionMapper.toSubmissionResponse(submissionOptional.get());
-        }
+//        if (classId == null || assignmentId == null) {
+//            throw new FieldRequiredException("ClassId and AssignmentId are required");
+//        }
+//
+//        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+//        Long userId = currentUser.userId();
+//        Optional<Submission> submissionOptional = submissionRepository
+//                .findTopByClassIdAndAssignmentIdAndStudentIdAndExamModeOrderByCreatedDateDesc(classId, assignmentId, userId, true);
+//
+//        if (!submissionOptional.isPresent()) {
+//            throw new NotFoundException("No exam mode submission found for the given class and assignment");
+//        } else {
+//            log.info("Get last exam mode submission for student ID: {} in class ID: {} and assignment ID: {}",
+//                    userId, classId, assignmentId);
+//            return submissionMapper.toSubmissionResponse(submissionOptional.get());
+//        }
+        return null;
     }
 
     @Override
     public Page<SubmissionResponse> getLastSubmissionsExamMode(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId) {
 
-        if (classId == null || assignmentId == null) {
-            throw new FieldRequiredException("ClassId and AssignmentId are required");
-        }
-
-        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sort = switch (sortBy) {
-            case "studentName" -> Sort.by(direction, "studentName");
-            default -> Sort.by(direction, "createdDate");
-        };
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Specification<Submission> spec = Specification
-                .where(SubmissionSpecification.hasClassId(classId))
-                .and(SubmissionSpecification.hasAssignmentId(assignmentId))
-                .and(SubmissionSpecification.isLatestSubmissionPerWithExamMode());
-
-        Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
-        log.info("Get all submissions for class ID: {} and assignment ID: {}", classId, assignmentId);
-
-        return submissions.map(submissionMapper::toSubmissionResponse);
+//        if (classId == null || assignmentId == null) {
+//            throw new FieldRequiredException("ClassId and AssignmentId are required");
+//        }
+//
+//        Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+//        Sort sort = switch (sortBy) {
+//            case "studentName" -> Sort.by(direction, "studentName");
+//            default -> Sort.by(direction, "createdDate");
+//        };
+//        Pageable pageable = PageRequest.of(page, size, sort);
+//
+//        Specification<Submission> spec = Specification
+//                .where(SubmissionSpecification.hasClassId(classId))
+//                .and(SubmissionSpecification.hasAssignmentId(assignmentId))
+//                .and(SubmissionSpecification.isLatestSubmissionPerWithExamMode());
+//
+//        Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
+//        log.info("Get all submissions for class ID: {} and assignment ID: {}", classId, assignmentId);
+//
+//        return submissions.map(submissionMapper::toSubmissionResponse);
+        return null;
     }
 
 }

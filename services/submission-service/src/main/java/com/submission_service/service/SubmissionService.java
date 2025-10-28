@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 public interface SubmissionService {
     Long handleSubmission(SubmissionRequest submissionRequest);
-    Page<SubmissionResponse> getSubmissions(int page, int size, String sortBy, String sortOrder, String studentName, String studentCode, String assignmentTitle, String className, String classCode, LocalDateTime fromDate, LocalDateTime toDate);
+    Page<SubmissionResponse> getSubmissions(int page, int size, String sortBy, String sortOrder, Long studentId, Long assignmentId, Long classId, LocalDateTime fromDate, LocalDateTime toDate);
     SubmissionResponse getSubmission(Long id);
     String addScoreSubmission(Long id, Double point);
     SubmissionResponse getLastSubmissionsExamMode(Long classId, Long assignmentId);

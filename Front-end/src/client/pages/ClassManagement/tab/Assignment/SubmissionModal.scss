@@ -1,4 +1,5 @@
 // Variables to match the existing theme
+@use 'sass:color';
 $header-bg: #282828;
 $main-bg: #141414;
 $card-bg: #1f1f1f;
@@ -119,7 +120,7 @@ $shadow-color: rgba(0, 0, 0, 0.5);
       border: none;
       
       &:hover {
-        background: lighten($primary-color, 8%);
+        background: color.adjust($primary-color, $lightness: 8%);
       }
       
       &:disabled {
@@ -288,7 +289,7 @@ $shadow-color: rgba(0, 0, 0, 0.5);
         box-shadow: 0 2px 8px rgba(0, 131, 255, 0.3);
         
         &:hover {
-          background: lighten($primary-color, 8%);
+          background: color.adjust($primary-color, $lightness: 8%);
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(0, 131, 255, 0.4);
         }
@@ -306,7 +307,7 @@ $shadow-color: rgba(0, 0, 0, 0.5);
         color: $text-light;
         
         &:hover {
-          background: lighten($card-bg-light, 10%);
+          background: color.adjust($card-bg-light, $lightness: 10%);
           border-color: rgba(255, 255, 255, 0.3);
           transform: translateY(-1px);
           color: $text-light;

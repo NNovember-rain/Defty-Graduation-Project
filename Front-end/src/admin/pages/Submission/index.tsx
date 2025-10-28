@@ -88,10 +88,9 @@ const Submission: React.FC = () => {
                 limit: entriesPerPage,
                 sortBy: currentSortColumn || undefined,
                 sortOrder: currentSortOrder || undefined,
-                studentName: currentFilters.studentName || undefined,
-                studentCode: currentFilters.studentCode || undefined,
-                assignmentTitle: currentFilters.assignmentTitle || undefined,
-                classCode: currentFilters.classCode || undefined,
+                studentId: currentFilters.studentId ? parseInt(currentFilters.studentId) : undefined,
+                assignmentId: currentFilters.assignmentId ? parseInt(currentFilters.assignmentId) : undefined,
+                classId: currentFilters.classId ? parseInt(currentFilters.classId) : undefined,
                 fromDate: currentFilters.fromDate || undefined,
                 toDate: currentFilters.toDate || undefined,
             };
@@ -128,31 +127,24 @@ const Submission: React.FC = () => {
 
     const searchFields: SearchField[] = useMemo(() => [
         {
-            key: 'studentName',
-            label: t('submissionPage.search.studentName'),
-            type: 'text',
-            placeholder: t('submissionPage.search.studentNamePlaceholder'),
+            key: 'studentId',
+            label: 'Sinh viên',
+            type: 'number',
+            placeholder: 'Nhập tên sinh viên',
             gridSpan: 1
         },
         {
-            key: 'studentCode',
-            label: t('submissionPage.search.studentCode'),
-            type: 'text',
-            placeholder: t('submissionPage.search.studentCodePlaceholder'),
+            key: 'assignmentId',
+            label: 'Bài tập',
+            type: 'number',
+            placeholder: 'Nhập tiêu đề bài tập',
             gridSpan: 1
         },
         {
-            key: 'assignmentTitle',
-            label: t('submissionPage.search.assignmentTitle'),
-            type: 'text',
-            placeholder: t('submissionPage.search.assignmentTitlePlaceholder'),
-            gridSpan: 1
-        },
-        {
-            key: 'classCode',
-            label: t('submissionPage.search.classCode'),
-            type: 'text',
-            placeholder: t('submissionPage.search.classCodePlaceholder'),
+            key: 'classId',
+            label: 'Lớp học',
+            type: 'number',
+            placeholder: 'Nhập mã lớp',
             gridSpan: 1
         },
         {
