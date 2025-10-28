@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import promptRoutes from "./prompt.routes";
-import plantumlRoutes from "./plantuml.routes";
+import umlKnowledgeBaseRoutes from "./uml-knowledge-base.routes";
 
 const router = Router();
 
 router.use("/prompts", promptRoutes);
-router.use("/plantuml", plantumlRoutes);
+router.use("/uml-knowledge-base", umlKnowledgeBaseRoutes);
 
 export default router;

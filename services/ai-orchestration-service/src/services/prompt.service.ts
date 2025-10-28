@@ -1,4 +1,4 @@
-import Prompt, { IPrompt } from '../models/prompt.model';
+import Prompt, { IPrompt } from '../models/mongodb/prompt.model';
 import { HttpError } from '../utils/httpErrors';
 import { FilterQuery, SortOrder } from 'mongoose';
 

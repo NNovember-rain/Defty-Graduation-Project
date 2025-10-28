@@ -25,26 +25,27 @@ const AI_TOP_K = parseInt(process.env.AI_TOP_K || '40');
 const API_TIMEOUT = parseInt(process.env.AI_API_TIMEOUT || '600000');
 const MAX_RETRIES = parseInt(process.env.AI_MAX_RETRIES || '3');
 const AI_RESPONSE_LOG_DIR = process.env.AI_RESPONSE_LOG_DIR || 'logs/ai_responses';
+const AI_PROMPT_LOG_DIR = process.env.AI_PROMPT_LOG_DIR || 'logs/ai_prompts'; // ✅ new dir for prompts
 
 // Provider-specific configurations
 const PROVIDER_CONFIGS = {
     gemini: {
         endpoint: AI_API_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-        maxTokens: 1000000, // Gemini 2.0 supports up to 1M output tokens
+        maxTokens: 1000000,
         supportsTopK: true,
         headerKey: 'x-goog-api-key'
     },
     openai: {
         endpoint: AI_API_ENDPOINT || 'https://api.openai.com/v1/chat/completions',
-        model: process.env.AI_MODEL || 'gpt-4o', // gpt-4o, gpt-4-turbo, gpt-3.5-turbo
-        maxTokens: 16384, // GPT-4 Turbo max output
+        model: process.env.AI_MODEL || 'gpt-4o',
+        maxTokens: 16384,
         supportsTopK: false,
         headerKey: 'Authorization'
     },
     claude: {
         endpoint: AI_API_ENDPOINT || 'https://api.anthropic.com/v1/messages',
-        model: process.env.AI_MODEL || 'claude-3-5-sonnet-20241022', // claude-3-opus, claude-3-sonnet
-        maxTokens: 8192, // Claude 3.5 max output (can request up to 200K with special access)
+        model: process.env.AI_MODEL || 'claude-3-5-sonnet-20241022',
+        maxTokens: 8192,
         supportsTopK: true,
         headerKey: 'x-api-key'
     },
@@ -55,6 +56,7 @@ const PROVIDER_CONFIGS = {
         headerKey: 'api-key'
     }
 };
+
 
 // ============================================================================
 // BUILD REQUEST BODY
@@ -193,6 +195,45 @@ const extractTextFromResponse = (response: any, provider: AIProvider): string =>
     return text;
 };
 
+
+// ============================================================================
+// SAVE PROMPT TO FILE (NEW)
+// ============================================================================
+
+const savePromptToFile = (prompt: string, umlId: number, step: string): void => {
+    try {
+        const logDir = path.join(process.cwd(), AI_PROMPT_LOG_DIR);
+        if (!fsSync.existsSync(logDir)) {
+            fsSync.mkdirSync(logDir, { recursive: true });
+        }
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `prompt-${step}-${umlId}-${timestamp}.log`;
+        const filePath = path.join(logDir, filename);
+
+        fsSync.writeFileSync(filePath, prompt, 'utf-8');
+
+        logger.info({
+            message: 'AI prompt saved to file',
+            event_type: 'ai_prompt_saved',
+            step,
+            filePath,
+            promptLength: prompt.length
+        });
+    } catch (error: any) {
+        logger.error({
+            message: 'Failed to save AI prompt',
+            event_type: 'ai_prompt_save_error',
+            step,
+            error_message: error.message
+        });
+    }
+};
+
+// ============================================================================
+// SAVE RESPONSE TO FILE (existing)
+// ============================================================================
+
 const saveResponseToFile = (text: string, umlId: number, step: string): void => {
     try {
         const logDir = path.join(process.cwd(), AI_RESPONSE_LOG_DIR);
@@ -224,7 +265,7 @@ const saveResponseToFile = (text: string, umlId: number, step: string): void => 
 };
 
 // ============================================================================
-// UNIFIED AI API CALL
+// CALL AI API (MODIFIED)
 // ============================================================================
 
 export const callAIApi = async (
@@ -255,6 +296,9 @@ export const callAIApi = async (
                 endpoint: config.endpoint
             });
 
+            // ✅ Save the prompt to file before calling API
+            savePromptToFile(promptContent, umlId, step);
+
             const startTime = Date.now();
 
             const response = await axios.post(
@@ -279,14 +323,12 @@ export const callAIApi = async (
                 responseLength: text.length
             });
 
-            // Save response to file
+            // Save response
             saveResponseToFile(text, umlId, step);
-
             return text;
 
         } catch (error: any) {
             lastError = error;
-
             const isTimeout = error.code === 'ECONNABORTED' || error.message?.includes('timeout');
             const isRateLimit = error.response?.status === 429;
             const statusCode = error.response?.status;
@@ -305,7 +347,6 @@ export const callAIApi = async (
                 willRetry: attempt < MAX_RETRIES
             });
 
-            // Log error details
             if (error.response?.data) {
                 logger.error({
                     message: 'AI API error response',
@@ -318,7 +359,6 @@ export const callAIApi = async (
                 });
             }
 
-            // Retry logic
             if (attempt < MAX_RETRIES) {
                 const delay = RETRY_DELAYS[attempt - 1];
                 logger.info({

@@ -4,6 +4,8 @@ import connectDB from './config/db';
 import runKafkaConsumer from './kafka/consumer';
 import { initProducer } from './kafka/producer';
 import './workers/uml-processing.worker';
+import * as embeddingService from './services/uml-embedding.service';
+import * as umlKnowledgeService from './services/uml-knowledge-base.service';
 import logger from './config/logger';
 
 (async () => {
@@ -17,6 +19,15 @@ import logger from './config/logger';
 
         // Start Kafka Consumer
         await runKafkaConsumer();
+
+        embeddingService.initEmbeddingService(process.env.EMBEDDING_ENDPOINT);
+
+        umlKnowledgeService.initService(
+            process.env.QDRANT_URL!,
+            process.env.QDRANT_API_KEY!
+        );
+
+        await umlKnowledgeService.initCollection();
 
         const PORT = process.env.PORT || 3000;
 
