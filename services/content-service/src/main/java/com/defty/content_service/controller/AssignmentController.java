@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -86,6 +87,14 @@ public class AssignmentController {
     @GetMapping("/{assignmentId}")
      ApiResponse<AssignmentResponse> getAssignment(@PathVariable Long assignmentId) {
         AssignmentResponse response = assignmentService.getAssignment(assignmentId);
+        return ApiResponse.<AssignmentResponse>builder()
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/{classId}/{assignmentId}")
+    ApiResponse<AssignmentResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
+        AssignmentResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
         return ApiResponse.<AssignmentResponse>builder()
                 .result(response)
                 .build();

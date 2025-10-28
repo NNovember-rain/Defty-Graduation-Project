@@ -208,6 +208,16 @@ public class AssignmentServiceImpl implements AssignmentService {
         return new PageImpl<>(responses, pageable, assignments.size());
     }
 
+    @Override
+    public AssignmentResponse getAssignmentByClassId(Long classId, Long assignmentId) {
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new NotFoundException("Assignment not found"));
+        List<AssignmentClass> assignmentClassesForClass = assignmentClassRepository
+                .findByClassId(classId);
+
+        return toAssignmentResponseWithClassModules(assignment, assignmentClassesForClass);
+    }
+
     private AssignmentResponse toAssignmentResponseWithClassModules(Assignment assignment, List<AssignmentClass> assignmentClassesForClass) {
         List<Long> classIds = assignmentClassesForClass.stream()
                 .map(AssignmentClass::getClassId)
@@ -257,11 +267,18 @@ public class AssignmentServiceImpl implements AssignmentService {
                 })
                 .toList();
 
-        List<ModuleResponse> mergedModules = Stream.concat(commonModules.stream(),
+        Map<Long, ModuleResponse> mergedModulesMap = Stream.concat(
+                        commonModules.stream(),
                         assignmentClassResponses.stream()
-                                .flatMap(acResp -> acResp.getModuleResponses().stream()))
-                .distinct()
-                .toList();
+                                .flatMap(acResp -> acResp.getModuleResponses().stream())
+                )
+                .collect(Collectors.toMap(
+                        ModuleResponse::getId,
+                        moduleResponse -> moduleResponse,
+                        (m1, m2) -> m1
+                ));
+
+        List<ModuleResponse> mergedModules = new ArrayList<>(mergedModulesMap.values());
 
         return AssignmentResponse.builder()
                 .id(assignment.getId())

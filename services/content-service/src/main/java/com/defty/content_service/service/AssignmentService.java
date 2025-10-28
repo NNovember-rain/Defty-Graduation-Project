@@ -17,6 +17,7 @@ public interface AssignmentService {
     void deleteAssignment(Long assignmentId);
     AssignmentResponse toggleAssignmentStatus(Long assignmentId );
     Page<AssignmentResponse> getAssignmentsByClassId(Long classId, Pageable pageable);
+    AssignmentResponse getAssignmentByClassId(Long classId, Long assignmentId);
     AssignmentResponse createAssignment(AssignmentRequest request);
     AssignmentResponse updateAssignment(Long id, AssignmentRequest request);
     Map<Long, AssignmentResponse> getAssignmentsByIds(List<Long> assignmentIds);

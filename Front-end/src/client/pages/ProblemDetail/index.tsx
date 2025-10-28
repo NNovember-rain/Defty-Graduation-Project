@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {useParams, useNavigate, useSearchParams} from "react-router-dom";
 import Split from "react-split";
 import Description from "./Description";
 import CodeEditor from "./CodeEditor.tsx";
@@ -13,6 +13,17 @@ import { getAssignmentById, type IAssignment } from "../../../shared/services/as
 import { deflate } from "pako";
 import { createSubmission, type SubmissionRequest } from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
+
+// KHAI BÁO INTERFACE ĐỂ DÙNG TRONG STATE VÀ LOGIC
+interface IAssignmentClass {
+    classId: number;
+    moduleName: string;
+    moduleDescription: string;
+}
+interface IAssignmentWithClasses extends IAssignment {
+    assignmentClasses?: IAssignmentClass[];
+}
+// END KHAI BÁO
 
 /** ========= PlantUML helpers (Giữ nguyên) ========= */
 const plantUmlEncTable = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
@@ -51,7 +62,6 @@ Alice -> Bob : Hi
 @enduml`;
 
 // Định nghĩa các loại UML được hỗ trợ bởi Kroki
-// Chúng ta sẽ chỉ sử dụng một số loại phổ biến cho PlantUML
 const UML_TYPES = [
     { key: "plantuml", label: "PlantUML (Default)" },
     { key: "mermaid", label: "Mermaid" },
@@ -59,9 +69,12 @@ const UML_TYPES = [
     { key: "ditaa", label: "Ditaa" },
 ];
 
+
+
 const ProblemDetail: React.FC = () => {
     const { message, notification } = useNotification();
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
+    const currentClassId = Number(classId); // Lấy classId dưới dạng số
     const navigate = useNavigate();
     const { t } = useTranslation();
 
@@ -78,10 +91,30 @@ const ProblemDetail: React.FC = () => {
     const [isRendering, setIsRendering] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // NEW STATES cho Type UML và Module (Module ở đây tạm bỏ qua, vì Kroki dùng UML type trực tiếp)
-    // Nếu bạn chỉ muốn PlantUML, bạn chỉ cần một state duy nhất cho UML Type.
-    const [umlType, setUmlType] = useState<string>("plantuml"); // Mặc định là PlantUML
-    const [module, setModule] = useState<string>("default"); // Module: có thể là 'default' hoặc 'server-side'
+    // THÊM STATE ĐỂ LƯU THÔNG TIN MODULE CỦA CLASS
+    const [assignmentClassModule, setAssignmentClassModule] = useState<IAssignmentClass | null>(null);
+
+    const [searchParams] = useSearchParams();
+    const isTestMode = searchParams.get("mode") === "test";
+    const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
+
+    // NEW STATES cho Type UML và Module
+    const [umlType, setUmlType] = useState<string>("plantuml");
+    const [module, setModule] = useState<string>("default"); // Module được chọn
+
+    // === BƯỚC SỬA CHỮA LỖI VÒNG LẶP: DÙNG useCallback ĐỂ ỔN ĐỊNH CÁC HÀM SETTER ===
+
+    // 1. Ổn định hàm setModule (prop onModuleChange)
+    const handleModuleChange = useCallback((value: string) => {
+        setModule(value);
+    }, []);
+
+    // 2. Ổn định hàm setUmlType (prop onUmlTypeChange)
+    const handleUmlTypeChange = useCallback((value: string) => {
+        setUmlType(value);
+    }, []);
+
+    // =========================================================================
 
     // responsive orientation
     const [isNarrow, setIsNarrow] = useState<boolean>(() => window.innerWidth < 1024);
@@ -91,6 +124,15 @@ const ProblemDetail: React.FC = () => {
 
     // Get current user info
     const { user } = useUserStore();
+
+    const handleNewButtonClick = useCallback(() => {
+        console.log('✨ New button clicked in Test Mode!');
+        notification.info(
+            "Hành động Test Mode",
+            "Nút mới đã được kích hoạt!",
+            { duration: 3, placement: 'topRight' }
+        );
+    }, [notification]);
 
     useEffect(() => {
         const onResize = () => setIsNarrow(window.innerWidth < 1024);
@@ -162,7 +204,7 @@ const ProblemDetail: React.FC = () => {
     const handleViewHistory = () => {
         console.log('📖 handleViewHistory clicked');
         console.log('Props that will be passed:', {
-            classId: Number(classId),
+            classId: currentClassId,
             problemId: Number(problemId),
             studentId: Number(user?.id) || 1
         });
@@ -183,10 +225,10 @@ const ProblemDetail: React.FC = () => {
         setIsSubmitting(true);
         try {
             const submissionData: SubmissionRequest = {
-                classId: Number(classId), // Chuyển đổi URL param sang số
+                classId: currentClassId, // Chuyển đổi URL param sang số
                 assignmentId: Number(problemId), // Chuyển đổi URL param sang số
                 studentPlantUmlCode: code, // Code PlantUML từ editor
-                examMode: false // Set examMode = false cho trang nộp bài thường
+                examMode: isTestMode // Dùng isTestMode cho examMode
             };
 
             // Bước 1: Validate dữ liệu trước khi gửi đi
@@ -233,10 +275,22 @@ const ProblemDetail: React.FC = () => {
         }
     };
 
+    // SỬA HÀM fetchAssignmentInfo để lấy thông tin module của class
     const fetchAssignmentInfo = async (pid: number) => {
         try {
-            const asg = await getAssignmentById(pid);
-            console.log("Fetched assignment:", asg);
+            // Ép kiểu để có assignmentClasses
+            const asg = (await getAssignmentById(pid)) as IAssignmentWithClasses;
+
+            // LOGIC MỚI: TÌM THÔNG TIN MODULE DỰA TRÊN classId
+            const classModuleInfo = asg.assignmentClasses?.find(ac => ac.classId === currentClassId);
+
+            // LƯU Ý: setAssignmentClassModule nhận IAssignmentClass, không cần bọc trong object mới
+            if (classModuleInfo) {
+                setAssignmentClassModule(classModuleInfo);
+            } else {
+                setAssignmentClassModule(null);
+            }
+
             setAssignment(asg);
             return true;
         } catch (e: any) {
@@ -248,6 +302,7 @@ const ProblemDetail: React.FC = () => {
             throw e;
         }
     };
+    // END SỬA HÀM fetchAssignmentInfo
 
     const fetchAll = useCallback(
         async (cid: number, pid: number) => {
@@ -264,7 +319,7 @@ const ProblemDetail: React.FC = () => {
                 setLoading(false);
             }
         },
-        [navigate]
+        [navigate, currentClassId] // THÊM currentClassId vào dependencies
     );
 
     useEffect(() => {
@@ -276,7 +331,7 @@ const ProblemDetail: React.FC = () => {
         }
         fetchAll(cid, pid);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [classId, problemId]);
+    }, [classId, problemId, fetchAll]); // Đảm bảo fetchAll là dependency
 
     if (loading) return <div className="problem-detail__loading">Loading…</div>;
     if (err) return <div className="problem-detail__error">Error: {err}</div>;
@@ -297,7 +352,16 @@ const ProblemDetail: React.FC = () => {
             >
                 {/* LEFT */}
                 <div className="panel panel--left scrollable">
-                    <Description assignment={assignment} isLoading={loading} error={err} />
+                    <Description assignment={assignment} isLoading={loading} error={err}
+                                 mode={currentMode}
+                                 assignmentClassModule={assignmentClassModule}
+                                 umlType={umlType}
+                                 onUmlTypeChange={handleUmlTypeChange} // SỬ DỤNG HÀM ĐÃ BỌC
+                                 module={module}
+                                 onModuleChange={handleModuleChange} // SỬ DỤNG HÀM ĐÃ BỌC
+                                 classId={currentClassId}
+                                 isRenderingOrSubmitting={isRendering || isSubmitting}
+                    />
                 </div>
 
                 {/* RIGHT: inner vertical split (Code over Result) */}
@@ -323,10 +387,12 @@ const ProblemDetail: React.FC = () => {
                             isRendering={isRendering}
                             isSubmitting={isSubmitting}
                             umlType={umlType}
-                            onUmlTypeChange={setUmlType}
+                            onUmlTypeChange={handleUmlTypeChange} // SỬ DỤNG HÀM ĐÃ BỌC
                             module={module}
-                            onModuleChange={setModule}
+                            onModuleChange={handleModuleChange} // SỬ DỤNG HÀM ĐÃ BỌC
                             umlTypes={UML_TYPES}
+                            isTestMode={isTestMode}
+                            onNewButtonClick={handleNewButtonClick}
                         />
                     </div>
 
@@ -342,7 +408,7 @@ const ProblemDetail: React.FC = () => {
                 visible={showHistoryModal}
                 onClose={handleCloseHistoryModal}
                 assignmentId={Number(problemId)}
-                classId={Number(classId)}
+                classId={currentClassId}
                 studentId={Number(user?.id) || 1} // Use actual student ID from auth context
                 examMode={false}
             />

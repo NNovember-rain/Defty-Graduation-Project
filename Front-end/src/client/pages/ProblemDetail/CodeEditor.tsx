@@ -5,6 +5,7 @@ import {HistoryOutlined} from "@ant-design/icons";
 import {useTranslation} from "react-i18next";
 import {Spin} from "antd";
 import {IoCodeSlashOutline} from "react-icons/io5";
+import {FaRegStar, FaTasks} from "react-icons/fa";
 
 
 export type CodeEditorProps = {
@@ -16,6 +17,8 @@ export type CodeEditorProps = {
     isRendering: boolean;
     isSubmitting: boolean;
     readOnly?: boolean;
+    isTestMode: boolean;
+    onNewButtonClick: () => void;
 };
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -27,7 +30,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                                                    isRendering,
                                                    isSubmitting,
                                                    readOnly = false,
-
+                                                   isTestMode,
+                                                   onNewButtonClick
                                                }) => {
     const { t } = useTranslation();
     const monaco = useMonaco();
@@ -74,6 +78,17 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                     </div>
 
                     <div className="code-editor__header--right-controls">
+                        {isTestMode && (
+                            <button
+                                className="code-editor__btn code-editor__btn--new"
+                                data-tooltip={"Nút hành động mới trong Test Mode"}
+                                onClick={onNewButtonClick}
+                                type="button"
+                                disabled={isRendering || isSubmitting || readOnly}
+                            >
+                                <FaTasks />
+                            </button>
+                        )}
                         {onViewHistory && (
                             <button
                                 className="code-editor__btn code-editor__btn--history"

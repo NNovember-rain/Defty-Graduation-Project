@@ -137,6 +137,11 @@ export const getAssignmentById = async (id: string | number): Promise<IAssignmen
     return data.result as IAssignment;
 };
 
+export const getAssignmentByClassId = async (classId: string | number, assignmentId: string | number): Promise<IAssignment> => {
+    const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/${classId}/${assignmentId}`));
+    const data = await response.json();
+    return data.result as IAssignment;
+};
 
 export const updateAssignment = async (id: string | number, data: Partial<Omit<IAssignment, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IAssignment> => {
     const response = await handleRequest(patchJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/update/${id}`, data));

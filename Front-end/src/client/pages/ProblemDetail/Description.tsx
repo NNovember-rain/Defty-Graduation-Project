@@ -2,7 +2,7 @@ import React, {useEffect, useState, useMemo} from "react";
 import {MdOutlineDescription} from "react-icons/md";
 import {useTranslation} from "react-i18next";
 import DOMPurify from "dompurify";
-import {getAssignmentById, type IAssignment} from "../../../shared/services/assignmentService";
+import {getAssignmentByClassId, getAssignmentById, type IAssignment} from "../../../shared/services/assignmentService";
 import {Select, Space} from "antd";
 import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {getTypeUmls, type ITypeUml} from "../../../shared/services/typeUmlService.ts";
@@ -16,6 +16,11 @@ export type UmlTypeOption = {
 
 interface IModuleResponse {
     id: number;
+    moduleName: string;
+    moduleDescription: string;
+}
+
+interface IAssignmentClassModule {
     moduleName: string;
     moduleDescription: string;
 }
@@ -39,6 +44,9 @@ type Props = {
     onModuleChange: (value: string) => void;
     umlTypes?: UmlTypeOption[];
     isRenderingOrSubmitting: boolean;
+    mode: 'practice' | 'test';
+    assignmentClassModule: IAssignmentClassModule | null;
+    classId: number | null;
 };
 
 const Description: React.FC<Props> = ({
@@ -48,13 +56,15 @@ const Description: React.FC<Props> = ({
                                           umlType,
                                           onUmlTypeChange,
                                           onModuleChange,
-                                          isRenderingOrSubmitting
+                                          isRenderingOrSubmitting,
+                                          classId,
+                                          mode
                                       }) => {
     const { t } = useTranslation();
     const { message } = useNotification();
     const [typeUMLs, setTypeUMLs] = useState<UmlTypeOption[]>([]);
     const [modules, setModules] = useState<IModuleResponse[]>([]);
-    const [module, setModule] = useState<IModuleResponse[]>([]);
+    const [module, setModule] = useState<string>('');
 
     useEffect(() => {
         async function fetchTypeUMLs() {
@@ -78,22 +88,54 @@ const Description: React.FC<Props> = ({
 
 
     useEffect(() => {
-        const fetchModules = async (assignmentId: number) => {
+        const fetchModules = async (assignmentId: number, classId: number, currentMode: 'practice' | 'test') => {
             try {
-                const data = (await getAssignmentById(assignmentId)) as IAssignmentData;
-                console.log('Fetched Modules:', data.modules);
-                if (data && Array.isArray(data.modules)) {
-                    setModules(data.modules);
+                // 1. GỌI API ĐỂ LẤY DỮ LIỆU ĐẦY ĐỦ
+                const data = await getAssignmentByClassId(classId, assignmentId);
+
+                console.log('Fetched Assignment Data for Mode:', currentMode, data);
+
+                let modulesToUse: IModuleResponse[] = [];
+
+                if (currentMode === 'test') {
+                    // CHẾ ĐỘ TEST: Lấy modules từ assignmentClasses[0].moduleResponses
+                    const assignmentClasses = data.assignmentClasses;
+                    if (
+                        Array.isArray(assignmentClasses) &&
+                        assignmentClasses.length > 0 &&
+                        Array.isArray(assignmentClasses[0].moduleResponses)
+                    ) {
+                        // Thêm logic loại bỏ module bị trùng lặp ở đây
+                        const uniqueModulesMap = new Map();
+                        assignmentClasses[0].moduleResponses.forEach((mod: IModuleResponse) => {
+                            if (!uniqueModulesMap.has(mod.id)) {
+                                uniqueModulesMap.set(mod.id, mod);
+                            }
+                        });
+                        modulesToUse = Array.from(uniqueModulesMap.values());
+                    }
+                } else {
+                    // CHẾ ĐỘ PRACTICE (hoặc mode khác): Lấy modules từ modules chung (đã loại bỏ trùng lặp từ server)
+                    if (data && Array.isArray(data.modules)) {
+                        modulesToUse = data.modules;
+                    }
                 }
+
+                setModules(modulesToUse);
+
             } catch (error) {
                 console.error('Error fetching Modules:', error);
+                message.error(t('common.errorFetchingModules') || 'Lỗi khi tải modules');
             }
         };
 
-        if (assignment && assignment.id) {
-            fetchModules(assignment.id);
+        // CHỈ GỌI KHI assignment.id VÀ classId ĐỀU CÓ GIÁ TRỊ
+        if (assignment?.id && classId !== null && classId !== undefined) {
+            // Truyền cả mode vào hàm fetchModules
+            fetchModules(assignment.id, classId, mode);
         }
-    }, [assignment?.id]);
+
+    }, [assignment?.id, classId, mode, t]);
 
     useEffect(() => {
         if (modules.length > 0 && !module) {
@@ -102,8 +144,9 @@ const Description: React.FC<Props> = ({
         }
     }, [modules, module, onModuleChange]);
 
-    const handleModuleChange = (value: IModuleResponse) => {
+    const handleModuleChange = (value: string) => { // Sửa IModuleResponse thành string
         setModule(value);
+        onModuleChange(value);
     };
 
     const selectUmlTypeOptions = [
@@ -132,7 +175,6 @@ const Description: React.FC<Props> = ({
         return modules.find(m => String(m.id) === selectedModuleId);
     }, [module, modules]);
 
-
     const moduleDescriptionHtml = currentModuleData?.moduleDescription
         ? DOMPurify.sanitize(currentModuleData.moduleDescription)
         : null;
@@ -145,7 +187,6 @@ const Description: React.FC<Props> = ({
 
 
     const isDisabled = isLoading || !!error || isRenderingOrSubmitting;
-
 
     const headerStyle: React.CSSProperties = {
         display: 'flex',
