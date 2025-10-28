@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +25,12 @@ public class Assignment extends  BaseEntity{
     @Column(columnDefinition = "TEXT")
     String solutionCode;
     String assignmentCode;
+
+    @Column
+    Date startDate;
+
+    @Column
+    Date endDate;
 
     @OneToMany(mappedBy = "assignment", fetch = FetchType.LAZY)
     Set<AssignmentClass> assignmentClasses;

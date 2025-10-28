@@ -131,7 +131,6 @@ const Description: React.FC<Props> = ({
         if (!selectedModuleId) return null;
         return modules.find(m => String(m.id) === selectedModuleId);
     }, [module, modules]);
-    console.log(currentModuleData)
 
 
     const moduleDescriptionHtml = currentModuleData?.moduleDescription

@@ -18,6 +18,7 @@ import {
     Row,
     Select,
     Space,
+    Tag,
     Tooltip,
     Typography
 } from "antd";
@@ -51,7 +52,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
 
-    const goToAssignmentDetails = (assignmentId) => {
+    const goToAssignmentDetails = (assignmentId: number) => {
         navigate(`/admin/class/${classId}/assignment/${assignmentId}/detail`);
     };
 
@@ -97,15 +98,27 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             };
 
             const response = await getAssignmentsByClassId(classId, options);
-            const formatted = (response.assignments || []).map((a) => {
-                const classInfo = a.assignmentClasses?.find((ac: { classId: number }) => ac.classId === classId);
+            console.log("Fetched assignments:", response);
+
+            const formatted = (response.assignments || []).map((a: IAssignment) => {
+                const classInfos = a.assignmentClasses?.filter((ac: { classId: number }) => ac.classId === classId) || [];
+                const allAssignedModules = classInfos.flatMap(ci => ci.moduleResponses || []);
+                let classInfoForDates = classInfos.find(
+                    (ci) => ci.startDate && ci.endDate
+                ) || classInfos[0];
+                if (classInfos.length === 0) {
+                    classInfoForDates = null;
+                }
+
                 return {
                     ...a,
                     createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
-                    startDate: classInfo?.startDate ? dayjs(classInfo.startDate).toISOString() : null,
-                    endDate: classInfo?.endDate ? dayjs(classInfo.endDate).toISOString() : null
+                    startDate: classInfoForDates?.startDate ? dayjs(classInfoForDates.startDate).toISOString() : null,
+                    endDate: classInfoForDates?.endDate ? dayjs(classInfoForDates.endDate).toISOString() : null,
+                    modules: allAssignedModules,
                 };
             });
+
             setAssignments(formatted);
             setTotal(response.total || 0);
         } catch (err) {
@@ -264,204 +277,178 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         </Space>
                     </div>
                 </div>
-                {/* List / Grid */}
-                {/*{view === "list" ? (*/}
-                    <List
-                        itemLayout="vertical"
-                        dataSource={assignments}
-                        renderItem={(a) => (
-                            <List.Item key={a.id} style={{ padding: 0 }}>
-                                <Card
-                                    hoverable
-                                    style={{
-                                        borderRadius: 12,
-                                        marginBottom: 12,
-                                        boxShadow: "0 6px 18px rgba(0,0,0,0.04)"
-                                    }}
-                                >
 
-                                    <Row gutter={[16, 16]} align="middle">
-                                        <Col xs={24} sm={21}>
-                                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: "column" }}>
-                                                <div style={{ display: "flex", gap: 12, width: "100%" }}>
-                                                    <div style={{
-                                                        width: 56,
-                                                        height: 56,
-                                                        borderRadius: 10,
-                                                        background: "#fff7e6",
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        color: "#fa8c16",
-                                                        fontSize: 24
-                                                    }}>
-                                                        <MdOutlineAssignment />
-                                                    </div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <Title level={5} style={{ margin: 0 }}>{a.title}</Title>
-                                                        <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                            <IoCalendarOutline />
-                                                            {a.startDate && a.endDate
-                                                                ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
-                                                                : "-"}
-                                                        </Text>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Col>
+                {/* List View - Đã chỉnh sửa để hiển thị Modules */}
+                <List
+                    itemLayout="vertical"
+                    dataSource={assignments}
+                    renderItem={(a) => (
+                        <List.Item key={a.id} style={{ padding: 0 }}>
+                            <Card
+                                hoverable
+                                style={{
+                                    borderRadius: 12,
+                                    marginBottom: 12,
+                                    boxShadow: "0 6px 18px rgba(0,0,0,0.04)"
+                                }}
+                            >
+                                <Row gutter={[16, 16]} align="middle">
+                                    <Col xs={24} sm={21}>
+                                        <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
 
-                                        <Col
-                                            xs={28}
-                                            sm={3}
-                                            style={{
-                                                textAlign: "center",
+                                            {/* Icon lớn bên trái (48x48) - Vẫn giữ để làm điểm nhấn */}
+                                            <div style={{
+                                                width: 48,
+                                                height: 48,
+                                                borderRadius: 10,
+                                                background: "#fff7e6",
                                                 display: "flex",
-                                                flexDirection: "row",
-                                                justifyContent: "flex-end",
                                                 alignItems: "center",
-                                                gap: 12,
-                                            }}
-                                        >
-                                            {/* Icon xem chi tiết bài tập */}
-                                            <Tooltip title="Xem thông tin bài tập">
-                                                <span
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleViewAssignmentDetails(a);
-                                                    }}
-                                                    style={{
-                                                        cursor: "pointer",
-                                                        fontSize: "20px",
-                                                        color: "#1677ff",
-                                                        backgroundColor: "rgba(22, 119, 255, 0.1)",
-                                                        padding: "8px",
-                                                        borderRadius: "50%",
-                                                        display: "flex",
-                                                        justifyContent: "center",
-                                                        alignItems: "center",
-                                                        transition: "all 0.25s ease",
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.2)";
-                                                        e.currentTarget.style.color = "#0958d9";
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.1)";
-                                                        e.currentTarget.style.color = "#1677ff";
-                                                    }}
-                                                >
-                                                  <MdOutlineAssignment />
-                                                </span>
-                                                                                        </Tooltip>
+                                                justifyContent: "center",
+                                                color: "#fa8c16",
+                                                fontSize: 22,
+                                                flexShrink: 0
+                                            }}>
+                                                <MdOutlineAssignment />
+                                            </div>
 
-                                                                                        {/* Icon xem danh sách bài nộp */}
-                                                                                        <Tooltip title="Xem chi tiết bài nộp">
-                                                <span
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        goToAssignmentDetails(a.id);
-                                                    }}
-                                                    style={{
-                                                        cursor: "pointer",
-                                                        fontSize: "20px",
-                                                        color: "#1890ff",
-                                                        backgroundColor: "rgba(24, 144, 255, 0.1)",
-                                                        padding: "8px",
-                                                        borderRadius: "50%",
-                                                        display: "flex",
-                                                        justifyContent: "center",
-                                                        alignItems: "center",
-                                                        transition: "all 0.25s ease",
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.2)";
-                                                        e.currentTarget.style.color = "#0958d9";
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.1)";
-                                                        e.currentTarget.style.color = "#1890ff";
-                                                    }}
-                                                >
-                                                  <IoFileTrayFull />
-                                                </span>
-                                            </Tooltip>
-                                        </Col>
+                                            <div style={{ flex: 1 }}>
+                                                <Title level={5} style={{ margin: 0, lineHeight: 1.2, fontSize: '18px' }}>
+                                                    {a.title}
+                                                </Title>
+                                                {a.modules && a.modules.length > 0 ? (
+                                                    <div style={{ margin: '6px 0 8px 0' }}>
+                                                        <Space size={[4, 4]} wrap>
+                                                            <Text type="secondary" style={{ fontSize: '12px', marginRight: 4 }}>
+                                                                {t("classDetail.assignment.modulesAssigned") || "Modules:"}
+                                                            </Text>
+                                                            {a.modules.slice(0, 3).map((moduleItem) => (
+                                                                <Tag
+                                                                    key={moduleItem.id}
+                                                                    color="blue"
+                                                                    style={{ fontSize: '11px', padding: '2px 7px' }}
+                                                                >
+                                                                    {moduleItem.moduleName}
+                                                                </Tag>
+                                                            ))}
+                                                            {a.modules.length > 3 && (
+                                                                <Tag style={{ fontSize: '11px', padding: '2px 7px' }}>
+                                                                    +{a.modules.length - 3}
+                                                                </Tag>
+                                                            )}
+                                                        </Space>
+                                                    </div>
+                                                ) : (
+                                                    <Text type="secondary" style={{ fontStyle: 'italic', display: 'block', fontSize: '13px', margin: '6px 0 8px 0' }}>
+                                                        {t("classDetail.assignment.modulesAssigned") || "No modules assigned."}
+                                                    </Text>
+                                                )}
 
+                                                <Space size={16}>
+                                                    <Text type="secondary" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: '13px' }}>
+                                                        <IoCalendarOutline style={{ color: '#595959' }} />
+                                                        {a.startDate && a.endDate
+                                                            ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
+                                                            : t("classDetail.assignment.noDeadline") || "No Deadline"}
+                                                    </Text>
 
-                                    </Row>
-                                </Card>
-                            </List.Item>
-                        )}
-                        locale={{emptyText: t("common.noData") || "No assignments"}}
-                    />
-                {/*) : (*/}
-                {/*    <List*/}
-                {/*        grid={{ gutter: 16, column: gridColumns }}*/}
-                {/*        dataSource={assignments}*/}
-                {/*        locale={{ emptyText: t("common.noData") || "No assignments" }}*/}
-                {/*        renderItem={(a) => (*/}
-                {/*            <List.Item key={a.id}>*/}
-                {/*                <Card*/}
-                {/*                    hoverable*/}
-                {/*                    style={{*/}
-                {/*                        borderRadius: 12,*/}
-                {/*                        transition: "transform .12s ease, box-shadow .12s ease",*/}
-                {/*                        height: "100%",*/}
-                {/*                        display: "flex",*/}
-                {/*                        flexDirection: "column",*/}
-                {/*                        justifyContent: "space-between"*/}
-                {/*                    }}*/}
-                {/*                    onClick={() => console.log("Open assignment", a.id)}*/}
-                {/*                >*/}
-                {/*                    <div>*/}
-                {/*                        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>*/}
-                {/*                            <div style={{*/}
-                {/*                                width: 44,*/}
-                {/*                                height: 44,*/}
-                {/*                                borderRadius: 10,*/}
-                {/*                                background: "#fff7e6",*/}
-                {/*                                display: "flex",*/}
-                {/*                                alignItems: "center",*/}
-                {/*                                justifyContent: "center",*/}
-                {/*                                color: "#fa8c16",*/}
-                {/*                                fontSize: 20*/}
-                {/*                            }}>*/}
-                {/*                                <MdOutlineAssignment />*/}
-                {/*                            </div>*/}
-                {/*                            <div style={{ flex: 1 }}>*/}
-                {/*                                <Title level={5} style={{ margin: 0, lineHeight: 1.1 }}>{a.title}</Title>*/}
-                {/*                                <Text type="secondary" style={{ display: "block" }}>*/}
-                {/*                                    {a.typeUmlName || t("common.noType") || "No UML type"}*/}
-                {/*                                </Text>*/}
-                {/*                                <Text type="secondary" className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4 }}>*/}
-                {/*                                    <IoCalendarOutline />*/}
-                {/*                                    {a.startDate && a.endDate*/}
-                {/*                                        ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`*/}
-                {/*                                        : "-"}*/}
-                {/*                                </Text>*/}
-                {/*                            </div>*/}
-                {/*                        </div>*/}
-                {/*                    </div>*/}
+                                                    {a.modules && a.modules.length > 0 && (
+                                                        <Tooltip title={t("classDetail.assignment.moduleRequired") || "Modules Required"}>
+                                                            <span style={{
+                                                                color: '#fa8c16',
+                                                                fontSize: 16,
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}>
+                                                            </span>
+                                                        </Tooltip>
+                                                    )}
+                                                </Space>
+                                            </div>
+                                        </div>
+                                    </Col>
+                                    <Col
+                                        xs={28}
+                                        sm={3}
+                                        style={{
+                                            textAlign: "center",
+                                            display: "flex",
+                                            flexDirection: "row",
+                                            justifyContent: "flex-end",
+                                            alignItems: "center",
+                                            gap: 12,
+                                        }}
+                                    >
+                                        <Tooltip title="Xem thông tin bài tập">
+                                            <span
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewAssignmentDetails(a);
+                                                }}
+                                                style={{
+                                                    cursor: "pointer",
+                                                    fontSize: "20px",
+                                                    color: "#1677ff",
+                                                    backgroundColor: "rgba(22, 119, 255, 0.1)",
+                                                    padding: "8px",
+                                                    borderRadius: "50%",
+                                                    display: "flex",
+                                                    justifyContent: "center",
+                                                    alignItems: "center",
+                                                    transition: "all 0.25s ease",
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.2)";
+                                                    e.currentTarget.style.color = "#0958d9";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = "rgba(22, 119, 255, 0.1)";
+                                                    e.currentTarget.style.color = "#1677ff";
+                                                }}
+                                            >
+                                                <MdOutlineAssignment />
+                                            </span>
+                                        </Tooltip>
 
-                {/*                    <div style={{ marginTop: 8 }}>*/}
-                {/*                        <Space style={{ width: "100%", justifyContent: "space-between" }}>*/}
-                {/*                            <Button*/}
-                {/*                                size="small"*/}
-                {/*                                type="primary"*/}
-                {/*                                onClick={(e) => {*/}
-                {/*                                    e.stopPropagation();*/}
-                {/*                                    handleViewAssignmentDetails(a);*/}
-                {/*                                }}*/}
-                {/*                            >*/}
-                {/*                                {t("classDetail.assignment.viewDetails") || "View"}*/}
-                {/*                            </Button>*/}
-                {/*                        </Space>*/}
-                {/*                    </div>*/}
-                {/*                </Card>*/}
-                {/*            </List.Item>*/}
-                {/*        )}*/}
-                {/*    />*/}
-                {/*)}*/}
+                                        {/* Icon xem danh sách bài nộp */}
+                                        <Tooltip title="Xem chi tiết bài nộp">
+                                            <span
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    goToAssignmentDetails(a.id);
+                                                }}
+                                                style={{
+                                                    cursor: "pointer",
+                                                    fontSize: "20px",
+                                                    color: "#1890ff",
+                                                    backgroundColor: "rgba(24, 144, 255, 0.1)",
+                                                    padding: "8px",
+                                                    borderRadius: "50%",
+                                                    display: "flex",
+                                                    justifyContent: "center",
+                                                    alignItems: "center",
+                                                    transition: "all 0.25s ease",
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.2)";
+                                                    e.currentTarget.style.color = "#0958d9";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = "rgba(24, 144, 255, 0.1)";
+                                                    e.currentTarget.style.color = "#1890ff";
+                                                }}
+                                            >
+                                                <IoFileTrayFull />
+                                            </span>
+                                        </Tooltip>
+                                    </Col>
+                                </Row>
+                            </Card>
+                        </List.Item>
+                    )}
+                    locale={{emptyText: t("common.noData") || "No assignments"}}
+                />
+
 
                 {/* Pagination */}
                 <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>

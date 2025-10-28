@@ -482,7 +482,8 @@
       "submit": "Nộp bài",
       "create": "Tạo",
       "createNew": "Tạo bài tập mới",
-      "assign": "Giao bài tập"
+      "assign": "Giao bài tập",
+      "modulesAssigned": "Module đã được giao"
     },
     "sort": {
       "newest": "Mới nhất",

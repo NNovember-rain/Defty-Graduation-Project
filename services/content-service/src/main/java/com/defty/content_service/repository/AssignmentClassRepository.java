@@ -13,4 +13,5 @@ public interface AssignmentClassRepository extends JpaRepository<AssignmentClass
     List<AssignmentClass> findByAssignmentIdInAndClassIdIn(List<Long> assignmentIds, List<Long> classIds);
     List<AssignmentClass> findByAssignmentId(Long assignmentId);
     List<AssignmentClass> findByClassId(Long classId);
+    List<AssignmentClass> findByModuleIdInAndClassIdIn(List<Long> moduleIds, List<Long> classIds);
 }

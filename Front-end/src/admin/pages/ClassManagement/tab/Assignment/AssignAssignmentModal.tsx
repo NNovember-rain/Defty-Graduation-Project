@@ -3,8 +3,14 @@ import React, {useCallback, useEffect, useState} from "react";
 import type {ColumnsType} from "antd/es/table";
 import {assignAssignment, getAssignments} from "../../../../../shared/services/assignmentService.ts";
 import {useTranslation} from "react-i18next";
+import type { Key } from "react";
 
 const {RangePicker} = DatePicker;
+
+interface Module {
+    id: number;
+    moduleName: string;
+}
 
 interface Assignment {
     id: number;
@@ -12,6 +18,8 @@ interface Assignment {
     typeUmlName?: string;
     startDate?: string | null;
     endDate?: string | null;
+    modules?: Module[];
+    key?: string;
 }
 
 interface AssignAssignmentModalProps {
@@ -35,13 +43,18 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(5);
-    const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [messageApi, contextHolder] = message.useMessage();
 
+
     const columns: ColumnsType<Assignment> = [
-        {title: "Title", dataIndex: "title", key: "title"},
-        {title: "Type", dataIndex: "typeUmlName", key: "typeUmlName", render: (text) => text || "-"},
+        {title: t("Title"), dataIndex: "title", key: "title"},
+        {title: t("Type"), dataIndex: "typeUmlName", key: "typeUmlName", render: (text) => text || "-"},
+    ];
+
+    const moduleColumns: ColumnsType<Module> = [
+        {title: t("Module Name"), dataIndex: "moduleName", key: "moduleName"},
     ];
 
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
@@ -51,20 +64,26 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             const response = await getAssignments(params);
             const assignmentData = Array.isArray(response) ? response : (response.assignments || []);
             const total = response.total || assignmentData.length;
-            setAssignments(assignmentData);
+
+            const dataWithKeys: Assignment[] = assignmentData.map((item: any) => ({
+                ...item,
+                key: `assignment_${item.id}`,
+            }));
+
+            setAssignments(dataWithKeys);
             setTotalItems(total);
         } catch (error) {
             console.error('Failed to load assignments:', error);
-            messageApi.error('Failed to load assignments');
+            messageApi.error(t('apiMessages.loadAssignmentsFailed'));
         } finally {
             setLoading(false);
         }
-    }, [messageApi]);
+    }, [messageApi, t]);
 
     useEffect(() => {
         if (visible) {
             fetchAssignmentsForModal(currentPage, pageSize);
-            setSelectedRowKeys([]);
+            setSelectedRowKeys([]); // Reset selection
             form.resetFields();
         }
     }, [visible, currentPage, pageSize, searchTerm, fetchAssignmentsForModal, form]);
@@ -78,8 +97,17 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             const startDate = dateRange.length > 0 ? dateRange[0].toISOString() : null;
             const endDate = dateRange.length > 1 ? dateRange[1].toISOString() : null;
 
+            const assignmentIds: number[] = selectedRowKeys
+                .filter(key => key.startsWith('assignment_'))
+                .map(key => Number(key.split('_')[1]));
+
+            const moduleIds: number[] = selectedRowKeys
+                .filter(key => key.startsWith('module_'))
+                .map(key => Number(key.split('_')[1]));
+
             await assignAssignment({
-                assignmentIds: selectedRowKeys as number[],
+                assignmentIds,
+                moduleIds,
                 classIds,
                 startDate,
                 endDate,
@@ -90,24 +118,76 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             onClose();
         } catch (error) {
             console.error(error);
-            messageApi.error("Failed to assign assignment");
+            messageApi.error(t("Failed to assign assignment"));
         } finally {
             setAssignLoading(false);
         }
     };
+
+    const expandedRowRender = (record: Assignment) => {
+        const assignmentKey = `assignment_${record.id}`;
+        const isAssignmentSelected = selectedRowKeys.includes(assignmentKey);
+        if (!isAssignmentSelected) {
+            return (
+                <p style={{margin: 0, paddingLeft: 40, color: 'gray'}}>
+                    {t('Please select the assignment to view/select its modules.')}
+                </p>
+            );
+        }
+
+        if (!record.modules || record.modules.length === 0) {
+            return (
+                <p style={{margin: 0, paddingLeft: 40, color: 'gray'}}>
+                    {t('No modules found for this assignment.')}
+                </p>
+            );
+        }
+
+        const modulesWithKeys: Module[] = record.modules.map(mod => ({
+            ...mod,
+            key: `module_${mod.id}` as unknown as number,
+        }));
+
+        return (
+            <Table
+                columns={moduleColumns}
+                dataSource={modulesWithKeys}
+                pagination={false}
+                rowKey={(record) => `module_${record.id}`}
+                rowSelection={{
+                    selectedRowKeys: selectedRowKeys.filter(key => key.startsWith('module_')),
+                    onChange: (selectedKeys: Key[]) => {
+                        const otherKeys = selectedRowKeys.filter(key => !key.startsWith('module_'));
+                        setSelectedRowKeys([...otherKeys, ...selectedKeys] as string[]);
+                    },
+                }}
+                size="small"
+                style={{margin: '10px 0', backgroundColor: '#fafafa'}}
+            />
+        );
+    };
+
 
     const onSearch = (value: string) => {
         setSearchTerm(value);
         setCurrentPage(1);
     };
 
-    const onSelectChange = (selectedKeys: React.Key[]) => {
-        setSelectedRowKeys(selectedKeys as number[]);
+    const onSelectChange = (selectedKeys: Key[]) => {
+        const assignmentKeys = selectedKeys
+            .filter(key => key.toString().startsWith('assignment_'))
+            .map(key => key.toString());
+
+        const moduleKeys = selectedRowKeys.filter(key => key.startsWith('module_'));
+        setSelectedRowKeys([...assignmentKeys, ...moduleKeys]);
     };
 
     const rowSelection = {
         selectedRowKeys,
         onChange: onSelectChange,
+        getCheckboxProps: (record: Assignment) => ({
+            key: `assignment_${record.id}`,
+        }),
     };
 
     const handleTableChange = (pagination: any) => {
@@ -119,11 +199,11 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         <>
             {contextHolder}
             <Modal
-                title="Assign Assignment"
+                title={t("Assign Assignment")}
                 open={visible}
                 onCancel={onClose}
                 footer={[
-                    <Button key="close" onClick={onClose}>Close</Button>,
+                    <Button key="close" onClick={onClose}>{t('Close')}</Button>,
                     <Button
                         key="assign"
                         type="primary"
@@ -131,19 +211,19 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                         disabled={selectedRowKeys.length === 0}
                         loading={assignLoading}
                     >
-                        Assign
+                        {t('Assign')}
                     </Button>
                 ]}
-                width={700}
+                width={800}
             >
-                <Spin spinning={assignLoading} tip="Assigning..."> {}
+                <Spin spinning={assignLoading} tip={t("Assigning...")}>
                     <Form form={form} layout="vertical">
                         <Row gutter={12} style={{marginBottom: 16}}>
                             <Col span={12}>
                                 <Input.Search
-                                    placeholder="Search assignments..."
+                                    placeholder={t("Search assignments...")}
                                     allowClear
-                                    enterButton="Search"
+                                    enterButton={t("Search")}
                                     size="middle"
                                     onSearch={onSearch}
                                 />
@@ -151,13 +231,19 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                             <Col span={12}>
                                 <Form.Item
                                     name="dateRange"
+                                    required={true}
                                     rules={[
+                                        {
+                                            required: true,
+                                            message: t('Please select start and end dates') || 'Vui lòng chọn ngày bắt đầu và ngày kết thúc'
+                                        },
                                         () => ({
                                             validator(_, value) {
                                                 if (!value || value.length < 2) return Promise.resolve();
                                                 const [start, end] = value;
-                                                if (end.isAfter(start)) return Promise.resolve();
-                                                return Promise.reject(new Error('End date must be after start date!'));
+                                                if (start && end && end.isAfter(start)) return Promise.resolve();
+
+                                                return Promise.reject(new Error(t('End date must be after start date!') || 'Ngày kết thúc phải sau ngày bắt đầu!'));
                                             }
                                         })
                                     ]}
@@ -165,18 +251,18 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                                     <RangePicker
                                         style={{width: '100%'}}
                                         format="YYYY-MM-DD"
-                                        placeholder={['Start Date', 'End Date']}
+                                        placeholder={[t('Start Date'), t('End Date')]}
                                     />
                                 </Form.Item>
                             </Col>
                         </Row>
                     </Form>
 
-                    <Spin spinning={loading} tip="Loading assignments...">
+                    <Spin spinning={loading} tip={t("Loading assignments...")}>
                         <Table
                             dataSource={assignments}
                             columns={columns}
-                            rowKey="id"
+                            rowKey="key"
                             pagination={{
                                 current: currentPage,
                                 pageSize,
@@ -186,6 +272,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                             }}
                             rowSelection={rowSelection}
                             onChange={handleTableChange}
+                            expandedRowRender={expandedRowRender}
                         />
                     </Spin>
                 </Spin>

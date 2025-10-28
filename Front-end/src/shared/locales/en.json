@@ -483,7 +483,8 @@
       "submit": "Submit",
       "create": "Create",
       "createNew": "Create new assignment",
-      "assigned": "Assign"
+      "assigned": "Assign",
+      "modulesAssigned": "Modules Assigned"
     },
     "sort": {
       "newest": "Newest",
