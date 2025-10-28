@@ -14,9 +14,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/assignments")
@@ -90,6 +92,14 @@ public class AssignmentController {
                 .build();
     }
 
+    @GetMapping("/{classId}/{assignmentId}")
+    ApiResponse<AssignmentResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
+        AssignmentResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
+        return ApiResponse.<AssignmentResponse>builder()
+                .result(response)
+                .build();
+    }
+
     @PatchMapping("/{id}/toggle-active")
     public ApiResponse<AssignmentResponse> toggleActiveStatus(@PathVariable Long id) {
         AssignmentResponse updatedAssignment = assignmentService.toggleAssignmentStatus(id);
@@ -106,4 +116,14 @@ public class AssignmentController {
                 .message("Assignment deleted successfully")
                 .build();
     }
+
+    @GetMapping("/list")
+    public ApiResponse<Map<Long, AssignmentResponse>> getExerciseMap(@RequestParam List<Long> assignmentIds) {
+        Map<Long, AssignmentResponse> result = assignmentService.getAssignmentsByIds(assignmentIds);
+        return ApiResponse.<Map<Long, AssignmentResponse>>builder()
+                .result(result)
+                .message("Fetched assignment successfully")
+                .build();
+    }
+
 }

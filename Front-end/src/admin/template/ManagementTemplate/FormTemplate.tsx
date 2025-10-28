@@ -480,6 +480,24 @@ const FormTemplate = <T extends Record<string, any>>({
                                                                     {t(subField.labelKey)}
                                                                     {subField.required && <span style={{ color: 'red', marginLeft: 4 }}>*</span>}
                                                                 </label>
+                                                                {subField.type === 'select' && (
+                                                                    <select
+                                                                        value={item[subField.key] || ''}
+                                                                        onChange={e => {
+                                                                            const newList = [...(formData[field.key as keyof T] as any[])];
+                                                                            newList[index][subField.key] = e.target.value;
+                                                                            handleChange(field.key, newList);
+                                                                        }}
+                                                                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #ccc', boxSizing: 'border-box' }}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        {subField.options?.map((option: any) => (
+                                                                            <option key={option.value} value={option.value}>
+                                                                                {option.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                )}
 
                                                                 {subField.type === 'text' && (
                                                                     <input

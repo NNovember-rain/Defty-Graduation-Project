@@ -26,8 +26,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -174,6 +176,25 @@ public class UserServiceImpl implements UserService {
         }
         throw new NotFoundException("No users found with the provided IDs: " + codeUsers);
     }
+
+    @Override
+    public Map<Long, UserResponse> getUsersDtoByIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        List<User> users = userRepository.findAllByIdInAndIsActive(userIds, 1);
+        if (users.isEmpty()) {
+            throw new NotFoundException("No active users found with the provided IDs: " + userIds);
+        }
+        List<UserResponse> userResponses = new ArrayList<>();
+        for (User user : users) {
+            UserResponse userResponse = userMapper.toUserResponse(user);
+            userResponses.add(userResponse);
+        }
+        return userResponses.stream()
+                .collect(Collectors.toMap(UserResponse::getId, ur -> ur));
+    }
+
 
     @Override
     public UserResponse getUser(Long id){

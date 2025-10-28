@@ -42,9 +42,21 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
     const [selectedAssignment, setSelectedAssignment] = useState<IAssignment | null>(null);
 
+    // const handleViewAssignmentDetails = useCallback(
+    //     (rowData: IAssignment) => {
+    //         navigate(`/class/${classId}/problem/${rowData.id}`);
+    //     },
+    //     [navigate, classId]
+    // );
+    // FILE: AssignmentTabUser.tsx
+
     const handleViewAssignmentDetails = useCallback(
-        (rowData: IAssignment) => {
-            navigate(`/class/${classId}/problem/${rowData.id}`);
+        (rowData: IAssignment, mode?: 'test' | 'practice') => {
+            let url = `/class/${classId}/problem/${rowData.id}`;
+            if (mode === 'test') {
+                url += `?mode=test`;
+            }
+            navigate(url);
         },
         [navigate, classId]
     );
@@ -351,7 +363,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                             size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleViewAssignmentDetails(a);
+                                                handleViewAssignmentDetails(a, 'practice');
                                             }}
                                         >
                                             {t("classDetail.assignment.practice") || "Luyện tập"}
@@ -365,6 +377,15 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                             }}
                                         >
                                             {t("classDetail.assignment.submit") || "Nộp bài"}
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewAssignmentDetails(a, 'test');
+                                            }}
+                                        >
+                                            {t("classDetail.assignment.test") || "Test"}
                                         </Button>
                                     </Space>
                                 </Card>

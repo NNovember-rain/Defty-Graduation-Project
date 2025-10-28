@@ -16,6 +16,7 @@ const AssignmentForm: React.FC = () => {
         async function fetchTypeUMLs() {
             try {
                 const response = await getTypeUmls();
+                console.log(response)
                 const typeUmlsArray = Array.isArray(response.typeUmls) ? response.typeUmls : [];
                 setTypeUMLs(typeUmlsArray);
             } catch (error) {
@@ -26,6 +27,11 @@ const AssignmentForm: React.FC = () => {
         fetchTypeUMLs();
     }, [t]);
 
+    const typeUmlOptions = typeUMLs.map(type => ({
+        value: String(type.id),
+        label: type.name,
+    }));
+
     const assignmentFormFields: FormField[] = [
         {
             key: 'title',
@@ -35,23 +41,7 @@ const AssignmentForm: React.FC = () => {
             required: true,
             gridSpan: 24,
         },
-        // {
-        //     key: 'typeUmlIds', // chọn nhiều module
-        //     labelKey: 'assignmentForm.typeUmlLabel',
-        //     type: 'select',
-        //     required: true,
-        //     gridSpan: 24,
-        //     options: typeUMLs.map(type => ({
-        //         value: String(type.id),
-        //         label: type.name,
-        //     })),
-        //     props: {
-        //         mode: 'multiple',
-        //         showSearch: true,
-        //         placeholder: t('assignmentForm.selectTypeUml'),
-        //         optionFilterProp: 'label',
-        //     },
-        // },
+
         {
             key: 'commonDescription',
             labelKey: 'assignmentForm.commonDescriptionLabel',
@@ -69,12 +59,15 @@ const AssignmentForm: React.FC = () => {
                 {
                     key: 'moduleId',
                     labelKey: 'assignmentForm.typeUmlLabel',
-                    type: 'multiSelect',
+                    type: 'select',
                     required: true,
-                    options: typeUMLs.map(type => ({
-                        value: String(type.id),
-                        label: type.name,
-                    })),
+                    gridSpan: 12,
+                    options: typeUmlOptions,
+                    props: {
+                        placeholder: t('assignmentForm.selectTypeUml'),
+                        showSearch: true,
+                        optionFilterProp: 'label',
+                    },
                 },
                 {
                     key: 'moduleName',

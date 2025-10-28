@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.Set;
 
 
@@ -28,6 +29,12 @@ public class ModuleEntity extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     String solutionCode;
+
+    @Column
+    Date startDate;
+
+    @Column
+    Date endDate;
 
     @ManyToMany
     @JoinTable(

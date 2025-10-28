@@ -14,9 +14,20 @@ import {
 } from '@ant-design/icons'
 import {useNavigate, useParams} from 'react-router-dom'
 import {getSubmissionsByClassAndAssignment} from "../../../../../shared/services/submissionService.ts";
+import {getStudentsInClass, GetStudentsInClassOptions} from "../../../../../shared/services/classManagementService.ts";
 
 
 const { Header, Content, Sider } = Layout
+
+
+interface StudentAssignmentData {
+    id: string;
+    name: string;
+    submitted: boolean;
+    score: number | null;
+    status: 'Đã chấm' | 'Đã nộp' | 'Chưa nộp';
+    submissionId: string | null;
+}
 
 const StudentAssignmentManagerAntD = () => {
     const navigate = useNavigate()
@@ -25,7 +36,7 @@ const StudentAssignmentManagerAntD = () => {
     const [filterSubmitted, setFilterSubmitted] = useState(false)
     const [loading, setLoading] = useState(false)
 
-    const [students, setStudents] = useState<any[]>([])
+    const [students, setStudents] = useState<StudentAssignmentData[]>([])
     const [assignmentData, setAssignmentData] = useState({
         title: 'Bài tập Chương 1',
         totalAssigned: 0,
@@ -33,48 +44,91 @@ const StudentAssignmentManagerAntD = () => {
         totalGraded: 0,
         maxScore: 100
     })
-    const { classId, assignmentId } = useParams();
+    const { classId, assignmentId } = useParams<{ classId: string, assignmentId: string }>();
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true)
+
+            if (!classId || !assignmentId) {
+                setLoading(false);
+                return;
+            }
+
             try {
-                if (!classId || !assignmentId) {
-                    throw new Error('Missing classId or assignmentId');
-                }
-                const result = await getSubmissionsByClassAndAssignment(Number(classId), Number(assignmentId))
-                // console.log(result)
-                const submissions = result.submissions.map((s) => ({
-                    id: s.id.toString(),
-                    name: s.studentName,
-                    submitted: true,
-                    score: s.score,
-                    status: s.score != null ? 'Đã chấm' : 'Đã nộp'
-                }))
-                setStudents(submissions)
+                const classIdNum = Number(classId);
+                const assignmentIdNum = Number(assignmentId);
+
+                const studentsInClassResult = await getStudentsInClass(classIdNum, { limit: 999 } as GetStudentsInClassOptions);
+                const studentsInClass = studentsInClassResult.content;
+
+                const submissionsResult = await getSubmissionsByClassAndAssignment(classIdNum, assignmentIdNum)
+                const submissions = submissionsResult.submissions;
+
+                const submittedMap = new Map();
+                submissions.forEach(sub => {
+                    submittedMap.set(sub.studentId.toString(), sub);
+                });
+
+                const mergedStudents: StudentAssignmentData[] = studentsInClass.map(student => {
+                    const submission = submittedMap.get(student.studentId.toString());
+                    const submitted = !!submission;
+                    const score = submission?.score ?? null;
+                    const submissionId = submission?.id.toString() ?? null;
+
+                    const status = score != null
+                        ? 'Đã chấm'
+                        : submitted
+                            ? 'Đã nộp'
+                            : 'Chưa nộp';
+
+                    return {
+                        id: student.studentId.toString(),
+                        name: student.fullName,
+                        submitted: submitted,
+                        score: score,
+                        status: status,
+                        submissionId: submissionId,
+                    };
+                });
+
+
+                setStudents(mergedStudents)
+
+                const totalSubmitted = submissions.length;
+                const totalGraded = submissions.filter((s) => s.score != null).length;
+
                 setAssignmentData({
-                    title: result.submissions[0]?.assignmentTitle || 'Bài tập',
-                    totalAssigned: result.total,
-                    totalSubmitted: submissions.length,
-                    totalGraded: submissions.filter((s) => s.score != null).length,
+                    title: submissions[0]?.assignmentTitle || 'Bài tập',
+                    totalAssigned: mergedStudents.length,
+                    totalSubmitted: totalSubmitted,
+                    totalGraded: totalGraded,
                     maxScore: 100
                 })
-                setSelectedStudentId(submissions[0]?.id)
+
+                setSelectedStudentId(mergedStudents[0]?.id)
+
             } catch (error) {
-                console.error('Error fetching submissions:', error)
+                console.error('Error fetching data:', error)
             } finally {
                 setLoading(false)
             }
         }
 
         fetchData()
-    }, [])
+    }, [classId, assignmentId])
 
     const filteredStudents = students.filter((s) => !filterSubmitted || s.submitted)
+
     const selectedStudent = students.find((s) => s.id === selectedStudentId)
 
-    const goToAssignmentDetails = (submissionId: string) => {
-        navigate(`/admin/assignments/${submissionId}/details`)
+
+    const goToAssignmentDetails = (submissionId: string | null) => {
+        if (submissionId) {
+            navigate(`/admin/assignments/${submissionId}/details`)
+        } else {
+            console.warn('Cannot view details: Student has not submitted yet.')
+        }
     }
 
     const sortMenu = (
@@ -93,9 +147,16 @@ const StudentAssignmentManagerAntD = () => {
         label: (
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                 <span style={{ fontWeight: 500 }}>{student.name}</span>
-                <span style={{ color: student.score != null ? '#52c41a' : '#999', fontSize: '12px' }}>
-          {student.score != null ? `${student.score}/${assignmentData.maxScore}` : '--'}
-        </span>
+                <span style={{
+                    color: student.score != null ? '#52c41a' : (student.submitted ? '#faad14' : '#999'),
+                    fontSize: '12px'
+                }}>
+                    {student.score != null
+                        ? `${student.score}/${assignmentData.maxScore}`
+                        : student.submitted
+                            ? 'Đã nộp'
+                            : 'Chưa nộp'}
+                </span>
             </div>
         ),
         className: student.id === selectedStudentId ? 'ant-menu-item-selected' : ''
@@ -125,7 +186,7 @@ const StudentAssignmentManagerAntD = () => {
                     <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0' }}>
                         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                             <Button type="default" icon={<TeamOutlined />} style={{ width: '100%', fontWeight: 500 }}>
-                                Tất cả học viên
+                                Tất cả học viên ({students.length}) {/* <--- HIỂN THỊ TỔNG SỐ SINH VIÊN */}
                             </Button>
                             <Dropdown overlay={sortMenu} trigger={['click']} placement="bottomLeft">
                                 <Button style={{ width: '100%', textAlign: 'left' }}>
@@ -133,7 +194,7 @@ const StudentAssignmentManagerAntD = () => {
                                 </Button>
                             </Dropdown>
                             <Checkbox checked={filterSubmitted} onChange={(e) => setFilterSubmitted(e.target.checked)}>
-                                <InboxOutlined /> Đã nộp
+                                <InboxOutlined /> Chỉ Đã nộp
                             </Checkbox>
                         </Space>
                     </div>
@@ -155,7 +216,7 @@ const StudentAssignmentManagerAntD = () => {
                                 <h2 style={{ fontSize: '24px', fontWeight: 600, margin: '0 0 16px 0' }}>{assignmentData.title}</h2>
                                 <Space size="large">
                                     <Statistic title="Đã nộp" value={assignmentData.totalSubmitted} suffix={`/${assignmentData.totalAssigned}`} />
-                                    <Statistic title="Đã giao" value={assignmentData.totalAssigned - assignmentData.totalSubmitted} />
+                                    <Statistic title="Chưa nộp" value={assignmentData.totalAssigned - assignmentData.totalSubmitted} />
                                     <Statistic title="Đã chấm" value={assignmentData.totalGraded} />
                                 </Space>
                             </div>
@@ -198,12 +259,18 @@ const StudentAssignmentManagerAntD = () => {
                                 renderItem={(item) => (
                                     <List.Item>
                                         <Card
-                                            hoverable
+                                            hoverable={item.submitted}
                                             style={{ width: '100%' }}
                                             actions={[
-                                                <Tooltip title="Xem chi tiết">
-                                                    <RightOutlined onClick={() => goToAssignmentDetails(item.id)} />
-                                                </Tooltip>
+                                                item.submitted ? (
+                                                    <Tooltip title="Xem chi tiết">
+                                                        <RightOutlined onClick={() => goToAssignmentDetails(item.submissionId)} />
+                                                    </Tooltip>
+                                                ) : (
+                                                    <Tooltip title="Học viên chưa nộp bài này">
+                                                        <RightOutlined style={{ color: '#ccc', cursor: 'not-allowed' }} />
+                                                    </Tooltip>
+                                                )
                                             ]}
                                         >
                                             <Card.Meta
@@ -217,7 +284,7 @@ const StudentAssignmentManagerAntD = () => {
                                                                     ? 'green'
                                                                     : item.status === 'Đã nộp'
                                                                         ? 'blue'
-                                                                        : 'default'
+                                                                        : 'red'
                                                             }
                                                             style={{ marginBottom: '8px' }}
                                                         >
@@ -226,7 +293,9 @@ const StudentAssignmentManagerAntD = () => {
                                                         <div style={{ color: '#595959' }}>
                                                             {item.status === 'Đã chấm'
                                                                 ? `Điểm: ${item.score}/${assignmentData.maxScore}`
-                                                                : 'Chờ giáo viên chấm'}
+                                                                : item.status === 'Đã nộp'
+                                                                    ? 'Chờ giáo viên chấm'
+                                                                    : 'Học viên chưa nộp bài'}
                                                         </div>
                                                     </>
                                                 }
