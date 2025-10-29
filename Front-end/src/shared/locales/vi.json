@@ -147,7 +147,8 @@
     "back": "Quay lại",
     "noData": "Không có dữ liệu để hiển thị.",
     "submit": "Nộp",
-    "add": "Thêm"
+    "add": "Thêm",
+    "loading": "Đang tải..."
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -422,6 +423,8 @@
       "noId": "Không tìm thấy ID lớp học trong URL.",
       "classNotFound": "Không tìm thấy lớp học."
     },
+    "umlType": "Loại UML",
+    "module": "Module",
     "tabs": {
       "stream": "Bảng tin",
       "classwork": "Bài tập",
@@ -429,7 +432,9 @@
       "marks": "Điểm số",
       "classworkContent": "Đây là trang Bài tập.",
       "peopleContent": "Đây là trang Thành viên.",
-      "marksContent": "Đây là trang Điểm số."
+      "marksContent": "Đây là trang Điểm số.",
+      "assignment": "Luyện tập",
+      "test": "Bài kiểm tra"
     },
     "peopleTab": {
       "teachersTitle": "Giáo viên",
@@ -483,7 +488,13 @@
       "create": "Tạo",
       "createNew": "Tạo bài tập mới",
       "assign": "Giao bài tập",
-      "modulesAssigned": "Module đã được giao"
+      "modulesAssigned": "Module đã được giao",
+      "assignTest": "Giao bài kiểm tra",
+      "noDeadline": "Không có hạn chót"
+    },
+    "type": {
+      "test": "Kiểm tra",
+      "assignment": "Luyện tập"
     },
     "sort": {
       "newest": "Mới nhất",
