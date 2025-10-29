@@ -28,18 +28,18 @@ type NavItem = NavLinkItem | NavDropdownItem;
 
 const NAV_ITEMS: NavItem[] = [
     { type: 'link', labelKey: 'header.home', linkTo: '' },
-    { type: 'link', labelKey: 'header.assignments', linkTo: '/problems' },
-    { type: 'link', labelKey: 'header.test', linkTo: '/test' },
-    { type: 'link', labelKey: 'header.quiz', linkTo: '/quiz' },
-    {
-        type: 'dropdown',
-        labelKey: 'header.class',
-        items: [
-            { key: '1', labelKey: 'classes.ise', linkTo: '/class/ise' },
-            { key: '2', labelKey: 'classes.isad', linkTo: '/class/isad' },
-            { key: '3', labelKey: 'classes.sad', linkTo: '/class/sad' },
-        ],
-    },
+    // { type: 'link', labelKey: 'header.assignments', linkTo: '/problems' },
+    // { type: 'link', labelKey: 'header.test', linkTo: '/test' },
+    // { type: 'link', labelKey: 'header.quiz', linkTo: '/quiz' },
+    // {
+    //     type: 'dropdown',
+    //     labelKey: 'header.class',
+    //     items: [
+    //         { key: '1', labelKey: 'classes.ise', linkTo: '/class/ise' },
+    //         { key: '2', labelKey: 'classes.isad', linkTo: '/class/isad' },
+    //         { key: '3', labelKey: 'classes.sad', linkTo: '/class/sad' },
+    //     ],
+    // },
 ];
 
 const Header: React.FC = () => {
