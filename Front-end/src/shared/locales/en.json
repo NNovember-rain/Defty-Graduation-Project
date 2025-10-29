@@ -146,7 +146,8 @@
     "back": "Back",
     "submit": "Submit",
     "noData": "No data available",
-    "add": "Add"
+    "add": "Add",
+    "loading": "Loading..."
   },
   "managementTemplate": {
     "hideFilters": "Hide Filters",

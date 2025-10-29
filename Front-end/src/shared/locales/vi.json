@@ -147,7 +147,8 @@
     "back": "Quay lại",
     "noData": "Không có dữ liệu để hiển thị.",
     "submit": "Nộp",
-    "add": "Thêm"
+    "add": "Thêm",
+    "loading": "Đang tải..."
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",

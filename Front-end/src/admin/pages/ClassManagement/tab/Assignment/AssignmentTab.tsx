@@ -18,7 +18,6 @@ import {
     Row,
     Select,
     Space,
-    Tag,
     Tooltip,
     Typography
 } from "antd";
@@ -26,6 +25,7 @@ import {IoCalendarOutline, IoFileTrayFull} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
 import {AppstoreOutlined, DownOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
+// Đảm bảo các modal này được import đúng
 import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
 import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
 
@@ -97,7 +97,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setIsAssignmentModalVisibleTest(false);
     };
 
-
+    // Hàm fetch data đã được bao bọc trong useCallback
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -114,7 +114,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
             const formatted = (response.assignments || []).map((a: IAssignment) => {
                 const classInfos = a.assignmentClasses?.filter((ac: { classId: number }) => ac.classId === classId) || [];
-                const allAssignedModules = classInfos.flatMap(ci => ci.moduleResponses || []);
+                // const allAssignedModules = classInfos.flatMap(ci => ci.moduleResponses || []); // Comment out or remove if not used
+
                 let classInfoForDates = classInfos.find(
                     (ci) => ci.startDate && ci.endDate
                 ) || classInfos[0];
@@ -127,7 +128,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
                     startDate: classInfoForDates?.startDate ? dayjs(classInfoForDates.startDate).toISOString() : null,
                     endDate: classInfoForDates?.endDate ? dayjs(classInfoForDates.endDate).toISOString() : null,
-                    modules: allAssignedModules,
+                    // modules: allAssignedModules, // Giữ nguyên modules nếu cần
                 };
             });
 
@@ -143,8 +144,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+    }, [fetchData]); // Dependencies là fetchData (useCallback)
 
+
+    // Dropdown và logic hiển thị (Giữ nguyên)
     const gridColumns = useMemo(() => {
         if (view === "list") return 1;
         if (size <= 4) return 3;
@@ -171,13 +174,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setPage(1);
     };
 
+    // --- HIỂN THỊ LOADING KHI FETCH DATA ---
     if (loading) {
         return (
             <div style={{ padding: "2rem", display: "flex", justifyContent: "center" }}>
                 <Spinner animation="border" />
+                <Text>{t('common.loading') || 'Đang tải...'}</Text>
             </div>
         );
     }
+    // --- END LOADING FETCH DATA ---
+
 
     if (error) {
         return (
@@ -328,33 +335,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                 <Title level={5} style={{ margin: 0, lineHeight: 1.2, fontSize: '18px' }}>
                                                     {a.title}
                                                 </Title>
-                                                {/*{a.modules && a.modules.length > 0 ? (*/}
-                                                {/*    <div style={{ margin: '6px 0 8px 0' }}>*/}
-                                                {/*        <Space size={[4, 4]} wrap>*/}
-                                                {/*            <Text type="secondary" style={{ fontSize: '12px', marginRight: 4 }}>*/}
-                                                {/*                {t("classDetail.assignment.modulesAssigned") || "Modules:"}*/}
-                                                {/*            </Text>*/}
-                                                {/*            {a.modules.slice(0, 3).map((moduleItem) => (*/}
-                                                {/*                <Tag*/}
-                                                {/*                    key={moduleItem.id}*/}
-                                                {/*                    color="blue"*/}
-                                                {/*                    style={{ fontSize: '11px', padding: '2px 7px' }}*/}
-                                                {/*                >*/}
-                                                {/*                    {moduleItem.moduleName}*/}
-                                                {/*                </Tag>*/}
-                                                {/*            ))}*/}
-                                                {/*            {a.modules.length > 3 && (*/}
-                                                {/*                <Tag style={{ fontSize: '11px', padding: '2px 7px' }}>*/}
-                                                {/*                    +{a.modules.length - 3}*/}
-                                                {/*                </Tag>*/}
-                                                {/*            )}*/}
-                                                {/*        </Space>*/}
-                                                {/*    </div>*/}
-                                                {/*) : (*/}
-                                                {/*    <Text type="secondary" style={{ fontStyle: 'italic', display: 'block', fontSize: '13px', margin: '6px 0 8px 0' }}>*/}
-                                                {/*        {t("classDetail.assignment.modulesAssigned") || "No modules assigned."}*/}
-                                                {/*    </Text>*/}
-                                                {/*)}*/}
 
                                                 <Space size={16}>
                                                     <Text type="secondary" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: '13px' }}>
