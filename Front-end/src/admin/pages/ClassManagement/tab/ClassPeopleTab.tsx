@@ -14,22 +14,22 @@ import {useNotification} from "../../../../shared/notification/useNotification.t
 
 // Interface cho Teacher (sử dụng IUser từ userService)
 interface ITeacher extends IUser {
-    avatarUrl?: string; // Optional avatar URL
+    avatarUrl?: string;
 }
 
-// Interface cho Student từ API response (dựa vào StudentInClassResponse từ backend)
+// Interface cho Student từ API response
 interface IStudent {
     studentId: string;
     username: string;
     fullName: string;
     email: string;
-    dob: string; // LocalDate từ backend
+    dob: string;
     userCode: string;
-    createdDate: string; // Date từ backend
-    isActive: number; // 1 for active, 0 for inactive, -1 for deleted
-    enrolledAt: string; // LocalDateTime từ backend
+    createdDate: string;
+    isActive: number;
+    enrolledAt: string;
     enrollmentStatus: string;
-    roles: any[]; // Set<RoleResponse> từ backend
+    roles: any[];
 }
 
 interface ClassPeopleTabProps {
@@ -116,20 +116,17 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const fetchTeacher = async () => {
         setTeacherLoading(true);
         try {
-            // First get class info to get teacher ID
             const classInfo = await getClassById(classId);
             if (classInfo.teacherId) {
-                // Then get teacher details
                 const teacherInfo = await getUserById(classInfo.teacherId);
                 const teacher: ITeacher = {
                     ...teacherInfo,
-                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(teacherInfo.fullName || teacherInfo.username)}&size=48&background=0d6efd&color=fff`
+                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(teacherInfo.fullName || teacherInfo.username)}&size=48&background=2563eb&color=fff`
                 };
                 setTeachers([teacher]);
             }
         } catch (err: any) {
             console.error("Failed to fetch teacher:", err);
-            // Set empty array if failed, don't show error for teacher
             setTeachers([]);
         } finally {
             setTeacherLoading(false);
@@ -141,7 +138,6 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         setError(null);
 
         try {
-            // Fetch real students data
             const options: GetStudentsInClassOptions = {
                 page: currentPage,
                 limit: pageSize,
@@ -179,15 +175,6 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         }
     };
 
-    const handleSortChange = () => {
-        if (sortBy === 'fullName') {
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortBy('fullName');
-            setSortOrder('asc');
-        }
-    };
-
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
@@ -195,31 +182,12 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         try {
-            return new Date(dateString).toLocaleDateString();
+            return new Date(dateString).toLocaleDateString('vi-VN');
         } catch {
             return dateString;
         }
     };
 
-    const getStatusText = (isActive: number) => {
-        switch (isActive) {
-            case 1: return t('classDetail.peopleTab.active');
-            case 0: return t('classDetail.peopleTab.inactive');
-            case -1: return t('classDetail.peopleTab.deleted');
-            default: return t('classDetail.peopleTab.unknown');
-        }
-    };
-
-    const getStatusColor = (isActive: number) => {
-        switch (isActive) {
-            case 1: return '#28a745';
-            case 0: return '#ffc107';
-            case -1: return '#dc3545';
-            default: return '#6c757d';
-        }
-    };
-
-    // Handle bulk action
     const handleBulkAction = (action: string) => {
         if (selectedStudents.length === 0) return;
 
@@ -234,7 +202,6 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         }
     };
 
-    // Handle single student action
     const handleSingleAction = (action: string, studentId: string, event: React.MouseEvent) => {
         event.stopPropagation();
         setOpenDropdown(null);
@@ -250,43 +217,29 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         }
     };
 
-    // Email students function - Link to Gmail
     const handleEmailStudents = (studentIds: string[]) => {
         const selectedStudentsData = students.filter(student =>
             studentIds.includes(student.studentId)
         );
         const emails = selectedStudentsData.map(student => student.email).join(',');
 
-        console.log('Sending email to:', emails);
-
-        // Tạo nội dung email mặc định
         const defaultSubject = 'Thông báo từ lớp học';
         const defaultBody = 'Xin chào các em,\n\nTôi có thông báo quan trọng muốn chia sẻ với các em.\n\nTrân trọng,\nGiáo viên';
 
-        // Tạo URL Gmail với thông tin được điền sẵn
         const gmailUrl = `https://mail.google.com/mail/u/0/?view=cm&to=${encodeURIComponent(emails)}&su=${encodeURIComponent(defaultSubject)}&body=${encodeURIComponent(defaultBody)}`;
 
-        // Mở Gmail trong tab mới
         window.open(gmailUrl, '_blank');
-
-        // Optional: Hiển thị thông báo thành công
-        // alert(`Đã mở Gmail để gửi email cho ${selectedStudentsData.length} học sinh`);
     };
 
-    // Remove students function
     const handleRemoveStudents = async () => {
         try {
-            // Replace with your actual API call
-            // await removeStudentsFromClass(classId, studentsToRemove);
             console.log('Removing students:', studentsToRemove);
 
-            // Refresh the list after removal
             await fetchPeople();
             setSelectedStudents([]);
             setShowConfirmModal(false);
             setStudentsToRemove([]);
 
-            // Show success message
             alert(t('classDetail.peopleTab.removeSuccess'));
         } catch (error) {
             console.error('Failed to remove students:', error);
@@ -294,7 +247,6 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         }
     };
 
-    // Toggle dropdown
     const toggleDropdown = (studentId: string, event: React.MouseEvent) => {
         event.stopPropagation();
         setOpenDropdown(openDropdown === studentId ? null : studentId);
@@ -302,11 +254,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
 
     if (loading || teacherLoading) {
         return (
-            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
-                <Spinner animation="border" />
-                <span style={{ marginLeft: '0.5rem' }}>
-                    {teacherLoading ? t('classDetail.peopleTab.loadingTeacher') : t('classDetail.peopleTab.loading')}
-                </span>
+            <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Spinner animation="border" style={{ color: '#3b82f6' }} />
             </div>
         );
     }
@@ -314,11 +263,11 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     if (error) {
         return (
             <div style={{
-                padding: '1rem',
-                color: '#dc3545',
-                backgroundColor: '#f8d7da',
-                border: '1px solid #f5c6cb',
-                borderRadius: '4px',
+                padding: '1.5rem',
+                color: '#dc2626',
+                backgroundColor: '#fee2e2',
+                border: '1px solid #fca5a5',
+                borderRadius: '12px',
                 margin: '1rem'
             }}>
                 {error}
@@ -327,55 +276,75 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     }
 
     return (
-        <div style={{ padding: '1rem' }}>
+        <div>
             {/* Phần Giáo viên */}
             <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid #e0e0e0',
-                paddingBottom: '0.5rem',
+                padding: '1.5rem',
+                backgroundColor: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
                 marginBottom: '1.5rem'
             }}>
-                <h2 style={{ margin: 0, fontWeight: 500 }}>
-                    {t('classDetail.peopleTab.teachersTitle')}
-                </h2>
-            </div>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '1.5rem'
+                }}>
+                    <h2 style={{
+                        margin: 0,
+                        fontSize: '1.25rem',
+                        fontWeight: '600',
+                        color: '#1e293b'
+                    }}>
+                        {t('classDetail.peopleTab.teachersTitle')}
+                    </h2>
+                </div>
 
-            <div style={{ marginBottom: '2rem' }}>
                 {teachers.length === 0 ? (
                     <div style={{
-                        padding: '1rem',
+                        padding: '2rem',
                         textAlign: 'center',
-                        color: '#6c757d',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '4px'
+                        color: '#64748b',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '8px'
                     }}>
                         {t('classDetail.peopleTab.noTeacher')}
                     </div>
                 ) : (
                     teachers.map(teacher => (
-                        <div key={teacher.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                        <div key={teacher.id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '1rem',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '8px'
+                        }}>
                             <div style={{
-                                width: '48px',
-                                height: '48px',
+                                width: '56px',
+                                height: '56px',
                                 borderRadius: '50%',
-                                backgroundColor: '#0d6efd',
+                                backgroundColor: '#2563eb',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 marginRight: '1rem',
-                                fontSize: '1.2rem',
-                                fontWeight: 'bold',
+                                fontSize: '1.5rem',
+                                fontWeight: '600',
                                 color: 'white'
                             }}>
                                 {(teacher.fullName || teacher.username)?.charAt(0)?.toUpperCase() || 'T'}
                             </div>
                             <div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>
+                                <div style={{
+                                    fontSize: '1.125rem',
+                                    fontWeight: '600',
+                                    color: '#1e293b',
+                                    marginBottom: '0.25rem'
+                                }}>
                                     {teacher.fullName || teacher.username}
                                 </div>
-                                <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+                                <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
                                     {teacher.email}
                                 </div>
                             </div>
@@ -386,258 +355,381 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
 
             {/* Phần Học sinh */}
             <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid #e0e0e0',
-                paddingBottom: '0.5rem',
-                marginBottom: '1.5rem'
+                padding: '1.5rem',
+                backgroundColor: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px'
             }}>
-                <h2 style={{margin: 0, fontWeight: 500}}>
-                    {t('classDetail.peopleTab.studentsTitle')}
-                </h2>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                    <span style={{color: '#6c757d'}}>
-                        {totalElements} {t('classDetail.peopleTab.studentCount')}
-                    </span>
-                    <Upload
-                        accept=".xlsx,.xls"
-                        showUploadList={false} // ẩn danh sách file
-                        beforeUpload={(file) => {
-                            handleFileUpload(file); // gọi function đọc file
-                            return false; // để ngăn AntD tự upload
-                        }}
-                    >
-                        <Button icon={<Upload/>}>Upload File</Button>
-                    </Upload>
-                </div>
-            </div>
-
-            {/* Thanh hành động hàng loạt */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem'
-            }}>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                    <input
-                        type="checkbox"
-                        checked={selectedStudents.length === students.length && students.length > 0}
-                        onChange={handleSelectAllStudents}
-                    />
-                    <select
-                        style={{
-                            padding: '0.5rem',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: '4px',
-                            backgroundColor: selectedStudents.length === 0 ? '#f8f9fa' : 'white',
-                            cursor: selectedStudents.length === 0 ? 'not-allowed' : 'pointer'
-                        }}
-                        disabled={selectedStudents.length === 0}
-                        onChange={(e) => {
-                            if (e.target.value) {
-                                handleBulkAction(e.target.value);
-                                e.target.value = ''; // Reset selection
-                            }
-                        }}
-                    >
-                        <option value="">
-                            {selectedStudents.length === 0
-                                ? t('classDetail.peopleTab.selectStudentsFirst')
-                                : t('classDetail.peopleTab.actions')
-                            }
-                        </option>
-                        {selectedStudents.length > 0 && (
-                            <>
-                                <option value="email">{t('classDetail.peopleTab.emailStudents')}</option>
-                                <option value="remove">{t('classDetail.peopleTab.removeStudents')}</option>
-                            </>
-                        )}
-                    </select>
-                    {selectedStudents.length > 0 && (
-                        <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>
-                            {selectedStudents.length} {t('classDetail.peopleTab.selected')}
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {/* Danh sách học sinh */}
-            <div>
-                {students.length === 0 ? (
-                    <div style={{
-                        padding: '2rem',
-                        textAlign: 'center',
-                        color: '#6c757d',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '4px'
-                    }}>
-                        {t('classDetail.peopleTab.noStudents')}
-                    </div>
-                ) : (
-                    students.map(student => (
-                        <div key={student.studentId} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '1rem 0',
-                            borderBottom: '1px solid #e0e0e0'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedStudents.includes(student.studentId)}
-                                    onChange={() => handleSelectStudent(student.studentId)}
-                                />
-                                <div style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: '50%',
-                                    backgroundColor: '#cccccc',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    marginRight: '0.5rem',
-                                    fontSize: '1.2rem',
-                                    fontWeight: 'bold',
-                                    color: 'white'
-                                }}>
-                                    {student.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>
-                                        {student.fullName || student.username}
-                                    </div>
-                                    <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
-                                        {student.email}
-                                    </div>
-                                    <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
-                                        {student.userCode} • {t('classDetail.peopleTab.joined')}: {formatDate(student.enrolledAt)}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ position: 'relative' }}>
-                                <div
-                                    style={{ cursor: 'pointer', fontSize: '1.2rem', padding: '0.5rem' }}
-                                    onClick={(e) => toggleDropdown(student.studentId, e)}
-                                >
-                                    ⋮
-                                </div>
-                                {openDropdown === student.studentId && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        right: 0,
-                                        top: '100%',
-                                        backgroundColor: 'white',
-                                        border: '1px solid #e0e0e0',
-                                        borderRadius: '4px',
-                                        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                                        zIndex: 1000,
-                                        minWidth: '150px'
-                                    }}>
-                                        <button
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.5rem 1rem',
-                                                border: 'none',
-                                                backgroundColor: 'transparent',
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                borderBottom: '1px solid #e0e0e0'
-                                            }}
-                                            onClick={(e) => handleSingleAction('email', student.studentId, e)}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                        >
-                                            {t('classDetail.peopleTab.emailStudent')}
-                                        </button>
-                                        <button
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.5rem 1rem',
-                                                border: 'none',
-                                                backgroundColor: 'transparent',
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                color: '#dc3545'
-                                            }}
-                                            onClick={(e) => handleSingleAction('remove', student.studentId, e)}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                        >
-                                            {t('classDetail.peopleTab.removeStudent')}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
                 <div style={{
                     display: 'flex',
-                    justifyContent: 'center',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '0.5rem',
-                    marginTop: '2rem',
-                    padding: '1rem'
+                    marginBottom: '1.5rem'
                 }}>
-                    <button
-                        disabled={currentPage === 1}
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: '4px',
-                            backgroundColor: currentPage === 1 ? '#f8f9fa' : 'white',
-                            cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+                    <div>
+                        <h2 style={{
+                            margin: '0 0 0.25rem 0',
+                            fontSize: '1.25rem',
+                            fontWeight: '600',
+                            color: '#1e293b'
+                        }}>
+                            {t('classDetail.peopleTab.studentsTitle')}
+                        </h2>
+                        <p style={{
+                            margin: 0,
+                            fontSize: '0.875rem',
+                            color: '#64748b'
+                        }}>
+                            {totalElements} {t('classDetail.peopleTab.studentCount')}
+                        </p>
+                    </div>
+                    <Upload
+                        accept=".xlsx,.xls"
+                        showUploadList={false}
+                        beforeUpload={(file) => {
+                            handleFileUpload(file);
+                            return false;
                         }}
                     >
-                        {t('common.previous')}
-                    </button>
-
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const startPage = Math.max(1, currentPage - 2);
-                        const pageNum = startPage + i;
-                        if (pageNum > totalPages) return null;
-
-                        return (
-                            <button
-                                key={pageNum}
-                                onClick={() => handlePageChange(pageNum)}
-                                style={{
-                                    padding: '0.5rem 1rem',
-                                    border: '1px solid #e0e0e0',
-                                    borderRadius: '4px',
-                                    backgroundColor: pageNum === currentPage ? '#0d6efd' : 'white',
-                                    color: pageNum === currentPage ? 'white' : '#333',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {pageNum}
-                            </button>
-                        );
-                    })}
-
-                    <button
-                        disabled={currentPage === totalPages}
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: '4px',
-                            backgroundColor: currentPage === totalPages ? '#f8f9fa' : 'white',
-                            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                        {t('common.next')}
-                    </button>
+                        <Button
+                            type="primary"
+                            style={{
+                                backgroundColor: '#3b82f6',
+                                borderColor: '#3b82f6',
+                                borderRadius: '8px',
+                                padding: '0.5rem 1.25rem',
+                                height: 'auto',
+                                fontWeight: '500'
+                            }}
+                        >
+                            <svg style={{ width: '16px', height: '16px', marginRight: '0.5rem', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Upload File
+                        </Button>
+                    </Upload>
                 </div>
-            )}
+
+                {/* Thanh hành động hàng loạt */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '1rem',
+                    padding: '0.75rem 1rem',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '0.5rem' }}>
+                            <input
+                                type="checkbox"
+                                checked={selectedStudents.length === students.length && students.length > 0}
+                                onChange={handleSelectAllStudents}
+                                style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    cursor: 'pointer',
+                                    accentColor: '#3b82f6'
+                                }}
+                            />
+                            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                                Chọn tất cả
+                            </span>
+                        </label>
+                        {selectedStudents.length > 0 && (
+                            <>
+                                <div style={{
+                                    padding: '0.375rem 0.75rem',
+                                    backgroundColor: '#eff6ff',
+                                    color: '#2563eb',
+                                    borderRadius: '6px',
+                                    fontSize: '0.875rem',
+                                    fontWeight: '600'
+                                }}>
+                                    {selectedStudents.length} đã chọn
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button
+                                        onClick={() => handleBulkAction('email')}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            border: '1px solid #cbd5e1',
+                                            borderRadius: '6px',
+                                            backgroundColor: 'white',
+                                            color: '#475569',
+                                            cursor: 'pointer',
+                                            fontSize: '0.875rem',
+                                            fontWeight: '500',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                                    >
+                                        <svg style={{ width: '14px', height: '14px', marginRight: '0.375rem', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        Gửi email
+                                    </button>
+                                    <button
+                                        onClick={() => handleBulkAction('remove')}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            border: '1px solid #fca5a5',
+                                            borderRadius: '6px',
+                                            backgroundColor: 'white',
+                                            color: '#dc2626',
+                                            cursor: 'pointer',
+                                            fontSize: '0.875rem',
+                                            fontWeight: '500',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                                    >
+                                        <svg style={{ width: '14px', height: '14px', marginRight: '0.375rem', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Xóa
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Danh sách học sinh */}
+                <div>
+                    {students.length === 0 ? (
+                        <div style={{
+                            padding: '3rem',
+                            textAlign: 'center',
+                            color: '#64748b',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '8px'
+                        }}>
+                            <svg style={{ width: '64px', height: '64px', margin: '0 auto 1rem', color: '#cbd5e1' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <p style={{ margin: 0, fontSize: '1rem' }}>{t('classDetail.peopleTab.noStudents')}</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {students.map(student => (
+                                <div key={student.studentId} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '1rem',
+                                    backgroundColor: '#fff',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    transition: 'all 0.2s'
+                                }}
+                                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedStudents.includes(student.studentId)}
+                                            onChange={() => handleSelectStudent(student.studentId)}
+                                            style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                cursor: 'pointer',
+                                                accentColor: '#3b82f6'
+                                            }}
+                                        />
+                                        <div style={{
+                                            width: '48px',
+                                            height: '48px',
+                                            borderRadius: '50%',
+                                            backgroundColor: '#cbd5e1',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '1.125rem',
+                                            fontWeight: '600',
+                                            color: 'white'
+                                        }}>
+                                            {student.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{
+                                                fontSize: '1rem',
+                                                fontWeight: '600',
+                                                color: '#1e293b',
+                                                marginBottom: '0.25rem'
+                                            }}>
+                                                {student.fullName || student.username}
+                                            </div>
+                                            <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                                                {student.email}
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                                {student.userCode} • Tham gia: {formatDate(student.enrolledAt)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ position: 'relative' }}>
+                                        <button
+                                            style={{
+                                                cursor: 'pointer',
+                                                fontSize: '1.25rem',
+                                                padding: '0.5rem',
+                                                border: 'none',
+                                                backgroundColor: 'transparent',
+                                                color: '#64748b',
+                                                borderRadius: '6px'
+                                            }}
+                                            onClick={(e) => toggleDropdown(student.studentId, e)}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            ⋮
+                                        </button>
+                                        {openDropdown === student.studentId && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                right: 0,
+                                                top: '100%',
+                                                backgroundColor: 'white',
+                                                border: '1px solid #e2e8f0',
+                                                borderRadius: '8px',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                                zIndex: 1000,
+                                                minWidth: '180px',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <button
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '0.75rem 1rem',
+                                                        border: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        textAlign: 'left',
+                                                        cursor: 'pointer',
+                                                        borderBottom: '1px solid #e2e8f0',
+                                                        fontSize: '0.875rem',
+                                                        color: '#475569',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.5rem'
+                                                    }}
+                                                    onClick={(e) => handleSingleAction('email', student.studentId, e)}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                >
+                                                    <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                    </svg>
+                                                    {t('classDetail.peopleTab.emailStudent')}
+                                                </button>
+                                                <button
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '0.75rem 1rem',
+                                                        border: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        textAlign: 'left',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.875rem',
+                                                        color: '#dc2626',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.5rem'
+                                                    }}
+                                                    onClick={(e) => handleSingleAction('remove', student.studentId, e)}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                >
+                                                    <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    {t('classDetail.peopleTab.removeStudent')}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginTop: '1.5rem',
+                        padding: '1rem 0'
+                    }}>
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '6px',
+                                backgroundColor: currentPage === 1 ? '#f8fafc' : 'white',
+                                color: currentPage === 1 ? '#94a3b8' : '#475569',
+                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                fontSize: '0.875rem',
+                                fontWeight: '500'
+                            }}
+                        >
+                            Trước
+                        </button>
+
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            const startPage = Math.max(1, currentPage - 2);
+                            const pageNum = startPage + i;
+                            if (pageNum > totalPages) return null;
+
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => handlePageChange(pageNum)}
+                                    style={{
+                                        padding: '0.5rem 0.875rem',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '6px',
+                                        backgroundColor: pageNum === currentPage ? '#3b82f6' : 'white',
+                                        color: pageNum === currentPage ? 'white' : '#475569',
+                                        cursor: 'pointer',
+                                        fontSize: '0.875rem',
+                                        fontWeight: '500',
+                                        minWidth: '40px'
+                                    }}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
+
+                        <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '6px',
+                                backgroundColor: currentPage === totalPages ? '#f8fafc' : 'white',
+                                color: currentPage === totalPages ? '#94a3b8' : '#475569',
+                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                fontSize: '0.875rem',
+                                fontWeight: '500'
+                            }}
+                        >
+                            Sau
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {/* Confirmation Modal */}
             {showConfirmModal && (
@@ -655,47 +747,84 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                 }}>
                     <div style={{
                         backgroundColor: 'white',
-                        borderRadius: '8px',
+                        borderRadius: '12px',
                         padding: '2rem',
                         maxWidth: '500px',
                         width: '90%',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.15)'
                     }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>
+                        <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            backgroundColor: '#fee2e2',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 1rem'
+                        }}>
+                            <svg style={{ width: '24px', height: '24px', color: '#dc2626' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h3 style={{
+                            marginTop: 0,
+                            marginBottom: '0.5rem',
+                            textAlign: 'center',
+                            fontSize: '1.25rem',
+                            fontWeight: '600',
+                            color: '#1e293b'
+                        }}>
                             {t('classDetail.peopleTab.confirmRemoval')}
                         </h3>
-                        <p style={{ marginBottom: '2rem', color: '#6c757d' }}>
+                        <p style={{
+                            marginBottom: '2rem',
+                            color: '#64748b',
+                            textAlign: 'center',
+                            fontSize: '0.875rem'
+                        }}>
                             {studentsToRemove.length === 1
                                 ? t('classDetail.peopleTab.confirmRemoveOne')
                                 : t('classDetail.peopleTab.confirmRemoveMultiple', { count: studentsToRemove.length })
                             }
                         </p>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
                             <button
                                 style={{
-                                    padding: '0.5rem 1.5rem',
-                                    border: '1px solid #e0e0e0',
-                                    borderRadius: '4px',
+                                    padding: '0.625rem 1.5rem',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
                                     backgroundColor: 'white',
-                                    cursor: 'pointer'
+                                    color: '#475569',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    fontWeight: '500',
+                                    transition: 'all 0.2s'
                                 }}
                                 onClick={() => {
                                     setShowConfirmModal(false);
                                     setStudentsToRemove([]);
                                 }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
                             >
                                 {t('common.cancel')}
                             </button>
                             <button
                                 style={{
-                                    padding: '0.5rem 1.5rem',
+                                    padding: '0.625rem 1.5rem',
                                     border: 'none',
-                                    borderRadius: '4px',
-                                    backgroundColor: '#dc3545',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#dc2626',
                                     color: 'white',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    fontWeight: '500',
+                                    transition: 'all 0.2s'
                                 }}
                                 onClick={handleRemoveStudents}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
                             >
                                 {t('common.confirm')}
                             </button>
