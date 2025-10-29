@@ -7,6 +7,7 @@ import com.defty.content_service.dto.request.ModuleRequest;
 import com.defty.content_service.dto.response.AssignmentClassResponse;
 import com.defty.content_service.dto.response.AssignmentResponse;
 import com.defty.content_service.dto.response.ModuleResponse;
+import com.defty.content_service.dto.response.TypeUMLResponse;
 import com.defty.content_service.entity.Assignment;
 import com.defty.content_service.entity.AssignmentClass;
 import com.defty.content_service.entity.ModuleEntity;
@@ -77,12 +78,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         List<Long> moduleIds = assignRequest.getModuleIds();
         List<AssignmentClass> assignmentClasses = new ArrayList<>();
 
-        List<AssignmentClass> existingAssignmentClasses = assignmentClassRepository
-                .findByAssignmentIdInAndClassIdIn(assignRequest.getAssignmentIds(), assignRequest.getClassIds());
-
-        if (!existingAssignmentClasses.isEmpty()) {
-            throw new IllegalArgumentException("Assignments already assigned to the specified classes");
-        }
+        boolean isTestAssignment = assignRequest.isCheckedTest();
 
         if (moduleIds != null && !moduleIds.isEmpty()) {
             List<ModuleEntity> modules = moduleRepository.findAllById(moduleIds);
@@ -91,7 +87,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             }
 
             List<AssignmentClass> existing = assignmentClassRepository
-                    .findByModuleIdInAndClassIdIn(moduleIds, assignRequest.getClassIds());
+                    .findByModuleIdInAndClassIdInAndCheckedAndTypeUmlId(moduleIds, assignRequest.getClassIds(), isTestAssignment, assignRequest.getTypeUmlId());
             if (!existing.isEmpty()) {
                 throw new IllegalArgumentException("Some modules are already assigned to the specified classes");
             }
@@ -104,22 +100,12 @@ public class AssignmentServiceImpl implements AssignmentService {
                             .classId(classId)
                             .startDate(assignRequest.getStartDate())
                             .endDate(assignRequest.getEndDate())
-                            .build());
-                }
-            }
-        } else {
-            for (Assignment assignment : assignments) {
-                for (Long classId : assignRequest.getClassIds()) {
-                    assignmentClasses.add(AssignmentClass.builder()
-                            .assignment(assignment)
-                            .startDate(assignRequest.getStartDate())
-                            .endDate(assignRequest.getEndDate())
-                            .classId(classId)
+                            .checked(isTestAssignment)
+                            .typeUmlId(assignRequest.getTypeUmlId())
                             .build());
                 }
             }
         }
-
         assignmentClassRepository.saveAll(assignmentClasses);
 
         return assignments.stream()
@@ -256,6 +242,17 @@ public class AssignmentServiceImpl implements AssignmentService {
                             .build())
                             : List.of();
 
+                    TypeUMLResponse typeUMLResponse = null;
+                    if(ac.isChecked()){
+                        TypeUML typeUML = typeUMLRepository.findById(ac.getTypeUmlId())
+                                .orElseThrow(() -> new NotFoundException("TypeUML not found with ID: " + ac.getTypeUmlId()));
+                        typeUMLResponse = TypeUMLResponse.builder()
+                                .id(typeUML.getId())
+                                .name(typeUML.getName())
+                                .description(typeUML.getDescription())
+                                .build();
+                    }
+
                     return AssignmentClassResponse.builder()
                             .id(ac.getId())
                             .classId(ac.getClassId())
@@ -263,6 +260,8 @@ public class AssignmentServiceImpl implements AssignmentService {
                             .startDate(ac.getStartDate())
                             .endDate(ac.getEndDate())
                             .moduleResponses(moduleResponses)
+                            .typeUmlResponse(typeUMLResponse)
+                            .checkedTest(ac.isChecked())
                             .build();
                 })
                 .toList();

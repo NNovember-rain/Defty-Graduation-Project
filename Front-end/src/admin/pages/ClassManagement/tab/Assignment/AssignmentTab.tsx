@@ -27,6 +27,7 @@ import {MdOutlineAssignment} from "react-icons/md";
 import {AppstoreOutlined, DownOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
 import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
+import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -51,6 +52,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [sortBy, setSortBy] = useState<string | undefined>("createdDate");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
+    const [isAssignmentModalVisibleTest, setIsAssignmentModalVisibleTest] = useState(false);
 
     const goToAssignmentDetails = (assignmentId: number) => {
         navigate(`/admin/class/${classId}/assignment/${assignmentId}/detail`);
@@ -74,6 +76,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             key: "assign",
             label: t("classDetail.assignment.assign") || "Assign Assignment",
             onClick: () => showAssignmentModal()
+        },
+        {
+            key: "assignTest",
+            label: t("classDetail.assignment.assignTest") || "Assign Test",
+            onClick: () => showQuizAssignmentModal()
         }
     ];
 
@@ -81,8 +88,13 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setIsAssignmentModalVisible(true);
     }, []);
 
+    const showQuizAssignmentModal = React.useCallback(() => {
+        setIsAssignmentModalVisibleTest(true);
+    }, []);
+
     const hideAssignmentModal = () => {
         setIsAssignmentModalVisible(false);
+        setIsAssignmentModalVisibleTest(false);
     };
 
 
@@ -316,33 +328,33 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                 <Title level={5} style={{ margin: 0, lineHeight: 1.2, fontSize: '18px' }}>
                                                     {a.title}
                                                 </Title>
-                                                {a.modules && a.modules.length > 0 ? (
-                                                    <div style={{ margin: '6px 0 8px 0' }}>
-                                                        <Space size={[4, 4]} wrap>
-                                                            <Text type="secondary" style={{ fontSize: '12px', marginRight: 4 }}>
-                                                                {t("classDetail.assignment.modulesAssigned") || "Modules:"}
-                                                            </Text>
-                                                            {a.modules.slice(0, 3).map((moduleItem) => (
-                                                                <Tag
-                                                                    key={moduleItem.id}
-                                                                    color="blue"
-                                                                    style={{ fontSize: '11px', padding: '2px 7px' }}
-                                                                >
-                                                                    {moduleItem.moduleName}
-                                                                </Tag>
-                                                            ))}
-                                                            {a.modules.length > 3 && (
-                                                                <Tag style={{ fontSize: '11px', padding: '2px 7px' }}>
-                                                                    +{a.modules.length - 3}
-                                                                </Tag>
-                                                            )}
-                                                        </Space>
-                                                    </div>
-                                                ) : (
-                                                    <Text type="secondary" style={{ fontStyle: 'italic', display: 'block', fontSize: '13px', margin: '6px 0 8px 0' }}>
-                                                        {t("classDetail.assignment.modulesAssigned") || "No modules assigned."}
-                                                    </Text>
-                                                )}
+                                                {/*{a.modules && a.modules.length > 0 ? (*/}
+                                                {/*    <div style={{ margin: '6px 0 8px 0' }}>*/}
+                                                {/*        <Space size={[4, 4]} wrap>*/}
+                                                {/*            <Text type="secondary" style={{ fontSize: '12px', marginRight: 4 }}>*/}
+                                                {/*                {t("classDetail.assignment.modulesAssigned") || "Modules:"}*/}
+                                                {/*            </Text>*/}
+                                                {/*            {a.modules.slice(0, 3).map((moduleItem) => (*/}
+                                                {/*                <Tag*/}
+                                                {/*                    key={moduleItem.id}*/}
+                                                {/*                    color="blue"*/}
+                                                {/*                    style={{ fontSize: '11px', padding: '2px 7px' }}*/}
+                                                {/*                >*/}
+                                                {/*                    {moduleItem.moduleName}*/}
+                                                {/*                </Tag>*/}
+                                                {/*            ))}*/}
+                                                {/*            {a.modules.length > 3 && (*/}
+                                                {/*                <Tag style={{ fontSize: '11px', padding: '2px 7px' }}>*/}
+                                                {/*                    +{a.modules.length - 3}*/}
+                                                {/*                </Tag>*/}
+                                                {/*            )}*/}
+                                                {/*        </Space>*/}
+                                                {/*    </div>*/}
+                                                {/*) : (*/}
+                                                {/*    <Text type="secondary" style={{ fontStyle: 'italic', display: 'block', fontSize: '13px', margin: '6px 0 8px 0' }}>*/}
+                                                {/*        {t("classDetail.assignment.modulesAssigned") || "No modules assigned."}*/}
+                                                {/*    </Text>*/}
+                                                {/*)}*/}
 
                                                 <Space size={16}>
                                                     <Text type="secondary" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: '13px' }}>
@@ -467,6 +479,12 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 </div>
                 <AssignAssignmentModal
                     visible={isAssignmentModalVisible}
+                    onClose={hideAssignmentModal}
+                    classIds={[classId]}
+                    onAssigned={fetchData}
+                />
+                <AssignAssignmentModalTest
+                    visible={isAssignmentModalVisibleTest}
                     onClose={hideAssignmentModal}
                     classIds={[classId]}
                     onAssigned={fetchData}

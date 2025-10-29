@@ -10,8 +10,8 @@ import java.util.List;
 @Repository
 public interface AssignmentClassRepository extends JpaRepository<AssignmentClass, Long> {
     List<AssignmentClass> findByAssignmentAndClassIdIn(Assignment assignment, List<Long> classIds);
-    List<AssignmentClass> findByAssignmentIdInAndClassIdIn(List<Long> assignmentIds, List<Long> classIds);
+    List<AssignmentClass> findByAssignmentIdInAndClassIdInAndChecked(List<Long> assignmentIds, List<Long> classIds, boolean checked);
     List<AssignmentClass> findByAssignmentId(Long assignmentId);
     List<AssignmentClass> findByClassId(Long classId);
-    List<AssignmentClass> findByModuleIdInAndClassIdIn(List<Long> moduleIds, List<Long> classIds);
+    List<AssignmentClass> findByModuleIdInAndClassIdInAndCheckedAndTypeUmlId(List<Long> moduleIds, List<Long> classIds, boolean checked, Long typeUmlId);
 }

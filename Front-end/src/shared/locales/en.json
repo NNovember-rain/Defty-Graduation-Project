@@ -484,7 +484,8 @@
       "create": "Create",
       "createNew": "Create new assignment",
       "assigned": "Assign",
-      "modulesAssigned": "Modules Assigned"
+      "modulesAssigned": "Modules Assigned",
+      "assignTest": "Assign Test"
     },
     "sort": {
       "newest": "Newest",

@@ -483,7 +483,8 @@
       "create": "Tạo",
       "createNew": "Tạo bài tập mới",
       "assign": "Giao bài tập",
-      "modulesAssigned": "Module đã được giao"
+      "modulesAssigned": "Module đã được giao",
+      "assignTest": "Giao bài kiểm tra"
     },
     "sort": {
       "newest": "Mới nhất",
