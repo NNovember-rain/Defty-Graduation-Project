@@ -23,4 +23,7 @@ public interface ContentServiceClient {
 
     @GetMapping("/content/assignments/module/{id}")
     ApiResponse<ModuleResponse> getModule(@PathVariable Long id);
+
+    @GetMapping("/content/assignments/{classId}/{assignmentId}")
+    ApiResponse<AssignmentResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId);
 }

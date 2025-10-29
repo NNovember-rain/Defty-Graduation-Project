@@ -90,12 +90,11 @@ public class SubmissionController {
     public ApiResponse<Page<SubmissionResponse>> getLastSubmissionsExamMode(
             @PathVariable Long classId,
             @PathVariable Long assignmentId,
-            @RequestParam Long typeUmlId,
             @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
             @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(value = "sortBy", defaultValue = "createdDate") String sortBy,
             @RequestParam(value = "sortOrder", defaultValue = "desc") String sortOrder) {
-        Page<SubmissionResponse>submissionResponses =submissionService.getLastSubmissionsExamModes(page, size, sortBy, sortOrder, classId,assignmentId);
+        Page<SubmissionResponse>submissionResponses =submissionService.getLastSubmissionsExamModes(page, size, sortBy, sortOrder, classId, assignmentId);
         return ApiResponse.<Page<SubmissionResponse>>builder()
                 .result(submissionResponses)
                 .build();
