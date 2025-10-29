@@ -76,8 +76,11 @@ public class SubmissionController {
     @GetMapping("/class/{classId}/assignment/{assignmentId}/last")
     public ApiResponse<SubmissionResponse> getLastSubmissionExamMode(
             @PathVariable Long classId,
-            @PathVariable Long assignmentId){
-        SubmissionResponse submissionResponse =submissionService.getLastSubmissionsExamMode(classId,assignmentId);
+            @PathVariable Long assignmentId,
+            @RequestParam(value = "typeUmlId") Long typeUmlId,
+            @RequestParam(value = "moduleId") Long moduleId
+    ){
+        SubmissionResponse submissionResponse =submissionService.getLastSubmissionsExamMode(classId,assignmentId,typeUmlId,moduleId);
         return ApiResponse.<SubmissionResponse>builder()
                 .result(submissionResponse)
                 .build();
@@ -91,14 +94,14 @@ public class SubmissionController {
             @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(value = "sortBy", defaultValue = "createdDate") String sortBy,
             @RequestParam(value = "sortOrder", defaultValue = "desc") String sortOrder) {
-        Page<SubmissionResponse>submissionResponses =submissionService.getLastSubmissionsExamMode(page, size, sortBy, sortOrder, classId,assignmentId);
+        Page<SubmissionResponse>submissionResponses =submissionService.getLastSubmissionsExamModes(page, size, sortBy, sortOrder, classId, assignmentId);
         return ApiResponse.<Page<SubmissionResponse>>builder()
                 .result(submissionResponses)
                 .build();
     }
 
     @GetMapping("/class/{classId}/assignment/{assignmentId}/student/{studentId}")
-    public ApiResponse<Page<SubmissionResponse>> getSubmissionsForStudent(@PathVariable Long classId,
+    public ApiResponse<Page<SubmissionResponse>> getSubmissionsExerciseMode(@PathVariable Long classId,
                                                                           @PathVariable Long assignmentId,
                                                                           @PathVariable Long studentId,
                                                                           @RequestParam(value = "examMode") Boolean examMode,

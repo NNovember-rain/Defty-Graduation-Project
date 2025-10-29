@@ -51,6 +51,16 @@ public class SubmissionSpecification {
         };
     }
 
+
+    public static Specification<Submission> hasModuleId(Long moduleId) {
+        return (root, query, cb) -> {
+            if (moduleId == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("moduleId"), moduleId);
+        };
+    }
+
     public static Specification<Submission> hasClassId(Long classId) {
         return (root, query, cb) -> {
             if (classId == null) {

@@ -368,7 +368,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                         >
                                             {t("classDetail.assignment.practice") || "Luyện tập"}
                                         </Button>
-                                        <Button
+                                        {/* <Button
                                             size="small"
                                             type="primary"
                                             onClick={(e) => {
@@ -377,7 +377,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                             }}
                                         >
                                             {t("Test nộp bài 1") || "Nộp bài"}
-                                        </Button>
+                                        </Button> */}
                                         <Button
                                             size="small"
                                             onClick={(e) => {
@@ -385,7 +385,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                 handleViewAssignmentDetails(a, 'test');
                                             }}
                                         >
-                                            {t("Test nộp bài 2") || "Test"}
+                                            {t("Nộp bài") || "Test"}
                                         </Button>
                                     </Space>
                                 </Card>
