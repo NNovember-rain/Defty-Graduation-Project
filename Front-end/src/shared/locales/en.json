@@ -149,6 +149,7 @@
     "add": "Add",
     "loading": "Loading..."
   },
+
   "managementTemplate": {
     "hideFilters": "Hide Filters",
     "showFilters": "Show Filters",
@@ -424,6 +425,8 @@
       "noId": "No class ID found in the URL.",
       "classNotFound": "Class not found."
     },
+    "umlType": "UML Type",
+    "module": "Module",
     "tabs": {
       "stream": "Stream",
       "classwork": "Classwork",
@@ -431,7 +434,9 @@
       "marks": "Marks",
       "classworkContent": "This is the Classwork page.",
       "peopleContent": "This is the People page.",
-      "marksContent": "This is the Marks page."
+      "marksContent": "This is the Marks page.",
+      "assignment": "Luyện tập",
+      "test": "Bài kiểm tra"
     },
     "peopleTab": {
       "teachersTitle": "Teachers",
@@ -486,7 +491,12 @@
       "createNew": "Create new assignment",
       "assigned": "Assign",
       "modulesAssigned": "Modules Assigned",
-      "assignTest": "Assign Test"
+      "assignTest": "Assign Test",
+      "noDeadline": "No deadline"
+    },
+    "type": {
+      "test": "Test",
+      "assignment": "Exercise"
     },
     "sort": {
       "newest": "Newest",
