@@ -17,7 +17,7 @@ public interface SubmissionService {
     Page<SubmissionResponse> getSubmissions(int page, int size, String sortBy, String sortOrder, Long studentId, Long assignmentId, Long classId, LocalDateTime fromDate, LocalDateTime toDate);
     SubmissionResponse getSubmission(Long id);
     String addScoreSubmission(Long id, Double point);
-    SubmissionResponse getLastSubmissionsExamMode(Long classId, Long assignmentId);
+    SubmissionResponse getLastSubmissionsExamMode(Long classId, Long assignmentId, Long typeUmlId, Long moduleId);
     Page<SubmissionResponse> getSubmissionsHistoryExerciseMode(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId, Long studentId, Boolean examMode);
-    Page<SubmissionResponse> getLastSubmissionsExamMode(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId);
+    Page<SubmissionResponse> getLastSubmissionsExamModes(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId);
 }

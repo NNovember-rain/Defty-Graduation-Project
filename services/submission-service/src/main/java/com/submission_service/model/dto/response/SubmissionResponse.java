@@ -22,7 +22,7 @@ public class SubmissionResponse {
     Long assignmentId;
     Long classId;
     Long moduleId;
-    String moduleCode; // check trường này hiển thị ra
+    String moduleName;
     String studentName;
     String studentCode;
     String classCode;
