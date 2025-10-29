@@ -24,6 +24,9 @@ public class AssignmentClass extends BaseEntity{
     @ManyToOne
     ModuleEntity module;
 
+    boolean checked;
+    Long typeUmlId;
+
     Long classId;
     String status;
     Date startDate;

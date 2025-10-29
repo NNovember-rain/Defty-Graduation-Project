@@ -1,15 +1,17 @@
-import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Spin, Table} from "antd";
+import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Spin, Table, Select, Switch, Typography} from "antd";
 import React, {useCallback, useEffect, useState} from "react";
 import type {ColumnsType} from "antd/es/table";
 import {assignAssignment, getAssignments} from "../../../../../shared/services/assignmentService.ts";
 import {useTranslation} from "react-i18next";
 import type { Key } from "react";
+import {getTypeUmls} from "../../../../../shared/services/typeUmlService.ts";
 
 const {RangePicker} = DatePicker;
 
 interface Module {
     id: number;
     moduleName: string;
+    key?: string;
 }
 
 interface Assignment {
@@ -29,6 +31,15 @@ interface AssignAssignmentModalProps {
     onAssigned?: () => void,
 }
 
+interface TypeUmlOption {
+    value: string;
+    label: string;
+}
+interface ITypeUml {
+    id: number;
+    name: string;
+}
+
 const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                                                                          visible,
                                                                          onClose,
@@ -43,25 +54,22 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(5);
-    const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+
+    const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(null);
+    const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+    const [selectedTypeUmlId, setSelectedTypeUmlId] = useState<number | null>(null);
+    const [typeUMLs, setTypeUMLs] = useState<TypeUmlOption[]>([]);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [messageApi, contextHolder] = message.useMessage();
 
 
-    const columns: ColumnsType<Assignment> = [
-        {title: t("Title"), dataIndex: "title", key: "title"},
-        {title: t("Type"), dataIndex: "typeUmlName", key: "typeUmlName", render: (text) => text || "-"},
-    ];
-
-    const moduleColumns: ColumnsType<Module> = [
-        {title: t("Module Name"), dataIndex: "moduleName", key: "moduleName"},
-    ];
-
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
         setLoading(true);
         try {
-            const params = {page, limit, status: 1};
-            const response = await getAssignments(params);
+            const params = {page, limit, status: 1, searchTerm};
+            const response: any = await getAssignments(params);
+
             const assignmentData = Array.isArray(response) ? response : (response.assignments || []);
             const total = response.total || assignmentData.length;
 
@@ -74,61 +82,88 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             setTotalItems(total);
         } catch (error) {
             console.error('Failed to load assignments:', error);
-            messageApi.error(t('apiMessages.loadAssignmentsFailed'));
+            messageApi.error(t('apiMessages.loadAssignmentsFailed') || 'Lỗi khi tải bài tập.');
         } finally {
             setLoading(false);
         }
+    }, [messageApi, t, searchTerm]);
+
+    useEffect(() => {
+        async function fetchTypeUMLs() {
+            try {
+                const response = await getTypeUmls();
+                const typeUmlsArray: TypeUmlOption[] = Array.isArray(response.typeUmls)
+                    ? response.typeUmls.map((t: ITypeUml) => ({
+                        value: String(t.id),
+                        label: t.name,
+                    }))
+                    : [];
+                setTypeUMLs(typeUmlsArray);
+            } catch (error) {
+                console.error('Error fetching Type UMLs:', error);
+                messageApi.error(t('common.errorFetchingData') || 'Lỗi khi lấy dữ liệu Type UML.');
+            }
+        }
+        fetchTypeUMLs();
     }, [messageApi, t]);
 
     useEffect(() => {
         if (visible) {
             fetchAssignmentsForModal(currentPage, pageSize);
-            setSelectedRowKeys([]); // Reset selection
+            setSelectedAssignmentId(null);
+            setSelectedModuleId(null);
+            setSelectedTypeUmlId(null);
             form.resetFields();
         }
-    }, [visible, currentPage, pageSize, searchTerm, fetchAssignmentsForModal, form]);
+    }, [visible, currentPage, pageSize, fetchAssignmentsForModal, form]);
+
+    const columns: ColumnsType<Assignment> = [
+        {title: t("Title"), dataIndex: "title", key: "title"},
+    ];
+
 
     const handleAssign = async () => {
         try {
             const values = await form.validateFields();
+
+            if (!selectedAssignmentId) {
+                return messageApi.error(t('Please select one assignment') || 'Vui lòng chọn một bài tập.');
+            }
+            if (selectedModuleId && !selectedTypeUmlId) {
+                return messageApi.error(t('Please select a Type UML for the selected module') || 'Vui lòng chọn Type UML cho module đã chọn.');
+            }
+
             setAssignLoading(true);
 
             const dateRange = values.dateRange || [];
             const startDate = dateRange.length > 0 ? dateRange[0].toISOString() : null;
             const endDate = dateRange.length > 1 ? dateRange[1].toISOString() : null;
-            const checkTest = false
 
-            const assignmentIds: number[] = selectedRowKeys
-                .filter(key => key.startsWith('assignment_'))
-                .map(key => Number(key.split('_')[1]));
-
-            const moduleIds: number[] = selectedRowKeys
-                .filter(key => key.startsWith('module_'))
-                .map(key => Number(key.split('_')[1]));
+            const checkedTest = true;
 
             await assignAssignment({
-                assignmentIds,
-                moduleIds,
+                assignmentIds: selectedAssignmentId ? [selectedAssignmentId] : [],
+                moduleIds: selectedModuleId ? [selectedModuleId] : [],
+                typeUmlId: selectedTypeUmlId,
                 classIds,
                 startDate,
                 endDate,
-                checkTest
+                checkedTest
             });
 
-            messageApi.success(t('apiMessages.assignSuccess'));
+            messageApi.success(t('apiMessages.assignSuccess') || 'Giao bài tập thành công!');
             onAssigned?.();
             onClose();
         } catch (error) {
             console.error(error);
-            messageApi.error(t("Failed to assign assignment"));
+            messageApi.error(t("Failed to assign assignment") || 'Lỗi khi giao bài tập.');
         } finally {
             setAssignLoading(false);
         }
     };
 
     const expandedRowRender = (record: Assignment) => {
-        const assignmentKey = `assignment_${record.id}`;
-        const isAssignmentSelected = selectedRowKeys.includes(assignmentKey);
+        const isAssignmentSelected = selectedAssignmentId === record.id;
         if (!isAssignmentSelected) {
             return (
                 <p style={{margin: 0, paddingLeft: 40, color: 'gray'}}>
@@ -145,22 +180,54 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             );
         }
 
+        // Cột cho Module và Type UML Select
+        const moduleColumnsWithSelection: ColumnsType<Module> = [
+            {title: t("Module Name"), dataIndex: "moduleName", key: "moduleName"},
+            {
+                title: t("Select Type UML"),
+                key: "selectTypeUml",
+                width: 220,
+                render: (text, moduleRecord) => {
+                    const isModuleSelected = selectedModuleId === moduleRecord.id;
+
+                    return (
+                        <Select
+                            placeholder={t('Select Type UML') || 'Chọn Type UML'}
+                            options={typeUMLs}
+                            disabled={!isModuleSelected}
+                            value={isModuleSelected && selectedTypeUmlId !== null ? String(selectedTypeUmlId) : undefined}
+                            onChange={(value: string) => {
+                                setSelectedTypeUmlId(Number(value));
+                            }}
+                            style={{width: '100%'}}
+                        />
+                    );
+                }
+            }
+        ];
+
         const modulesWithKeys: Module[] = record.modules.map(mod => ({
             ...mod,
-            key: `module_${mod.id}` as unknown as number,
+            key: `module_${mod.id}`,
         }));
 
         return (
             <Table
-                columns={moduleColumns}
+                columns={moduleColumnsWithSelection}
                 dataSource={modulesWithKeys}
                 pagination={false}
-                rowKey={(record) => `module_${record.id}`}
+                rowKey={(record) => record.key!}
                 rowSelection={{
-                    selectedRowKeys: selectedRowKeys.filter(key => key.startsWith('module_')),
+                    type: 'radio' as const, // CHỈ CHO PHÉP CHỌN 1 MODULE
+                    selectedRowKeys: selectedModuleId ? [`module_${selectedModuleId}`] : [],
                     onChange: (selectedKeys: Key[]) => {
-                        const otherKeys = selectedRowKeys.filter(key => !key.startsWith('module_'));
-                        setSelectedRowKeys([...otherKeys, ...selectedKeys] as string[]);
+                        const key = selectedKeys[0] as string | undefined;
+                        const newModuleId = key ? Number(key.split('_')[1]) : null;
+
+                        if (newModuleId !== selectedModuleId) {
+                            setSelectedTypeUmlId(null);
+                        }
+                        setSelectedModuleId(newModuleId);
                     },
                 }}
                 size="small"
@@ -175,18 +242,22 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         setCurrentPage(1);
     };
 
-    const onSelectChange = (selectedKeys: Key[]) => {
-        const assignmentKeys = selectedKeys
-            .filter(key => key.toString().startsWith('assignment_'))
-            .map(key => key.toString());
-
-        const moduleKeys = selectedRowKeys.filter(key => key.startsWith('module_'));
-        setSelectedRowKeys([...assignmentKeys, ...moduleKeys]);
-    };
-
+    // Row selection cho Assignment (Chỉ chọn 1)
     const rowSelection = {
-        selectedRowKeys,
-        onChange: onSelectChange,
+        type: 'radio' as const, // CHỈ CHO PHÉP CHỌN 1 HÀNG (Assignment)
+        selectedRowKeys: selectedAssignmentId ? [`assignment_${selectedAssignmentId}`] : [],
+        onChange: (selectedKeys: Key[]) => {
+            const key = selectedKeys[0] as string | undefined;
+            const newAssignmentId = key ? Number(key.split('_')[1]) : null;
+
+            // Reset module và typeUml khi chọn bài tập khác hoặc bỏ chọn bài tập
+            if (newAssignmentId !== selectedAssignmentId) {
+                setSelectedModuleId(null);
+                setSelectedTypeUmlId(null);
+            }
+
+            setSelectedAssignmentId(newAssignmentId);
+        },
         getCheckboxProps: (record: Assignment) => ({
             key: `assignment_${record.id}`,
         }),
@@ -197,6 +268,10 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         setPageSize(pagination.pageSize);
     };
 
+    // Điều kiện để nút Assign được enable
+    const isAssignButtonDisabled = !selectedAssignmentId ||
+        (selectedModuleId && !selectedTypeUmlId);
+
     return (
         <>
             {contextHolder}
@@ -205,27 +280,31 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                 open={visible}
                 onCancel={onClose}
                 footer={[
-                    <Button key="close" onClick={onClose}>{t('Close')}</Button>,
+                    <Button key="close" onClick={onClose}>{t('Close') || 'Đóng'}</Button>,
                     <Button
                         key="assign"
                         type="primary"
                         onClick={handleAssign}
-                        disabled={selectedRowKeys.length === 0}
+                        disabled={isAssignButtonDisabled}
                         loading={assignLoading}
                     >
-                        {t('Assign')}
+                        {t('Assign') || 'Giao bài'}
                     </Button>
                 ]}
                 width={800}
             >
-                <Spin spinning={assignLoading} tip={t("Assigning...")}>
-                    <Form form={form} layout="vertical">
+                <Spin spinning={assignLoading} tip={t("Assigning...") || 'Đang giao bài...'}>
+                    <Form
+                        form={form}
+                        layout="vertical"
+                        initialValues={{ checkTest: true }}
+                    >
                         <Row gutter={12} style={{marginBottom: 16}}>
                             <Col span={12}>
                                 <Input.Search
-                                    placeholder={t("Search assignments...")}
+                                    placeholder={t("Search assignments...") || 'Tìm kiếm bài tập...'}
                                     allowClear
-                                    enterButton={t("Search")}
+                                    enterButton={t("Search") || 'Tìm kiếm'}
                                     size="middle"
                                     onSearch={onSearch}
                                 />
@@ -233,7 +312,12 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                             <Col span={12}>
                                 <Form.Item
                                     name="dateRange"
+                                    required={true}
                                     rules={[
+                                        {
+                                            required: true,
+                                            message: t('Please select start and end dates') || 'Vui lòng chọn ngày bắt đầu và ngày kết thúc'
+                                        },
                                         () => ({
                                             validator(_, value) {
                                                 if (!value || value.length < 2) return Promise.resolve();
@@ -255,7 +339,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                         </Row>
                     </Form>
 
-                    <Spin spinning={loading} tip={t("Loading assignments...")}>
+                    <Spin spinning={loading} tip={t("Loading assignments...") || 'Đang tải bài tập...'}>
                         <Table
                             dataSource={assignments}
                             columns={columns}
@@ -270,6 +354,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                             rowSelection={rowSelection}
                             onChange={handleTableChange}
                             expandedRowRender={expandedRowRender}
+                            expandRowByClick
                         />
                     </Spin>
                 </Spin>

@@ -38,6 +38,11 @@ const MODULE_OPTIONS: UmlTypeOption[] = [
     { value: 'server-side', label: 'Module: Server Side', key: 'server-side' },
 ];
 
+
+interface IConsolidatedModuleResponse extends IModuleResponse {
+    typeUmlIds: Set<number>;
+}
+
 type Props = {
     assignment: IAssignment | null;
     isLoading?: boolean;
@@ -86,7 +91,6 @@ const Description: React.FC<Props> = ({
                     }))
                     : [];
                 setTypeUMLs(typeUmlsArray);
-                // Set initial typeUmlName if umlType matches
                 const initialType = typeUmlsArray.find(t => t.value === umlType);
                 if (initialType) {
                     onTypeUmlNameChange(initialType.label);
@@ -103,48 +107,66 @@ const Description: React.FC<Props> = ({
     useEffect(() => {
         const fetchModules = async (assignmentId: number, classId: number, currentMode: 'practice' | 'test') => {
             try {
-                // 1. GỌI API ĐỂ LẤY DỮ LIỆU ĐẦY ĐỦ
-                const data = await getAssignmentByClassId(classId, assignmentId);
+                const data: any = await getAssignmentByClassId(classId, assignmentId);
 
                 console.log('Fetched Assignment Data for Mode:', currentMode, data);
 
-                let modulesToUse: IModuleResponse[] = [];
+                let modulesToUse: IConsolidatedModuleResponse[] = [];
 
-                if (currentMode === 'test') {
-                    // CHẾ ĐỘ TEST: Lấy modules từ assignmentClasses[0].moduleResponses
-                    const assignmentClasses = data.assignmentClasses;
-                    if (
-                        Array.isArray(assignmentClasses) &&
-                        assignmentClasses.length > 0 &&
-                        Array.isArray(assignmentClasses[0].moduleResponses)
-                    ) {
-                        // Thêm logic loại bỏ module bị trùng lặp ở đây
-                        const uniqueModulesMap = new Map();
-                        assignmentClasses[0].moduleResponses.forEach((mod: IModuleResponse) => {
-                            if (!uniqueModulesMap.has(mod.id)) {
-                                uniqueModulesMap.set(mod.id, mod);
+                const consolidatedModuleMap = new Map<number, IConsolidatedModuleResponse>();
+                const assignmentClasses = data.assignmentClasses || [];
+
+                if (currentMode === 'practice') {
+                    const filteredClasses = assignmentClasses.filter((ac: any) => ac.checkedTest === false);
+                    const uniqueModulesMap = new Map<number, IModuleResponse>();
+
+                    filteredClasses.forEach((ac: any) => {
+                        (ac.moduleResponses || []).forEach((mod: IModuleResponse) => {
+                            const moduleId = mod.id;
+                            if (!uniqueModulesMap.has(moduleId)) {
+                                uniqueModulesMap.set(moduleId, mod);
                             }
                         });
-                        modulesToUse = Array.from(uniqueModulesMap.values());
-                    }
+                    });
+                    modulesToUse = Array.from(uniqueModulesMap.values()).map(m => ({
+                        ...m,
+                        typeUmlResponses: new Map<number, UmlTypeOption>()
+                    }));
+
                 } else {
-                    // CHẾ ĐỘ PRACTICE (hoặc mode khác): Lấy modules từ modules chung (đã loại bỏ trùng lặp từ server)
-                    if (data && Array.isArray(data.modules)) {
-                        modulesToUse = data.modules;
-                    }
+
+                    const filteredClasses = assignmentClasses.filter((ac: any) => ac.checkedTest);
+
+                    filteredClasses.forEach((ac: any) => {
+                        (ac.moduleResponses || []).forEach((mod: IModuleResponse) => {
+                            const moduleId = mod.id;
+                            const typeUmlId = ac.typeUmlId;
+
+                            if (!consolidatedModuleMap.has(moduleId)) {
+                                consolidatedModuleMap.set(moduleId, {
+                                    ...mod,
+                                    typeUmlIds: new Set<number>(),
+                                } as IConsolidatedModuleResponse);
+                            }
+
+                            const consolidatedModule = consolidatedModuleMap.get(moduleId)!;
+                            if (typeUmlId !== null && typeUmlId !== undefined) {
+                                consolidatedModule.typeUmlIds.add(typeUmlId);
+                            }
+                        });
+                    });
+
+                    modulesToUse = Array.from(consolidatedModuleMap.values());
                 }
 
-                setModules(modulesToUse);
+                setModules(modulesToUse as IConsolidatedModuleResponse[]);
 
             } catch (error) {
                 console.error('Error fetching Modules:', error);
-                message.error(t('common.errorFetchingModules') || 'Lỗi khi tải modules');
             }
         };
 
-        // CHỈ GỌI KHI assignment.id VÀ classId ĐỀU CÓ GIÁ TRỊ
         if (assignment?.id && classId !== null && classId !== undefined) {
-            // Truyền cả mode vào hàm fetchModules
             fetchModules(assignment.id, classId, mode);
         }
 
@@ -161,7 +183,6 @@ const Description: React.FC<Props> = ({
     const handleModuleChange = (value: string) => { // Sửa IModuleResponse thành string
         setModule(value);
         onModuleChange(value);
-        // Gọi callback để set moduleName
         const selectedModule = modules.find(m => String(m.id) === value);
         if (selectedModule) {
             onModuleNameChange(selectedModule.moduleName);
