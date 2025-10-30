@@ -25,15 +25,23 @@ export interface GetSubmissionsResult {
 
 export interface ISubmission {
     id: number
+    studentId?: number
+    assignmentId?: number
+    classId?: number
+    moduleId?: number
+    moduleName?: string
+    descriptionModule?: string
     studentName: string
     studentCode?: string
     assignmentTitle: string
-    umlType?: string
-    classCode: string
+    descriptionAssignment?: string
+    typeUml?: string
+    classCode?: string
     createdDate: string
     studentPlantUMLCode: string
-    solutionCode?: string // Make optional since not all responses have this
+    solutionCode?: string 
     score?: number
+    isfeedbackTeacher?: boolean
 }
 
 export interface SubmissionRequest {

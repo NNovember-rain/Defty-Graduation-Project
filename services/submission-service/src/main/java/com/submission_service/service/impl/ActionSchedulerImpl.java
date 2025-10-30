@@ -24,15 +24,15 @@ public class ActionSchedulerImpl implements IActionScheduler {
     ISubmissionRepository submissionRepository;
 
     public void checkSubmissionStatus(Long submissionId) {
-        taskScheduler.schedule(
-                () -> {
-                    Submission submission = submissionRepository.findById(submissionId).orElseThrow(()-> new NotFoundException("Submission not found"));
-                    if (submission.getSubmissionStatus().toString().equals("PROCESSING")) {
-                        submission.setSubmissionStatus(com.submission_service.enums.SubmissionStatus.FAILED);
-                        submissionRepository.save(submission);
-                    }
-                },
-                Instant.now().plusSeconds(120)
-        );
+//        taskScheduler.schedule(
+//                () -> {
+//                    Submission submission = submissionRepository.findById(submissionId).orElseThrow(()-> new NotFoundException("Submission not found"));
+//                    if (submission.getSubmissionStatus().toString().equals("PROCESSING")) {
+//                        submission.setSubmissionStatus(com.submission_service.enums.SubmissionStatus.FAILED);
+//                        submissionRepository.save(submission);
+//                    }
+//                },
+//                Instant.now().plusSeconds(120)
+//        );
     }
 }

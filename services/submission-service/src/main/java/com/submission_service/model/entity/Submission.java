@@ -43,7 +43,7 @@ public class Submission extends BaseEntity {
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    SubmissionStatus submissionStatus=SubmissionStatus.PROCESSING;
+    SubmissionStatus submissionStatus=SubmissionStatus.SUBMITTED;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "feedback_ai_id", referencedColumnName = "id")
