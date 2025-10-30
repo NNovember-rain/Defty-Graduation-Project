@@ -1,12 +1,14 @@
 import React from "react";
 import { Button, Spin, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
     type FeedbackAIResponse
 } from "../../../shared/services/submissionService";
 import "./SubmissionFeedbackAI.scss";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface SubmissionFeedbackAIProps {
     feedbackData: FeedbackAIResponse | null;
@@ -16,11 +18,13 @@ interface SubmissionFeedbackAIProps {
 }
 
 const SubmissionFeedbackAI: React.FC<SubmissionFeedbackAIProps> = ({
-    feedbackData,
-    loading,
-    error,
-    onBack
-}) => {
+                                                                       feedbackData,
+                                                                       loading,
+                                                                       error,
+                                                                       onBack
+                                                                   }) => {
+    console.log(feedbackData?.feedback?.feedback);
+
     return (
         <div className="submission-feedback-ai">
             <Button
@@ -34,30 +38,26 @@ const SubmissionFeedbackAI: React.FC<SubmissionFeedbackAIProps> = ({
 
             <div className="submission-feedback-ai__content">
                 {loading ? (
-                    <div>
+                    <div className="submission-feedback-ai__loading">
                         <Spin size="large" />
                         <Text>Đang tải phản hồi...</Text>
                     </div>
                 ) : error ? (
-                    <div>
+                    <div className="submission-feedback-ai__error">
                         <Text type="danger">{error}</Text>
                     </div>
                 ) : feedbackData ? (
                     <>
-                        <div>
-                            <Title level={4}>
-                                Phản hồi từ AI - {feedbackData.aiModalName}
-                            </Title>
-                            <Text>
-                                ID: {feedbackData.id} | Submission: #{feedbackData.submissionId}
-                            </Text>
-                        </div>
-                        {feedbackData.feedback && Object.keys(feedbackData.feedback).length > 0 ? (
-                            <div>
-                                <pre>{JSON.stringify(feedbackData.feedback, null, 2)}</pre>
+                        {feedbackData.feedback && feedbackData.feedback.feedback ? (
+                            <div className="submission-feedback-ai__markdown-wrapper">
+                                <div className="submission-feedback-ai__markdown">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {feedbackData.feedback.feedback}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
                         ) : (
-                            <div>
+                            <div className="submission-feedback-ai__empty">
                                 <Text>
                                     Chưa có phản hồi từ AI hoặc AI đang xử lý bài nộp này.
                                 </Text>

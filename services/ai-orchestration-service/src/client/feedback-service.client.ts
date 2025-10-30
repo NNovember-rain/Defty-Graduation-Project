@@ -3,7 +3,7 @@ import { getErrorMessage, getErrorStack } from "../utils/errorHandler";
 
 const sendFeedBack = async (
     id: number,
-    aiResponse: string,
+    aiResponse: object,
     aiModalName: string
 ) => {
     if (!id) {
@@ -11,7 +11,7 @@ const sendFeedBack = async (
     }
 
     try {
-        const url = 'http://localhost:8086/submission/feedback/llm';
+        const url = 'http://localhost:8086/submission/feedback/accessible/llm';
 
         const payload = {
             submissionId: id,
@@ -19,10 +19,13 @@ const sendFeedBack = async (
             aiModalName: aiModalName
         };
 
-        logger.info("payload: -------------", payload);
+        logger.info(JSON.stringify(payload), "PAYLOAD ====================");
 
         const feedbackResponse = await fetch(url, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(payload)
         });
 
