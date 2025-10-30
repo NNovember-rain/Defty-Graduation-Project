@@ -3,12 +3,10 @@ import {MdOutlineDescription} from "react-icons/md";
 import {useTranslation} from "react-i18next";
 import DOMPurify from "dompurify";
 import {getAssignmentByClassId, type IAssignment} from "../../../shared/services/assignmentService";
-import {Select, Space, Tag, Typography} from "antd";
+import {Select, Space} from "antd";
 import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {getTypeUmls, type ITypeUml} from "../../../shared/services/typeUmlService.ts";
 import "./Description.scss";
-
-const { Title, Text } = Typography;
 
 // ... (Các interfaces và hằng số UML_TYPES, MODULE_OPTIONS giữ nguyên)
 
@@ -83,7 +81,7 @@ const Description: React.FC<Props> = ({
     const [localModule, setLocalModule] = useState<string>(propModule);
     const [assignedUmlType, setAssignedUmlType] = useState<ITypeUmlResponse | null>(null);
 
-    // Fetch Type UMLs (Giữ nguyên)
+    // Fetch Type UMLs - CHỈ GỌI 1 LẦN KHI MOUNT
     useEffect(() => {
         async function fetchTypeUMLs() {
             try {
@@ -96,17 +94,14 @@ const Description: React.FC<Props> = ({
                     }))
                     : [];
                 setTypeUMLs(typeUmlsArray);
-                const initialType = typeUmlsArray.find(t => t.value === umlType);
-                if (initialType) {
-                    onTypeUmlNameChange(initialType.label);
-                }
             } catch (error) {
                 console.error('Error fetching Type UMLs:', error);
                 message.error(t('common.errorFetchingData'));
             }
         }
         fetchTypeUMLs();
-    }, [t, onTypeUmlNameChange, umlType, message]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // CHỈ GỌI 1 LẦN KHI MOUNT
 
 
     /**
@@ -248,11 +243,6 @@ const Description: React.FC<Props> = ({
         const selectedType = typeUMLs.find(t => t.value === value);
         if (selectedType) {
             onTypeUmlNameChange(selectedType.label);
-        } else {
-            const fallback = UML_TYPES.find((t: any) => t.key === value);
-            if (fallback) {
-                onTypeUmlNameChange(fallback.label);
-            }
         }
     };
 

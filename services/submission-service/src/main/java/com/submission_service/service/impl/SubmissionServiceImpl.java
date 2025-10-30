@@ -387,7 +387,6 @@ public class SubmissionServiceImpl implements SubmissionService {
         Specification<Submission> spec = Specification
                 .where(SubmissionSpecification.hasClassId(classId))
                 .and(SubmissionSpecification.hasAssignmentId(assignmentId))
-                .and(SubmissionSpecification.hasModuleId(moduleIds.get(0))) // fix tạm
                 .and(SubmissionSpecification.isLatestSubmissionPerWithExamMode());
 
         Page<Submission> submissions = submissionRepository.findAll(spec, pageable);
