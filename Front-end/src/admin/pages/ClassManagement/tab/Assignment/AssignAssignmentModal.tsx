@@ -50,7 +50,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
 
     const columns: ColumnsType<Assignment> = [
         {title: t("Title"), dataIndex: "title", key: "title"},
-        {title: t("Type"), dataIndex: "typeUmlName", key: "typeUmlName", render: (text) => text || "-"},
     ];
 
     const moduleColumns: ColumnsType<Module> = [

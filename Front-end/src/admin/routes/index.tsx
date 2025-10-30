@@ -174,7 +174,7 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'content/assignments/update/:id',
         component: AssignmentForm,
-        requiredAnyOfRoles: ['admin'],
+        requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
         path: 'content/type-uml',
@@ -194,7 +194,7 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'content/type-uml/update/:id',
         component: TypeUMlForm,
-        requiredAnyOfRoles: ['admin'],
+        requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
         path: 'settings/prompts',

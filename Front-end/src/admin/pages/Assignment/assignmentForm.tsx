@@ -57,7 +57,7 @@ const AssignmentForm: React.FC = () => {
             gridSpan: 24,
             itemFields: [
                 {
-                    key: 'moduleId',
+                    key: 'typeUmlId', // Đổi key thành typeUmlId để rõ ràng hơn
                     labelKey: 'assignmentForm.typeUmlLabel',
                     type: 'select',
                     required: true,
@@ -67,6 +67,7 @@ const AssignmentForm: React.FC = () => {
                         placeholder: t('assignmentForm.selectTypeUml'),
                         showSearch: true,
                         optionFilterProp: 'label',
+                        // ĐÃ BỎ mode: 'multiple' -> Chỉ chọn 1 giá trị (string ID)
                     },
                 },
                 {
@@ -119,15 +120,19 @@ const AssignmentForm: React.FC = () => {
             formFields={assignmentFormFields}
             serviceGetById={async (id) => {
                 const res = await getAssignmentById(id);
+
+                // --- SỬA LOGIC GET: CHỈ LẤY MỘT ID ĐẦU TIÊN (STRING) ---
                 return {
                     ...res,
                     moduleDescriptions: res.modules?.map((m: any) => ({
-                        moduleId: m.typeUmlIds.map((tid: number) => String(tid)),
+                        // Chỉ lấy ID đầu tiên và chuyển sang chuỗi (Single Select)
+                        typeUmlId: m.typeUmlIds?.length > 0 ? String(m.typeUmlIds[0]) : undefined,
                         moduleName: m.moduleName,
                         description: m.moduleDescription,
                         solutionCode: m.solutionCode,
                     })) || []
                 };
+                // --- KẾT THÚC SỬA LOGIC GET ---
             }}
             serviceCreate={async (formData) => {
                 const data = formData as any;
@@ -136,10 +141,12 @@ const AssignmentForm: React.FC = () => {
                     description: data.commonDescription || '',
                     modules: Array.isArray(data.moduleDescriptions)
                         ? data.moduleDescriptions.map((m: any) => ({
-                            moduleName: m.moduleName || '',              // lấy đúng giá trị input text
+                            moduleName: m.moduleName || '',
                             moduleDescription: m.description || '',
                             solutionCode: m.solutionCode || '',
-                            typeUmlIds: Array.isArray(m.moduleId) ? m.moduleId.map((id: string) => Number(id)) : [],
+                            // --- SỬA LOGIC CREATE: CHUYỂN 1 STRING ID THÀNH MẢNG 1 PHẦN TỬ (SỐ) ---
+                            typeUmlIds: m.typeUmlId ? [Number(m.typeUmlId)] : [],
+                            // --- KẾT THÚC SỬA LOGIC CREATE ---
                         }))
                         : [],
                 };
@@ -153,10 +160,12 @@ const AssignmentForm: React.FC = () => {
                     description: data.commonDescription || '',
                     modules: Array.isArray(data.moduleDescriptions)
                         ? data.moduleDescriptions.map((m: any) => ({
-                            moduleName: m.moduleName || '',              // lấy đúng giá trị input text
+                            moduleName: m.moduleName || '',
                             moduleDescription: m.description || '',
                             solutionCode: m.solutionCode || '',
-                            typeUmlIds: Array.isArray(m.moduleId) ? m.moduleId.map((id: string) => Number(id)) : [],
+                            // --- SỬA LOGIC UPDATE: CHUYỂN 1 STRING ID THÀNH MẢNG 1 PHẦN TỬ (SỐ) ---
+                            typeUmlIds: m.typeUmlId ? [Number(m.typeUmlId)] : [],
+                            // --- KẾT THÚC SỬA LOGIC UPDATE ---
                         }))
                         : [],
                 };

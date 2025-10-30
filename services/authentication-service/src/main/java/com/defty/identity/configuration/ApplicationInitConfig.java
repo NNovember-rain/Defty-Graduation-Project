@@ -27,23 +27,23 @@ public class ApplicationInitConfig {
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository){
         return args -> {
-            if (userRepository.findByUsername("vannv").isEmpty()){
+            if (userRepository.findByUsername("teacher").isEmpty()){
                 Set<Role> roles = new HashSet<>();
-                if (!roleRepository.existsRoleByName("student")) {
+                if (!roleRepository.existsRoleByName("teacher")) {
                     Role role = new Role();
-                    role.setName("student");
+                    role.setName("teacher");
                     role.setDescription("Full system access. Can manage users, roles, settings, and perform administrative tasks.");
                     roleRepository.save(role);
                     roles.add(role);
                 } else {
-                    Role role = roleRepository.findByName("student")
+                    Role role = roleRepository.findByName("teacher")
                             .orElseThrow(() -> new RuntimeException("Role admin not found"));
                     roles.add(role);
                 }
                 User user = User.builder()
-                        .username("vannv")
-                        .email("vannv@gmail.com")
-                        .fullName("vannv22")
+                        .username("teacher")
+                        .email("teacher@gmail.com")
+                        .fullName("teacher22")
                         .isActive(1)
                         .password(passwordEncoder.encode("Defty@12345"))
                         .roles(roles)
