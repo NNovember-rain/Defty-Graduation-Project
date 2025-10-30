@@ -1,4 +1,4 @@
-import {UmlInput} from "../../types/uml.types";
+import {UmlInput, UmlProcessedResult} from "../../types/uml.types";
 import logger from "../../config/logger";
 import {getErrorMessage} from "../../utils/errorHandler";
 import {processUseCaseUmlWithAI} from "./use-case";
@@ -96,17 +96,15 @@ export const parseJsonResponse = <T>(response: string, umlId: number, step: stri
 
 export const processUmlWithAI = async (
     input: UmlInput
-): Promise<void> => {
+): Promise<UmlProcessedResult | null> => {
     switch (input.typeUmlName) {
         case "use-case":
-            await processUseCaseUmlWithAI(input);
-            break;
+            return await processUseCaseUmlWithAI(input);
 
         case "class":
-            await processClassDiagramAnalysisPhaseWithAI(input);
-            break;
+            return await processClassDiagramAnalysisPhaseWithAI(input);
 
         default:
-            break;
+            return null;
     }
 }

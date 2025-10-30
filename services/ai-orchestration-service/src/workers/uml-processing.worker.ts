@@ -9,6 +9,7 @@ import {
     UmlProcessingError,
     parseStructuredError
 } from '../services/plantuml-processor-services';
+import sendFeedBack from "../client/feedback-service.client";
 
 const KAFKA_TOPIC_UML_SUBMISSION_PROCESSED = process.env.KAFKA_TOPIC_UML_SUBMISSION_PROCESSED || 'uml_submission.processed';
 const QUEUE_CONCURRENCY = parseInt(process.env.QUEUE_CONCURRENCY || '50');
@@ -26,13 +27,18 @@ umlProcessingQueue.process(
 
         try {
             const data = await processUmlWithAI(job.data);
+            if (!data) {
+                throw new UmlProcessingError('Type miss match');
+            }
 
-            await publishMessage(KAFKA_TOPIC_UML_SUBMISSION_PROCESSED, {
-                submissionId: job.data.id,
-                typeUmlName: job.data.typeUmlName,
-                status: 'success',
-                data
-            });
+            // await publishMessage(KAFKA_TOPIC_UML_SUBMISSION_PROCESSED, {
+            //     submissionId: job.data.id,
+            //     typeUmlName: job.data.typeUmlName,
+            //     status: 'success',
+            //     data
+            // });
+
+            await sendFeedBack(job.data.id, data?.feedback, 'gemini');
 
             logger.info({
                 message: 'Worker completed UML job',
