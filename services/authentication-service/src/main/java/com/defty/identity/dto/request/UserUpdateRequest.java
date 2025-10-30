@@ -1,5 +1,6 @@
 package com.defty.identity.dto.request;
 
+import com.defty.identity.entity.Role;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,6 +17,8 @@ public class UserUpdateRequest {
     String username;
     String fullName;
     LocalDate dob;
-    List<Long> roles;
+    List<Role> roles;
+    Integer isActive; // 1 for active, 0 for inactive
+    String userCode;
 }
 

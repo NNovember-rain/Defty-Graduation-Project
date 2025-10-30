@@ -15,6 +15,9 @@ import java.util.List;
 public class AssignRequest {
     List<Long> classIds;
     List<Long> assignmentIds;
+    List<Long> moduleIds;
+    Long typeUmlId;
     Date startDate;
     Date endDate;
+    boolean checkedTest;
 }

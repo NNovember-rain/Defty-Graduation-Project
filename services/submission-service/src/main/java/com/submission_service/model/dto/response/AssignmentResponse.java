@@ -15,12 +15,15 @@ import java.util.List;
 public class AssignmentResponse {
     Long id;
     String title;
-    String description;
+    String commonDescription;
     Long userId;
-    String typeUmlName;
-    String solutionCode;
+//    String typeUmlName;
+//    Long typeUmlId;
+//    String solutionCode;
     String assignmentCode;
     Integer isActive;
     List<Long> classIds;
     Date createdDate;
+    List<AssignmentClassResponse> assignmentClasses;
+    List<ModuleResponse> modules;
 }

@@ -1,0 +1,468 @@
+// Variables to match the existing theme
+@use 'sass:color';
+$header-bg: #282828;
+$main-bg: #141414;
+$card-bg: #1f1f1f;
+$card-bg-light: #3A3A3A;
+$primary-color: #0083ff;
+$text-light: #fff;
+$text-secondary: #aaa;
+$border-radius: 8px;
+$transition-duration: 0.3s;
+$shadow-color: rgba(0, 0, 0, 0.5);
+
+.submission-modal {
+  .ant-modal-content {
+    background: $main-bg;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  }
+
+  .ant-modal-header {
+    background: $header-bg;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px 12px 0 0;
+    
+    .ant-modal-title {
+      color: $text-light;
+      font-weight: 600;
+      font-size: 1.2rem;
+      padding-left: 12px;
+    }
+  }
+
+  .ant-modal-body {
+    padding: 12px 12px 6px 12px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .ant-modal-close-x {
+    color: $text-light;
+    font-size: 18px;
+    
+    &:hover {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+.submission-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 80vh;
+}
+
+.submission-main {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.submission-editor-section {
+  flex: 2; // Tăng tỷ lệ cho code editor
+  display: flex;
+  flex-direction: column;
+  background: $card-bg;
+  border-radius: $border-radius;
+  overflow: hidden;
+  box-shadow: 0 4px 12px $shadow-color;
+}
+
+.submission-feedback-section {
+  flex: 1; // Giảm tỷ lệ cho feedback
+  background: $card-bg;
+  border-radius: $border-radius;
+  padding: 16px;
+  box-shadow: 0 4px 12px $shadow-color;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-header {
+  background: $header-bg;
+  color: $text-light;
+  padding: 12px 16px;
+  font-weight: 600;
+  border-radius: $border-radius $border-radius 0 0;
+  margin: 0;
+}
+
+.section-header-with-button {
+  background: $header-bg;
+  padding: 4px 16px;
+  border-radius: $border-radius $border-radius 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .section-header {
+    background: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  .ant-btn {
+    border-radius: 4px;
+    font-size: 12px;
+    height: 28px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    &.ant-btn-primary {
+      background: $primary-color;
+      border: none;
+      
+      &:hover {
+        background: color.adjust($primary-color, $lightness: 8%);
+      }
+      
+      &:disabled {
+        background: rgba(0, 131, 255, 0.5);
+        border: none;
+      }
+    }
+  }
+  
+  .play-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #52c41a;
+    font-size: 22px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+    
+    &:hover {
+      color: #73d13d;
+    }
+    
+    &:disabled {
+      color: rgba(82, 196, 26, 0.5);
+      cursor: pointer;
+    }
+    
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+}
+
+.code-editor-container {
+  flex: 1;
+  min-height: 300px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: #3A3A3A;
+    z-index: 10;
+  }
+  
+  .monaco-editor {
+    border-radius: 0 0 $border-radius $border-radius;
+  }
+}
+
+.submission-status-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: $text-light;
+  
+  .submission-status-header {
+    color: $text-light;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .submission-status-content {
+    text-align: center;
+    
+    .ant-typography {
+      margin: 0;
+    }
+  }
+}
+
+.score-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius;
+  padding: 16px;
+  text-align: center;
+  color: $text-light;
+  
+  .score-label {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    opacity: 0.9;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .score-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+    color: $primary-color;
+  }
+  
+  .score-divider {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.comments-section {
+  flex: 1;
+  
+  .comments-header {
+    color: $text-light;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .comments-content {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    &.no-comments {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      font-style: italic;
+    }
+    
+    .comment-text {
+      line-height: 1.5;
+      color: $text-light;
+      margin: 0;
+    }
+  }
+}
+
+.submission-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 0 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    
+    .ant-btn {
+      border-radius: 6px;
+      font-weight: 500;
+      padding: 8px 24px;
+      height: auto;
+      
+      &.ant-btn-primary {
+        background: $primary-color;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 131, 255, 0.3);
+        
+        &:hover {
+          background: color.adjust($primary-color, $lightness: 8%);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 131, 255, 0.4);
+        }
+        
+        &:disabled {
+          background: rgba(0, 131, 255, 0.5);
+          box-shadow: none;
+          transform: none;
+        }
+      }
+      
+      &.ant-btn-default {
+        background: $card-bg-light;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: $text-light;
+        
+        &:hover {
+          background: color.adjust($card-bg-light, $lightness: 10%);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+          color: $text-light;
+        }
+      }
+    }
+  }
+}
+
+// Loading states
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius;
+  z-index: 10;
+  
+  .ant-spin {
+    .ant-spin-dot-item {
+      background-color: $primary-color;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 1400px) {
+  .submission-main {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .submission-editor-section {
+    flex: 1;
+  }
+  
+  .submission-feedback-section {
+    flex: none;
+    flex-direction: row;
+    gap: 20px;
+    padding: 16px 20px;
+    
+    .score-section {
+      min-width: 180px;
+      flex-shrink: 0;
+    }
+    
+    .comments-section {
+      flex: 1;
+    }
+  }
+}
+
+@media (max-width: 1200px) {
+  .submission-editor-section {
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .submission-modal .ant-modal-body {
+    padding: 16px;
+  }
+  
+  .submission-editor-section {
+    min-height: 300px;
+  }
+  
+  .submission-feedback-section {
+    flex-direction: column !important;
+    gap: 16px !important;
+    
+    .score-section {
+      min-width: auto;
+    }
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    
+    .ant-btn {
+      width: 100%;
+    }
+  }
+  
+  .submission-main {
+    gap: 12px;
+  }
+  
+  .section-header {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+}
+
+// Ant Design component overrides for dark theme
+.submission-modal {
+  .ant-typography {
+    color: $text-light !important;
+  }
+  
+  .ant-spin-dot-item {
+    background-color: $primary-color !important;
+  }
+  
+  .ant-modal-mask {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+  }
+}
+
+// Image preview modal styling for dark theme
+.ant-image-preview-wrap {
+  .ant-image-preview-mask {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+  }
+  
+  .ant-image-preview-operations {
+    background: rgba(40, 40, 40, 0.9) !important;
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    .ant-image-preview-operations-operation {
+      color: $text-light !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      border-radius: 4px !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      
+      &:hover {
+        color: $primary-color !important;
+        background: rgba(0, 131, 255, 0.2) !important;
+        border-color: $primary-color !important;
+      }
+    }
+  }
+  
+  .ant-image-preview-close {
+    color: $text-light !important;
+    background: rgba(40, 40, 40, 0.8) !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    
+    &:hover {
+      color: $primary-color !important;
+      background: rgba(40, 40, 40, 0.95) !important;
+      border-color: $primary-color !important;
+    }
+  }
+  
+  .ant-image-preview-img {
+    background: transparent !important;
+  }
+}

@@ -26,7 +26,7 @@ import ClassDetailPage from "../pages/ClassManagement/ClassDetailPage.tsx";
 import AssignmentDetail from "../pages/ClassManagement/tab/Assignment/AssignmentDetail.tsx";
 import AssignmentForm from "../pages/Assignment/assignmentForm.tsx";
 import SubmissionDetail from "../pages/Submission/SubmissionDetail.tsx";
-import SubmissionFeedback from "../pages/Submission/SubmissionFeedback.tsx";
+import StudentAssignmentManagerAntD from "../pages/ClassManagement/tab/Assignment/StudentAssignmentManagerAntD.tsx";
 
 
 interface AppRoute {
@@ -152,6 +152,16 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
+        path: 'class/:classId/assignment/:assignmentId/detail',
+        component: StudentAssignmentManagerAntD,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'assignments/:submissionId/details',
+        component: SubmissionDetail,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
         path: 'content/assignments',
         component: Assignment,
         requiredAnyOfRoles: ['admin', 'teacher'],
@@ -229,11 +239,6 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: "/admin/submissions/detail/:id",
         component: SubmissionDetail,
-        requiredAnyOfRoles: ['admin', 'teacher'],
-    },
-    {
-        path: "/admin/submissions/feedback/:id",
-        component: SubmissionFeedback,
         requiredAnyOfRoles: ['admin', 'teacher'],
     }
 ];

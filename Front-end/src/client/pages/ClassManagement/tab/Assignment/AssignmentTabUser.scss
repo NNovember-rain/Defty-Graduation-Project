@@ -1,4 +1,5 @@
 // Variables
+@use 'sass:color';
 $header-bg: #282828;
 $main-bg: #141414;
 $card-bg: #1f1f1f;
@@ -77,7 +78,7 @@ $shadow-color: rgba(0, 0, 0, 0.5);
     color: $text-light !important;
 
     &:hover {
-      background-color: darken($card-bg, 5%) !important;
+      background-color: color.adjust($card-bg, $lightness: -5%) !important;
     }
   }
 
@@ -91,8 +92,8 @@ $shadow-color: rgba(0, 0, 0, 0.5);
       color: $text-light;
 
       &:hover {
-        background-color: lighten($primary-color, 5%);
-        border-color: lighten($primary-color, 5%);
+        background-color: color.adjust($primary-color, $lightness: 5%);
+        border-color: color.adjust($primary-color, $lightness: 5%);
       }
     }
 
@@ -114,10 +115,50 @@ $shadow-color: rgba(0, 0, 0, 0.5);
     border-radius: $border-radius;
     box-shadow: 0 4px 8px $shadow-color;
     transition: all $transition-duration ease;
+    cursor: default !important;
 
     &:hover {
       box-shadow: 0 6px 12px $shadow-color;
       transform: translateY(-2px);
+    }
+    
+    .ant-btn {
+      cursor: pointer !important;
+      border-radius: 6px;
+      font-weight: 500;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      
+      &.ant-btn-default {
+        background: rgba(255, 255, 255, 0.1);
+        color: $text-light;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+      }
+      
+      &.ant-btn-primary {
+        background: linear-gradient(135deg, $primary-color, #005bb3);
+        border: none;
+        
+        &:hover {
+          background: linear-gradient(135deg, #1890ff, $primary-color);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 131, 255, 0.4);
+        }
+      }
+      
+      &.ant-btn-sm {
+        padding: 4px 12px;
+        height: 28px;
+        font-size: 12px;
+      }
     }
   }
 

@@ -21,6 +21,12 @@ public class AssignmentClass extends BaseEntity{
     @JoinColumn(name = "assignment_id")
     Assignment assignment;
 
+    @ManyToOne
+    ModuleEntity module;
+
+    boolean checked;
+    Long typeUmlId;
+
     Long classId;
     String status;
     Date startDate;

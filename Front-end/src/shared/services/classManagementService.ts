@@ -298,3 +298,26 @@ export const leaveClass = async (classId: number, studentId: number): Promise<Ap
     const response = await handleRequest(del(`${CLASS_SERVICE_PREFIX}/class/${classId}/enrollments/students/${studentId}/leave`));
     return await response.json() as ApiResponse<void>;
 };
+
+// API để import danh sách sinh viên vào lớp
+export interface StudentImportRequest {
+    userCode: string; // hoặc id nếu bạn dùng trực tiếp
+    fullName?: string;
+    email?: string;
+    dob?: string;
+}
+
+// Gọi API backend POST /enrollment/class/{classId}/import
+export const importStudentsToClass = async (
+    classId: number,
+    students: StudentImportRequest[]
+): Promise<ApiResponse<any>> => {
+    const response = await handleRequest(
+        postJsonData(`${CLASS_SERVICE_PREFIX}/enrollment/class/${classId}/import`, students)
+    );
+    const data = await response.json() as ApiResponse<any>;
+    if (data.code !== 200) {
+        throw new Error(data.message || "Import sinh viên thất bại");
+    }
+    return data;
+};

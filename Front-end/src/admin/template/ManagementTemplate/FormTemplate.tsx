@@ -10,16 +10,19 @@ import {useNotification} from "../../../shared/notification/useNotification.ts";
 import './FormTemplate.scss';
 import DualListBox from "../../components/DualListBox/DualListBox.tsx";
 import TextEditor from "../../components/TextEditor/TextEditor.tsx";
+import PasswordInput from "../../components/PasswordInput/PasswordInput.tsx";
 
 export interface FormField {
     key: string;
     labelKey: string; // Key dịch thuật cho label
-    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'duallistbox' | 'textEditor';
+    type: 'text' | 'textarea' | 'select' | 'number' | 'datetime' | 'date' | 'password' | 'duallistbox' | 'textEditor' | 'dynamicList' | 'multiSelect';
     placeholderKey?: string; // Key dịch thuật cho placeholder
     options?: { value: string; label: string; [key: string]: any };
     required?: boolean;
     gridSpan?: number; // Cho layout grid
     format?: string;
+    hideOnEdit?: boolean;
+    itemFields?: FormField[];
 }
 
 interface BreadcrumbItem {
@@ -92,6 +95,7 @@ const FormTemplate = <T extends Record<string, any>>({
                 setFetchError(null);
                 try {
                     const data = await serviceGetById(id);
+                    console.log(data)
                     setFormData(data);
                 } catch (err: any) {
                     console.error("Failed to fetch data:", err);
@@ -135,6 +139,8 @@ const FormTemplate = <T extends Record<string, any>>({
 
         const errors: Record<string, string> = {};
         for (const field of formFields) {
+            if (field.hideOnEdit) continue;
+
             if (field.required && (!formData[field.key as keyof T] || formData[field.key as keyof T]?.toString().trim() === '')) {
                 errors[field.key] = t(`${field.labelKey}Required`); // Sử dụng labelKey cho thông báo lỗi
             }
@@ -270,7 +276,9 @@ const FormTemplate = <T extends Record<string, any>>({
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-template__grid-layout">
-                            {formFields.map(field => (
+                            {formFields
+                                .filter(field => !(field.hideOnEdit && isEditMode))
+                                .map(field => (
                                 <div
                                     key={field.key}
                                     className={`form-template__form-group ${field.gridSpan ? `form-template__col-span-${field.gridSpan}` : ''} ${validationErrors[field.key] ? 'has-error' : ''}`}
@@ -395,6 +403,230 @@ const FormTemplate = <T extends Record<string, any>>({
 
                                             showSearch
                                         />
+                                    )}
+                                    {field.type === 'password' && (
+                                        <PasswordInput
+                                            value={(formData && formData[field.key as keyof T]) ?? ''}
+                                            onChange={(val) => handleChange(field.key, val)}
+                                            placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
+                                            disabled={loading}
+                                        />
+                                    )}
+
+                                    {field.type === 'date' && (
+                                        <AntdDatePicker
+                                            id={field.key}
+                                            showTime={false}
+                                            format={field.format || 'YYYY-MM-DD'}
+                                            value={
+                                                formData[field.key as keyof T]
+                                                    ? dayjs(formData[field.key as keyof T] as string, field.format || 'YYYY-MM-DD')
+                                                    : null
+                                            }
+                                            onChange={(date, dateString) => handleDateChange(field.key, date, dateString)}
+                                            className="form-template__input form-template__date-picker"
+                                            disabled={loading}
+                                            placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
+                                        />
+                                    )}
+
+                                    {field.type === 'dynamicList' && field.itemFields && (
+                                        <div style={{ marginBottom: 24 }}>
+                                            {(formData[field.key as keyof T] as any[] || []).map((item, index) => (
+                                                <div
+                                                    key={index}
+                                                    style={{
+                                                        border: '1px solid #ccc',
+                                                        borderRadius: 8,
+                                                        padding: 16,
+                                                        marginBottom: 16,
+                                                        backgroundColor: '#f9f9f9',
+                                                    }}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            fontWeight: 600,
+                                                            marginBottom: 12,
+                                                        }}
+                                                    >
+                                                        <span>{`${t(field.labelKey)} ${index + 1}`}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newList = [...(formData[field.key as keyof T] as any[])];
+                                                                newList.splice(index, 1);
+                                                                handleChange(field.key, newList);
+                                                            }}
+                                                            style={{
+                                                                backgroundColor: '#ff4d4f',
+                                                                color: '#fff',
+                                                                border: 'none',
+                                                                padding: '4px 12px',
+                                                                borderRadius: 4,
+                                                                cursor: 'pointer',
+                                                            }}
+                                                        >
+                                                            {t('common.delete')}
+                                                        </button>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+                                                        {field.itemFields!.map(subField => (
+                                                            <div key={subField.key} style={{ flex: `1 1 ${subField.gridSpan ? (subField.gridSpan / 24) * 100 + '%' : '100%'}` }}>
+                                                                <label style={{ display: 'block', marginBottom: 4 }}>
+                                                                    {t(subField.labelKey)}
+                                                                    {subField.required && <span style={{ color: 'red', marginLeft: 4 }}>*</span>}
+                                                                </label>
+                                                                {subField.type === 'select' && (
+                                                                    <select
+                                                                        value={item[subField.key] || ''}
+                                                                        onChange={e => {
+                                                                            const newList = [...(formData[field.key as keyof T] as any[])];
+                                                                            newList[index][subField.key] = e.target.value;
+                                                                            handleChange(field.key, newList);
+                                                                        }}
+                                                                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #ccc', boxSizing: 'border-box' }}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        {subField.options?.map((option: any) => (
+                                                                            <option key={option.value} value={option.value}>
+                                                                                {option.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                )}
+
+                                                                {subField.type === 'text' && (
+                                                                    <input
+                                                                        type="text"
+                                                                        value={item[subField.key] || ''}
+                                                                        onChange={e => {
+                                                                            const newList = [...(formData[field.key as keyof T] as any[])];
+                                                                            newList[index][subField.key] = e.target.value;
+                                                                            handleChange(field.key, newList);
+                                                                        }}
+                                                                        placeholder={subField.placeholderKey ? t(subField.placeholderKey) : ''}
+                                                                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #ccc', boxSizing: 'border-box' }}
+                                                                        disabled={loading}
+                                                                    />
+                                                                )}
+
+                                                                {subField.type === 'textEditor' && (
+                                                                    <TextEditor
+                                                                        value={item[subField.key] || ''}
+                                                                        onChange={(val) => {
+                                                                            const newList = [...(formData[field.key as keyof T] as any[])];
+                                                                            newList[index][subField.key] = val;
+                                                                            handleChange(field.key, newList);
+                                                                        }}
+                                                                        disabled={loading}
+                                                                        placeholder={subField.placeholderKey ? t(subField.placeholderKey) : ''}
+                                                                        style={{ minHeight: 120, width: '100%', border: '1px solid #ccc', borderRadius: 4, padding: 6, boxSizing: 'border-box' }}
+                                                                    />
+                                                                )}
+
+
+                                                                {subField.type === 'multiSelect' && (
+                                                                    <div
+                                                                        style={{
+                                                                            border: '1px solid #ccc',
+                                                                            borderRadius: 6,
+                                                                            padding: 8,
+                                                                            minHeight: 40,
+                                                                            maxHeight: 160,
+                                                                            overflowY: 'auto',
+                                                                            display: 'flex',
+                                                                            flexWrap: 'wrap',
+                                                                            gap: 8,
+                                                                            backgroundColor: '#fff',
+                                                                        }}
+                                                                    >
+                                                                        {subField.options?.map(opt => {
+                                                                            const checked = (item[subField.key] || []).includes(opt.value);
+                                                                            return (
+                                                                                <label
+                                                                                    key={opt.value}
+                                                                                    style={{
+                                                                                        display: 'flex',
+                                                                                        alignItems: 'center',
+                                                                                        padding: '4px 8px',
+                                                                                        borderRadius: 4,
+                                                                                        border: checked ? '1px solid #1890ff' : '1px solid #ddd',
+                                                                                        backgroundColor: checked ? '#e6f7ff' : '#f9f9f9',
+                                                                                        cursor: 'pointer',
+                                                                                        transition: 'all 0.2s',
+                                                                                        fontSize: 14,
+                                                                                    }}
+                                                                                    onMouseEnter={e => {
+                                                                                        (e.currentTarget as HTMLLabelElement).style.backgroundColor = checked ? '#bae7ff' : '#f0f0f0';
+                                                                                    }}
+                                                                                    onMouseLeave={e => {
+                                                                                        (e.currentTarget as HTMLLabelElement).style.backgroundColor = checked ? '#e6f7ff' : '#f9f9f9';
+                                                                                    }}
+                                                                                >
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        value={opt.value}
+                                                                                        checked={checked}
+                                                                                        disabled={loading}
+                                                                                        onChange={() => {
+                                                                                            const newList = [...(formData[field.key as keyof T] as any[])];
+                                                                                            const selectedValues = newList[index][subField.key] || [];
+                                                                                            if (checked) {
+                                                                                                newList[index][subField.key] = selectedValues.filter((v: string) => v !== opt.value);
+                                                                                            } else {
+                                                                                                newList[index][subField.key] = [...selectedValues, opt.value];
+                                                                                            }
+                                                                                            handleChange(field.key, newList);
+                                                                                        }}
+                                                                                        style={{ marginRight: 6 }}
+                                                                                    />
+                                                                                    {t(opt.label)}
+                                                                                </label>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                )}
+
+
+                                                                {validationErrors[`${field.key}.${index}.${subField.key}`] && (
+                                                                    <p style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
+                                                                        {validationErrors[`${field.key}.${index}.${subField.key}`]}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newItem = field.itemFields!.reduce((acc, f) => {
+                                                        acc[f.key] = f.type === 'select' && f.options ? f.options[0].value : '';
+                                                        return acc;
+                                                    }, {} as any);
+                                                    const newList = [...(formData[field.key as keyof T] as any[] || []), newItem];
+                                                    handleChange(field.key, newList);
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 16px',
+                                                    backgroundColor: '#1890ff',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: 4,
+                                                    cursor: 'pointer',
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                {t('common.add')} {t(field.labelKey)}
+                                            </button>
+                                        </div>
                                     )}
 
 

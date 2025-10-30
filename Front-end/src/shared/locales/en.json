@@ -145,8 +145,11 @@
     "all": "All",
     "back": "Back",
     "submit": "Submit",
-    "noData": "No data available"
+    "noData": "No data available",
+    "add": "Add",
+    "loading": "Loading..."
   },
+
   "managementTemplate": {
     "hideFilters": "Hide Filters",
     "showFilters": "Show Filters",
@@ -264,14 +267,19 @@
     "title": "Assignment Management",
     "titleLabel": "Title",
     "titlePlaceholder": "Enter assignment title",
-    "descriptionLabel": "Description",
+    "commonDescriptionLabel": "Description",
+    "moduleDescriptionsLabel": "Module",
     "solutionCodeLabel": "Solution Code",
     "solutionCodePlaceholder": "Enter solution code",
     "typeUmlLabel": "UML Type",
+    "moduleLabel": "Module Name",
+    "descriptionLabel": "Module Description",
     "validation": {
       "titleRequired": "Title is required",
       "descriptionRequired": "Description is required",
-      "typeUmlRequired": "UML Type is required"
+      "typeUmlRequired": "UML Type is required",
+      "moduleRequired": "Module is required",
+      "moduleDescriptionRequired": "Module description is required"
     },
     "startDate": "Start Date",
     "endDate": "End Date",
@@ -305,6 +313,43 @@
       "name": "Name",
       "creationDate": "Creation Date"
     }
+  },
+  "userForm" : {
+    "title": "User Management",
+    "breadcrumb": "Users",
+    "fullNameLabel": "Full Name",
+    "fullNamePlaceholder": "Enter full name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter email",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Enter username",
+    "dobLabel": "Date of Birth",
+    "dobPlaceholder": "Select date of birth",
+    "userCodePlaceholder": "Enter user code",
+    "userCodeLabel": "User Code",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter password",
+    "retypePasswordLabel": "Retype Password",
+    "retypePasswordPlaceholder": "Retype password",
+    "roleLabel": "Role",
+    "rolePlaceholder": "Select role",
+    "userCode": "User Code",
+    "validation": {
+      "dobLabelRequired": "Date of birth is required",
+      "userCodeRequired": "User code is required",
+      "fullNameRequired": "Full name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email format",
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "passwordLowercase": "Password must contain a lowercase letter",
+      "passwordUppercase": "Password must contain an uppercase letter",
+      "passwordNumber": "Password must contain a number",
+      "passwordSpecialChar": "Password must contain a special character",
+      "retypePasswordRequired": "Please retype your password",
+      "passwordsNotMatch": "Passwords do not match"
+  }
   },
   "classPage": {
     "title": "Class Management",
@@ -380,6 +425,8 @@
       "noId": "No class ID found in the URL.",
       "classNotFound": "Class not found."
     },
+    "umlType": "UML Type",
+    "module": "Module",
     "tabs": {
       "stream": "Stream",
       "classwork": "Classwork",
@@ -387,7 +434,9 @@
       "marks": "Marks",
       "classworkContent": "This is the Classwork page.",
       "peopleContent": "This is the People page.",
-      "marksContent": "This is the Marks page."
+      "marksContent": "This is the Marks page.",
+      "assignment": "Luyện tập",
+      "test": "Bài kiểm tra"
     },
     "peopleTab": {
       "teachersTitle": "Teachers",
@@ -435,7 +484,19 @@
     "assignment": {
       "inactive": "Inactive",
       "active": "Active",
-      "viewDetails": "View"
+      "viewDetails": "View",
+      "practice": "Practice",
+      "submit": "Submit",
+      "create": "Create",
+      "createNew": "Create new assignment",
+      "assigned": "Assign",
+      "modulesAssigned": "Modules Assigned",
+      "assignTest": "Assign Test",
+      "noDeadline": "No deadline"
+    },
+    "type": {
+      "test": "Test",
+      "assignment": "Exercise"
     },
     "sort": {
       "newest": "Newest",

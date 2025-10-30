@@ -139,13 +139,16 @@
     "errorUpdatingData": "Cập nhật dữ liệu thất bại. Vui lòng thử lại.",
     "active": "đã kích hoạt",
     "inactive": "đã vô hiệu hóa",
+    "deleteSuccess": "Xóa thành công",
     "confirm": "Xác nhận",
     "delete": "Xóa",
     "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.",
     "all": "Tất cả",
     "back": "Quay lại",
     "noData": "Không có dữ liệu để hiển thị.",
-    "submit": "Nộp"
+    "submit": "Nộp",
+    "add": "Thêm",
+    "loading": "Đang tải..."
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -264,14 +267,19 @@
     "title": "Quản lý bài tập",
     "titleLabel": "Tiêu đề",
     "titlePlaceholder": "Nhập tiêu đề bài tập",
-    "descriptionLabel": "Mô tả",
+    "commonDescriptionLabel": "Mô tả",
     "solutionCodeLabel": "Mã giải pháp",
     "solutionCodePlaceholder": "Nhập mã giải pháp",
     "typeUmlLabel": "Loại UML",
+    "moduleDescriptionsLabel": "Mô tả Module",
+    "moduleName": "Tên Module",
+    "descriptionLabel": "Mô tả Module",
     "validation": {
       "titleRequired": "Tiêu đề là bắt buộc",
       "descriptionRequired": "Mô tả là bắt buộc",
-      "typeUmlRequired": "Loại UML là bắt buộc"
+      "typeUmlRequired": "Loại UML là bắt buộc",
+      "moduleRequired": "Module là bắt buộc",
+      "moduleDescriptionRequired": "Mô tả module là bắt buộc"
     },
     "assignmentLoading": "Đang tải bài tập..."
   },
@@ -302,6 +310,43 @@
       "by": "Sắp xếp theo",
       "name": "Tên",
       "creationDate": "Ngày tạo"
+    }
+  },
+  "userForm": {
+    "title": "Quản lý người dùng",
+    "breadcrumb": "Người dùng",
+    "fullNameLabel": "Họ và tên",
+    "fullNamePlaceholder": "Nhập họ và tên",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Nhập email",
+    "usernameLabel": "Tên đăng nhập",
+    "usernamePlaceholder": "Nhập tên đăng nhập",
+    "dobLabel": "Ngày sinh",
+    "dobPlaceholder": "Chọn ngày sinh",
+    "userCodePlaceholder": "Nhập mã học sinh",
+    "userCodeLabel": "Mã học sinh",
+    "passwordLabel": "Mật khẩu",
+    "passwordPlaceholder": "Nhập mật khẩu",
+    "retypePasswordLabel": "Nhập lại mật khẩu",
+    "retypePasswordPlaceholder": "Nhập lại mật khẩu",
+    "roleLabel": "Vai trò",
+    "rolePlaceholder": "Chọn vai trò",
+    "userCode": "Mã học sinh",
+    "validation": {
+      "dobLabelRequired": "Ngày sinh là bắt buộc",
+      "userCodeRequired": "Mã học sinh là bắt buộc",
+      "fullNameRequired": "Họ và tên là bắt buộc",
+      "emailRequired": "Email là bắt buộc",
+      "emailInvalid": "Định dạng email không hợp lệ",
+      "usernameRequired": "Tên đăng nhập là bắt buộc",
+      "passwordRequired": "Mật khẩu là bắt buộc",
+      "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự",
+      "passwordLowercase": "Mật khẩu phải có chữ thường",
+      "passwordUppercase": "Mật khẩu phải có chữ hoa",
+      "passwordNumber": "Mật khẩu phải có số",
+      "passwordSpecialChar": "Mật khẩu phải có ký tự đặc biệt",
+      "retypePasswordRequired": "Vui lòng nhập lại mật khẩu",
+      "passwordsNotMatch": "Mật khẩu không khớp"
     }
   },
   "classPage": {
@@ -378,6 +423,8 @@
       "noId": "Không tìm thấy ID lớp học trong URL.",
       "classNotFound": "Không tìm thấy lớp học."
     },
+    "umlType": "Loại UML",
+    "module": "Module",
     "tabs": {
       "stream": "Bảng tin",
       "classwork": "Bài tập",
@@ -385,7 +432,9 @@
       "marks": "Điểm số",
       "classworkContent": "Đây là trang Bài tập.",
       "peopleContent": "Đây là trang Thành viên.",
-      "marksContent": "Đây là trang Điểm số."
+      "marksContent": "Đây là trang Điểm số.",
+      "assignment": "Luyện tập",
+      "test": "Bài kiểm tra"
     },
     "peopleTab": {
       "teachersTitle": "Giáo viên",
@@ -433,7 +482,19 @@
     "assignment": {
       "inactive": "Không hoạt động",
       "active": "Đang hoạt động",
-      "viewDetails": "Xem"
+      "viewDetails": "Xem",
+      "practice": "Luyện tập",
+      "submit": "Nộp bài",
+      "create": "Tạo",
+      "createNew": "Tạo bài tập mới",
+      "assign": "Giao bài tập",
+      "modulesAssigned": "Module đã được giao",
+      "assignTest": "Giao bài kiểm tra",
+      "noDeadline": "Không có hạn chót"
+    },
+    "type": {
+      "test": "Kiểm tra",
+      "assignment": "Luyện tập"
     },
     "sort": {
       "newest": "Mới nhất",

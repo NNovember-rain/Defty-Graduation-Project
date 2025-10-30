@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -17,4 +18,7 @@ public class AssignmentClassResponse {
     Long assignmentId;
     Date startDate;
     Date endDate;
+    List<ModuleResponse> moduleResponses;
+    boolean checkedTest;
+    TypeUMLResponse typeUmlResponse;
 }

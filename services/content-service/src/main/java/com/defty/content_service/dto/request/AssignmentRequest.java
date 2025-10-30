@@ -14,8 +14,7 @@ import java.util.List;
 public class AssignmentRequest {
     String title;
     String description;
-    Long typeUmlId;
-    List<Long> classIds;
     String assignmentCode;
-    String solutionCode;
+    List<Long> classIds;
+    List<ModuleRequest> modules;
 }

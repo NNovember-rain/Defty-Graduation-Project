@@ -36,19 +36,20 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
     );
 };
 
-// Các mock data và interface
-interface IPost {
+// Mock data cho deadline assignments
+interface IDeadlineAssignment {
     id: number;
-    author: string;
-    type: 'announcement' | 'assignment';
-    content: string;
-    date: string;
+    title: string;
+    dueDate: string;
+    dueTime: string;
+    status: 'urgent' | 'upcoming' | 'overdue';
+    totalPoints: number;
 }
 
-const mockPosts: IPost[] = [
-    { id: 1, author: 'Michael John', type: 'assignment', content: 'posted a new assignment: required assignment 1', date: '18 Jul' },
-    { id: 2, author: 'B21DCCN233_Dương Văn Dư', type: 'announcement', content: 'chào các bạn nhé', date: '18 Jul' },
-    { id: 3, author: 'Michael John', type: 'announcement', content: 'ai cho em đăng lên đây', date: '18 Jul' }
+const mockDeadlines: IDeadlineAssignment[] = [
+    { id: 1, title: 'Assignment 1: Introduction to React', dueDate: '2025-10-26', dueTime: '23:59', status: 'upcoming', totalPoints: 100 },
+    { id: 2, title: 'Lab 2: State Management', dueDate: '2025-10-25', dueTime: '18:00', status: 'urgent', totalPoints: 50 },
+    { id: 3, title: 'Project Proposal', dueDate: '2025-10-23', dueTime: '12:00', status: 'overdue', totalPoints: 200 },
 ];
 
 const ClassDetailPage: React.FC = () => {
@@ -92,51 +93,301 @@ const ClassDetailPage: React.FC = () => {
         fetchClassDetails();
     }, [id, t]);
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'overdue': return { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' };
+            case 'urgent': return { bg: '#fffbeb', border: '#fcd34d', text: '#f59e0b' };
+            case 'upcoming': return { bg: '#f0fdf4', border: '#86efac', text: '#16a34a' };
+            default: return { bg: '#f8fafc', border: '#cbd5e1', text: '#64748b' };
+        }
+    };
+
+    const getStatusIcon = (status: string) => {
+        const iconStyle = { width: '18px', height: '18px' };
+        switch (status) {
+            case 'overdue':
+                return (
+                    <svg style={iconStyle} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                        <line x1="12" y1="8" x2="12" y2="12" strokeWidth="2"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16" strokeWidth="2"/>
+                    </svg>
+                );
+            case 'urgent':
+                return (
+                    <svg style={iconStyle} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                        <polyline points="12 6 12 12 16 14" strokeWidth="2"/>
+                    </svg>
+                );
+            case 'upcoming':
+                return (
+                    <svg style={iconStyle} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" strokeWidth="2"/>
+                        <polyline points="22 4 12 14.01 9 11.01" strokeWidth="2"/>
+                    </svg>
+                );
+            default:
+                return (
+                    <svg style={iconStyle} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                        <polyline points="12 6 12 12 16 14" strokeWidth="2"/>
+                    </svg>
+                );
+        }
+    };
+
+    const formatDate = (dateString: string, timeString: string) => {
+        const date = new Date(dateString);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
+
+        const diffTime = date.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) return `Quá hạn ${Math.abs(diffDays)} ngày`;
+        if (diffDays === 0) return `Hôm nay lúc ${timeString}`;
+        if (diffDays === 1) return `Ngày mai lúc ${timeString}`;
+        return `${diffDays} ngày nữa - ${timeString}`;
+    };
+
+    const renderStreamTab = () => {
+        const urgentCount = mockDeadlines.filter(d => d.status === 'urgent').length;
+        const overdueCount = mockDeadlines.filter(d => d.status === 'overdue').length;
+
+        return (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem' }}>
+                {/* Main Content */}
+                <div>
+                    {/* Quick Stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ padding: '1.25rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                <div style={{ padding: '0.5rem', backgroundColor: '#dbeafe', borderRadius: '8px', color: '#2563eb' }}>
+                                    <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                </div>
+                                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Bài tập chưa làm</span>
+                            </div>
+                            <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>{mockDeadlines.length}</p>
+                        </div>
+
+                        <div style={{ padding: '1.25rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                <div style={{ padding: '0.5rem', backgroundColor: '#fef3c7', borderRadius: '8px', color: '#f59e0b' }}>
+                                    <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                                        <polyline points="12 6 12 12 16 14" strokeWidth="2"/>
+                                    </svg>
+                                </div>
+                                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Sắp đến hạn</span>
+                            </div>
+                            <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>{urgentCount}</p>
+                        </div>
+
+                        <div style={{ padding: '1.25rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                <div style={{ padding: '0.5rem', backgroundColor: '#fee2e2', borderRadius: '8px', color: '#dc2626' }}>
+                                    <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                                        <line x1="12" y1="8" x2="12" y2="12" strokeWidth="2"/>
+                                        <line x1="12" y1="16" x2="12.01" y2="16" strokeWidth="2"/>
+                                    </svg>
+                                </div>
+                                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Quá hạn</span>
+                            </div>
+                            <p style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>{overdueCount}</p>
+                        </div>
+                    </div>
+
+                    {/* Deadlines List */}
+                    <div>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem' }}>
+                            Bài tập cần hoàn thành
+                        </h3>
+
+                        {mockDeadlines.length === 0 ? (
+                            <div style={{ padding: '3rem', textAlign: 'center', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                <svg style={{ width: '48px', height: '48px', color: '#10b981', margin: '0 auto 1rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p style={{ fontSize: '1rem', color: '#64748b', margin: 0 }}>Tuyệt vời! Bạn đã hoàn thành tất cả bài tập</p>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {mockDeadlines.map(assignment => {
+                                    const colors = getStatusColor(assignment.status);
+                                    return (
+                                        <div
+                                            key={assignment.id}
+                                            style={{
+                                                padding: '1.25rem',
+                                                backgroundColor: '#fff',
+                                                border: `1px solid ${colors.border}`,
+                                                borderLeft: `4px solid ${colors.text}`,
+                                                borderRadius: '12px',
+                                                transition: 'all 0.2s',
+                                                cursor: 'pointer'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.boxShadow = 'none';
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                                                <h4 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', margin: 0, flex: 1 }}>
+                                                    {assignment.title}
+                                                </h4>
+                                                <div
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.375rem',
+                                                        padding: '0.375rem 0.75rem',
+                                                        backgroundColor: colors.bg,
+                                                        color: colors.text,
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: '600'
+                                                    }}
+                                                >
+                                                    {getStatusIcon(assignment.status)}
+                                                    <span style={{ textTransform: 'uppercase' }}>
+                                                        {assignment.status === 'overdue' ? 'Quá hạn' :
+                                                            assignment.status === 'urgent' ? 'Gấp' : 'Sắp tới'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2"/>
+                                                        <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2"/>
+                                                        <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2"/>
+                                                        <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2"/>
+                                                    </svg>
+                                                    <span>{formatDate(assignment.dueDate, assignment.dueTime)}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <span>Điểm:</span>
+                                                    <span style={{ fontWeight: '600', color: '#1e293b' }}>{assignment.totalPoints}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Sidebar */}
+                <div>
+                    <div style={{ position: 'sticky', top: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {/* Class Code */}
+                        <div style={{ padding: '1.25rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                            <h5 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                {t('classDetail.classCode')}
+                            </h5>
+                            <div style={{
+                                padding: '0.75rem',
+                                backgroundColor: '#f1f5f9',
+                                borderRadius: '8px',
+                                border: '2px dashed #cbd5e1',
+                                textAlign: 'center'
+                            }}>
+                                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2563eb', margin: 0, letterSpacing: '0.1em' }}>
+                                    {classData?.inviteCode || 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Class Info */}
+                        <div style={{ padding: '1.25rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                            <h5 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Thông tin lớp
+                            </h5>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {classData?.section && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <svg style={{ width: '18px', height: '18px', color: '#64748b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        <span style={{ fontSize: '0.875rem', color: '#475569' }}>Phòng: {classData.section}</span>
+                                    </div>
+                                )}
+                                {classData?.subject && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <svg style={{ width: '18px', height: '18px', color: '#64748b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                        <span style={{ fontSize: '0.875rem', color: '#475569' }}>Môn: {classData.subject}</span>
+                                    </div>
+                                )}
+                                {classData?.room && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <svg style={{ width: '18px', height: '18px', color: '#64748b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span style={{ fontSize: '0.875rem', color: '#475569' }}>Phòng: {classData.room}</span>
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <svg style={{ width: '18px', height: '18px', color: '#64748b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span style={{ fontSize: '0.875rem', color: '#475569' }}>
+                                        Tạo: {new Date(classData?.createdDate || '').toLocaleDateString('vi-VN')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Links */}
+                        <div style={{ padding: '1.25rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                            <h5 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#64748b', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Liên kết nhanh
+                            </h5>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <a href="#" style={{ padding: '0.625rem', color: '#3b82f6', textDecoration: 'none', fontSize: '0.875rem', borderRadius: '6px', transition: 'background-color 0.2s' }}
+                                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                    Tài liệu khóa học
+                                </a>
+                                <a href="#" style={{ padding: '0.625rem', color: '#3b82f6', textDecoration: 'none', fontSize: '0.875rem', borderRadius: '6px', transition: 'background-color 0.2s' }}
+                                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                    Lịch học
+                                </a>
+                                <a href="#" style={{ padding: '0.625rem', color: '#3b82f6', textDecoration: 'none', fontSize: '0.875rem', borderRadius: '6px', transition: 'background-color 0.2s' }}
+                                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                    Bảng điểm
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'stream':
-                return (
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {/* Sidebar */}
-                        <div style={{ width: '300px', flexShrink: 0 }}>
-                            <div style={{ padding: '1rem', marginBottom: '1rem', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
-                                <h5 style={{ margin: 0, fontSize: '1.25rem' }}>{t('classDetail.classCode')}</h5>
-                                <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#0d6efd' }}>{classData?.classCode || 'drbaoiun'}</p>
-                            </div>
-                            <div style={{ padding: '1rem', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
-                                <h5 style={{ margin: 0, fontSize: '1.25rem' }}>{t('classDetail.upcoming')}</h5>
-                                <p>{t('classDetail.noUpcomingWork')}</p>
-                            </div>
-                        </div>
-
-                        {/* Feed bài đăng */}
-                        <div style={{ flexGrow: 1 }}>
-                            <div style={{ padding: '1rem', marginBottom: '1rem', border: '1px solid #e0e0e0', borderRadius: '8px', display: 'flex', alignItems: 'center' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#cccccc', marginRight: '1rem' }}></div>
-                                <p style={{ margin: 0, color: '#6c757d' }}>{t('classDetail.announcePlaceholder')}</p>
-                            </div>
-
-                            {/* Danh sách các bài đăng */}
-                            {mockPosts.map(post => (
-                                <div key={post.id} style={{ padding: '1rem', marginBottom: '1rem', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#cccccc', marginRight: '1rem' }}></div>
-                                        <div>
-                                            <p style={{ margin: 0, fontWeight: 'bold' }}>{post.author}</p>
-                                            <small style={{ color: '#6c757d' }}>{post.content}</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
+                return renderStreamTab();
             case 'classwork':
                 return <AssignmentTab classId={classData.id} />;
             case 'people':
                 return <ClassPeopleTab classId={classData.id} />;
-            case 'marks':
-                return <div style={{ padding: '1rem' }}>{t('classDetail.tabs.marksContent')}</div>;
             default:
                 return null;
         }
@@ -168,53 +419,59 @@ const ClassDetailPage: React.FC = () => {
     }
 
     return (
-        <div style={{ padding: '1rem' }}>
-            {/* Thông tin lớp học chỉ hiển thị khi activeTab là 'stream' */}
-            {activeTab === 'stream' && (
-                <div style={{
-                    padding: '1.5rem',
-                    marginBottom: '1.5rem',
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px'
-                }}>
-                    <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: '#333' }}>{classData.name}</h2>
-                    {classData.description && (
-                        <p style={{ margin: 0, color: '#6c757d' }}>{classData.description}</p>
-                    )}
-                </div>
-            )}
-
-            {/* Thanh điều hướng ngang với breadcrumb */}
+        <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            {/* Header */}
             <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid #e0e0e0',
-                marginBottom: '1.5rem'
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                backgroundColor: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px'
             }}>
-                {/* Navigation tabs */}
-                <div style={{ display: 'flex' }}>
-                    {['stream', 'classwork', 'people', 'marks'].map(tab => (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#1e293b', margin: '0 0 0.5rem 0' }}>
+                            {classData.name}
+                        </h1>
+                        {classData.description && (
+                            <p style={{ fontSize: '1rem', color: '#64748b', margin: 0 }}>{classData.description}</p>
+                        )}
+                    </div>
+                    <Breadcrumb items={breadcrumbItems} />
+                </div>
+
+                {/* Navigation Tabs */}
+                <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '1rem' }}>
+                    {['stream', 'classwork', 'people'].map(tab => (
                         <button
                             key={tab}
                             style={{
-                                padding: '0.75rem 1rem',
+                                padding: '0.625rem 1.25rem',
                                 border: 'none',
-                                backgroundColor: 'transparent',
+                                backgroundColor: activeTab === tab ? '#eff6ff' : 'transparent',
+                                color: activeTab === tab ? '#2563eb' : '#64748b',
+                                borderRadius: '8px',
                                 cursor: 'pointer',
-                                color: activeTab === tab ? '#0d6efd' : '#6c757d',
-                                borderBottom: activeTab === tab ? '3px solid #0d6efd' : '3px solid transparent'
+                                fontSize: '0.875rem',
+                                fontWeight: activeTab === tab ? '600' : '500',
+                                transition: 'all 0.2s'
                             }}
                             onClick={() => setActiveTab(tab)}
+                            onMouseEnter={(e) => {
+                                if (activeTab !== tab) {
+                                    e.currentTarget.style.backgroundColor = '#f1f5f9';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (activeTab !== tab) {
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                }
+                            }}
                         >
                             {t(`classDetail.tabs.${tab}`)}
                         </button>
                     ))}
                 </div>
-
-                {/* Breadcrumb */}
-                <Breadcrumb items={breadcrumbItems} />
             </div>
 
             {/* Nội dung chính dựa trên tab đã chọn */}

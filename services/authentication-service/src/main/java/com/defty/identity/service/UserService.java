@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserService {
     UserResponse createUser(UserCreationRequest request);
@@ -20,4 +21,6 @@ public interface UserService {
     List<UserResponse> getAllUsersByRole(String fullName, Long roleId);
     UserExistenceCheckResult checkUsersExistByIds(List<Long> userIds);
     List<UserResponse> getUsersByIds(List<Long> userIds);
+    List<UserResponse> getUsersByCodeUsers(List<String> codeUsers);
+    Map<Long, UserResponse> getUsersDtoByIds(List<Long> userIds);
 }

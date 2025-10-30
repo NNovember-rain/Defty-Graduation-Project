@@ -1,9 +1,6 @@
 package com.defty.content_service.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,6 +18,6 @@ public class TypeUML extends BaseEntity {
     String name; // e.g., "UML", "ERD", etc.
     String description;
 
-    @OneToMany(mappedBy = "typeUML", fetch = FetchType.LAZY)
-    Set<Assignment> assignments;
+    @ManyToMany(mappedBy = "typeUMLs")
+    Set<ModuleEntity> modules;
 }

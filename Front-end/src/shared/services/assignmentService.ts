@@ -20,6 +20,13 @@ export interface GetAssignmentsResult {
     limit: number;
 }
 
+export interface ITypeUML {
+    id: number;
+    name: string;
+    description?: string;
+    solutionCode?: string; // nếu mỗi typeUML trong module có solution riêng
+}
+
 export interface IAssignmentClass {
     id: number;
     classId: number;
@@ -28,11 +35,33 @@ export interface IAssignmentClass {
     endDate: string;
 }
 
+export interface IModule {
+    id: number;
+    moduleName: string;
+    moduleDescription: string;
+    solutionCode?: string;
+    typeUMLs: ITypeUML[]; // mỗi module có nhiều UML
+}
+
+export interface IModuleRequest {
+    moduleName: string;
+    moduleDescription: string;
+    solutionCode?: string;
+    typeUmlIds: number[]; // mỗi module có nhiều TypeUML
+}
+
+export interface IAssignmentRequest {
+    title: string;
+    description: string;
+    solutionCode?: string;
+    modules: IModuleRequest[];
+}
+
 export interface IAssignment {
     assignmentClasses: any;
     id: number;
     title: string,
-    description: string;
+    commonDescription: string;
     typeUmlName: number;
     solutionCode: string;
     assignmentCode: string;
@@ -40,6 +69,7 @@ export interface IAssignment {
     isActive: number;
     startDate: string | null;
     endDate: string | null;
+    modules: IModule[];
     // assignmentClasses: IAssignmentClass[]
 }
 
@@ -50,11 +80,12 @@ export interface IAssignAssignment {
     endDate: string;
 }
 
-export const createAssignment = async (data: Omit<IAssignment, '_id' | 'createdAt' | 'updatedAt'>): Promise<IAssignment> => {
-    const response = await handleRequest(postJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}`, data));
-    return await response.json() as Promise<IAssignment>;
+export const createAssignment = async (data: IAssignmentRequest): Promise<IAssignment> => {
+    const response = await handleRequest(
+        postJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}`, data)
+    );
+    return await response.json() as IAssignment;
 };
-
 export const assignAssignment = async (data: Omit<IAssignAssignment, '_id' | 'createdAt' | 'updatedAt'>): Promise<IAssignAssignment> => {
     const response = await handleRequest(postJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/assign`, data));
     return await response.json() as Promise<IAssignAssignment>;
@@ -106,6 +137,11 @@ export const getAssignmentById = async (id: string | number): Promise<IAssignmen
     return data.result as IAssignment;
 };
 
+export const getAssignmentByClassId = async (classId: string | number, assignmentId: string | number): Promise<IAssignment> => {
+    const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/${classId}/${assignmentId}`));
+    const data = await response.json();
+    return data.result as IAssignment;
+};
 
 export const updateAssignment = async (id: string | number, data: Partial<Omit<IAssignment, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IAssignment> => {
     const response = await handleRequest(patchJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/update/${id}`, data));

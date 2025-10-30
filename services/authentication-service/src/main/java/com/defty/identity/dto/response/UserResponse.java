@@ -13,7 +13,7 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserResponse {
-    String id;
+    Long id;
     String username;
     String fullName;
     LocalDate dob;
@@ -21,5 +21,6 @@ public class UserResponse {
     String userCode;
     Date createdDate;
     String email;
+    String avatarUrl;
     Integer isActive; // 1 for active, 0 for inactive, -1 for deleted
 }

@@ -7,6 +7,7 @@ import com.submission_service.model.entity.Submission;
 import com.submission_service.repository.IFeedbackTeacherRepository;
 import com.submission_service.repository.ISubmissionRepository;
 import com.submission_service.service.IFeedBackTeacherService;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,8 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,14 +29,15 @@ public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
     ISubmissionRepository submissionRepository;
 
     @Override
+    @Transactional
     public Long addFeedbackTeacher(FeedbackTeacherRequest feedbackTeacherRequest) {
         Submission submission = submissionRepository.findById(feedbackTeacherRequest.getSubmissionId())
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
         FeedbackTeacher feedbackTeacher = new FeedbackTeacher();
         BeanUtils.copyProperties(feedbackTeacherRequest, feedbackTeacher);
+        feedbackTeacher.setSubmission(submission);
         feedbackTeacher=feedbackTeacherRepository.save(feedbackTeacher);
-        submission.setFeedbackTeacher(feedbackTeacher);
-        submissionRepository.save(submission);
+        feedbackTeacher.setSubmission(submission);
         return feedbackTeacher.getId();
     }
 
@@ -47,15 +51,18 @@ public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
     }
 
     @Override
-    public FeedbackTeacherResponse getFeedbackTeacher(Long submissionId) {
+    public List<FeedbackTeacherResponse> getFeedbackTeacher(Long submissionId) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
-        FeedbackTeacher feedbackTeacher=submission.getFeedbackTeacher();
-        FeedbackTeacherResponse feedbackTeacherResponse = new FeedbackTeacherResponse();
-        feedbackTeacherResponse.setFeedback(feedbackTeacher.getContent());
-        feedbackTeacherResponse.setId(feedbackTeacher.getId());
-        return feedbackTeacherResponse;
-
+        List<FeedbackTeacher> feedbackTeacher=submission.getFeedbackTeachers();
+        return feedbackTeacher.stream().map(ft -> {
+            FeedbackTeacherResponse response = new FeedbackTeacherResponse();
+            response.setId(ft.getId());
+            response.setTeacherId(ft.getTeacherId());
+            response.setContent(ft.getContent());
+            response.setCreatedDate(ft.getCreatedDate());
+            return response;
+        }).toList();
     }
 
 }

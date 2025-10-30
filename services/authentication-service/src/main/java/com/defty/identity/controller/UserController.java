@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -35,8 +36,8 @@ public class UserController {
                 .build();
     }
 
-//    @PreAuthorize("hasRole('admin')")
-    @GetMapping
+
+    @GetMapping//    @PreAuthorize("hasRole('admin')")
     ApiResponse<Page<UserResponse>> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
                                              @RequestParam(value = "size", defaultValue = "10") int size,
                                              @RequestParam(required = false) String username,
@@ -62,6 +63,23 @@ public class UserController {
     @GetMapping("/users-with-ids")
     ApiResponse<List<UserResponse>> getUsersWithIds(@RequestParam List<Long> userIds) {
         List<UserResponse> result = userService.getUsersByIds(userIds);
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(result)
+                .build();
+    }
+
+    @GetMapping("/list")
+    public ApiResponse<Map<Long, UserResponse>> getExerciseMap(@RequestParam List<Long> userIds) {
+        Map<Long, UserResponse> result = userService.getUsersDtoByIds(userIds);
+        return ApiResponse.<Map<Long, UserResponse>>builder()
+                .result(result)
+                .message("Fetched user successfully")
+                .build();
+    }
+
+    @GetMapping("/users-with-codeUsers")
+    ApiResponse<List<UserResponse>> getUsersWithCodeUser(@RequestParam List<String> codeUsers) {
+        List<UserResponse> result = userService.getUsersByCodeUsers(codeUsers);
         return ApiResponse.<List<UserResponse>>builder()
                 .result(result)
                 .build();

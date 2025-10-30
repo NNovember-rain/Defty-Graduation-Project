@@ -4,6 +4,7 @@ import com.defty.identity.dto.request.UserCreationRequest;
 import com.defty.identity.dto.request.UserUpdateRequest;
 import com.defty.identity.dto.response.UserExistenceCheckResult;
 import com.defty.identity.dto.response.UserResponse;
+import com.defty.identity.entity.BaseEntity;
 import com.defty.identity.entity.Role;
 import com.defty.identity.entity.User;
 import com.defty.identity.exception.AppException;
@@ -25,8 +26,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -73,16 +76,22 @@ public class UserServiceImpl implements UserService {
             throw new AlreadyExitException("Email '" + request.getEmail() + "' already exists");
         }
 
+        if (userRepository.existsByUserCodeAndIdNot(request.getUserCode(), userId)) {
+            throw new AlreadyExitException("User code '" + request.getUserCode() + "' already exists");
+        }
+
         userMapper.updateUser(user, request);
 
         if (request.getRoles() != null) {
-            var roles = roleRepository.findAllById(request.getRoles());
+            List<Long> roleIds = request.getRoles().stream()
+                    .map(BaseEntity::getId)
+                    .toList();
+            var roles = roleRepository.findAllById(roleIds);
             user.setRoles(new HashSet<>(roles));
         }
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
-
 
     @Override
     public void deleteUser(Long userId){
@@ -156,6 +165,36 @@ public class UserServiceImpl implements UserService {
         }
         throw new NotFoundException("No users found with the provided IDs: " + userIds);
     }
+
+    @Override
+    public List<UserResponse> getUsersByCodeUsers(List<String> codeUsers) {
+        List<User> users = userRepository.findAllByUserCodeInAndIsActive(codeUsers, 1);
+        if (!users.isEmpty()) {
+            return users.stream()
+                    .map(userMapper::toUserResponse)
+                    .collect(Collectors.toList());
+        }
+        throw new NotFoundException("No users found with the provided IDs: " + codeUsers);
+    }
+
+    @Override
+    public Map<Long, UserResponse> getUsersDtoByIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        List<User> users = userRepository.findAllByIdInAndIsActive(userIds, 1);
+        if (users.isEmpty()) {
+            throw new NotFoundException("No active users found with the provided IDs: " + userIds);
+        }
+        List<UserResponse> userResponses = new ArrayList<>();
+        for (User user : users) {
+            UserResponse userResponse = userMapper.toUserResponse(user);
+            userResponses.add(userResponse);
+        }
+        return userResponses.stream()
+                .collect(Collectors.toMap(UserResponse::getId, ur -> ur));
+    }
+
 
     @Override
     public UserResponse getUser(Long id){

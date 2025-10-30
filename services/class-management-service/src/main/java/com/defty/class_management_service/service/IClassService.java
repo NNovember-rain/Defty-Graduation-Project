@@ -7,6 +7,7 @@ import com.example.common_library.response.ApiResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IClassService {
     ApiResponse<Long> createClass(ClassRequest request);
@@ -16,6 +17,8 @@ public interface IClassService {
     ApiResponse<Long> updateClass(Long id, ClassRequest request);
     ApiResponse<List<Long>> deleteClass(List<Long> ids);
     ApiResponse<Long> toggleActiveStatus(Long classId);
+    ApiResponse<Map<Long, ClassResponse>> getClassesByIds(List<Long> ids);
+
 
 
 //    EnrollmentResponse enrollStudentInClass(String inviteCode, Long studentId);

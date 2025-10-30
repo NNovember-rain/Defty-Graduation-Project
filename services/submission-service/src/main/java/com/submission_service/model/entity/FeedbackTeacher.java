@@ -9,10 +9,13 @@ import lombok.Setter;
 @Setter
 public class FeedbackTeacher extends BaseEntity {
 
+    @Column(nullable = false)
     private Long teacherId;
-    private Double grade;
+
+    @Column(nullable = false)
     private String content;
 
-    @OneToOne(mappedBy = "feedbackTeacher")
+    @ManyToOne
+    @JoinColumn(name = "submission_id")
     private Submission submission;
 }

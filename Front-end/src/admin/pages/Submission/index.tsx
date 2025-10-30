@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getSubmissions, type GetSubmissionsOptions, type ISubmission } from "../../../shared/services/submissionService.ts";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaComments } from "react-icons/fa";
+import { FaEye } from "react-icons/fa";
 import dayjs from 'dayjs';
+import './SubmissionList.scss';
 
 const Submission: React.FC = () => {
     const { t } = useTranslation();
@@ -87,12 +88,9 @@ const Submission: React.FC = () => {
                 limit: entriesPerPage,
                 sortBy: currentSortColumn || undefined,
                 sortOrder: currentSortOrder || undefined,
-                studentName: currentFilters.studentName || undefined,
-                studentCode: currentFilters.studentCode || undefined,
-                assignmentTitle: currentFilters.assignmentTitle || undefined,
-                umlType: currentFilters.umlType || undefined,
-                classCode: currentFilters.classCode || undefined,
-                submissionStatus: currentFilters.submissionStatus as 'SUBMITTED' | 'PROCESSING' | 'COMPLETED' | 'REVIEWED' | 'FAILED' || undefined,
+                studentId: currentFilters.studentId ? parseInt(currentFilters.studentId) : undefined,
+                assignmentId: currentFilters.assignmentId ? parseInt(currentFilters.assignmentId) : undefined,
+                classId: currentFilters.classId ? parseInt(currentFilters.classId) : undefined,
                 fromDate: currentFilters.fromDate || undefined,
                 toDate: currentFilters.toDate || undefined,
             };
@@ -100,7 +98,8 @@ const Submission: React.FC = () => {
             const response = await getSubmissions(options);
             const formattedSubmissions = (response.submissions || []).map(submission => ({
                 ...submission,
-                createdDate: submission.createdDate ? dayjs(submission.createdDate).format('YYYY-MM-DD') : '',
+                // Keep original createdDate (no truncation) for precise time rendering
+                createdDate: submission.createdDate,
             }));
 
             setSubmissions(formattedSubmissions);
@@ -122,60 +121,30 @@ const Submission: React.FC = () => {
         { key: 'studentName', label: t('submissionPage.columns.studentName'), sortable: true },
         { key: 'studentCode', label: t('submissionPage.columns.studentCode'), sortable: true },
         { key: 'assignmentTitle', label: t('submissionPage.columns.assignmentTitle'), sortable: true },
-        { key: 'umlType', label: t('submissionPage.columns.umlType'), sortable: true },
         { key: 'classCode', label: t('submissionPage.columns.classCode'), sortable: true },
-        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true },
-        { key: 'submissionStatus', label: t('submissionPage.columns.submissionStatus'), sortable: true },
+        { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' }
     ], [t]);
 
     const searchFields: SearchField[] = useMemo(() => [
         {
-            key: 'studentName',
-            label: t('submissionPage.search.studentName'),
-            type: 'text',
-            placeholder: t('submissionPage.search.studentNamePlaceholder'),
+            key: 'studentId',
+            label: 'Sinh viên',
+            type: 'number',
+            placeholder: 'Nhập tên sinh viên',
             gridSpan: 1
         },
         {
-            key: 'studentCode',
-            label: t('submissionPage.search.studentCode'),
-            type: 'text',
-            placeholder: t('submissionPage.search.studentCodePlaceholder'),
+            key: 'assignmentId',
+            label: 'Bài tập',
+            type: 'number',
+            placeholder: 'Nhập tiêu đề bài tập',
             gridSpan: 1
         },
         {
-            key: 'assignmentTitle',
-            label: t('submissionPage.search.assignmentTitle'),
-            type: 'text',
-            placeholder: t('submissionPage.search.assignmentTitlePlaceholder'),
-            gridSpan: 1
-        },
-        {
-            key: 'umlType',
-            label: t('submissionPage.search.umlType'),
-            type: 'text',
-            placeholder: t('submissionPage.search.umlTypePlaceholder'),
-            gridSpan: 1
-        },
-        {
-            key: 'classCode',
-            label: t('submissionPage.search.classCode'),
-            type: 'text',
-            placeholder: t('submissionPage.search.classCodePlaceholder'),
-            gridSpan: 1
-        },
-        {
-            key: 'submissionStatus',
-            label: t('submissionPage.search.submissionStatus'),
-            type: 'select',
-            options: [
-                { value: 'SUBMITTED', label: t('submissionPage.status.submitted') },
-                { value: 'PROCESSING', label: t('submissionPage.status.processing') },
-                { value: 'COMPLETED', label: t('submissionPage.status.completed') },
-                { value: 'REVIEWED', label: t('submissionPage.status.reviewed') },
-                { value: 'FAILED', label: t('submissionPage.status.failed') },
-            ],
-            placeholder: t('submissionPage.search.submissionStatusPlaceholder'),
+            key: 'classId',
+            label: 'Lớp học',
+            type: 'number',
+            placeholder: 'Nhập mã lớp',
             gridSpan: 1
         },
         {
@@ -212,8 +181,7 @@ const Submission: React.FC = () => {
                 { value: 'studentCode', label: t('submissionPage.sort.studentCode') },
                 { value: 'assignmentTitle', label: t('submissionPage.sort.assignmentTitle') },
                 { value: 'classCode', label: t('submissionPage.sort.classCode') },
-                { value: 'createdDate', label: t('submissionPage.sort.createdDate') },
-                { value: 'submissionStatus', label: t('submissionPage.sort.submissionStatus') },
+                { value: 'createdDate', label: t('submissionPage.sort.createdDate')},
             ],
             gridSpan: 1
         },
@@ -260,10 +228,6 @@ const Submission: React.FC = () => {
         navigate(`/admin/submissions/detail/${rowData.id}`);
     }, [navigate]);
 
-    const handleViewFeedback = useCallback((rowData: ISubmission) => {
-        navigate(`/admin/submissions/feedback/${rowData.id}`);
-    }, [navigate]);
-
     const submissionActions = useMemo(() => [
         {
             icon: <FaEye />,
@@ -271,15 +235,8 @@ const Submission: React.FC = () => {
             className: 'text-blue-500 hover:text-blue-700',
             tooltip: t('submissionPage.viewTooltip'),
             color: '#3b82f6'
-        },
-        {
-            icon: <FaComments />,
-            onClick: handleViewFeedback,
-            className: 'text-green-500 hover:text-green-700',
-            tooltip: t('submissionPage.feedbackTooltip'),
-            color: '#059669'
-        },
-    ], [handleViewSubmission, handleViewFeedback, t]);
+        }
+    ], [handleViewSubmission, t]);
 
     if (loading && submissions.length === 0) {
         return <div>{t('common.loadingData')}</div>;

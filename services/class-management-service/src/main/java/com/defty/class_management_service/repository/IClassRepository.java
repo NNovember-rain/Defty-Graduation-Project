@@ -8,9 +8,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IClassRepository extends JpaRepository<ClassEntity, Long> {
+
+    @Query("SELECT c FROM ClassEntity c WHERE c.id IN :ids AND c.status = 1")
+    List<ClassEntity> findAllActiveByIdIn(@Param("ids") List<Long> ids);
+
     @Query(value = "SELECT c FROM ClassEntity c WHERE " +
             "(:teacherId IS NULL OR c.teacherId = :teacherId) AND " +
             "(c.status != -1) AND " +
