@@ -172,7 +172,7 @@ const StudentAssignmentManagerAntD = () => {
                         defaultSelectedKeys={['student-work']}
                         style={{ borderBottom: 'none', flexGrow: 1, lineHeight: '56px' }}
                     >
-                        <Menu.Item key="guide">Hướng dẫn</Menu.Item>
+                        {/* <Menu.Item key="guide">Hướng dẫn</Menu.Item> */}
                         <Menu.Item key="student-work">Bài tập của học viên</Menu.Item>
                     </Menu>
                     <Tooltip title="Cài đặt">
@@ -221,13 +221,13 @@ const StudentAssignmentManagerAntD = () => {
                                 </Space>
                             </div>
 
-                            <Space size="middle">
+                            {/* <Space size="middle">
                                 <Button type="default" icon={<MailOutlined />}>
                                     Gửi Email
                                 </Button>
                                 <Button type="primary">Trả bài</Button>
                                 <Input addonBefore="Điểm" defaultValue={assignmentData.maxScore} style={{ width: 120, textAlign: 'center' }} disabled />
-                            </Space>
+                            </Space> */}
                         </div>
                     </Card>
 

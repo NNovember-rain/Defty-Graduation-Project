@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button, Card, Row, Col, Typography, Tag, Input, message, Spin, Alert, Avatar } from "antd";
-import { ArrowLeftOutlined, EyeOutlined, MessageOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Card, Row, Col, Typography, Tag, Input, message, Spin, Alert, Avatar, Collapse } from "antd";
+import { MessageOutlined, UserOutlined, InfoCircleOutlined, FileTextOutlined, CodeOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import PlantUMLViewer from "../../components/PlantUMLViewer";
 import "./SubmissionDetail.scss";
 import {
     getSubmissionDetail,
@@ -174,26 +175,25 @@ const SubmissionDetail: React.FC = () => {
         <div className="submission-detail-container">
             {/* Header */}
             <div className="submission-detail-header">
-                <Button
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigate(-1)}
-                >
-                    Quay lại
-                </Button>
-                
                 <div className="submission-detail-info">
                     <div className="submission-detail-info-left">
                         <Title level={3} style={{ margin: 0, marginBottom: 8 }}>
-                            Chi tiết bài nộp
+                            {submission.assignmentTitle}
                         </Title>
                         <div className="submission-detail-meta">
                             <Text strong>{submission.studentName}</Text>
                             {submission.studentCode && (
                                 <Text type="secondary">({submission.studentCode})</Text>
                             )}
-                            <Tag color="green">
-                                COMPLETED
-                            </Tag>
+                            {submission.moduleName && (
+                                <>
+                                    <Text type="secondary" strong>Module:</Text>
+                                    <Tag color="blue">{submission.moduleName}</Tag>
+                                </>
+                            )}
+                            {submission.typeUml && (
+                                <Tag color="green">{submission.typeUml}</Tag>
+                            )}
                             <Text type="secondary">
                                 Nộp lúc: {dayjs(submission.createdDate).format("DD/MM/YYYY HH:mm")}
                             </Text>
@@ -204,43 +204,120 @@ const SubmissionDetail: React.FC = () => {
 
             <Row gutter={24}>
                 {/* Left Column - Code Display */}
-                <Col span={16}>
-                    <Card 
+                <Col span={18}>
+                    {/* Compact Info Section with Tabs */}
+                    {(submission.descriptionModule || submission.descriptionAssignment) && (
+                        <Collapse 
+                            defaultActiveKey={[]} 
+                            style={{ marginBottom: 16 }}
+                            items={[
+                                {
+                                    key: '1',
+                                    label: (
+                                        <span>
+                                            <InfoCircleOutlined style={{ marginRight: 8 }} />
+                                            Thông tin đề bài
+                                        </span>
+                                    ),
+                                    children: (
+                                        <div>
+                                            {submission.descriptionAssignment && (
+                                                <div style={{ marginBottom: submission.descriptionModule ? '20px' : 0 }}>
+                                                    <h4 style={{ 
+                                                        margin: '0 0 12px 0',
+                                                        fontSize: '14px',
+                                                        fontWeight: 600,
+                                                        color: '#1890ff',
+                                                        borderBottom: '2px solid #1890ff',
+                                                        paddingBottom: '6px'
+                                                    }}>
+                                                        Đề bài
+                                                    </h4>
+                                                    <div 
+                                                        dangerouslySetInnerHTML={{ __html: submission.descriptionAssignment }}
+                                                        style={{ 
+                                                            padding: '12px',
+                                                            backgroundColor: '#fafafa',
+                                                            borderRadius: '4px',
+                                                            maxHeight: '300px',
+                                                            overflowY: 'auto'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            
+                                            {submission.descriptionModule && (
+                                                <div>
+                                                    <h4 style={{ 
+                                                        margin: '0 0 12px 0',
+                                                        fontSize: '14px',
+                                                        fontWeight: 600,
+                                                        color: '#52c41a',
+                                                        borderBottom: '2px solid #52c41a',
+                                                        paddingBottom: '6px'
+                                                    }}>
+                                                        Module
+                                                    </h4>
+                                                    <div 
+                                                        dangerouslySetInnerHTML={{ __html: submission.descriptionModule }}
+                                                        style={{ 
+                                                            padding: '12px',
+                                                            backgroundColor: '#fafafa',
+                                                            borderRadius: '4px',
+                                                            maxHeight: '300px',
+                                                            overflowY: 'auto'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                }
+                            ]}
+                        />
+                    )}
+
+                    {/* Solution Code - Collapsible */}
+                    {submission.solutionCode && (
+                        <Collapse
+                            style={{ marginBottom: 16 }}
+                            items={[
+                                {
+                                    key: '1',
+                                    label: (
+                                        <span>
+                                            <FileTextOutlined style={{ marginRight: 8 }} />
+                                            Đáp án tham khảo
+                                        </span>
+                                    ),
+                                    children: (
+                                        <PlantUMLViewer 
+                                            code={submission.solutionCode}
+                                        />
+                                    )
+                                }
+                            ]}
+                        />
+                    )}
+
+                    {/* Main Code Card - Student Code */}
+                    <Card
                         title={
-                            <div className="submission-code-header">
-                                <EyeOutlined />
-                                <span>Mã nguồn PlantUML</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <CodeOutlined />
+                                <span>Chi tiết bài làm</span>
                             </div>
                         }
-                        className="submission-code-section"
-                        bodyStyle={{ padding: 0, height: "calc(100% - 57px)" }}
+                        bodyStyle={{ padding: '16px' }}
                     >
-                        <div className="submission-code-container">
-                            {/* Student Code */}
-                            <div className="submission-code-block">
-                                <div className="submission-code-title submission-code-title--student">
-                                    📝 Code của sinh viên
-                                </div>
-                                <pre className="submission-code-content">
-                                    {submission.studentPlantUMLCode || "// Không có dữ liệu"}
-                                </pre>
-                            </div>
-
-                            {/* Solution Code */}
-                            <div className="submission-code-block">
-                                <div className="submission-code-title submission-code-title--solution">
-                                    ✅ Code mẫu (Đáp án)
-                                </div>
-                                <pre className="submission-code-content submission-code-content--solution">
-                                    {submission.solutionCode || "// Không có dữ liệu"}
-                                </pre>
-                            </div>
-                        </div>
+                        <PlantUMLViewer 
+                            code={submission.studentPlantUMLCode || "// Không có dữ liệu"}
+                        />
                     </Card>
                 </Col>
 
                 {/* Right Column - Modern Evaluation Panel */}
-                <Col span={8}>
+                <Col span={6}>
                     <div className="evaluation-panel">
                         {/* Header */}
                         <div className="evaluation-header">
@@ -249,7 +326,12 @@ const SubmissionDetail: React.FC = () => {
                                 <span>Đánh giá bài nộp</span>
                             </div>
                             <div className="evaluation-status">
-                                <Tag color="green" className="status-tag">ĐANG CHẤM</Tag>
+                                <Tag 
+                                    color={submission?.score !== null && submission?.score !== undefined ? 'green' : 'orange'} 
+                                    className="status-tag"
+                                >
+                                    {submission?.score !== null && submission?.score !== undefined ? 'ĐÃ CHẤM' : 'CHƯA CHẤM'}
+                                </Tag>
                             </div>
                         </div>
 

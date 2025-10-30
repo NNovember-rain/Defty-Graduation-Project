@@ -110,28 +110,29 @@ public class SubmissionServiceImpl implements SubmissionService {
         submissionRepository.save(submission);
         log.info("Submission saved");
 
-        String accessToken = GetTokenUtil.getToken();
-        SubmissionEvent submissionEvent= SubmissionEvent.builder()
-                .id(submission.getId())
-                .accessToken(accessToken)
-                .contentAssignment(assignmentResponse.getCommonDescription()+moduleResponse.getModuleDescription())
-                .solutionPlantUmlCode(moduleResponse.getSolutionCode())
-                .typeUmlName(submissionRequest.getTypeUmlName())
-                .studentPlantUmlCode(submissionRequest.getStudentPlantUmlCode())
-                .build();
+        if(!submissionRequest.getExamMode()) {
+            String accessToken = GetTokenUtil.getToken();
+            SubmissionEvent submissionEvent = SubmissionEvent.builder()
+                    .id(submission.getId())
+                    .accessToken(accessToken)
+                    .contentAssignment(assignmentResponse.getCommonDescription() + moduleResponse.getModuleDescription())
+                    .solutionPlantUmlCode(moduleResponse.getSolutionCode())
+                    .typeUmlName(submissionRequest.getTypeUmlName())
+                    .studentPlantUmlCode(submissionRequest.getStudentPlantUmlCode())
+                    .build();
 
-        try {
-            String message = objectMapper.writeValueAsString(submissionEvent);
-            kafkaTemplate.send("umlDiagram.submission", message);
-            log.info("Submission event sent to Kafka for submission ID: {}", submission.getId());
-            actionScheduler.checkSubmissionStatus(submission.getId());
-        }catch (JsonProcessingException e){
-            log.error("Error serializing submission event: {}", e.getMessage());
-        }catch (KafkaException e) {
-            log.error("Error sending submission event to Kafka: {}", e.getMessage());
+            try {
+                String message = objectMapper.writeValueAsString(submissionEvent);
+                kafkaTemplate.send("umlDiagram.submission", message);
+                log.info("Submission event sent to Kafka for submission ID: {}", submission.getId());
+//                actionScheduler.checkSubmissionStatus(submission.getId());
+            } catch (JsonProcessingException e) {
+                log.error("Error serializing submission event: {}", e.getMessage());
+            } catch (KafkaException e) {
+                log.error("Error sending submission event to Kafka: {}", e.getMessage());
+            }
         }
         return submission.getId();
-
     }
 
     @Override
@@ -225,6 +226,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
         SubmissionResponse submissionResponse=submissionMapper.toSubmissionResponse(submission, userResponse, assignmentResponse, classResponse);
         submissionResponse.setModuleName(moduleResponse.getModuleName());
+        submissionResponse.setSolutionCode(moduleResponse.getSolutionCode());
+        submissionResponse.setTypeUml("use case");
+        submissionResponse.setDescriptionModule(moduleResponse.getModuleDescription());
         return submissionResponse;
     }
 

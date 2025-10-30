@@ -16,6 +16,8 @@ public class FeedbackTeacherResponse {
     Long id;
     String content;
     Long teacherId;
+    String fullName;
+    String imageUrl;
     LocalDateTime createdDate;
     LocalDateTime updatedDate;
 }
