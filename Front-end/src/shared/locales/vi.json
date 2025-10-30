@@ -148,7 +148,8 @@
     "noData": "Không có dữ liệu để hiển thị.",
     "submit": "Nộp",
     "add": "Thêm",
-    "loading": "Đang tải..."
+    "loading": "Đang tải...",
+    "items": "mục"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",

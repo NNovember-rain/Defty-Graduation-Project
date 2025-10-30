@@ -339,7 +339,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw new IllegalArgumentException("Modules cannot be empty");
         }
 
-        // Lấy TypeUML đầu tiên để sinh assignmentCode (nếu assignment mới)
+        // 🔹 Sinh assignmentCode nếu chưa có
         if (assignment.getAssignmentCode() == null || assignment.getAssignmentCode().isEmpty()) {
             ModuleRequest firstModuleReq = request.getModules().get(0);
             if (firstModuleReq.getTypeUmlIds() == null || firstModuleReq.getTypeUmlIds().isEmpty()) {
@@ -363,19 +363,42 @@ public class AssignmentServiceImpl implements AssignmentService {
             assignment.setAssignmentCode(prefix + "-" + randomNum);
         }
 
-        // 🧩 Xử lý modules
-        if (assignment.getModules() == null) {
-            assignment.setModules(new ArrayList<>());
-        } else {
-            assignment.getModules().clear(); // xóa modules cũ
+        // 🔹 Luôn dùng cùng collection cũ, không tạo mới
+        List<ModuleEntity> modules = assignment.getModules();
+        if (modules == null) {
+            modules = new ArrayList<>();
+            assignment.setModules(modules);
         }
 
+        // 🔹 Map module cũ theo tên
+        Map<String, ModuleEntity> existingModulesByName = modules.stream()
+                .filter(m -> m.getModuleName() != null)
+                .collect(Collectors.toMap(
+                        m -> m.getModuleName().strip().toLowerCase(),
+                        m -> m,
+                        (a, b) -> a
+                ));
+
+        // 🔹 Tập module mới để thay thế nội dung (chứ không gán list mới)
+        List<ModuleEntity> newModules = new ArrayList<>();
+
         for (ModuleRequest moduleReq : request.getModules()) {
-            ModuleEntity module = new ModuleEntity();
-            module.setModuleName(moduleReq.getModuleName());
-            module.setModuleDescription(moduleReq.getModuleDescription());
-            module.setSolutionCode(moduleReq.getSolutionCode());
-            module.setAssignment(assignment);
+            String nameKey = moduleReq.getModuleName().strip().toLowerCase();
+            ModuleEntity module;
+
+            if (existingModulesByName.containsKey(nameKey)) {
+                // Cập nhật module cũ
+                module = existingModulesByName.get(nameKey);
+                module.setModuleDescription(moduleReq.getModuleDescription());
+                module.setSolutionCode(moduleReq.getSolutionCode());
+            } else {
+                // Thêm module mới
+                module = new ModuleEntity();
+                module.setModuleName(moduleReq.getModuleName());
+                module.setModuleDescription(moduleReq.getModuleDescription());
+                module.setSolutionCode(moduleReq.getSolutionCode());
+                module.setAssignment(assignment);
+            }
 
             // Mapping TypeUMLs
             Set<TypeUML> typeUMLs = new HashSet<>();
@@ -386,18 +409,32 @@ public class AssignmentServiceImpl implements AssignmentService {
             }
             module.setTypeUMLs(typeUMLs);
 
-            assignment.getModules().add(module);
+            newModules.add(module);
         }
 
+        // 🔹 Xóa các module cũ không còn tồn tại trong request
+        modules.removeIf(m -> newModules.stream()
+                .noneMatch(n -> n.getModuleName().equalsIgnoreCase(m.getModuleName())));
+
+        // 🔹 Thêm/cập nhật module mới vào danh sách cũ
+        for (ModuleEntity newModule : newModules) {
+            if (!modules.contains(newModule)) {
+                modules.add(newModule);
+            }
+        }
+
+        // 🔹 Lưu assignment + module code
         assignment = assignmentRepository.save(assignment);
 
-        // Gán code cho từng module sau khi đã có ID
         for (ModuleEntity module : assignment.getModules()) {
-            module.setModuleCode(assignment.getAssignmentCode() + "-" + module.getId());
+            if (module.getModuleCode() == null || module.getModuleCode().isEmpty()) {
+                module.setModuleCode(assignment.getAssignmentCode() + "-" + module.getId());
+            }
         }
 
         return assignmentRepository.save(assignment);
     }
+
 
 
     private void validateClassIds(List<Long> classIds) {
