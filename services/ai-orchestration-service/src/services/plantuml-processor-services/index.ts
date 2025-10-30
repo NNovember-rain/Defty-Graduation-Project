@@ -1,7 +1,8 @@
 import {UmlInput} from "../../types/uml.types";
-import {processUseCaseUmlWithAI} from "./use-case";
 import logger from "../../config/logger";
 import {getErrorMessage} from "../../utils/errorHandler";
+import {processUseCaseUmlWithAI} from "./use-case";
+import {processClassDiagramAnalysisPhaseWithAI} from "./class-analysis-phase";
 
 export class AIValidationError extends Error {
     public readonly errorMessage: string;
@@ -99,6 +100,10 @@ export const processUmlWithAI = async (
     switch (input.typeUmlName) {
         case "use-case":
             await processUseCaseUmlWithAI(input);
+            break;
+
+        case "class":
+            await processClassDiagramAnalysisPhaseWithAI(input);
             break;
 
         default:

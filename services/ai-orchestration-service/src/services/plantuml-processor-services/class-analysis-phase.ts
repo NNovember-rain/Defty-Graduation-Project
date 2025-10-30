@@ -223,7 +223,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
 
     // Extract domain context using AI
     const prompt = await promptService.getPrompts({
-        type: 'class-domain-extractor',
+        type: 'class-analysis-domain-extractor',
         isActive: true,
         limit: 1
     });
@@ -265,7 +265,7 @@ const step2_extractToJson = async (
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'class-plantuml-extractor',
+        type: 'class-analysis-plantuml-extractor',
         isActive: true,
         limit: 1
     });
@@ -320,7 +320,7 @@ const step3_semanticNormalization = async (
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'class-semantic-normalizer',
+        type: 'class-analysis-semantic-normalizer',
         isActive: true,
         limit: 1
     });
@@ -728,7 +728,7 @@ const step5_classifyErrorsAndScore = async (
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'class-error-classifier-scorer',
+        type: 'class-analysis-error-classifier-scorer',
         isActive: true,
         limit: 1
     });
@@ -850,7 +850,7 @@ const step6_generateFeedback = async (
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'class-feedback-generator',
+        type: 'class-analysis-feedback-generator',
         isActive: true,
         limit: 1
     });
@@ -897,7 +897,7 @@ const step6_generateFeedback = async (
 // MAIN ORCHESTRATOR
 // ============================================================================
 
-export const processClassDiagramWithAI = async (
+export const processClassDiagramAnalysisPhaseWithAI = async (
     input: UmlInput
 ): Promise<UmlProcessedResult> => {
     const startTime = Date.now();

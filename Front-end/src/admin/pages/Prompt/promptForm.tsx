@@ -27,56 +27,66 @@ const PromptForm: React.FC = () => {
             labelKey: 'promptPage.dataTableColumns.type',
             type: 'select',
             options: [
-                // Step 1: Domain Analysis
+                // ========================================
+                // USE CASE DIAGRAM PROMPTS
+                // ========================================
                 {
-                    value: 'uml-domain-extractor',
-                    label: 'Domain Context Extractor',
-                    description: 'Extract keywords and requirements from assignment'
+                    value: 'usecase-domain-extractor',
+                    label: '[Use Case] Domain Context Extractor',
+                    description: 'Extract keywords and requirements from Use Case assignment'
+                },
+                {
+                    value: 'usecase-plantuml-extractor',
+                    label: '[Use Case] PlantUML to JSON Parser',
+                    description: 'Parse Use Case PlantUML code into structured JSON'
+                },
+                {
+                    value: 'usecase-semantic-normalizer',
+                    label: '[Use Case] Semantic Normalizer',
+                    description: 'Normalize Use Case element names to canonical forms'
+                },
+                {
+                    value: 'usecase-error-classifier-scorer',
+                    label: '[Use Case] Error Classifier & Scorer',
+                    description: 'Detect, classify errors and calculate score for Use Case diagrams'
+                },
+                {
+                    value: 'usecase-feedback-generator',
+                    label: '[Use Case] Feedback Generator',
+                    description: 'Generate personalized feedback for Use Case diagrams'
                 },
 
-                // Step 2: PlantUML Parsing
+                // ========================================
+                // CLASS DIAGRAM PROMPTS (ANALYSIS PHASE)
+                // ========================================
                 {
-                    value: 'uml-plantuml-extractor',
-                    label: 'PlantUML to JSON Parser',
-                    description: 'Parse PlantUML code into structured JSON'
-                },
-
-                // Step 3: Semantic Normalization
-                {
-                    value: 'uml-semantic-normalizer',
-                    label: 'Semantic Normalizer',
-                    description: 'Normalize element names to canonical forms'
-                },
-
-                // Step 5: Error Classification
-                {
-                    value: 'uml-error-classifier',
-                    label: 'Error Detector & Classifier',
-                    description: 'Detect and classify UML errors'
-                },
-
-                // Step 7: Feedback Generation
-                {
-                    value: 'uml-feedback-generator',
-                    label: 'Feedback Generator',
-                    description: 'Generate personalized student feedback'
-                },
-
-                // Legacy/Old analyzer (if still needed)
-                {
-                    value: 'uml-use-case-analyzer',
-                    label: '[Legacy] Use Case Analyzer',
-                    description: 'Old single-step analyzer (deprecated)'
+                    value: 'class-analysis-domain-extractor',
+                    label: '[Class Analysis] Domain Context Extractor',
+                    description: 'Extract business concepts and entities from Class Diagram assignment'
                 },
                 {
-                    value: 'uml-class-analyzer',
-                    label: '[Legacy] Class Diagram Analyzer',
-                    description: 'Old single-step analyzer (deprecated)'
+                    value: 'class-analysis-plantuml-extractor',
+                    label: '[Class Analysis] PlantUML to JSON Parser',
+                    description: 'Parse Class Diagram PlantUML code into structured JSON'
+                },
+                {
+                    value: 'class-analysis-semantic-normalizer',
+                    label: '[Class Analysis] Semantic Normalizer',
+                    description: 'Normalize class and attribute names to canonical forms'
+                },
+                {
+                    value: 'class-analysis-error-classifier-scorer',
+                    label: '[Class Analysis] Error Classifier & Scorer',
+                    description: 'Detect, classify errors and calculate score for Class diagrams'
+                },
+                {
+                    value: 'class-analysis-feedback-generator',
+                    label: '[Class Analysis] Feedback Generator',
+                    description: 'Generate personalized feedback for Class diagrams'
                 },
             ],
             required: true,
             gridSpan: 12,
-            groupBy: 'category' // Optional: if your UI supports grouping
         },
         {
             key: 'description',
@@ -128,6 +138,7 @@ const PromptForm: React.FC = () => {
             serviceGetById={getPromptById}
             serviceCreate={createPrompt}
             serviceUpdate={updatePrompt}
+            // @ts-ignore
             validationSchema={promptValidationSchema}
             redirectPath="/admin/settings/prompts"
         />

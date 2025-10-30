@@ -132,7 +132,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
 
     // Extract domain context using AI
     const prompt = await promptService.getPrompts({
-        type: 'uml-domain-extractor',
+        type: 'usecase-domain-extractor',
         isActive: true,
         limit: 1
     });
@@ -173,7 +173,7 @@ const step2_extractToJson = async (
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'uml-plantuml-extractor',
+        type: 'usecase-plantuml-extractor',
         isActive: true,
         limit: 1
     });
@@ -226,7 +226,7 @@ const step3_semanticNormalization = async (
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'uml-semantic-normalizer',
+        type: 'usecase-semantic-normalizer',
         isActive: true,
         limit: 1
     });
@@ -337,7 +337,7 @@ const step3_semanticNormalization = async (
 };
 
 // ============================================================================
-// STEP 4: STRUCTURE COMPARISON (ENHANCED with Generalization Analysis)
+// STEP 4: STRUCTURE COMPARISON WITH RULE-BASED ANALYSIS
 // ============================================================================
 
 interface MissingActorAnalysis {
@@ -357,7 +357,7 @@ const step4_structureComparison = (
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram }
 ): EnhancedComparisonResult => {
     logger.info({
-        message: 'STEP 4: Starting structure comparison with generalization analysis',
+        message: 'STEP 4: Starting structure comparison with rule-based analysis',
         event_type: 'step4_start'
     });
 
@@ -388,7 +388,7 @@ const step4_structureComparison = (
 
     extraActors.push(...Array.from(studentActorMap.values()));
 
-    // ENHANCED: Analyze missing actors for abstract parent pattern
+    // RULE-BASED: Analyze missing actors for abstract parent pattern
     const missingActorsAnalysis: MissingActorAnalysis[] = missingActors.map(actor => {
         // Check if this actor is a parent in generalization
         const generalizationRelations = solution.relationships.generalization
@@ -418,7 +418,7 @@ const step4_structureComparison = (
             }
         }
 
-        // Determine severity
+        // RULE-BASED: Determine severity
         let severity: 'CRITICAL' | 'MINOR' = 'CRITICAL';
 
         if (isAbstractParent && !hasDirectUseCases) {
@@ -464,7 +464,7 @@ const step4_structureComparison = (
 
     extraUsecases.push(...Array.from(studentUsecaseMap.values()));
 
-    // Compare relationships (simplified - match by canonical IDs)
+    // Compare relationships
     const compareRelationships = (
         solRels: any[],
         stuRels: any[],
@@ -531,117 +531,75 @@ const step4_structureComparison = (
 };
 
 // ============================================================================
-// STEP 5: ERROR CLASSIFICATION (ENHANCED)
+// STEP 5: ERROR CLASSIFICATION & SCORING (HYBRID)
 // ============================================================================
 
-const step5_errorClassification = async (
+const step5_classifyErrorsAndScore = async (
     input: UmlInput,
     comparison: EnhancedComparisonResult,
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram },
     domainContext: DomainContext
-): Promise<DetectedError[]> => {
+): Promise<{ errors: DetectedError[]; score: ReferenceScore }> => {
     logger.info({
-        message: 'STEP 5: Starting error classification with generalization analysis',
+        message: 'STEP 5: Starting error classification and scoring',
         event_type: 'step5_start',
         id: input.id
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'uml-error-classifier',
+        type: 'usecase-error-classifier-scorer',
         isActive: true,
         limit: 1
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('No active error classifier prompt found');
+        throw new Error('No active error classifier-scorer prompt found');
     }
 
     const classificationInput = {
         domainContext,
         comparison: {
-            actors: comparison.actors,
-            usecases: comparison.usecases,
-            relationships: comparison.relationships,
-            missingActorsAnalysis: comparison.missingActorsAnalysis
+            actors: {
+                matched: comparison.actors.matched.length,
+                missing: comparison.actors.missing.map(a => a.name),
+                extra: comparison.actors.extra.map(a => a.name),
+                missingActorsAnalysis: comparison.missingActorsAnalysis
+            },
+            usecases: {
+                matched: comparison.usecases.matched.length,
+                missing: comparison.usecases.missing.map(uc => uc.name),
+                extra: comparison.usecases.extra.map(uc => uc.name)
+            },
+            relationships: comparison.relationships
         },
-        studentDiagram: normalized.student,
-        solutionDiagram: normalized.solution
+        studentDiagram: {
+            actorCount: normalized.student.actors.length,
+            usecaseCount: normalized.student.usecases.length
+        },
+        solutionDiagram: {
+            actorCount: normalized.solution.actors.length,
+            usecaseCount: normalized.solution.usecases.length
+        },
+        scoringCriteria: {
+            actors: { max: 20, description: "Actor identification and types" },
+            usecases: { max: 30, description: "Use case identification and quality" },
+            relationships: { max: 40, description: "Relationships correctness" },
+            presentation: { max: 10, description: "Boundary and layout" }
+        }
     };
 
     const promptContent = prompt.prompts[0].templateString
         .replace(/\{\{classificationInput\}\}/g, JSON.stringify(classificationInput, null, 2));
 
-    const aiResponse = await callAIApi(promptContent, input.id, 'step5-classify');
-    const errors = parseJsonResponse<{ errors: DetectedError[] }>(aiResponse, input.id, 'step5');
-
-    logger.info({
-        message: 'STEP 5: Completed',
-        event_type: 'step5_complete',
-        id: input.id,
-        errorsDetected: errors.errors.length,
-        criticalCount: errors.errors.filter(e => e.severity === 'CRITICAL').length,
-        majorCount: errors.errors.filter(e => e.severity === 'MAJOR').length,
-        minorCount: errors.errors.filter(e => e.severity === 'MINOR').length
-    });
-
-    return errors.errors;
-};
-
-// ============================================================================
-// STEP 6: CALCULATE REFERENCE SCORE (UNCHANGED - Let AI decide penalty)
-// ============================================================================
-
-const step6_calculateScore = (
-    comparison: EnhancedComparisonResult,
-    errors: DetectedError[]
-): ReferenceScore => {
-    logger.info({
-        message: 'STEP 6: Starting score calculation',
-        event_type: 'step6_start'
-    });
-
-    // Actors scoring (20%)
-    const totalActors = comparison.actors.matched.length + comparison.actors.missing.length;
-    const actorMatchScore = totalActors > 0
-        ? (comparison.actors.matched.length / totalActors) * 15
-        : 0;
-    const actorPenalty = comparison.actors.extra.length > 0 ? 0 : 5;
-    const actorsScore = Math.min(20, actorMatchScore + actorPenalty);
-
-    // UseCases scoring (30%)
-    const totalUsecases = comparison.usecases.matched.length + comparison.usecases.missing.length;
-    const usecaseMatchScore = totalUsecases > 0
-        ? (comparison.usecases.matched.length / totalUsecases) * 20
-        : 0;
-    const usecaseQualityScore = 10; // Simplified - would check for fragments/abstraction
-    const usecasesScore = Math.min(30, usecaseMatchScore + usecaseQualityScore);
-
-    // Relationships scoring (40%)
-    const relScore = {
-        actorToUC: comparison.relationships.actorToUC.matched > 0
-            ? (comparison.relationships.actorToUC.matched /
-            (comparison.relationships.actorToUC.matched + comparison.relationships.actorToUC.missing)) * 20
-            : 0,
-        include: comparison.relationships.include.matched > 0
-            ? (comparison.relationships.include.matched /
-            (comparison.relationships.include.matched + comparison.relationships.include.missing)) * 10
-            : 0,
-        extend: comparison.relationships.extend.matched > 0
-            ? (comparison.relationships.extend.matched /
-            (comparison.relationships.extend.matched + comparison.relationships.extend.missing)) * 10
-            : 0
-    };
-    const relationshipsScore = Math.min(40, relScore.actorToUC + relScore.include + relScore.extend);
-
-    // Presentation scoring (10%)
-    const presentationScore = 10; // Simplified - would check boundary and layout
-
-    // Calculate total before penalties
-    let total = actorsScore + usecasesScore + relationshipsScore + presentationScore;
-
-    // Apply error penalties (AI decides penalty including for abstract parents)
-    const totalPenalty = errors.reduce((sum, err) => sum + err.penalty, 0);
-    total = Math.max(0, total - totalPenalty);
+    const aiResponse = await callAIApi(promptContent, input.id, 'step5-classify-score');
+    const result = parseJsonResponse<{
+        errors: DetectedError[];
+        score: {
+            total: number;
+            breakdown: ScoreBreakdown;
+            reasoning: string;
+        };
+    }>(aiResponse, input.id, 'step5');
 
     // Determine confidence based on ambiguous matches
     const lowSimilarityCount = [
@@ -654,49 +612,51 @@ const step6_calculateScore = (
             lowSimilarityCount <= 3 ? 'MEDIUM' : 'LOW';
 
     const range = confidence === 'HIGH' ? 2 : confidence === 'MEDIUM' ? 4 : 6;
-    const suggestedRange = `${Math.max(0, Math.floor(total - range))}-${Math.min(100, Math.ceil(total + range))}`;
+    const suggestedRange = `${Math.max(0, Math.floor(result.score.total - range))}-${Math.min(100, Math.ceil(result.score.total + range))}`;
 
-    const result: ReferenceScore = {
-        total: Math.round(total * 10) / 10,
-        breakdown: {
-            actors: { score: Math.round(actorsScore * 10) / 10, max: 20, details: `Matched: ${comparison.actors.matched.length}/${totalActors}` },
-            usecases: { score: Math.round(usecasesScore * 10) / 10, max: 30, details: `Matched: ${comparison.usecases.matched.length}/${totalUsecases}` },
-            relationships: { score: Math.round(relationshipsScore * 10) / 10, max: 40, details: `Actor-UC: ${comparison.relationships.actorToUC.matched}` },
-            presentation: { score: presentationScore, max: 10, details: 'Layout and boundary' }
-        },
+    const finalScore: ReferenceScore = {
+        total: Math.round(result.score.total * 10) / 10,
+        breakdown: result.score.breakdown,
         confidence,
         suggestedRange
     };
 
     logger.info({
-        message: 'STEP 6: Completed',
-        event_type: 'step6_complete',
-        total: result.total,
-        confidence,
-        totalPenalty
+        message: 'STEP 5: Completed',
+        event_type: 'step5_complete',
+        id: input.id,
+        errorsDetected: result.errors.length,
+        criticalCount: result.errors.filter(e => e.severity === 'CRITICAL').length,
+        majorCount: result.errors.filter(e => e.severity === 'MAJOR').length,
+        minorCount: result.errors.filter(e => e.severity === 'MINOR').length,
+        score: finalScore.total,
+        confidence
     });
 
-    return result;
+    return {
+        errors: result.errors,
+        score: finalScore
+    };
 };
 
 // ============================================================================
-// STEP 7: GENERATE FEEDBACK
+// STEP 6: GENERATE FEEDBACK
 // ============================================================================
 
-const step7_generateFeedback = async (
+const step6_generateFeedback = async (
     input: UmlInput,
     referenceScore: ReferenceScore,
     errors: DetectedError[],
     comparison: ComparisonResult
 ): Promise<string> => {
     logger.info({
-        message: 'STEP 7: Starting feedback generation',
-        event_type: 'step7_start',
+        message: 'STEP 6: Starting feedback generation',
+        event_type: 'step6_start',
         id: input.id
     });
 
     const prompt = await promptService.getPrompts({
-        type: 'uml-feedback-generator',
+        type: 'usecase-feedback-generator',
         isActive: true,
         limit: 1
     });
@@ -708,18 +668,30 @@ const step7_generateFeedback = async (
     const feedbackInput = {
         score: referenceScore,
         errors: errors,
-        comparison: comparison,
-        assignmentContext: input.contentAssignment.substring(0, 500) // First 500 chars for context
+        comparison: {
+            actors: {
+                matched: comparison.actors.matched.length,
+                missing: comparison.actors.missing.length,
+                extra: comparison.actors.extra.length
+            },
+            usecases: {
+                matched: comparison.usecases.matched.length,
+                missing: comparison.usecases.missing.length,
+                extra: comparison.usecases.extra.length
+            },
+            relationships: comparison.relationships
+        },
+        assignmentContext: input.contentAssignment.substring(0, 500)
     };
 
     const promptContent = prompt.prompts[0].templateString
         .replace(/\{\{feedbackInput\}\}/g, JSON.stringify(feedbackInput, null, 2));
 
-    const feedback = await callAIApi(promptContent, input.id, 'step7-feedback');
+    const feedback = await callAIApi(promptContent, input.id, 'step6-feedback');
 
     logger.info({
-        message: 'STEP 7: Completed',
-        event_type: 'step7_complete',
+        message: 'STEP 6: Completed',
+        event_type: 'step6_complete',
         id: input.id,
         feedbackLength: feedback.length
     });
@@ -738,7 +710,7 @@ export const processUseCaseUmlWithAI = async (
 
     try {
         logger.info({
-            message: '🚀 Starting 7-step UML processing pipeline',
+            message: '🚀 Starting 6-step Use Case Diagram processing pipeline',
             event_type: 'pipeline_start',
             id: input.id,
             typeUmlName: input.typeUmlName
@@ -753,17 +725,19 @@ export const processUseCaseUmlWithAI = async (
         // STEP 3: Semantic Normalization
         const normalized = await step3_semanticNormalization(input, diagrams);
 
-        // STEP 4: Structure Comparison
+        // STEP 4: Structure Comparison (Rule-based)
         const comparison = step4_structureComparison(normalized);
 
-        // STEP 5: Error Classification
-        const errors = await step5_errorClassification(input, comparison, normalized, domainContext);
+        // STEP 5: Error Classification & Scoring (Hybrid AI)
+        const { errors, score: referenceScore } = await step5_classifyErrorsAndScore(
+            input,
+            comparison,
+            normalized,
+            domainContext
+        );
 
-        // STEP 6: Calculate Reference Score
-        const referenceScore = step6_calculateScore(comparison, errors);
-
-        // STEP 7: Generate Feedback
-        const feedback = await step7_generateFeedback(input, referenceScore, errors, comparison);
+        // STEP 6: Generate Feedback
+        const feedback = await step6_generateFeedback(input, referenceScore, errors, comparison);
 
         const duration = Date.now() - startTime;
 
@@ -815,14 +789,14 @@ export const processUseCaseUmlWithAI = async (
             humanReviewItems: humanReviewItems,
             metadata: {
                 processingTime: `${(duration / 1000).toFixed(1)}s`,
-                aiCallsCount: 7, // 1 domain + 2 extract + 2 normalize + 1 classify + 1 feedback
-                pipelineVersion: '1.0.0',
+                aiCallsCount: 5, // 1 domain + 1 extract + 1 normalize + 1 classify-score + 1 feedback
+                pipelineVersion: '1.0.0-usecase',
                 timestamp: new Date().toISOString()
             }
         };
 
         logger.info({
-            message: '✅ UML processing pipeline completed successfully',
+            message: '✅ Use Case Diagram processing pipeline completed successfully',
             event_type: 'pipeline_complete',
             id: input.id,
             durationMs: duration,
@@ -839,7 +813,7 @@ export const processUseCaseUmlWithAI = async (
         const duration = Date.now() - startTime;
 
         logger.error({
-            message: '❌ UML processing pipeline failed',
+            message: '❌ Use Case Diagram processing pipeline failed',
             event_type: 'pipeline_error',
             id: input.id,
             typeUmlName: input.typeUmlName,
@@ -855,7 +829,7 @@ export const processUseCaseUmlWithAI = async (
         } else if (error instanceof UmlProcessingError) {
             throw error;
         } else {
-            throw new UmlProcessingError(`Pipeline failed: ${getErrorMessage(error)}`);
+            throw new UmlProcessingError(`Use Case Diagram pipeline failed: ${getErrorMessage(error)}`);
         }
     }
 };
