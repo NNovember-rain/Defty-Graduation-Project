@@ -322,17 +322,20 @@ public class SubmissionServiceImpl implements SubmissionService {
         } else {
             Submission submission = submissionOptional.get();
             List<FeedbackTeacherResponse> feedbacks = new ArrayList<>();
-            UserResponse userResponse= submission.getFeedbackTeachers().get(0) !=null?
-                    authServiceClient.getUser(submission.getFeedbackTeachers().get(0).getTeacherId()).getResult():null;
-            submission.getFeedbackTeachers().forEach(feedbackTeacher -> {
-                FeedbackTeacherResponse feedbackTeacherResponse = FeedbackTeacherResponse.builder()
-                        .teacherId(feedbackTeacher.getTeacherId())
-                        .content(feedbackTeacher.getContent())
-                        .fullName(userResponse.getFullName())
-                        .createdDate(feedbackTeacher.getCreatedDate())
-                        .build();
-                feedbacks.add(feedbackTeacherResponse);
-            });
+            if(!submission.getFeedbackTeachers().isEmpty()) {
+                UserResponse userResponse = submission.getFeedbackTeachers().get(0) != null ?
+                        authServiceClient.getUser(submission.getFeedbackTeachers().get(0).getTeacherId()).getResult() : null;
+
+                submission.getFeedbackTeachers().forEach(feedbackTeacher -> {
+                    FeedbackTeacherResponse feedbackTeacherResponse = FeedbackTeacherResponse.builder()
+                            .teacherId(feedbackTeacher.getTeacherId())
+                            .content(feedbackTeacher.getContent())
+                            .fullName(userResponse.getFullName())
+                            .createdDate(feedbackTeacher.getCreatedDate())
+                            .build();
+                    feedbacks.add(feedbackTeacherResponse);
+                });
+            }
             LastSubmissionResonse submissionResponse = LastSubmissionResonse.builder()
                     .id(submission.getId())
                     .score(submission.getScore())
