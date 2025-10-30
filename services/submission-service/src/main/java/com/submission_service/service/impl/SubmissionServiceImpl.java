@@ -307,53 +307,42 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
-    public SubmissionResponse getLastSubmissionsExamMode(Long classId, Long assignmentId, Long typeUmlId, Long moduleId) {
-//        if (classId == null || assignmentId == null) {
-//            throw new FieldRequiredException("ClassId and AssignmentId are required");
-//        }
-//
-//        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
-//        Long userId = currentUser.userId();
-//        Optional<Submission> submissionOptional = submissionRepository
-//                .findTopByClassIdAndAssignmentIdAndStudentIdAndModuleIdAndTypeUmlIdAndExamModeOrderByCreatedDateDescAndExamModeOrderByCreatedDateDesc(classId, assignmentId, userId, moduleId,typeUmlId, true);
-//
-//        if (!submissionOptional.isPresent()) {
-//            throw new NotFoundException("No exam mode submission found for the given class and assignment");
-//        } else {
-//            Submission submission = submissionOptional.get();
-//            AssignmentResponse assignmentResponse;
-//            UserResponse userResponse;
-//            ClassResponse classResponse;
-//            ModuleResponse moduleResponse;
-//            try {
-//                assignmentResponse = contentServiceClient.getAssignment(submission.getAssignmentId()).getResult();
-//                log.info("Fetched assignment with ID: {}", submission.getAssignmentId());
-//            }catch (FeignException e){
-//                throw new FeignClientException("Failed to fetch assignment with ID: " + submission.getAssignmentId());
-//            }
-//            try {
-//                userResponse = authServiceClient.getUser(userId).getResult();
-//                log.info("Fetched user with ID: {}", userId);
-//            }catch (FeignClientException e){
-//                throw new FeignClientException("Failed to fetch user with ID: " + userId);
-//            }
-//            try {
-//                classResponse = classManagementServiceClient.getClassById(submission.getClassId()).getResult();
-//                log.info("Fetched class with ID: {}", submission.getClassId());
-//            }catch (FeignClientException e){
-//                throw new FeignClientException("Failed to fetch class with ID: " + submission.getClassId());
-//            }
-//            try {
-//                moduleResponse = contentServiceClient.getModule(submission.getModuleId()).getResult();
-//                log.info("Fetched module with ID: {}", submission.getModuleId());
-//            }catch (FeignClientException e){
-//                throw new FeignClientException("Failed to fetch module with ID: " + submission.getModuleId());
-//            }
-//            SubmissionResponse submissionResponse=submissionMapper.toSubmissionResponse(submission, userResponse, assignmentResponse, classResponse);
-//            submissionResponse.setModuleName(moduleResponse.getModuleName());
-//            return submissionResponse;
-//        }
-        return null;
+    public LastSubmissionResonse getLastSubmissionsExamMode(Long classId, Long assignmentId) {
+        if (classId == null || assignmentId == null) {
+            throw new FieldRequiredException("ClassId and AssignmentId are required");
+        }
+
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        Long userId = currentUser.userId();
+        Optional<Submission> submissionOptional = submissionRepository
+                .findTopByClassIdAndAssignmentIdAndStudentIdAndExamModeOrderByCreatedDateDesc(classId, assignmentId, userId, true);
+
+        if (!submissionOptional.isPresent()) {
+            throw new NotFoundException("No exam mode submission found for the given class and assignment");
+        } else {
+            Submission submission = submissionOptional.get();
+            List<FeedbackTeacherResponse> feedbacks = new ArrayList<>();
+            UserResponse userResponse= submission.getFeedbackTeachers().get(0) !=null?
+                    authServiceClient.getUser(submission.getFeedbackTeachers().get(0).getTeacherId()).getResult():null;
+            submission.getFeedbackTeachers().forEach(feedbackTeacher -> {
+                FeedbackTeacherResponse feedbackTeacherResponse = FeedbackTeacherResponse.builder()
+                        .teacherId(feedbackTeacher.getTeacherId())
+                        .content(feedbackTeacher.getContent())
+                        .fullName(userResponse.getFullName())
+                        .createdDate(feedbackTeacher.getCreatedDate())
+                        .build();
+                feedbacks.add(feedbackTeacherResponse);
+            });
+            LastSubmissionResonse submissionResponse = LastSubmissionResonse.builder()
+                    .id(submission.getId())
+                    .score(submission.getScore())
+                    .studentPlantUMLCode(submission.getStudentPlantUMLCode())
+                    .createdDate(submission.getCreatedDate())
+                    .feedbackTeacherResponse(feedbacks)
+                    .submissionStatus(submission.getSubmissionStatus())
+                    .build();
+            return submissionResponse;
+        }
     }
 
     @Override

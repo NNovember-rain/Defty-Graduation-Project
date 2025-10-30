@@ -190,6 +190,26 @@
 
     &--run { color: #02b128; &:hover { color: #02e634; }; font-size: 22px }
     &--submit { color: #0277f6; &:hover { color: #007aff; } }
+    &--submit-text {
+      background: #0277f6;
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 18px;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+      line-height: 1.4;
+
+      &:hover {
+        background: #1890ff;
+      }
+
+      &:disabled {
+        background: #555;
+        color: #999;
+        cursor: not-allowed;
+      }
+    }
     &--feedback { color: #faad14; &:hover { color: #ffd700; } } // Thêm styling cho nút feedback
 
     /* tooltip */
@@ -299,9 +319,6 @@
     overflow: auto;
   }
 
-  &--left {
-  }
-
   &--code,
   &--result {
     display: flex;
@@ -312,6 +329,12 @@
       min-height: 0;
       min-width: 0;
     }
+  }
+
+  &--feedback {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 }
 

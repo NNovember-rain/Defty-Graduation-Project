@@ -80,9 +80,22 @@ export interface FeedbackTeacherResponse {
     teacherId?: number | null
     avatar?: string // URL ảnh đại diện giáo viên
     fullName?: string // Tên đầy đủ của giáo viên
+    imageUrl?: string // URL ảnh đại diện giáo viên (new field)
     createdDate: string | null  // API trả về null hoặc string
     updatedDate: string | null  // API trả về null hoặc string
     score?: number // Thêm score để hiển thị điểm số
+}
+
+// Response cho Last Submission trong Test Mode
+export interface LastSubmissionResponse {
+    id: number
+    studentPlantUMLCode: string
+    score?: number | null
+    feedbackTeacherResponse?: FeedbackTeacherResponse[] // Danh sách feedback của giáo viên
+    createdDate: string
+    submissionStatus?: string
+    moduleId?: number // THÊM: Module ID đã dùng khi nộp
+    typeUmlId?: number // THÊM: Type UML ID đã dùng khi nộp
 }
 
 export const getSubmissionsByClassAndAssignment = async (
@@ -217,11 +230,11 @@ export const getSubmissionHistory = async (
 export const getLastSubmissionExamMode = async (
     classId: number,
     assignmentId: number
-): Promise<ISubmission | null> => {
+): Promise<LastSubmissionResponse | null> => {
     try {
         const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/class/${classId}/assignment/${assignmentId}/last`))
         const data = await response.json()
-        return data.result as ISubmission
+        return data.result as LastSubmissionResponse
     } catch (error) {
         console.log('No submission found:', error)
         return null

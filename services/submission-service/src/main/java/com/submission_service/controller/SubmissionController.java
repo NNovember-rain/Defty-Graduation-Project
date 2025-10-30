@@ -3,6 +3,7 @@ package com.submission_service.controller;
 import com.example.common_library.response.ApiResponse;
 import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.dto.request.SubmissionRequest;
+import com.submission_service.model.dto.response.LastSubmissionResonse;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.service.SubmissionService;
 import jakarta.validation.constraints.Max;
@@ -74,14 +75,14 @@ public class SubmissionController {
     }
 
     @GetMapping("/class/{classId}/assignment/{assignmentId}/last")
-    public ApiResponse<SubmissionResponse> getLastSubmissionExamMode(
+    public ApiResponse<LastSubmissionResonse> getLastSubmissionExamMode(
             @PathVariable Long classId,
-            @PathVariable Long assignmentId,
-            @RequestParam(value = "typeUmlId") Long typeUmlId,
-            @RequestParam(value = "moduleId") Long moduleId
+            @PathVariable Long assignmentId
+//            @RequestParam(value = "typeUmlId") Long typeUmlId,
+//            @RequestParam(value = "moduleId") Long moduleId
     ){
-        SubmissionResponse submissionResponse =submissionService.getLastSubmissionsExamMode(classId,assignmentId,typeUmlId,moduleId);
-        return ApiResponse.<SubmissionResponse>builder()
+        LastSubmissionResonse submissionResponse =submissionService.getLastSubmissionsExamMode(classId,assignmentId);
+        return ApiResponse.<LastSubmissionResonse>builder()
                 .result(submissionResponse)
                 .build();
     }

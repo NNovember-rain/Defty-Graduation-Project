@@ -5,7 +5,6 @@ import {HistoryOutlined} from "@ant-design/icons";
 import {useTranslation} from "react-i18next";
 import {Spin} from "antd";
 import {IoCodeSlashOutline} from "react-icons/io5";
-import {FaRegStar, FaTasks} from "react-icons/fa";
 
 
 export type CodeEditorProps = {
@@ -18,7 +17,7 @@ export type CodeEditorProps = {
     isSubmitting: boolean;
     readOnly?: boolean;
     isTestMode: boolean;
-    onNewButtonClick: () => void;
+    isGraded?: boolean; // Đã được chấm điểm (chỉ dùng trong test mode)
 };
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -31,7 +30,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                                                    isSubmitting,
                                                    readOnly = false,
                                                    isTestMode,
-                                                   onNewButtonClick
+                                                   isGraded = false
                                                }) => {
     const { t } = useTranslation();
     const monaco = useMonaco();
@@ -83,18 +82,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                     </div>
 
                     <div className="code-editor__header--right-controls">
-                        {isTestMode && (
-                            <button
-                                className="code-editor__btn code-editor__btn--new"
-                                data-tooltip={"Nút hành động mới trong Test Mode"}
-                                onClick={onNewButtonClick}
-                                type="button"
-                                disabled={isRendering || isSubmitting || readOnly}
-                            >
-                                <FaTasks />
-                            </button>
-                        )}
-                        {onViewHistory && (
+                        {onViewHistory && !isTestMode && (
                             <button
                                 className="code-editor__btn code-editor__btn--history"
                                 data-tooltip={t("problemDetail.codeEditor.historyTooltip") || "Xem lịch sử nộp bài"}
@@ -116,15 +104,27 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                             {isRendering ? <Spin size="small" /> : <MdPlayArrow />}
                         </button>
 
-                        <button
-                            className="code-editor__btn code-editor__btn--submit"
-                            data-tooltip={t("problemDetail.codeEditor.submitTooltip") || "Submit (Ctrl/Cmd + S)"}
-                            onClick={onSubmit}
-                            type="button"
-                            disabled={isRendering || isSubmitting || readOnly}
-                        >
-                            {isSubmitting ? <Spin size="small" /> : <MdSend />}
-                        </button>
+                        {isTestMode ? (
+                            <button
+                                className="code-editor__btn code-editor__btn--submit-text"
+                                onClick={onSubmit}
+                                type="button"
+                                disabled={isRendering || isSubmitting || readOnly || isGraded}
+                                data-tooltip={isGraded ? "Bài đã được chấm điểm" : ""}
+                            >
+                                {isSubmitting ? <Spin size="small" /> : isGraded ? 'Đã chấm điểm' : 'Nộp bài'}
+                            </button>
+                        ) : (
+                            <button
+                                className="code-editor__btn code-editor__btn--submit"
+                                data-tooltip={t("problemDetail.codeEditor.submitTooltip") || "Submit (Ctrl/Cmd + S)"}
+                                onClick={onSubmit}
+                                type="button"
+                                disabled={isRendering || isSubmitting || readOnly}
+                            >
+                                {isSubmitting ? <Spin size="small" /> : <MdSend />}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

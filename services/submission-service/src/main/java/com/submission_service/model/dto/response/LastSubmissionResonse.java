@@ -1,11 +1,13 @@
 package com.submission_service.model.dto.response;
 
+import com.submission_service.enums.SubmissionStatus;
+import com.submission_service.model.entity.FeedbackTeacher;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,12 +15,11 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackTeacherResponse {
+public class LastSubmissionResonse {
     Long id;
-    String content;
-    Long teacherId;
-    String fullName;
-    String imageUrl;
+    String studentPlantUMLCode;
+    Double score;
+    List<FeedbackTeacherResponse> feedbackTeacherResponse;
     LocalDateTime createdDate;
-    LocalDateTime updatedDate;
+    SubmissionStatus submissionStatus;
 }

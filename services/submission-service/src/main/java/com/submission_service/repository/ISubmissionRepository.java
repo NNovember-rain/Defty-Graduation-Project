@@ -11,6 +11,8 @@ import java.util.Optional;
 
 public interface ISubmissionRepository extends JpaRepository<Submission, Long>, JpaSpecificationExecutor<Submission> {
     Optional<Submission> findByIdAndStatus(Long id, Integer status);
-//    Optional<Submission> findTopByClassIdAndAssignmentIdAndStudentIdAndModuleIdAndTypeUmlIdAndExamModeOrderByCreatedDateDescAndExamModeOrderByCreatedDateDesc(Long classId, Long assignmentId, Long studentId, Long moduleId, Long typeUmlId, Boolean examMode);
+    Optional<Submission> findTopByClassIdAndAssignmentIdAndStudentIdAndExamModeOrderByCreatedDateDesc(
+            Long classId, Long assignmentId, Long studentId, Boolean examMode);
+
 }
 

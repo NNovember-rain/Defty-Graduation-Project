@@ -37,7 +37,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private String[] publicEndpoints = {
             "/identity/auth/.*",
             "/identity/users/registration",
-
+            "/submission/feedback/accessible/llm",
             ".*/v3/api-docs.*",
             ".*/swagger-ui.html",
             ".*/swagger-ui/.*",
