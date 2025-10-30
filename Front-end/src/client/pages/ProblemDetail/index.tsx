@@ -5,15 +5,15 @@ import Description from "./Description";
 import CodeEditor from "./CodeEditor.tsx";
 import Result from "./Result";
 import SubmissionHistory from "./SubmissionHistory";
+import FeedbackPanel from "./FeedbackPanel";
 import "./ProblemDetail.scss";
 import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
-import { getAssignmentById, getAssignmentByClassId, type IAssignment } from "../../../shared/services/assignmentService";
+import { getAssignmentById, type IAssignment } from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
-import { createSubmission, type SubmissionRequest } from "../../../shared/services/submissionService.ts";
+import { createSubmission, type SubmissionRequest, getLastSubmissionExamMode, type LastSubmissionResponse } from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
-import { getTypeUmls } from "../../../shared/services/typeUmlService.ts";
 
 // KHAI BÁO INTERFACE ĐỂ DÙNG TRONG STATE VÀ LOGIC
 interface IAssignmentClass {
@@ -60,16 +60,6 @@ Bob -> Alice : Hello
 Alice -> Bob : Hi
 @enduml`;
 
-// Định nghĩa các loại UML được hỗ trợ bởi Kroki
-const UML_TYPES = [
-    { key: "plantuml", label: "PlantUML (Default)" },
-    { key: "mermaid", label: "Mermaid" },
-    { key: "graphviz", label: "Graphviz" },
-    { key: "ditaa", label: "Ditaa" },
-];
-
-
-
 const ProblemDetail: React.FC = () => {
     const { message, notification } = useNotification();
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
@@ -77,8 +67,12 @@ const ProblemDetail: React.FC = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
-    // state
-    const [code, setCode] = useState<string>(initialPlantUml);
+    const [searchParams] = useSearchParams();
+    const isTestMode = searchParams.get("mode") === "test";
+    const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
+
+    // state - KHÔNG khởi tạo code mặc định nếu là Test Mode
+    const [code, setCode] = useState<string>("");
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
@@ -93,15 +87,19 @@ const ProblemDetail: React.FC = () => {
     // THÊM STATE ĐỂ LƯU THÔNG TIN MODULE CỦA CLASS
     const [assignmentClassModule, setAssignmentClassModule] = useState<IAssignmentClass | null>(null);
 
-    const [searchParams] = useSearchParams();
-    const isTestMode = searchParams.get("mode") === "test";
-    const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
-
     // NEW STATES cho Type UML và Module
-    const [umlType, setUmlType] = useState<string>("plantuml");
-    const [module, setModule] = useState<string>("default"); // Module được chọn
-    const [typeUmlName, setTypeUmlName] = useState<string>("PlantUML (Default)");
-    const [moduleName, setModuleName] = useState<string>("Default");
+    const [umlType, setUmlType] = useState<string>("");
+    const [module, setModule] = useState<string>(""); // Module được chọn
+    const [typeUmlName, setTypeUmlName] = useState<string>("");
+    
+    // STATE để kiểm tra xem bài đã được chấm điểm chưa (trong test mode)
+    const [isGraded, setIsGraded] = useState<boolean>(false);
+    
+    // STATE để lưu submission data cho FeedbackPanel
+    const [lastSubmission, setLastSubmission] = useState<LastSubmissionResponse | null>(null);
+    
+    // STATE để track việc đã load initial data cho Test Mode chưa
+    const [isInitialDataLoaded, setIsInitialDataLoaded] = useState<boolean>(false);
 
     // === BƯỚC SỬA CHỮA LỖI VÒNG LẶP: DÙNG useCallback ĐỂ ỔN ĐỊNH CÁC HÀM SETTER ===
 
@@ -122,7 +120,7 @@ const ProblemDetail: React.FC = () => {
 
     // 4. Callback cho moduleName
     const handleModuleNameChange = useCallback((name: string) => {
-        setModuleName(name);
+        console.log('Module name changed:', name);
     }, []);
 
     // =========================================================================
@@ -136,14 +134,8 @@ const ProblemDetail: React.FC = () => {
     // Get current user info
     const { user } = useUserStore();
 
-    const handleNewButtonClick = useCallback(() => {
-        console.log('✨ New button clicked in Test Mode!');
-        notification.info(
-            "Hành động Test Mode",
-            "Nút mới đã được kích hoạt!",
-            { duration: 3, placement: 'topRight' }
-        );
-    }, [notification]);
+    // Trigger để refresh FeedbackPanel sau khi submit
+    const [feedbackRefreshTrigger, setFeedbackRefreshTrigger] = useState(0);
 
     useEffect(() => {
         const onResize = () => setIsNarrow(window.innerWidth < 1024);
@@ -159,6 +151,9 @@ const ProblemDetail: React.FC = () => {
         () => JSON.parse(localStorage.getItem("pd-sizes-inner-v") || "[55,45]")
     );
 
+    // Tỉ lệ riêng cho Test Mode
+    const effectiveSizesInner = isTestMode ? [65, 35] : sizesInner;
+
     // helpers
     const getHttpStatus = (e: any): number | undefined =>
         e?.response?.status ?? e?.status ?? e?.data?.status ?? e?.code;
@@ -169,9 +164,6 @@ const ProblemDetail: React.FC = () => {
         setRenderErr(null);
         setSvgMarkup(null);
         setImageUrl(null);
-
-        // Sử dụng type (ví dụ: plantuml, mermaid) trong endpoint của Kroki
-        const krokiUrl = `https://kroki.io/${type}/svg`;
 
         try {
             const res = await fetch("https://kroki.io/plantuml/svg", {
@@ -226,13 +218,14 @@ const ProblemDetail: React.FC = () => {
         setShowHistoryModal(false);
     };
 
-    const handleViewSubmission = (submissionId: number) => {
-        console.log("View submission:", submissionId);
-        setShowHistoryModal(false);
-    };
-
     // Handle submit code (giữ nguyên)
     const handleSubmitCode = async () => {
+        // Kiểm tra nếu đã được chấm điểm thì không cho nộp
+        if (isTestMode && isGraded) {
+            message.warning("Bài tập đã được chấm điểm, không thể nộp lại!");
+            return;
+        }
+        
         setIsSubmitting(true);
         try {
             const submissionData: SubmissionRequest = {
@@ -256,7 +249,7 @@ const ProblemDetail: React.FC = () => {
                 return;
             }
 
-            if (module === "default" || umlType === "plantuml") {
+            if (!module || !umlType) {
                 message.error("Vui lòng chọn Module và UML Type trước khi nộp bài!");
                 return;
             }
@@ -270,6 +263,19 @@ const ProblemDetail: React.FC = () => {
                 `Hệ thống sẽ xử lý và thông báo kết quả cho bạn sớm!`,
                 { duration: 5, placement: 'topRight' }
             );
+
+            // Bước 4: Reload submission data và trigger refresh FeedbackPanel nếu đang ở Test Mode
+            if (isTestMode) {
+                // Reload submission data sau khi submit
+                try {
+                    const newSubmission = await getLastSubmissionExamMode(currentClassId, Number(problemId));
+                    setLastSubmission(newSubmission);
+                } catch (err) {
+                    console.error('Error reloading submission after submit:', err);
+                }
+                
+                setFeedbackRefreshTrigger(prev => prev + 1);
+            }
 
         } catch (error) {
             message.error("Nộp bài thất bại, hãy kiểm tra lại mạng và thử lại!");
@@ -301,7 +307,7 @@ const ProblemDetail: React.FC = () => {
             const asg = (await getAssignmentById(pid)) as IAssignmentWithClasses;
 
             // LOGIC MỚI: TÌM THÔNG TIN MODULE DỰA TRÊN classId
-            const classModuleInfo = asg.assignmentClasses?.find(ac => ac.classId === currentClassId);
+            const classModuleInfo = asg.assignmentClasses?.find((ac: IAssignmentClass) => ac.classId === currentClassId);
 
             // LƯU Ý: setAssignmentClassModule nhận IAssignmentClass, không cần bọc trong object mới
             if (classModuleInfo) {
@@ -352,32 +358,93 @@ const ProblemDetail: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [classId, problemId, fetchAll]); // Đảm bảo fetchAll là dependency
 
-    if (loading) return <div className="problem-detail__loading">Loading…</div>;
+    // Load submitted code in Test Mode - CHẠY SỚM HƠN VÀ SET CODE MẶC ĐỊNH
+    useEffect(() => {
+        const loadSubmittedCode = async () => {
+            if (!assignment?.id) return;
+            
+            if (isTestMode) {
+                // Test Mode: Load code đã nộp
+                try {
+                    const submission: LastSubmissionResponse | null = await getLastSubmissionExamMode(currentClassId, assignment.id);
+                    
+                    // Lưu submission vào state để truyền cho FeedbackPanel
+                    setLastSubmission(submission);
+                    
+                    if (submission?.studentPlantUMLCode) {
+                        setCode(submission.studentPlantUMLCode);
+                        console.log('✅ Loaded submitted code in Test Mode');
+                        
+                        // THÊM: Load module và umlType từ submission nếu có
+                        if (submission.moduleId) {
+                            setModule(String(submission.moduleId));
+                            console.log('✅ Loaded module from submission:', submission.moduleId);
+                        }
+                        if (submission.typeUmlId) {
+                            setUmlType(String(submission.typeUmlId));
+                            console.log('✅ Loaded umlType from submission:', submission.typeUmlId);
+                        }
+                    } else {
+                        // Nếu chưa có submission, set code mặc định
+                        setCode(initialPlantUml);
+                        console.log('⚠️ No submission found, using default code');
+                    }
+                    
+                    // Kiểm tra xem bài đã được chấm điểm chưa
+                    if (submission?.score !== undefined && submission?.score !== null) {
+                        setIsGraded(true);
+                    } else {
+                        setIsGraded(false);
+                    }
+                    
+                    setIsInitialDataLoaded(true);
+                } catch (error) {
+                    console.log('No previous submission found in test mode');
+                    setCode(initialPlantUml);
+                    setIsGraded(false);
+                    setLastSubmission(null);
+                    setIsInitialDataLoaded(true);
+                }
+            } else {
+                // Practice Mode: Dùng code mặc định
+                if (!code) {
+                    setCode(initialPlantUml);
+                }
+                setIsInitialDataLoaded(true);
+            }
+        };
+
+        loadSubmittedCode();
+    }, [isTestMode, assignment?.id, currentClassId]);
+
+    if (loading || !isInitialDataLoaded) return <div className="problem-detail__loading">Loading…</div>;
     if (err) return <div className="problem-detail__error">Error: {err}</div>;
 
     return (
         <div className="problem-detail">
-            {/* Outer split: LEFT (Description) | RIGHT (Code+Result) */}
+            {/* Outer split: LEFT (Description) | MIDDLE (Code+Result) | RIGHT (Feedback - chỉ ở Test Mode) */}
             <Split
                 className={`split-outer ${isNarrow ? "split-vertical" : "split-horizontal"}`}
                 direction={isNarrow ? "vertical" : "horizontal"}
-                sizes={sizesOuter}
-                minSize={isNarrow ? 160 : 260}
+                sizes={isTestMode ? [35, 50, 15] : sizesOuter}
+                minSize={isNarrow ? 160 : 200}
                 gutterSize={8}
                 onDragEnd={(sizes) => {
-                    setSizesOuter(sizes);
-                    localStorage.setItem(isNarrow ? "pd-sizes-outer-v" : "pd-sizes-outer-h", JSON.stringify(sizes));
+                    if (!isTestMode) {
+                        setSizesOuter(sizes);
+                        localStorage.setItem(isNarrow ? "pd-sizes-outer-v" : "pd-sizes-outer-h", JSON.stringify(sizes));
+                    }
                 }}
             >
-                {/* LEFT */}
+                {/* LEFT - Description */}
                 <div className="panel panel--left scrollable">
                     <Description assignment={assignment} isLoading={loading} error={err}
                                  mode={currentMode}
                                  assignmentClassModule={assignmentClassModule}
                                  umlType={umlType}
-                                 onUmlTypeChange={handleUmlTypeChange} // SỬ DỤNG HÀM ĐÃ BỌC
+                                 onUmlTypeChange={handleUmlTypeChange}
                                  module={module}
-                                 onModuleChange={handleModuleChange} // SỬ DỤNG HÀM ĐÃ BỌC
+                                 onModuleChange={handleModuleChange}
                                  classId={currentClassId}
                                  isRenderingOrSubmitting={isRendering || isSubmitting}
                                  onTypeUmlNameChange={handleTypeUmlNameChange}
@@ -385,16 +452,18 @@ const ProblemDetail: React.FC = () => {
                     />
                 </div>
 
-                {/* RIGHT: inner vertical split (Code over Result) */}
+                {/* MIDDLE - Code + Result */}
                 <Split
                     className="split-inner split-vertical"
                     direction="vertical"
-                    sizes={sizesInner}
+                    sizes={effectiveSizesInner}
                     minSize={180}
                     gutterSize={8}
                     onDragEnd={(sizes) => {
-                        setSizesInner(sizes);
-                        localStorage.setItem("pd-sizes-inner-v", JSON.stringify(sizes));
+                        if (!isTestMode) {
+                            setSizesInner(sizes);
+                            localStorage.setItem("pd-sizes-inner-v", JSON.stringify(sizes));
+                        }
                     }}
                 >
                     {/* CODE (TOP) */}
@@ -408,7 +477,8 @@ const ProblemDetail: React.FC = () => {
                             isRendering={isRendering}
                             isSubmitting={isSubmitting}
                             isTestMode={isTestMode}
-                            onNewButtonClick={handleNewButtonClick}
+                            isGraded={isGraded}
+                            readOnly={isTestMode && isGraded}
                         />
                     </div>
 
@@ -417,6 +487,18 @@ const ProblemDetail: React.FC = () => {
                         <Result imageUrl={imageUrl} svgMarkup={svgMarkup} error={renderErr} isRendering={isRendering} />
                     </div>
                 </Split>
+
+                {/* RIGHT - Feedback Panel (CHỈ HIỂN THỊ Ở TEST MODE) */}
+                {isTestMode && (
+                    <div className="panel panel--feedback scrollable">
+                        <FeedbackPanel
+                            classId={currentClassId}
+                            assignmentId={Number(problemId)}
+                            refreshTrigger={feedbackRefreshTrigger}
+                            submissionData={lastSubmission}
+                        />
+                    </div>
+                )}
             </Split>
 
             {/* Submission History Modal */}

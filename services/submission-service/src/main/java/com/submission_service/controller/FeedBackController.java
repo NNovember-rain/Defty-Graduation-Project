@@ -26,7 +26,7 @@ public class FeedBackController {
     IFeedBackAIService feedBackAIService;
     IFeedBackTeacherService feedBackTeacherService;
 
-    @PostMapping("/llm")
+    @PostMapping("/accessible/llm")
     public ApiResponse<Long> addFeedbackAI(@RequestBody FeedbackAiRequest feedbackAiRequest) {
         Long id=feedBackAIService.addFeedbackAI(feedbackAiRequest);
         return ApiResponse.<Long>builder()
