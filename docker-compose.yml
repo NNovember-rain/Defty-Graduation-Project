@@ -65,37 +65,30 @@ services:
       - app-network
 
   bge-m3:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
-    container_name: bge_m3_embedder
-    restart: unless-stopped
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.2
+    container_name: bge-m3
     ports:
       - "8001:80"
+    volumes:
+      - bge_data:/data
+    restart: unless-stopped
     command:
       - --model-id
       - BAAI/bge-m3
-      - --revision
-      - refs/pr/5
-      - --max-concurrent-requests
-      - "16"
-      - --max-batch-tokens
-      - "8192"
-    environment:
-      - TRANSFORMERS_CACHE=/data/models
-      - TZ=Asia/Ho_Chi_Minh
-    volumes:
-      - ./models_cache:/data/models
+      - --port
+      - "80"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:80/health" ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
     networks:
       - app-network
 
 volumes:
   redis_cache:
-  models_cache:
+  bge_data:
 
 networks:
   app-network:

@@ -757,5 +757,8 @@
       "failed": "Lỗi"
     },
     "viewTooltip": "Xem chi tiết bài nộp"
+  },
+  "umlKnowledge": {
+    "title": "Ngữ cảnh UML"
   }
 }

@@ -1,5 +1,6 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
-import { IUMLKnowledgeBase, IUMLChunk, validateUMLDocument, toPayload } from '../models/bge-m3/uml-knowledge-base.model';
+import { v4 as uuidv4 } from "uuid";
+import {QdrantClient} from '@qdrant/js-client-rest';
+import {IUMLChunk, IUMLKnowledgeBase, toPayload, validateUMLDocument} from '../models/qdrant/uml-knowledge-base.model';
 import * as embeddingService from './uml-embedding.service';
 
 export interface SearchFilter {
@@ -55,18 +56,32 @@ export const indexDocument = async (umlDoc: IUMLKnowledgeBase): Promise<void> =>
     const chunks = chunkText(umlDoc.content);
     const vectors = await embeddingService.encodeBatch(chunks);
 
-    const points = chunks.map((chunk, index) => ({
-        id: `${umlDoc.id}_chunk_${index}`,
-        vector: vectors[index],
-        payload: {
-            ...toPayload(umlDoc),
-            chunkIndex: index,
-            chunkText: chunk
-        } as IUMLChunk
-    }));
+    const points = chunks.map((chunk, index) => {
+        const basePayload = toPayload(umlDoc);
 
-    // @ts-ignore
-    await client.upsert(COLLECTION_NAME, { wait: true, points });
+        const chunkPayload: IUMLChunk = {
+            id: uuidv4(),
+            documentId: basePayload.documentId,
+            chunkIndex: index,
+            chunkText: chunk,
+            title: basePayload.title,
+            diagramType: basePayload.diagramType,
+            tags: basePayload.tags,
+            source: basePayload.source,
+            createdAt: basePayload.createdAt
+        };
+
+        return {
+            id: chunkPayload.id,
+            vector: vectors[index],
+            payload: chunkPayload as unknown as Record<string, unknown>
+        };
+    });
+
+    await client.upsert(COLLECTION_NAME, {
+        wait: true,
+        points
+    });
 };
 
 const buildFilter = (filters?: SearchFilter) => {
@@ -109,6 +124,27 @@ export const search = async (query: string, limit: number = 5, filters?: SearchF
     }));
 };
 
+export const documentExists = async (documentId: string): Promise<boolean> => {
+    try {
+        const results = await client.scroll(COLLECTION_NAME, {
+            filter: {
+                must: [
+                    {
+                        key: 'documentId',
+                        match: { value: documentId }
+                    }
+                ]
+            },
+            limit: 1,
+            with_payload: false
+        });
+
+        return results.points.length > 0;
+    } catch (error) {
+        return false;
+    }
+};
+
 export const deleteDocument = async (documentId: string): Promise<void> => {
     await client.delete(COLLECTION_NAME, {
         filter: {
@@ -123,6 +159,39 @@ export const deleteDocument = async (documentId: string): Promise<void> => {
 };
 
 export const updateDocument = async (umlDoc: IUMLKnowledgeBase): Promise<void> => {
+    validateUMLDocument(umlDoc);
+
+    const exists = await documentExists(umlDoc.id);
+    if (!exists) {
+        throw new Error(`Document with id ${umlDoc.id} not found`);
+    }
+
+    const tempDoc = { ...umlDoc, id: `${umlDoc.id}_temp` };
+
+    try {
+        await indexDocument(tempDoc);
+        await deleteDocument(umlDoc.id);
+        await indexDocument(umlDoc);
+        await deleteDocument(tempDoc.id);
+    } catch (error) {
+        try {
+            await deleteDocument(tempDoc.id);
+        } catch (cleanupError) {
+            console.error('Failed to clean up temp document:', cleanupError);
+        }
+
+        throw new Error(`Failed to update document: ${(error as Error).message}`);
+    }
+};
+
+export const updateDocumentSimple = async (umlDoc: IUMLKnowledgeBase): Promise<void> => {
+    validateUMLDocument(umlDoc);
+
+    const exists = await documentExists(umlDoc.id);
+    if (!exists) {
+        throw new Error(`Document with id ${umlDoc.id} not found`);
+    }
+
     await deleteDocument(umlDoc.id);
     await indexDocument(umlDoc);
 };
@@ -130,9 +199,7 @@ export const updateDocument = async (umlDoc: IUMLKnowledgeBase): Promise<void> =
 export const retrieve = async (query: string, topK: number = 3, filters?: SearchFilter): Promise<string> => {
     const results = await search(query, topK, filters);
 
-    const contexts = results.map(r =>
+    return results.map(r =>
         `[${r.payload.title} - ${r.payload.diagramType}]\n${r.payload.chunkText}`
     ).join('\n\n---\n\n');
-
-    return contexts;
 };

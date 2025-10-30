@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-const MODEL_NAME = 'BAAI/bge-m3';
 const DIMENSION = 1024;
 
 let modelEndpoint: string;
@@ -12,15 +11,14 @@ export const initEmbeddingService = (endpoint?: string) => {
 export const encode = async (text: string): Promise<number[]> => {
     try {
         const response = await axios.post(`${modelEndpoint}/embed`, {
-            text: text,
-            model: MODEL_NAME
+            inputs: text
         });
 
-        if (!response.data || !response.data.embedding) {
+        if (!Array.isArray(response.data) || response.data.length === 0) {
             throw new Error('Invalid response from embedding service');
         }
 
-        return response.data.embedding;
+        return response.data[0];
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw new Error(`Embedding service error: ${error.message}`);
@@ -31,16 +29,15 @@ export const encode = async (text: string): Promise<number[]> => {
 
 export const encodeBatch = async (texts: string[]): Promise<number[][]> => {
     try {
-        const response = await axios.post(`${modelEndpoint}/embed/batch`, {
-            texts: texts,
-            model: MODEL_NAME
+        const response = await axios.post(`${modelEndpoint}/embed`, {
+            inputs: texts
         });
 
-        if (!response.data || !response.data.embeddings) {
+        if (!Array.isArray(response.data)) {
             throw new Error('Invalid response from embedding service');
         }
 
-        return response.data.embeddings;
+        return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw new Error(`Embedding service error: ${error.message}`);

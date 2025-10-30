@@ -728,5 +728,8 @@
       "renderFailed": "Failed to render diagram",
       "imageLoadError": "Cannot load diagram image"
     }
+  },
+  "umlKnowledge": {
+    "title": "UML knowledge"
   }
 }

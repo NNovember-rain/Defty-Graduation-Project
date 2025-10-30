@@ -159,7 +159,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
 };
 
 // ============================================================================
-// STEP 2: EXTRACT TO JSON
+// STEP 2: EXTRACT TO JSON (OPTIMIZED - Single API Call)
 // ============================================================================
 
 const step2_extractToJson = async (
@@ -167,7 +167,7 @@ const step2_extractToJson = async (
     domainContext: DomainContext
 ): Promise<{ solution: DiagramJSON; student: DiagramJSON }> => {
     logger.info({
-        message: 'STEP 2: Starting PlantUML to JSON extraction',
+        message: 'STEP 2: Starting PlantUML to JSON extraction (single call)',
         event_type: 'step2_start',
         id: input.id
     });
@@ -182,39 +182,37 @@ const step2_extractToJson = async (
         throw new Error('No active PlantUML extractor prompt found');
     }
 
-    const extractDiagram = async (plantUmlCode: string, label: string): Promise<DiagramJSON> => {
-        const promptContent = prompt.prompts[0].templateString
-            .replace(/\{\{plantUmlCode\}\}/g, plantUmlCode)
-            .replace(/\{\{domainContext\}\}/g, JSON.stringify(domainContext));
+    // Single API call for both diagrams
+    const promptContent = prompt.prompts[0].templateString
+        .replace(/\{\{solutionPlantUmlCode\}\}/g, input.solutionPlantUmlCode)
+        .replace(/\{\{studentPlantUmlCode\}\}/g, input.studentPlantUmlCode)
+        .replace(/\{\{domainContext\}\}/g, JSON.stringify(domainContext));
 
-        const aiResponse = await callAIApi(promptContent, input.id, `step2-${label}`);
-        return parseJsonResponse<DiagramJSON>(aiResponse, input.id, `step2-${label}`);
-    };
-
-    const [solution, student] = await Promise.all([
-        extractDiagram(input.solutionPlantUmlCode, 'solution'),
-        extractDiagram(input.studentPlantUmlCode, 'student')
-    ]);
+    const aiResponse = await callAIApi(promptContent, input.id, 'step2-extract');
+    const result = parseJsonResponse<{
+        solution: DiagramJSON;
+        student: DiagramJSON;
+    }>(aiResponse, input.id, 'step2');
 
     logger.info({
         message: 'STEP 2: Completed',
         event_type: 'step2_complete',
         id: input.id,
         solution: {
-            actors: solution.actors.length,
-            usecases: solution.usecases.length
+            actors: result.solution.actors.length,
+            usecases: result.solution.usecases.length
         },
         student: {
-            actors: student.actors.length,
-            usecases: student.usecases.length
+            actors: result.student.actors.length,
+            usecases: result.student.usecases.length
         }
     });
 
-    return { solution, student };
+    return result;
 };
 
 // ============================================================================
-// STEP 3: SEMANTIC NORMALIZATION
+// STEP 3: SEMANTIC NORMALIZATION (OPTIMIZED - Single API Call)
 // ============================================================================
 
 const step3_semanticNormalization = async (
@@ -222,7 +220,7 @@ const step3_semanticNormalization = async (
     diagrams: { solution: DiagramJSON; student: DiagramJSON }
 ): Promise<{ solution: NormalizedDiagram; student: NormalizedDiagram }> => {
     logger.info({
-        message: 'STEP 3: Starting semantic normalization',
+        message: 'STEP 3: Starting semantic normalization (single call)',
         event_type: 'step3_start',
         id: input.id
     });
@@ -237,58 +235,97 @@ const step3_semanticNormalization = async (
         throw new Error('No active semantic normalizer prompt found');
     }
 
-    const normalizeDiagram = async (diagram: DiagramJSON, label: string): Promise<NormalizedDiagram> => {
-        const elementsToNormalize = {
-            actors: diagram.actors.map(a => ({ id: a.id, name: a.name })),
-            usecases: diagram.usecases.map(uc => ({ id: uc.id, name: uc.name }))
-        };
-
-        const promptContent = prompt.prompts[0].templateString
-            .replace(/\{\{elements\}\}/g, JSON.stringify(elementsToNormalize));
-
-        const aiResponse = await callAIApi(promptContent, input.id, `step3-${label}`);
-        const normalized = parseJsonResponse<{
-            actors: Array<{ id: string; canonical: string; similarityScore: number }>;
-            usecases: Array<{ id: string; canonical: string; similarityScore: number }>;
-        }>(aiResponse, input.id, `step3-${label}`);
-
-        // Merge normalized data with original
-        const normalizedActors = diagram.actors.map(actor => {
-            const norm = normalized.actors.find(n => n.id === actor.id);
-            return {
-                ...actor,
-                normalized: {
-                    original: actor.name,
-                    canonical: norm?.canonical || actor.name,
-                    similarityScore: norm?.similarityScore || 1.0
-                }
-            };
-        });
-
-        const normalizedUsecases = diagram.usecases.map(uc => {
-            const norm = normalized.usecases.find(n => n.id === uc.id);
-            return {
-                ...uc,
-                normalized: {
-                    original: uc.name,
-                    canonical: norm?.canonical || uc.name,
-                    similarityScore: norm?.similarityScore || 1.0
-                }
-            };
-        });
-
-        return {
-            actors: normalizedActors,
-            usecases: normalizedUsecases,
-            relationships: diagram.relationships,
-            boundary: diagram.boundary
-        };
+    const elementsToNormalize = {
+        solution: {
+            actors: diagrams.solution.actors.map(a => ({ id: a.id, name: a.name })),
+            usecases: diagrams.solution.usecases.map(uc => ({ id: uc.id, name: uc.name }))
+        },
+        student: {
+            actors: diagrams.student.actors.map(a => ({ id: a.id, name: a.name })),
+            usecases: diagrams.student.usecases.map(uc => ({ id: uc.id, name: uc.name }))
+        }
     };
 
-    const [solution, student] = await Promise.all([
-        normalizeDiagram(diagrams.solution, 'solution'),
-        normalizeDiagram(diagrams.student, 'student')
-    ]);
+    // Single API call for both diagrams
+    const promptContent = prompt.prompts[0].templateString
+        .replace(/\{\{elements\}\}/g, JSON.stringify(elementsToNormalize));
+
+    const aiResponse = await callAIApi(promptContent, input.id, 'step3-normalize');
+    const normalized = parseJsonResponse<{
+        solution: {
+            actors: Array<{ id: string; canonical: string; similarityScore: number }>;
+            usecases: Array<{ id: string; canonical: string; similarityScore: number }>;
+        };
+        student: {
+            actors: Array<{ id: string; canonical: string; similarityScore: number }>;
+            usecases: Array<{ id: string; canonical: string; similarityScore: number }>;
+        };
+    }>(aiResponse, input.id, 'step3');
+
+    // Merge normalized data with original - Solution
+    const normalizedSolutionActors = diagrams.solution.actors.map(actor => {
+        const norm = normalized.solution.actors.find(n => n.id === actor.id);
+        return {
+            ...actor,
+            normalized: {
+                original: actor.name,
+                canonical: norm?.canonical || actor.name,
+                similarityScore: norm?.similarityScore || 1.0
+            }
+        };
+    });
+
+    const normalizedSolutionUsecases = diagrams.solution.usecases.map(uc => {
+        const norm = normalized.solution.usecases.find(n => n.id === uc.id);
+        return {
+            ...uc,
+            normalized: {
+                original: uc.name,
+                canonical: norm?.canonical || uc.name,
+                similarityScore: norm?.similarityScore || 1.0
+            }
+        };
+    });
+
+    // Merge normalized data with original - Student
+    const normalizedStudentActors = diagrams.student.actors.map(actor => {
+        const norm = normalized.student.actors.find(n => n.id === actor.id);
+        return {
+            ...actor,
+            normalized: {
+                original: actor.name,
+                canonical: norm?.canonical || actor.name,
+                similarityScore: norm?.similarityScore || 1.0
+            }
+        };
+    });
+
+    const normalizedStudentUsecases = diagrams.student.usecases.map(uc => {
+        const norm = normalized.student.usecases.find(n => n.id === uc.id);
+        return {
+            ...uc,
+            normalized: {
+                original: uc.name,
+                canonical: norm?.canonical || uc.name,
+                similarityScore: norm?.similarityScore || 1.0
+            }
+        };
+    });
+
+    const result = {
+        solution: {
+            actors: normalizedSolutionActors,
+            usecases: normalizedSolutionUsecases,
+            relationships: diagrams.solution.relationships,
+            boundary: diagrams.solution.boundary
+        },
+        student: {
+            actors: normalizedStudentActors,
+            usecases: normalizedStudentUsecases,
+            relationships: diagrams.student.relationships,
+            boundary: diagrams.student.boundary
+        }
+    };
 
     logger.info({
         message: 'STEP 3: Completed',
@@ -296,18 +333,31 @@ const step3_semanticNormalization = async (
         id: input.id
     });
 
-    return { solution, student };
+    return result;
 };
 
 // ============================================================================
-// STEP 4: STRUCTURE COMPARISON
+// STEP 4: STRUCTURE COMPARISON (ENHANCED with Generalization Analysis)
 // ============================================================================
+
+interface MissingActorAnalysis {
+    actor: Actor;
+    isAbstractParent: boolean;
+    hasDirectUseCases: boolean;
+    childrenIds: string[];
+    childrenInStudent: string[];
+    severity: 'CRITICAL' | 'MINOR';
+}
+
+interface EnhancedComparisonResult extends ComparisonResult {
+    missingActorsAnalysis: MissingActorAnalysis[];
+}
 
 const step4_structureComparison = (
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram }
-): ComparisonResult => {
+): EnhancedComparisonResult => {
     logger.info({
-        message: 'STEP 4: Starting structure comparison',
+        message: 'STEP 4: Starting structure comparison with generalization analysis',
         event_type: 'step4_start'
     });
 
@@ -337,6 +387,57 @@ const step4_structureComparison = (
     }
 
     extraActors.push(...Array.from(studentActorMap.values()));
+
+    // ENHANCED: Analyze missing actors for abstract parent pattern
+    const missingActorsAnalysis: MissingActorAnalysis[] = missingActors.map(actor => {
+        // Check if this actor is a parent in generalization
+        const generalizationRelations = solution.relationships.generalization
+            .filter(gen => gen.type === 'actor' && gen.parentId === actor.id);
+
+        const isAbstractParent = generalizationRelations.length > 0;
+        const childrenIds = generalizationRelations.map(gen => gen.childId);
+
+        // Check if actor has direct use case relationships
+        const hasDirectUseCases = solution.relationships.actorToUC
+            .some(rel => rel.actorId === actor.id);
+
+        // Check which children exist in student diagram
+        const childrenInStudent: string[] = [];
+        if (isAbstractParent) {
+            for (const childId of childrenIds) {
+                const childActor = solution.actors.find(a => a.id === childId);
+                if (childActor) {
+                    const childCanonical = childActor.normalized.canonical.toLowerCase();
+                    const existsInStudent = student.actors.some(
+                        sa => sa.normalized.canonical.toLowerCase() === childCanonical
+                    );
+                    if (existsInStudent) {
+                        childrenInStudent.push(childId);
+                    }
+                }
+            }
+        }
+
+        // Determine severity
+        let severity: 'CRITICAL' | 'MINOR' = 'CRITICAL';
+
+        if (isAbstractParent && !hasDirectUseCases) {
+            // Pure abstract parent without direct use cases
+            if (childrenInStudent.length === childrenIds.length) {
+                // All children exist in student - just missing abstraction
+                severity = 'MINOR';
+            }
+        }
+
+        return {
+            actor,
+            isAbstractParent,
+            hasDirectUseCases,
+            childrenIds,
+            childrenInStudent,
+            severity
+        };
+    });
 
     // Compare usecases
     const matchedUsecases: ComparisonResult['usecases']['matched'] = [];
@@ -407,16 +508,22 @@ const step4_structureComparison = (
         )
     };
 
-    const result: ComparisonResult = {
+    const result: EnhancedComparisonResult = {
         actors: { matched: matchedActors, missing: missingActors, extra: extraActors },
         usecases: { matched: matchedUsecases, missing: missingUsecases, extra: extraUsecases },
-        relationships
+        relationships,
+        missingActorsAnalysis
     };
 
     logger.info({
         message: 'STEP 4: Completed',
         event_type: 'step4_complete',
-        actors: { matched: matchedActors.length, missing: missingActors.length, extra: extraActors.length },
+        actors: {
+            matched: matchedActors.length,
+            missing: missingActors.length,
+            extra: extraActors.length,
+            abstractParents: missingActorsAnalysis.filter(a => a.isAbstractParent).length
+        },
         usecases: { matched: matchedUsecases.length, missing: missingUsecases.length, extra: extraUsecases.length }
     });
 
@@ -424,17 +531,17 @@ const step4_structureComparison = (
 };
 
 // ============================================================================
-// STEP 5: ERROR CLASSIFICATION
+// STEP 5: ERROR CLASSIFICATION (ENHANCED)
 // ============================================================================
 
 const step5_errorClassification = async (
     input: UmlInput,
-    comparison: ComparisonResult,
+    comparison: EnhancedComparisonResult,
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram },
     domainContext: DomainContext
 ): Promise<DetectedError[]> => {
     logger.info({
-        message: 'STEP 5: Starting error classification',
+        message: 'STEP 5: Starting error classification with generalization analysis',
         event_type: 'step5_start',
         id: input.id
     });
@@ -451,7 +558,12 @@ const step5_errorClassification = async (
 
     const classificationInput = {
         domainContext,
-        comparison,
+        comparison: {
+            actors: comparison.actors,
+            usecases: comparison.usecases,
+            relationships: comparison.relationships,
+            missingActorsAnalysis: comparison.missingActorsAnalysis
+        },
         studentDiagram: normalized.student,
         solutionDiagram: normalized.solution
     };
@@ -468,18 +580,19 @@ const step5_errorClassification = async (
         id: input.id,
         errorsDetected: errors.errors.length,
         criticalCount: errors.errors.filter(e => e.severity === 'CRITICAL').length,
-        majorCount: errors.errors.filter(e => e.severity === 'MAJOR').length
+        majorCount: errors.errors.filter(e => e.severity === 'MAJOR').length,
+        minorCount: errors.errors.filter(e => e.severity === 'MINOR').length
     });
 
     return errors.errors;
 };
 
 // ============================================================================
-// STEP 6: CALCULATE REFERENCE SCORE
+// STEP 6: CALCULATE REFERENCE SCORE (UNCHANGED - Let AI decide penalty)
 // ============================================================================
 
 const step6_calculateScore = (
-    comparison: ComparisonResult,
+    comparison: EnhancedComparisonResult,
     errors: DetectedError[]
 ): ReferenceScore => {
     logger.info({
@@ -526,7 +639,7 @@ const step6_calculateScore = (
     // Calculate total before penalties
     let total = actorsScore + usecasesScore + relationshipsScore + presentationScore;
 
-    // Apply error penalties
+    // Apply error penalties (AI decides penalty including for abstract parents)
     const totalPenalty = errors.reduce((sum, err) => sum + err.penalty, 0);
     total = Math.max(0, total - totalPenalty);
 
