@@ -59,7 +59,8 @@ const ClassDetailPage: React.FC = () => {
     const [classData, setClassData] = useState<IClass | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<string>('stream');
+    // const [activeTab, setActiveTab] = useState<string>('stream');
+    const [activeTab, setActiveTab] = useState<string>('classwork');
 
     // Breadcrumb items
     const breadcrumbItems: BreadcrumbItem[] = [
@@ -382,8 +383,8 @@ const ClassDetailPage: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'stream':
-                return renderStreamTab();
+            // case 'stream':
+            //     return renderStreamTab();
             case 'classwork':
                 return <AssignmentTab classId={classData.id} />;
             case 'people':
@@ -442,7 +443,8 @@ const ClassDetailPage: React.FC = () => {
 
                 {/* Navigation Tabs */}
                 <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '1rem' }}>
-                    {['stream', 'classwork', 'people'].map(tab => (
+                    {/* {['stream', 'classwork', 'people'].map(tab => ( */}
+                    {['classwork', 'people'].map(tab => (
                         <button
                             key={tab}
                             style={{

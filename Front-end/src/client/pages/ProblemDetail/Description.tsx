@@ -2,19 +2,13 @@ import React, {useEffect, useState, useMemo} from "react";
 import {MdOutlineDescription} from "react-icons/md";
 import {useTranslation} from "react-i18next";
 import DOMPurify from "dompurify";
-import {getAssignmentByClassId, getAssignmentById, type IAssignment} from "../../../shared/services/assignmentService";
+import {getAssignmentByClassId, type IAssignment} from "../../../shared/services/assignmentService";
 import {Select, Space} from "antd";
 import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {getTypeUmls, type ITypeUml} from "../../../shared/services/typeUmlService.ts";
 import "./Description.scss";
 
-// Định nghĩa các loại UML được hỗ trợ bởi Kroki
-const UML_TYPES = [
-    { key: "plantuml", label: "PlantUML (Default)" },
-    { key: "mermaid", label: "Mermaid" },
-    { key: "graphviz", label: "Graphviz" },
-    { key: "ditaa", label: "Ditaa" },
-];
+// ... (Các interfaces và hằng số UML_TYPES, MODULE_OPTIONS giữ nguyên)
 
 export type UmlTypeOption = {
     value: string;
@@ -26,6 +20,11 @@ interface IModuleResponse {
     id: number;
     moduleName: string;
     moduleDescription: string;
+}
+
+interface ITypeUmlResponse {
+    id: number;
+    name: string;
 }
 
 interface IAssignmentClassModule {
@@ -43,6 +42,7 @@ interface IConsolidatedModuleResponse extends IModuleResponse {
     typeUmlIds: Set<number>;
 }
 
+// Thêm prop cho UML Type Name được gán trong mode test
 type Props = {
     assignment: IAssignment | null;
     isLoading?: boolean;
@@ -71,14 +71,17 @@ const Description: React.FC<Props> = ({
                                           classId,
                                           mode,
                                           onTypeUmlNameChange,
-                                          onModuleNameChange
+                                          onModuleNameChange,
+                                          module: propModule
                                       }) => {
     const { t } = useTranslation();
     const { message } = useNotification();
     const [typeUMLs, setTypeUMLs] = useState<UmlTypeOption[]>([]);
-    const [modules, setModules] = useState<IModuleResponse[]>([]);
-    const [module, setModule] = useState<string>('');
+    const [modules, setModules] = useState<IConsolidatedModuleResponse[]>([]);
+    const [localModule, setLocalModule] = useState<string>(propModule);
+    const [assignedUmlType, setAssignedUmlType] = useState<ITypeUmlResponse | null>(null);
 
+    // Fetch Type UMLs - CHỈ GỌI 1 LẦN KHI MOUNT
     useEffect(() => {
         async function fetchTypeUMLs() {
             try {
@@ -91,36 +94,47 @@ const Description: React.FC<Props> = ({
                     }))
                     : [];
                 setTypeUMLs(typeUmlsArray);
-                const initialType = typeUmlsArray.find(t => t.value === umlType);
-                if (initialType) {
-                    onTypeUmlNameChange(initialType.label);
-                }
             } catch (error) {
                 console.error('Error fetching Type UMLs:', error);
                 message.error(t('common.errorFetchingData'));
             }
         }
         fetchTypeUMLs();
-    }, [t, onTypeUmlNameChange]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // CHỈ GỌI 1 LẦN KHI MOUNT
 
 
+    /**
+     * Logic chính: Fetch Modules và trích xuất Type UML được gán (mode test).
+     */
     useEffect(() => {
         const fetchModules = async (assignmentId: number, classId: number, currentMode: 'practice' | 'test') => {
             try {
                 const data: any = await getAssignmentByClassId(classId, assignmentId);
 
-                console.log('Fetched Assignment Data for Mode:', currentMode, data);
-
                 let modulesToUse: IConsolidatedModuleResponse[] = [];
-
+                let defaultUmlType: ITypeUmlResponse | null = null;
                 const consolidatedModuleMap = new Map<number, IConsolidatedModuleResponse>();
                 const assignmentClasses = data.assignmentClasses || [];
 
+                // Xác định điều kiện lọc dựa trên mode
+                const filterCondition = currentMode === 'test' ? true : false;
+
+                // --- SỬA ĐỔI LỚP LỌC MODULE CHÍNH ---
+                const relevantAssignmentClasses = assignmentClasses.filter(
+                    (ac: any) =>
+                        ac.classId === classId &&
+                        ac.checkedTest === filterCondition &&
+                        // LỌC CHỈ NHỮNG GÁN NÀO CÓ assignmentId KHỚP VỚI BÀI TẬP HIỆN TẠI
+                        ac.assignmentId === assignmentId
+                );
+                // --- KẾT THÚC SỬA ĐỔI LỚP LỌC MODULE CHÍNH ---
+
                 if (currentMode === 'practice') {
-                    const filteredClasses = assignmentClasses.filter((ac: any) => ac.checkedTest === false);
+                    // Logic Practice: Lấy tất cả unique modules từ các lần gán practice
                     const uniqueModulesMap = new Map<number, IModuleResponse>();
 
-                    filteredClasses.forEach((ac: any) => {
+                    relevantAssignmentClasses.forEach((ac: any) => {
                         (ac.moduleResponses || []).forEach((mod: IModuleResponse) => {
                             const moduleId = mod.id;
                             if (!uniqueModulesMap.has(moduleId)) {
@@ -130,36 +144,32 @@ const Description: React.FC<Props> = ({
                     });
                     modulesToUse = Array.from(uniqueModulesMap.values()).map(m => ({
                         ...m,
-                        typeUmlResponses: new Map<number, UmlTypeOption>()
+                        typeUmlIds: new Set<number>()
                     }));
 
-                } else {
+                } else { // mode === 'test'
 
-                    const filteredClasses = assignmentClasses.filter((ac: any) => ac.checkedTest);
+                    // Logic Test: Chỉ lấy lần gán TEST (chỉ có 1 nếu logic gán là đúng)
+                    const testAssignmentClass = relevantAssignmentClasses[0];
 
-                    filteredClasses.forEach((ac: any) => {
-                        (ac.moduleResponses || []).forEach((mod: IModuleResponse) => {
+                    if (testAssignmentClass) {
+                        // 1. Trích xuất Type UML được gán
+                        defaultUmlType = testAssignmentClass.typeUmlResponse || null;
+
+                        // 2. Trích xuất modules (thường chỉ có 1 module trong mode test)
+                        (testAssignmentClass.moduleResponses || []).forEach((mod: IModuleResponse) => {
                             const moduleId = mod.id;
-                            const typeUmlId = ac.typeUmlId;
-
-                            if (!consolidatedModuleMap.has(moduleId)) {
-                                consolidatedModuleMap.set(moduleId, {
-                                    ...mod,
-                                    typeUmlIds: new Set<number>(),
-                                } as IConsolidatedModuleResponse);
-                            }
-
-                            const consolidatedModule = consolidatedModuleMap.get(moduleId)!;
-                            if (typeUmlId !== null && typeUmlId !== undefined) {
-                                consolidatedModule.typeUmlIds.add(typeUmlId);
-                            }
+                            consolidatedModuleMap.set(moduleId, {
+                                ...mod,
+                                typeUmlIds: new Set<number>(),
+                            } as IConsolidatedModuleResponse);
                         });
-                    });
-
+                    }
                     modulesToUse = Array.from(consolidatedModuleMap.values());
                 }
 
-                setModules(modulesToUse as IConsolidatedModuleResponse[]);
+                setModules(modulesToUse);
+                setAssignedUmlType(defaultUmlType);
 
             } catch (error) {
                 console.error('Error fetching Modules:', error);
@@ -167,21 +177,60 @@ const Description: React.FC<Props> = ({
         };
 
         if (assignment?.id && classId !== null && classId !== undefined) {
-            fetchModules(assignment.id, classId, mode);
+            // Đảm bảo assignment.id là số
+            fetchModules(Number(assignment.id), classId, mode);
         }
 
     }, [assignment?.id, classId, mode, t]);
 
-    useEffect(() => {
-        if (modules.length > 0 && !module) {
-            const firstModuleId = String(modules[0].id);
-            onModuleChange(firstModuleId);
-            onModuleNameChange(modules[0].moduleName);
-        }
-    }, [modules, module, onModuleChange, onModuleNameChange]);
 
-    const handleModuleChange = (value: string) => { // Sửa IModuleResponse thành string
-        setModule(value);
+    /**
+     * Khởi tạo Module và UML Type mặc định.
+     */
+    useEffect(() => {
+        // --- 1. Khởi tạo/Đồng bộ Module ---
+        if (modules.length > 0) {
+            const firstModuleId = String(modules[0].id);
+            let selectedModuleId = propModule || firstModuleId;
+            let moduleChanged = false;
+
+            // Kiểm tra xem module hiện tại (từ prop hoặc local) có hợp lệ không
+            const isValidModule = modules.some(m => String(m.id) === selectedModuleId);
+            if (!isValidModule) {
+                selectedModuleId = firstModuleId;
+                moduleChanged = true;
+            }
+
+            // Chỉ cập nhật nếu localModule khác giá trị mới hoặc module cần thay đổi
+            if (localModule !== selectedModuleId || moduleChanged) {
+                setLocalModule(selectedModuleId);
+                onModuleChange(selectedModuleId);
+                const selectedModule = modules.find(m => String(m.id) === selectedModuleId);
+                if (selectedModule) {
+                    onModuleNameChange(selectedModule.moduleName);
+                }
+            }
+        } else if (localModule) {
+            // Reset localModule nếu không có modules
+            setLocalModule('');
+            onModuleChange('');
+            onModuleNameChange('');
+        }
+
+        // --- 2. Khởi tạo UML Type mặc định trong mode test ---
+        if (mode === 'test' && assignedUmlType) {
+            // Tự động set UML Type được gán nếu nó khác với UML Type hiện tại
+            if (umlType !== String(assignedUmlType.id)) {
+                onUmlTypeChange(String(assignedUmlType.id));
+                onTypeUmlNameChange(assignedUmlType.name);
+            }
+        }
+
+    }, [modules, propModule, localModule, onModuleChange, onModuleNameChange, mode, assignedUmlType, umlType, onUmlTypeChange, onTypeUmlNameChange]);
+
+
+    const handleModuleChange = (value: string) => {
+        setLocalModule(value);
         onModuleChange(value);
         const selectedModule = modules.find(m => String(m.id) === value);
         if (selectedModule) {
@@ -191,16 +240,9 @@ const Description: React.FC<Props> = ({
 
     const handleUmlTypeChange = (value: string) => {
         onUmlTypeChange(value);
-        // Gọi callback để set typeUmlName
         const selectedType = typeUMLs.find(t => t.value === value);
         if (selectedType) {
             onTypeUmlNameChange(selectedType.label);
-        } else {
-            // Fallback to UML_TYPES
-            const fallback = UML_TYPES.find((t: any) => t.key === value);
-            if (fallback) {
-                onTypeUmlNameChange(fallback.label);
-            }
         }
     };
 
@@ -225,10 +267,10 @@ const Description: React.FC<Props> = ({
     ];
 
     const currentModuleData = useMemo(() => {
-        const selectedModuleId = module;
+        const selectedModuleId = localModule;
         if (!selectedModuleId) return null;
         return modules.find(m => String(m.id) === selectedModuleId);
-    }, [module, modules]);
+    }, [localModule, modules]);
 
     const moduleDescriptionHtml = currentModuleData?.moduleDescription
         ? DOMPurify.sanitize(currentModuleData.moduleDescription)
@@ -280,6 +322,9 @@ const Description: React.FC<Props> = ({
         backgroundColor: '#262626',
     }
 
+    const showModuleSelect = mode === 'practice';
+    const shouldShowModuleDescription = (mode === 'test' || mode === 'practice') && moduleDescriptionHtml;
+
     return (
         <div className="description">
             <div className="description__header" style={headerStyle}>
@@ -295,20 +340,23 @@ const Description: React.FC<Props> = ({
                             style={{ width: 180 }}
                             onChange={handleUmlTypeChange}
                             options={selectUmlTypeOptions}
-                            disabled={isDisabled}
+                            disabled={isDisabled || (mode === 'test' && assignedUmlType !== null)} // Disable nếu ở mode test và đã có UML Type được gán
                             size="middle"
                             placeholder={t('problemDetail.description.selectUmlType', { defaultValue: 'Chọn UML Type' })}
                         />
 
-                        <Select
-                            value={module || undefined}
-                            style={{ width: 180 }}
-                            onChange={handleModuleChange}
-                            options={selectModuleOptions}
-                            disabled={isDisabled}
-                            size="middle"
-                            placeholder={t('problemDetail.description.selectModule', { defaultValue: 'Chọn Module' })}
-                        />
+                        {/* HIỂN THỊ SELECT MODULE CHỈ Ở MODE PRACTICE */}
+                        {showModuleSelect && (
+                            <Select
+                                value={localModule || undefined}
+                                style={{ width: 180 }}
+                                onChange={handleModuleChange}
+                                options={selectModuleOptions}
+                                disabled={isDisabled}
+                                size="middle"
+                                placeholder={t('problemDetail.description.selectModule', { defaultValue: 'Chọn Module' })}
+                            />
+                        )}
                     </Space>
                 </div>
             </div>
@@ -339,7 +387,8 @@ const Description: React.FC<Props> = ({
                         </div>
                     )}
 
-                    {moduleDescriptionHtml && (
+                    {/* HIỂN THỊ MODULE DESCRIPTION */}
+                    {shouldShowModuleDescription && (
                         <>
                             <h3 style={{ color: '#e0e0e0', marginTop: '16px' }}>
                                 {t('problemDetail.description.module_description_title', { defaultValue: 'Module' })} - {currentModuleData?.moduleName}

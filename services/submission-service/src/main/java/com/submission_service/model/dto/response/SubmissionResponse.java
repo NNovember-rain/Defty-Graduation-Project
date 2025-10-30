@@ -1,5 +1,6 @@
 package com.submission_service.model.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.entity.FeedbackTeacher;
 import lombok.AllArgsConstructor;
@@ -16,11 +17,11 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubmissionResponse {
     Long id;
     Long studentId;
     Long assignmentId;
-    Long classId;
     Long moduleId;
     String moduleName;
     String studentName;
@@ -28,10 +29,12 @@ public class SubmissionResponse {
     String classCode;
     String assignmentTitle;
     String descriptionAssignment;
+    String descriptionModule;
     String typeUml;
     String studentPlantUMLCode;
     String solutionCode;
     Double score;
     LocalDateTime createdDate;
     boolean isfeedbackTeacher;
+    SubmissionStatus submissionStatus;
 }

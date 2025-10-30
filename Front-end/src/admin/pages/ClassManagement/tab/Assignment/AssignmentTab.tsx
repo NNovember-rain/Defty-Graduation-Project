@@ -282,6 +282,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                             ))}
                                         </Space>
                                     )}
+                                    {a.type !== 'TEST' && (moduleNames.length > 0 || umlTypeName) && (
+                                        <Space size={[0, 8]} wrap style={{ marginBottom: 8, marginTop: 4 }}>
+                                            {moduleNames.map((name, index) => (
+                                                <Tag key={index} color={umlTagColor}>
+                                                    {t("classDetail.module") || "Module"}: {name}
+                                                </Tag>
+                                            ))}
+                                        </Space>
+                                    )}
 
                                     <Space size={16}>
                                         {/* Hiển thị loại bài tập */}
@@ -498,7 +507,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             onChange={onChangePage}
                             onShowSizeChange={onChangePage}
                             showTotal={(total) =>
-                                `${t("common.total") || "Tổng"} ${total} ${total > 1 ? t("common.items") || "mục" : t("common.item") || "mục"}`
+                                `${t("common.all") || "Tổng"} ${total} ${total > 1 ? t("common.items") || "mục" : t("common.item") || "mục"}`
                             }
                         />
                     )}

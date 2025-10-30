@@ -147,7 +147,8 @@
     "submit": "Submit",
     "noData": "No data available",
     "add": "Add",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "items": "items"
   },
 
   "managementTemplate": {
