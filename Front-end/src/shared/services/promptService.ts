@@ -10,7 +10,7 @@ export interface IPrompt {
     name: string;
     description?: string;
     templateString: string;
-    umlType?: 'use-case' | 'class';
+    type?: 'use-case' | 'class';
     version: string;
     createdBy?: number;
     createdAt?: string;
@@ -22,7 +22,7 @@ export interface GetPromptsOptions {
     page?: number;
     limit?: number;
     name?: string;
-    umlType?: string;
+    type?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
 }
@@ -44,7 +44,7 @@ export const getPrompts = async (options: GetPromptsOptions = {}): Promise<GetPr
         page: options.page,
         limit: options.limit,
         name: options.name,
-        umlType: options.umlType,
+        type: options.type,
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
     };

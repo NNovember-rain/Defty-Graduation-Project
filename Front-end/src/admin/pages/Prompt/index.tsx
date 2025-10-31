@@ -110,7 +110,7 @@ const Prompt: React.FC = () => {
                 sortBy: currentSortColumn || undefined,
                 sortOrder: currentSortOrder || undefined,
                 name: currentFilters.name || undefined,
-                umlType: currentFilters.umlType || undefined
+                type: currentFilters.type || undefined
             };
 
             const result = await getPrompts(options);
@@ -122,7 +122,7 @@ const Prompt: React.FC = () => {
             setError(t('common.errorFetchingData'));
             setLoading(false);
         }
-    }, [currentPage, entriesPerPage, currentSortColumn, currentSortOrder, t, setLoading, setError, currentFilters.name, currentFilters.umlType, setPrompts, setTotalPrompts]);
+    }, [currentPage, entriesPerPage, currentSortColumn, currentSortOrder, t, setLoading, setError, currentFilters.name, currentFilters.type, setPrompts, setTotalPrompts]);
 
     // Effect để gọi fetchData và updateUrl khi các state liên quan thay đổi
     useEffect(() => {
@@ -133,7 +133,7 @@ const Prompt: React.FC = () => {
     const dataTableColumns = React.useMemo(() => [
         { key: 'name', label: t('promptPage.dataTableColumns.name'), sortable: true },
         { key: 'description', label: t('promptPage.dataTableColumns.description'), sortable: true },
-        { key: 'umlType', label: t('promptPage.dataTableColumns.type'), sortable: true },
+        { key: 'type', label: t('promptPage.dataTableColumns.type'), sortable: true },
         { key: 'templateString', label: t('promptPage.dataTableColumns.templateString'), sortable: true },
         { key: 'version', label: t('promptPage.dataTableColumns.version'), sortable: true },
         {
@@ -153,15 +153,15 @@ const Prompt: React.FC = () => {
     const searchFields: SearchField[] = React.useMemo(() => [
         { key: 'name', label: t('promptPage.searchFields.nameLabel'), type: 'text', placeholder: t('promptPage.searchFields.namePlaceholder'), gridSpan: 1 },
         {
-            key: 'umlType',
+            key: 'type',
             label: t('promptPage.dataTableColumns.type'),
             type: 'select',
             placeholder: t('promptPage.searchFields.typePlaceholder'),
             gridSpan: 1,
             options: [
                 {value: '', label: t('promptPage.searchFields.typeAll')},
-                {value: 'use-case', label: t('promptPage.umlTypes.useCase')},
-                {value: 'class', label: t('promptPage.umlTypes.class')}
+                {value: 'use-case', label: t('promptPage.types.useCase')},
+                {value: 'class', label: t('promptPage.types.class')}
             ]
         }
     ], [t]);

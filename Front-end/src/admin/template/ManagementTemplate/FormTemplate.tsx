@@ -364,7 +364,7 @@ const FormTemplate = <T extends Record<string, any>>({
 
                                     {field.type === 'duallistbox' && (
                                         <DualListBox
-                                            dataSource={(field.options || []).map((opt) => ({
+                                            dataSource={(field.options || []).map((opt: any) => ({
                                                 key: opt.value.toString(),
                                                 name: opt.name,
                                                 description: opt.description,

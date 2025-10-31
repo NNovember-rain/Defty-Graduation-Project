@@ -4,7 +4,7 @@ export interface IPrompt extends Document {
     name: string;
     description?: string;
     templateString: string;
-    umlType?: 'use-case' | 'class';
+    type: string;
     version: string;
     createdBy?: number;
     isDeleted: boolean;
@@ -15,7 +15,7 @@ const PromptSchema = new Schema<IPrompt>({
     name: { type: String, required: true, unique: true, trim: true },
     description: { type: String, trim: true },
     templateString: { type: String, required: true },
-    umlType: { type: String, enum: ['use-case', 'class'] },
+    type: { type: String, required: true, trim: true },
     version: { type: String, required: true, default: '1.0' },
     createdBy: { type: Number },
     isDeleted: { type: Boolean, default: false },

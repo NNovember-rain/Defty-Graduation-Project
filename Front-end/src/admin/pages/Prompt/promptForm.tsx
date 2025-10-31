@@ -23,12 +23,67 @@ const PromptForm: React.FC = () => {
             gridSpan: 12,
         },
         {
-            key: 'umlType',
+            key: 'type',
             labelKey: 'promptPage.dataTableColumns.type',
             type: 'select',
             options: [
-                { value: 'use-case', label: 'use-case' },
-                { value: 'class', label: 'class' },
+                // ========================================
+                // USE CASE DIAGRAM PROMPTS
+                // ========================================
+                {
+                    value: 'usecase-domain-extractor',
+                    label: '[Use Case] Domain Context Extractor',
+                    description: 'Extract keywords and requirements from Use Case assignment'
+                },
+                {
+                    value: 'usecase-plantuml-extractor',
+                    label: '[Use Case] PlantUML to JSON Parser',
+                    description: 'Parse Use Case PlantUML code into structured JSON'
+                },
+                {
+                    value: 'usecase-semantic-normalizer',
+                    label: '[Use Case] Semantic Normalizer',
+                    description: 'Normalize Use Case element names to canonical forms'
+                },
+                {
+                    value: 'usecase-error-classifier-scorer',
+                    label: '[Use Case] Error Classifier & Scorer',
+                    description: 'Detect, classify errors and calculate score for Use Case diagrams'
+                },
+                {
+                    value: 'usecase-feedback-generator',
+                    label: '[Use Case] Feedback Generator',
+                    description: 'Generate personalized feedback for Use Case diagrams'
+                },
+
+                // ========================================
+                // CLASS DIAGRAM PROMPTS (ANALYSIS PHASE)
+                // ========================================
+                {
+                    value: 'class-analysis-domain-extractor',
+                    label: '[Class Analysis] Domain Context Extractor',
+                    description: 'Extract business concepts and entities from Class Diagram assignment'
+                },
+                {
+                    value: 'class-analysis-plantuml-extractor',
+                    label: '[Class Analysis] PlantUML to JSON Parser',
+                    description: 'Parse Class Diagram PlantUML code into structured JSON'
+                },
+                {
+                    value: 'class-analysis-semantic-normalizer',
+                    label: '[Class Analysis] Semantic Normalizer',
+                    description: 'Normalize class and attribute names to canonical forms'
+                },
+                {
+                    value: 'class-analysis-error-classifier-scorer',
+                    label: '[Class Analysis] Error Classifier & Scorer',
+                    description: 'Detect, classify errors and calculate score for Class diagrams'
+                },
+                {
+                    value: 'class-analysis-feedback-generator',
+                    label: '[Class Analysis] Feedback Generator',
+                    description: 'Generate personalized feedback for Class diagrams'
+                },
             ],
             required: true,
             gridSpan: 12,
@@ -83,6 +138,7 @@ const PromptForm: React.FC = () => {
             serviceGetById={getPromptById}
             serviceCreate={createPrompt}
             serviceUpdate={updatePrompt}
+            // @ts-ignore
             validationSchema={promptValidationSchema}
             redirectPath="/admin/settings/prompts"
         />
