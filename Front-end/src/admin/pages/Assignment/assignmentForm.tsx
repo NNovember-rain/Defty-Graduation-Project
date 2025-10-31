@@ -27,6 +27,12 @@ const AssignmentForm: React.FC = () => {
         fetchTypeUMLs();
     }, [t]);
 
+    function stripHtml(html: string): string {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    }
+
     const typeUmlOptions = typeUMLs.map(type => ({
         value: String(type.id),
         label: type.name,
@@ -138,15 +144,13 @@ const AssignmentForm: React.FC = () => {
                 const data = formData as any;
                 const payload = {
                     title: data.title || '',
-                    description: data.commonDescription || '',
+                    description: stripHtml(data.commonDescription || ''),
                     modules: Array.isArray(data.moduleDescriptions)
                         ? data.moduleDescriptions.map((m: any) => ({
                             moduleName: m.moduleName || '',
-                            moduleDescription: m.description || '',
-                            solutionCode: m.solutionCode || '',
-                            // --- SỬA LOGIC CREATE: CHUYỂN 1 STRING ID THÀNH MẢNG 1 PHẦN TỬ (SỐ) ---
+                            moduleDescription: stripHtml(m.description || ''),
+                            solutionCode: stripHtml(m.solutionCode || ''),
                             typeUmlIds: m.typeUmlId ? [Number(m.typeUmlId)] : [],
-                            // --- KẾT THÚC SỬA LOGIC CREATE ---
                         }))
                         : [],
                 };
@@ -157,15 +161,14 @@ const AssignmentForm: React.FC = () => {
                 const data = formData as any;
                 const payload = {
                     title: data.title || '',
-                    description: data.commonDescription || '',
+                    description: stripHtml(data.commonDescription || ''),
                     modules: Array.isArray(data.moduleDescriptions)
                         ? data.moduleDescriptions.map((m: any) => ({
                             moduleName: m.moduleName || '',
                             moduleDescription: m.description || '',
-                            solutionCode: m.solutionCode || '',
-                            // --- SỬA LOGIC UPDATE: CHUYỂN 1 STRING ID THÀNH MẢNG 1 PHẦN TỬ (SỐ) ---
+                            moduleDescription: stripHtml(m.description || ''),
+                            solutionCode: stripHtml(m.solutionCode || ''),
                             typeUmlIds: m.typeUmlId ? [Number(m.typeUmlId)] : [],
-                            // --- KẾT THÚC SỬA LOGIC UPDATE ---
                         }))
                         : [],
                 };
