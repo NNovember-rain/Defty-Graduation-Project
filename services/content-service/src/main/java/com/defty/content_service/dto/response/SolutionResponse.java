@@ -3,14 +3,14 @@ package com.defty.content_service.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TypeUMLResponse {
-    String name;
+public class SolutionResponse {
+    Long id;
+    String typeUml;
+    String solutionCode;
 }

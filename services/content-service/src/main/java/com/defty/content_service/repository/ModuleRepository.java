@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ModuleRepository extends JpaRepository<ModuleEntity, Long> {
     List<ModuleEntity> findAllById(Long moduleIds);
+    List<ModuleEntity> findByAssignmentId(Long assignmentId);
 }
