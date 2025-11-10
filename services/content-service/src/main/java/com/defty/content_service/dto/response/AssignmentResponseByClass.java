@@ -1,4 +1,4 @@
-package com.defty.content_service.dto.request;
+package com.defty.content_service.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -11,9 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AssignmentRequest {
-    String title;
-    String description;
-    List<Long> classIds;
-    List<ModuleRequest> modules;
+public class AssignmentResponseByClass {
+    List<ModuleResponse> modules;
 }

@@ -2,12 +2,12 @@ package com.defty.content_service.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
@@ -18,17 +18,10 @@ import java.util.Date;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AssignmentClass extends BaseEntity{
     @ManyToOne
-    @JoinColumn(name = "assignment_id")
     Assignment assignment;
 
-    @ManyToOne
-    ModuleEntity module;
-
-    boolean checked;
-    Long typeUmlId;
+    @OneToMany(mappedBy = "assignmentClass", fetch = FetchType.LAZY)
+    List<AssignmentClassDetail> assignmentClassDetails;
 
     Long classId;
-    String status;
-    Date startDate;
-    Date endDate;
 }
