@@ -3,12 +3,17 @@
 $header-bg: #282828;
 $main-bg: #141414;
 $card-bg: #1f1f1f;
-$primary-color: #0083ff;
-$text-light: #fff;
-$text-secondary: #aaa;
-$border-radius: 8px;
+$primary-color: #0083ff; // Màu chủ đạo (Blue)
+$text-light: #e0e0e0; // Màu chữ chính
+$text-secondary: #999; // Màu chữ phụ
+$border-radius: 12px;
 $transition-duration: 0.3s;
-$shadow-color: rgba(0, 0, 0, 0.5);
+$shadow-color: rgba(0, 0, 0, 0.6);
+
+// Màu trạng thái (Tươi hơn và dùng cho chỉ báo mỏng)
+$status-active-color: #38a169; // Green (Hoạt động)
+$status-upcoming-color: #f6ad55; // Amber (Sắp diễn ra)
+$status-expired-color: #f53d3d; // Red (Hết hạn)
 
 // Mixins
 @mixin flex-center {
@@ -17,243 +22,313 @@ $shadow-color: rgba(0, 0, 0, 0.5);
   align-items: center;
 }
 
-// Container
+// Container chính
 .assignment-tab-container {
-  display: flex;
-  gap: 24px;
-  padding: 30px;
-  min-height: 100vh;
   color: $text-light;
+  min-height: 100vh;
+  padding-bottom: 50px; // Thêm padding dưới cho Pagination
 
-  // Sidebar (Giữ nguyên)
-  .side-bar {
-    width: 320px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 24px;
-    align-self: flex-start;
+  // --- HEADER CONTROLS ---
+  .header-controls {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    background-color: $header-bg;
+    border-radius: 8px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
 
-    .ant-card {
-      background-color: $card-bg;
-      border: none;
-      border-radius: $border-radius;
-      box-shadow: 0 4px 8px $shadow-color;
-      transition: box-shadow $transition-duration ease;
-
-      &:hover {
-        box-shadow: 0 6px 12px $shadow-color;
-      }
-    }
-  }
-
-  // Main Content (Giữ nguyên)
-  .assignment-content {
-    flex: 1;
-
-    .header-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-  }
-
-  // Ant Design overrides (scoped)
-
-  // --- START SỬA ĐỔI CHO TABS ---
-  .ant-tabs-tab {
-    .ant-tabs-tab-btn {
-      color: $text-light !important; // Đặt màu chữ tab là trắng
-      font-weight: 600;
-    }
-
-    // Đảm bảo tab đang active cũng có màu trắng
-    &.ant-tabs-tab-active {
-      .ant-tabs-tab-btn {
-        color: $text-light !important;
-      }
-    }
-  }
-  // --- END SỬA ĐỔI CHO TABS ---
-
-  .ant-select-selector,
-  .ant-select-dropdown {
-    background-color: $card-bg !important;
-    color: $text-light !important;
-    border-color: $text-secondary !important;
-
-    .ant-select-arrow {
-      color: $text-secondary;
-    }
-  }
-
-  .ant-select-item {
-    background-color: $card-bg !important;
-    color: $text-light !important;
-
-    &:hover {
-      background-color: color.adjust($card-bg, $lightness: -5%) !important;
-    }
-  }
-
-  .ant-btn {
-    border-radius: $border-radius;
-    transition: all $transition-duration ease;
-
-    &.ant-btn-primary {
-      background-color: $primary-color;
-      border-color: $primary-color;
-      color: $text-light;
-
-      &:hover {
-        background-color: color.adjust($primary-color, $lightness: 5%);
-        border-color: color.adjust($primary-color, $lightness: 5%);
-      }
-    }
-
-    &.ant-btn-default {
-      background-color: $card-bg;
-      border-color: $text-secondary;
-      color: $text-light;
-
-      &:hover {
-        border-color: $primary-color;
-        color: $primary-color;
-      }
-    }
-  }
-
-  .ant-card.assignment-card {
-    background-color: $card-bg;
-    border: none;
-    border-radius: $border-radius;
-    box-shadow: 0 4px 8px $shadow-color;
-    transition: all $transition-duration ease;
-    cursor: default !important;
-
-    &:hover {
-      box-shadow: 0 6px 12px $shadow-color;
-      transform: translateY(-2px);
+    .ant-typography {
+      color: $text-light !important;
     }
 
     .ant-btn {
-      cursor: pointer !important;
-      border-radius: 6px;
-      font-weight: 500;
-      border: none;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-
-      &.ant-btn-default {
-        background: rgba(255, 255, 255, 0.1);
-        color: $text-light;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.3);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-      }
-
-      &.ant-btn-primary {
-        background: linear-gradient(135deg, $primary-color, #005bb3);
-        border: none;
-
-        &:hover {
-          background: linear-gradient(135deg, #1890ff, $primary-color);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 131, 255, 0.4);
-        }
-      }
-
-      &.ant-btn-sm {
-        padding: 4px 12px;
-        height: 28px;
-        font-size: 12px;
-      }
-    }
-  }
-
-  .ant-list-item {
-    padding: 0 !important;
-  }
-
-  .ant-list-grid .ant-list-item {
-    margin-bottom: 16px;
-  }
-
-  // Card content (Giữ nguyên)
-  .assignment-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(45deg, #7c848c, #0056b3);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-  }
-
-  .ant-card-body {
-    background-color: #3A3A3A;
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-  }
-
-  h5:where(.css-dev-only-do-not-override-96z72z).ant-typography,
-  div:where(.css-dev-only-do-not-override-96z72z).ant-typography-h5,
-  div:where(.css-dev-only-do-not-override-96z72z).ant-typography-h5 > textarea,
-  :where(.css-dev-only-do-not-override-96z72z).ant-typography h5.ant-typography .assignment-title {
-    margin: 0;
-    color: #ffffff;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-
-  .assignment-date {
-    font-size: 0.8rem;
-    color: $text-secondary;
-
-    svg {
-      margin-right: 4px;
-      vertical-align: middle;
-    }
-  }
-
-  // Pagination (Giữ nguyên)
-  .ant-pagination {
-    .ant-pagination-total-text {
+      background: $card-bg;
+      border-color: rgba($text-light, 0.1);
       color: $text-light;
-    }
-    .ant-pagination-prev, .ant-pagination-next, .ant-pagination-disabled {
-      color: $text-light;
+      &:hover, &.ant-btn-primary {
+        background: $text-light;
+        border-color: $text-light;
+        color: white;
+      }
     }
 
-    .ant-pagination-item {
+    .ant-select-selector {
+      background-color: $card-bg !important;
+      border-color: rgba($text-light, 0.1) !important;
+      color: $text-light !important;
+    }
+  }
+
+  // --- TABS ---
+  .assignment-tabs {
+    .ant-tabs-nav {
+      margin-bottom: 0;
+      // Loại bỏ background của nav để chỉ giữ content có background
+      &::before {
+        border-bottom: 1px solid rgba($text-light, 0.1);
+      }
+    }
+
+    .ant-tabs-tab {
+      padding: 12px 24px;
+      .ant-tabs-tab-btn {
+        color: $text-secondary !important;
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      &.ant-tabs-tab-active .ant-tabs-tab-btn {
+        color: $text-light !important;
+      }
+    }
+
+    .ant-tabs-ink-bar {
+      background: $text-light;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    .ant-tabs-content-holder {
+      background-color: color.adjust($card-bg, $lightness: 3%);
+      border-radius: 0 0 $border-radius $border-radius;
+      border: 1px solid rgba($text-light, 0.1);
+      border-top: none;
+      padding: 24px;
+      min-height: 400px;
+    }
+  }
+
+  // --- LIST (Bọc ngoài Card) ---
+  .ant-list {
+    .ant-list-item {
+      padding: 0 !important;
+      border-bottom: none !important;
+      margin-bottom: 16px; // Khoảng cách giữa các item
+    }
+  }
+
+
+  .ant-card.assignment-card {
+    background-color: $card-bg;
+    border: 1px solid rgba($text-light, 0.05);
+    border-radius: $border-radius;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: all $transition-duration ease-in-out;
+    width: 100%;
+
+    .ant-card-body {
+      padding: 0;
       background-color: $card-bg;
-      border-color: $text-secondary;
+      display: flex;
+      height: 100%;
+    }
 
-      a {
-        color: $text-secondary;
+    .status-bar-strip {
+      width: 6px;
+      opacity: 1;
+      transition: background $transition-duration ease;
+      background-color: #efca8d;
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      border-radius: $border-radius 0 0 $border-radius;
+    }
+
+    .card-content-wrapper {
+      display: flex;
+      width: 100%;
+      position: relative;
+      padding-left: 10px;
+    }
+
+    &.is-list-view {
+      height: 100%;
+
+      .card-content-wrapper {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        padding-left: 34px;
+
+        .card-header, .card-body, .card-footer {
+          padding: 0;
+        }
       }
 
-      &-active {
-        background-color: $primary-color;
-        border-color: $primary-color;
+      .card-header {
+        flex-basis: 35%;
+        flex-shrink: 0; // Không bị co lại
+        display: flex;
+        align-items: center;
+        gap: 16px;
 
-        a {
+        .assignment-title {
+          font-size: 1.15rem !important;
+          color: $text-light;
+          margin-bottom: 2px !important;
+          // Giới hạn 1 dòng cho List View
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+        }
+
+        .assignment-type-tag {
+          // Tái sử dụng style tag đã định nghĩa ở nơi khác hoặc dùng style chung
+          font-size: 0.75rem;
+          color: $text-secondary;
+        }
+      }
+
+      // 2. BODY / STATUS & DATES & UML (Phần thông tin phụ)
+      .card-body {
+        flex-basis: 45%;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px; // Giảm khoảng cách giữa các phần tử phụ
+
+        .uml-info {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 20px;
+        }
+
+        .uml-tags {
+          margin-bottom: 0;
+          flex-shrink: 0;
+        }
+
+        .assignment-dates-list {
+          flex-grow: 1;
+          text-align: right;
+        }
+      }
+
+      // 3. FOOTER / ACTIONS (Phần nút bấm)
+      .card-footer {
+        flex-basis: 20%;
+        text-align: right;
+        border-top: none; // Đã loại bỏ
+      }
+    }
+
+
+    // --- CHUNG CHO CARD ---
+    .assignment-icon {
+      @include flex-center;
+      width: 40px;
+      height: 40px;
+      font-size: 1.6rem;
+      color: #efca8d;
+      background-color: rgba(#efca8d, 0.15);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .ant-tag.uml-tag {
+      background-color: rgba(#efca8d, 0.1);
+      color: #efca8d;
+      border: none;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .assignment-dates-list {
+      .date-item {
+        color: $text-secondary;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        svg {
+          font-size: 1rem;
           color: $text-light;
         }
       }
     }
+
+
+    // Footer & Actions
+    .card-footer {
+      .action-button {
+        height: 30px;
+        min-width: 100px;
+        font-size: 0.95rem;
+        font-weight: 400;
+        border-radius: 8px;
+
+        &.ant-btn-default {
+          background: rgba($text-light, 0.1);
+          color: $text-light;
+          border: 1px solid rgba($text-light, 0.2);
+        }
+      }
+    }
+
+    // --- MÀU SẮC TRẠNG THÁI ĐỘNG ---
+    .status-active {
+      .status-bar-strip { background-color: $status-active-color; }
+    }
+
+    .status-upcoming {
+      .status-bar-strip { background-color: $status-upcoming-color; }
+      .assignment-dates-list .date-item svg { color: $status-upcoming-color; }
+    }
+
+    .status-expired {
+      .status-bar-strip { background-color: $status-expired-color; }
+      .assignment-dates-list .date-item svg { color: $status-expired-color; }
+
+      .card-content-wrapper {
+        opacity: 0.6; // Làm mờ nhẹ bài tập đã hết hạn
+      }
+
+      .card-footer .action-button {
+        opacity: 0.7;
+        pointer-events: none;
+      }
+    }
+
+    .status-default {
+      .status-bar-strip { background-color: $text-secondary; }
+      .assignment-dates-list .date-item svg { color: $text-secondary; }
+    }
+  }
+
+  // --- PAGINATION ---
+  .ant-pagination-item-link, .ant-pagination-item {
+    background-color: $card-bg !important;
+    border-color: rgba($text-light, 0.1) !important;
+    a {
+      color: $text-light !important;
+    }
+    &.ant-pagination-item-active {
+      background-color: $header-bg !important;
+      a {
+        color: $text-light !important;
+      }
+    }
+    .anticon{
+        color: $text-light !important;
+    }
+  }
+  .ant-pagination-options-quick-jumper, .ant-select-selector {
+    color: $text-light !important;
+    background-color: $header-bg !important;
+  }
+  .ant-pagination-total-text {
+    color: $text-light !important;
   }
 }

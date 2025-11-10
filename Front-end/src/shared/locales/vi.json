@@ -424,6 +424,7 @@
       "noId": "Không tìm thấy ID lớp học trong URL.",
       "classNotFound": "Không tìm thấy lớp học."
     },
+    "assignmentAssignment": "Danh sách bài tập",
     "umlType": "Loại UML",
     "module": "Module",
     "tabs": {

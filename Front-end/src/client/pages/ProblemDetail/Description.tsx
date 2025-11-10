@@ -1,14 +1,18 @@
-import React, {useEffect, useState, useMemo} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {MdOutlineDescription} from "react-icons/md";
 import {useTranslation} from "react-i18next";
 import DOMPurify from "dompurify";
-import {getAssignmentByClassId, type IAssignment} from "../../../shared/services/assignmentService";
-import {Select, Space} from "antd";
+import {
+    getAssignmentAllModule,
+    getAssignmentDetail,
+    type IAssignment
+} from "../../../shared/services/assignmentService";
+import {Select, Space, Tag, Typography} from "antd";
 import {useNotification} from "../../../shared/notification/useNotification.ts";
 import {getTypeUmls, type ITypeUml} from "../../../shared/services/typeUmlService.ts";
 import "./Description.scss";
 
-// ... (Các interfaces và hằng số UML_TYPES, MODULE_OPTIONS giữ nguyên)
+const { Title } = Typography;
 
 export type UmlTypeOption = {
     value: string;
@@ -16,10 +20,17 @@ export type UmlTypeOption = {
     key: string;
 };
 
+interface ISolutionResponse {
+    typeUml: string;
+}
+
 interface IModuleResponse {
     id: number;
     moduleName: string;
     moduleDescription: string;
+    typeUmls: string[];
+    solutionResponses?: ISolutionResponse[];
+    checkedTest: boolean;
 }
 
 interface ITypeUmlResponse {
@@ -27,9 +38,8 @@ interface ITypeUmlResponse {
     name: string;
 }
 
-interface IAssignmentClassModule {
-    moduleName: string;
-    moduleDescription: string;
+interface IConsolidatedModuleResponse extends IModuleResponse {
+    typeUmlIds: Set<number>;
 }
 
 const MODULE_OPTIONS: UmlTypeOption[] = [
@@ -37,135 +47,158 @@ const MODULE_OPTIONS: UmlTypeOption[] = [
     { value: 'server-side', label: 'Module: Server Side', key: 'server-side' },
 ];
 
-
-interface IConsolidatedModuleResponse extends IModuleResponse {
-    typeUmlIds: Set<number>;
+interface Option {
+    value: string;
+    label: string;
 }
 
-// Thêm prop cho UML Type Name được gán trong mode test
+
 type Props = {
     assignment: IAssignment | null;
     isLoading?: boolean;
     error?: string | null;
-    umlType: string;
     onUmlTypeChange: (value: string) => void;
     module: string;
     onModuleChange: (value: string) => void;
     umlTypes?: UmlTypeOption[];
     isRenderingOrSubmitting: boolean;
     mode: 'practice' | 'test';
-    assignmentClassModule: IAssignmentClassModule | null;
     classId: number | null;
     onTypeUmlNameChange: (name: string) => void;
     onModuleNameChange: (name: string) => void;
+    assignmentClassDetailId: number | null;
+    assignmentClassId?: number | null;
 };
 
 const Description: React.FC<Props> = ({
                                           assignment,
                                           isLoading,
+                                          assignmentClassId,
                                           error,
-                                          umlType,
                                           onUmlTypeChange,
                                           onModuleChange,
                                           isRenderingOrSubmitting,
-                                          classId,
                                           mode,
                                           onTypeUmlNameChange,
                                           onModuleNameChange,
-                                          module: propModule
+                                          module: propModule,
+                                          assignmentClassDetailId
                                       }) => {
     const { t } = useTranslation();
     const { message } = useNotification();
+    const [allTypeUMLs, setAllTypeUMLs] = useState<ITypeUml[]>([]);
     const [typeUMLs, setTypeUMLs] = useState<UmlTypeOption[]>([]);
     const [modules, setModules] = useState<IConsolidatedModuleResponse[]>([]);
     const [localModule, setLocalModule] = useState<string>(propModule);
     const [assignedUmlType, setAssignedUmlType] = useState<ITypeUmlResponse | null>(null);
 
-    // Fetch Type UMLs - CHỈ GỌI 1 LẦN KHI MOUNT
+    const [localUmlType, setLocalUmlType] = useState<string>('');
+
+
+    const currentModuleData = useMemo(() => {
+        const selectedModuleId = localModule;
+        if (!selectedModuleId) return null;
+        return modules.find(m => String(m.id) === selectedModuleId);
+    }, [localModule, modules]);
+
     useEffect(() => {
-        async function fetchTypeUMLs() {
+        const fetchTypeUMLs = async () => {
             try {
-                const response = await getTypeUmls();
-                const typeUmlsArray = Array.isArray(response.typeUmls)
-                    ? response.typeUmls.map((t: ITypeUml) => ({
-                        value: String(t.id),
-                        label: t.name,
-                        key: String(t.id)
-                    }))
-                    : [];
-                setTypeUMLs(typeUmlsArray);
-            } catch (error) {
-                console.error('Error fetching Type UMLs:', error);
-                message.error(t('common.errorFetchingData'));
+                const res = await getTypeUmls();
+                const list = Array.isArray(res.typeUmls) ? res.typeUmls : [];
+
+                const mapped = list.map((item, index) => ({
+                    key: item.name || String(index),
+                    value: item.name,
+                    label: item.name,
+                }));
+
+                setAllTypeUMLs(list);
+                setTypeUMLs(mapped);
+
+                if (mapped.length > 0 && !localUmlType) {
+                    setLocalUmlType(mapped[0].value);
+                    onUmlTypeChange(mapped[0].value);
+                    onTypeUmlNameChange(mapped[0].label);
+                }
+
+            } catch (err) {
+                console.error("Lỗi khi load UML Types:", err);
+                message.error(t("common.errorFetchingData"));
             }
-        }
+        };
+
         fetchTypeUMLs();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // CHỈ GỌI 1 LẦN KHI MOUNT
+    }, [t, message]);
+
+    const typeUmlOptions: UmlTypeOption[] = useMemo(() => {
+        return allTypeUMLs.map((uml, index) => ({
+            value: uml.name,
+            label: uml.name,
+            key: uml.name || String(index), // dùng name làm key
+        }));
+    }, [allTypeUMLs]);
 
 
-    /**
-     * Logic chính: Fetch Modules và trích xuất Type UML được gán (mode test).
-     */
     useEffect(() => {
-        const fetchModules = async (assignmentId: number, classId: number, currentMode: 'practice' | 'test') => {
+        const fetchModules = async () => {
+            let data: any;
+            let modulesToUse: IConsolidatedModuleResponse[] = [];
+            let defaultUmlType: ITypeUmlResponse | null = null;
+
             try {
-                const data: any = await getAssignmentByClassId(classId, assignmentId);
+                const isTestCondition = mode === 'test' && assignmentClassDetailId !== null && !isNaN(assignmentClassDetailId);
+                const isPracticeCondition = mode === 'practice' && assignmentClassId;
 
-                let modulesToUse: IConsolidatedModuleResponse[] = [];
-                let defaultUmlType: ITypeUmlResponse | null = null;
-                const consolidatedModuleMap = new Map<number, IConsolidatedModuleResponse>();
-                const assignmentClasses = data.assignmentClasses || [];
+                if (!isTestCondition && !isPracticeCondition) {
+                    return;
+                }
 
-                // Xác định điều kiện lọc dựa trên mode
-                const filterCondition = currentMode === 'test' ? true : false;
+                if (isTestCondition) {
+                    data = await getAssignmentDetail(assignmentClassDetailId!);
 
-                // --- SỬA ĐỔI LỚP LỌC MODULE CHÍNH ---
-                const relevantAssignmentClasses = assignmentClasses.filter(
-                    (ac: any) =>
-                        ac.classId === classId &&
-                        ac.checkedTest === filterCondition &&
-                        // LỌC CHỈ NHỮNG GÁN NÀO CÓ assignmentId KHỚP VỚI BÀI TẬP HIỆN TẠI
-                        ac.assignmentId === assignmentId
-                );
-                // --- KẾT THÚC SỬA ĐỔI LỚP LỌC MODULE CHÍNH ---
+                    const assignmentClasses = data.assignmentClasses || [];
+                    const assignmentClass = assignmentClasses[0];
 
-                if (currentMode === 'practice') {
-                    // Logic Practice: Lấy tất cả unique modules từ các lần gán practice
-                    const uniqueModulesMap = new Map<number, IModuleResponse>();
-
-                    relevantAssignmentClasses.forEach((ac: any) => {
-                        (ac.moduleResponses || []).forEach((mod: IModuleResponse) => {
-                            const moduleId = mod.id;
-                            if (!uniqueModulesMap.has(moduleId)) {
-                                uniqueModulesMap.set(moduleId, mod);
-                            }
-                        });
-                    });
-                    modulesToUse = Array.from(uniqueModulesMap.values()).map(m => ({
-                        ...m,
-                        typeUmlIds: new Set<number>()
-                    }));
-
-                } else { // mode === 'test'
-
-                    // Logic Test: Chỉ lấy lần gán TEST (chỉ có 1 nếu logic gán là đúng)
-                    const testAssignmentClass = relevantAssignmentClasses[0];
-
-                    if (testAssignmentClass) {
-                        // 1. Trích xuất Type UML được gán
-                        defaultUmlType = testAssignmentClass.typeUmlResponse || null;
-
-                        // 2. Trích xuất modules (thường chỉ có 1 module trong mode test)
-                        (testAssignmentClass.moduleResponses || []).forEach((mod: IModuleResponse) => {
-                            const moduleId = mod.id;
-                            consolidatedModuleMap.set(moduleId, {
-                                ...mod,
-                                typeUmlIds: new Set<number>(),
-                            } as IConsolidatedModuleResponse);
-                        });
+                    if (assignmentClass) {
+                        defaultUmlType = assignmentClass.typeUmlResponse || null;
+                        modulesToUse = (assignmentClass.moduleResponses || []).map((mod: IModuleResponse) => ({
+                            ...mod,
+                            typeUmlIds: new Set<number>(),
+                        } as IConsolidatedModuleResponse));
+                    } else if (data.modules && Array.isArray(data.modules)) {
+                        modulesToUse = data.modules.map((mod: any) => ({
+                            id: mod.moduleId,
+                            moduleName: mod.moduleName,
+                            moduleDescription: mod.moduleDescription,
+                            typeUmls: mod.typeUmls || [],
+                            checkedTest: mod.checkedTest,
+                            typeUmlIds: new Set<number>(),
+                        } as IConsolidatedModuleResponse));
                     }
-                    modulesToUse = Array.from(consolidatedModuleMap.values());
+                }
+                else if (isPracticeCondition) {
+                    data = await getAssignmentAllModule(assignmentClassId!);
+
+                    if (data?.result?.modules && Array.isArray(data.result.modules)) {
+                        modulesToUse = data.result.modules.map((mod: any) => ({
+                            id: mod.id,
+                            moduleName: mod.moduleName,
+                            moduleDescription: mod.moduleDescription,
+                            typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
+                            checkedTest: false,
+                            typeUmlIds: new Set<number>(),
+                        } as IConsolidatedModuleResponse));
+                    } else if (data?.modules && Array.isArray(data.modules)) {
+                        modulesToUse = data.modules.map((mod: any) => ({
+                            id: mod.id,
+                            moduleName: mod.moduleName,
+                            moduleDescription: mod.moduleDescription,
+                            typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
+                            checkedTest: false,
+                            typeUmlIds: new Set<number>(),
+                        } as IConsolidatedModuleResponse));
+                    }
                 }
 
                 setModules(modulesToUse);
@@ -176,57 +209,63 @@ const Description: React.FC<Props> = ({
             }
         };
 
-        if (assignment?.id && classId !== null && classId !== undefined) {
-            // Đảm bảo assignment.id là số
-            fetchModules(Number(assignment.id), classId, mode);
-        }
+        fetchModules();
 
-    }, [assignment?.id, classId, mode, t]);
+    }, [assignmentClassDetailId, assignmentClassId, mode, t]);
 
 
-    /**
-     * Khởi tạo Module và UML Type mặc định.
-     */
     useEffect(() => {
-        // --- 1. Khởi tạo/Đồng bộ Module ---
-        if (modules.length > 0) {
-            const firstModuleId = String(modules[0].id);
+        const moduleOptionsList = modules.filter(m => mode !== 'practice' || m.checkedTest === false);
+
+        const uniqueModuleMap = new Map<string, IConsolidatedModuleResponse>();
+        moduleOptionsList.forEach(m => {
+            if (!uniqueModuleMap.has(String(m.id))) {
+                uniqueModuleMap.set(String(m.id), m);
+            }
+        });
+        const uniqueModules = Array.from(uniqueModuleMap.values());
+
+
+        if (uniqueModules.length > 0) {
+            const firstModuleId = String(uniqueModules[0].id);
             let selectedModuleId = propModule || firstModuleId;
             let moduleChanged = false;
 
-            // Kiểm tra xem module hiện tại (từ prop hoặc local) có hợp lệ không
-            const isValidModule = modules.some(m => String(m.id) === selectedModuleId);
+            const isValidModule = uniqueModules.some(m => String(m.id) === selectedModuleId);
             if (!isValidModule) {
                 selectedModuleId = firstModuleId;
                 moduleChanged = true;
             }
 
-            // Chỉ cập nhật nếu localModule khác giá trị mới hoặc module cần thay đổi
             if (localModule !== selectedModuleId || moduleChanged) {
                 setLocalModule(selectedModuleId);
                 onModuleChange(selectedModuleId);
-                const selectedModule = modules.find(m => String(m.id) === selectedModuleId);
+                const selectedModule = uniqueModules.find(m => String(m.id) === selectedModuleId);
                 if (selectedModule) {
                     onModuleNameChange(selectedModule.moduleName);
                 }
             }
         } else if (localModule) {
-            // Reset localModule nếu không có modules
             setLocalModule('');
             onModuleChange('');
             onModuleNameChange('');
         }
 
-        // --- 2. Khởi tạo UML Type mặc định trong mode test ---
         if (mode === 'test' && assignedUmlType) {
-            // Tự động set UML Type được gán nếu nó khác với UML Type hiện tại
-            if (umlType !== String(assignedUmlType.id)) {
+            if (localUmlType !== String(assignedUmlType.id)) {
+                setLocalUmlType(String(assignedUmlType.id));
                 onUmlTypeChange(String(assignedUmlType.id));
                 onTypeUmlNameChange(assignedUmlType.name);
             }
         }
+    }, [modules, propModule, localModule, onModuleChange, onModuleNameChange, mode, assignedUmlType, localUmlType, onUmlTypeChange, onTypeUmlNameChange]);
 
-    }, [modules, propModule, localModule, onModuleChange, onModuleNameChange, mode, assignedUmlType, umlType, onUmlTypeChange, onTypeUmlNameChange]);
+    useEffect(() => {
+        if (allTypeUMLs.length === 0) {
+            setTypeUMLs([]);
+            return;
+        }
+    }, [allTypeUMLs, currentModuleData, mode, localUmlType, onUmlTypeChange, onTypeUmlNameChange]);
 
 
     const handleModuleChange = (value: string) => {
@@ -236,26 +275,48 @@ const Description: React.FC<Props> = ({
         if (selectedModule) {
             onModuleNameChange(selectedModule.moduleName);
         }
-    };
-
-    const handleUmlTypeChange = (value: string) => {
-        onUmlTypeChange(value);
-        const selectedType = typeUMLs.find(t => t.value === value);
-        if (selectedType) {
-            onTypeUmlNameChange(selectedType.label);
+        if (mode === 'practice') {
+            setLocalUmlType('');
+            onUmlTypeChange('');
+            onTypeUmlNameChange('');
         }
     };
 
-    const selectUmlTypeOptions = [
-        { value: '', label: t('problemDetail.description.selectUmlType', { defaultValue: 'Chọn UML Type' }), disabled: true, key: 'placeholder_uml' },
-        ...typeUMLs
-    ];
+    const moduleDescriptionHtml = useMemo(() => {
+        const html = currentModuleData?.moduleDescription;
+        return html ? DOMPurify.sanitize(html) : null;
+    }, [currentModuleData?.moduleDescription]);
 
-    const moduleOptionsForSelect: UmlTypeOption[] = modules.map(mod => ({
-        value: String(mod.id),
-        label: mod.moduleName,
-        key: String(mod.id)
-    }));
+    const assignmentDescriptionHtml = useMemo(() => {
+        const html = assignment?.assignmentDescription ?? "";
+        return DOMPurify.sanitize(html);
+    }, [assignment?.assignmentDescription]);
+
+
+    const moduleOptionsForSelect: UmlTypeOption[] = useMemo(() => {
+        const moduleOptionsList = modules.filter(m => mode !== 'practice' || m.checkedTest === false);
+
+        const uniqueModuleMap = new Map<string, IConsolidatedModuleResponse>();
+        moduleOptionsList.forEach(m => {
+            if (!uniqueModuleMap.has(String(m.id))) {
+                uniqueModuleMap.set(String(m.id), m);
+            }
+        });
+
+        return Array.from(uniqueModuleMap.values()).map(mod => ({
+            value: String(mod.id),
+            label: mod.moduleName,
+            key: String(mod.id)
+        }));
+    }, [modules, mode]);
+
+    const handleUmlTypeChange = (value: string) => {
+        console.log("User chọn UML Type:", value);
+        setLocalUmlType(value);
+        onUmlTypeChange(value);
+        onTypeUmlNameChange(value);
+    };
+
 
     const moduleOptionsFromState = moduleOptionsForSelect.length > 0
         ? moduleOptionsForSelect
@@ -265,23 +326,6 @@ const Description: React.FC<Props> = ({
         { value: '', label: t('problemDetail.description.selectModule', { defaultValue: 'Chọn Module' }), disabled: true, key: 'placeholder_module' },
         ...moduleOptionsFromState
     ];
-
-    const currentModuleData = useMemo(() => {
-        const selectedModuleId = localModule;
-        if (!selectedModuleId) return null;
-        return modules.find(m => String(m.id) === selectedModuleId);
-    }, [localModule, modules]);
-
-    const moduleDescriptionHtml = currentModuleData?.moduleDescription
-        ? DOMPurify.sanitize(currentModuleData.moduleDescription)
-        : null;
-
-
-    const safeHtml = React.useMemo(() => {
-        const html = assignment?.commonDescription ?? "";
-        return DOMPurify.sanitize(html);
-    }, [assignment?.commonDescription]);
-
 
     const isDisabled = isLoading || !!error || isRenderingOrSubmitting;
 
@@ -312,6 +356,7 @@ const Description: React.FC<Props> = ({
         color: '#e0e0e0',
         fontSize: '20px',
         fontWeight: '600',
+        marginBottom: '10px'
     };
 
     const descriptionContentStyle: React.CSSProperties = {
@@ -322,43 +367,52 @@ const Description: React.FC<Props> = ({
         backgroundColor: '#262626',
     }
 
-    const showModuleSelect = mode === 'practice';
-    const shouldShowModuleDescription = (mode === 'test' || mode === 'practice') && moduleDescriptionHtml;
+    const showModuleSelect = moduleOptionsForSelect.length > 0;
+
+    const shouldShowModuleDescription = (mode === 'test' && moduleDescriptionHtml) ||
+        (mode === 'practice' && localModule && moduleDescriptionHtml);
+
 
     return (
         <div className="description">
             <div className="description__header" style={headerStyle}>
                 <h2 className="description__header-title" style={titleStyle}>
-                    <MdOutlineDescription color={iconColor} style={{ fontSize: '20px' }} />
-                    {t("problemDetail.description.title", { defaultValue: "Mô tả" })}
+                    <MdOutlineDescription color={iconColor} style={{fontSize: '20px'}}/>
+                    {t("problemDetail.description.title", {defaultValue: "Mô tả"})}
                 </h2>
 
-                <div className="description__controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="description__controls" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                     <Space wrap size="small">
-                        <Select
-                            value={umlType || undefined}
-                            style={{ width: 180 }}
-                            onChange={handleUmlTypeChange}
-                            options={selectUmlTypeOptions}
-                            disabled={isDisabled || (mode === 'test' && assignedUmlType !== null)} // Disable nếu ở mode test và đã có UML Type được gán
-                            size="middle"
-                            placeholder={t('problemDetail.description.selectUmlType', { defaultValue: 'Chọn UML Type' })}
-                        />
+                        {mode === 'practice' && (
+                            <Select
+                                value={localUmlType || undefined}
+                                style={{width: 180}}
+                                options={typeUMLs}
+                                onChange={(val) => {
+                                    setLocalUmlType(val);
+                                    onUmlTypeChange(val);
+                                    const selected = typeUmlOptions.find(opt => opt.value === val);
+                                    if (selected) onTypeUmlNameChange(selected.label);
+                                }}
+                                placeholder="Chọn UML Type"
+                            />
 
-                        {/* HIỂN THỊ SELECT MODULE CHỈ Ở MODE PRACTICE */}
-                        {showModuleSelect && (
+                        )}
+
+                        {showModuleSelect && mode === 'practice' && (
                             <Select
                                 value={localModule || undefined}
-                                style={{ width: 180 }}
+                                style={{width: 180}}
                                 onChange={handleModuleChange}
                                 options={selectModuleOptions}
                                 disabled={isDisabled}
                                 size="middle"
-                                placeholder={t('problemDetail.description.selectModule', { defaultValue: 'Chọn Module' })}
+                                placeholder={t('problemDetail.description.selectModule', {defaultValue: 'Chọn Module'})}
                             />
                         )}
                     </Space>
                 </div>
+
             </div>
 
             {isLoading && (
@@ -374,28 +428,45 @@ const Description: React.FC<Props> = ({
 
             {assignment && (
                 <div className="description__content" style={descriptionContentStyle}>
-                    {assignment.title && (
-                        <h2 style={mainTitleStyle}>{assignment.title}</h2>
+                    <Title level={4} style={mainTitleStyle}>{assignment.assignmentTitle}</Title>
+                    <Space size={[0, 8]} wrap style={{display: 'flex', marginTop: '8px', marginBottom: '10px'}}>
+                        {mode === "test" && (
+                            <Tag color="blue">
+                                {currentModuleData?.moduleName || t('common.not_selected', {defaultValue: 'Chưa chọn'})}
+                            </Tag>
+                        )}
+
+                        {mode === "test" && currentModuleData && Array.isArray(currentModuleData.typeUmls) && (
+                            currentModuleData.typeUmls
+                                .filter(uml => assignedUmlType?.name !== uml)
+                                .map((uml: string) => (
+                                    <Tag key={uml} color="purple">
+                                        {uml}
+                                    </Tag>
+                                ))
+                        )}
+                    </Space>
+
+                    {assignmentDescriptionHtml && (
+                        <>
+                            <Title level={5} style={{ color: '#e0e0e0', marginTop: '16px' }}>
+                                {t('problemDetail.description.assignment_description_title', { defaultValue: 'Mô tả bài tập' })}
+                            </Title>
+                            <div className="description__assignment-text">
+                                <div
+                                    dangerouslySetInnerHTML={{ __html: assignmentDescriptionHtml }}
+                                />
+                            </div>
+                        </>
                     )}
 
-                    {assignment.commonDescription && (
-                        <div className="description__assignment-text">
-                            <div
-                                className="description__assignment-html"
-                                dangerouslySetInnerHTML={{ __html: safeHtml }}
-                            />
-                        </div>
-                    )}
-
-                    {/* HIỂN THỊ MODULE DESCRIPTION */}
                     {shouldShowModuleDescription && (
                         <>
-                            <h3 style={{ color: '#e0e0e0', marginTop: '16px' }}>
-                                {t('problemDetail.description.module_description_title', { defaultValue: 'Module' })} - {currentModuleData?.moduleName}
-                            </h3>
+                            <Title level={5} style={{ color: '#e0e0e0', marginTop: '16px' }}>
+                                {t('problemDetail.description.module_description_title', { defaultValue: 'Mô tả Module' })}: {currentModuleData?.moduleName}
+                            </Title>
                             <div className="description__module-text">
                                 <div
-                                    className="description__module-html"
                                     dangerouslySetInnerHTML={{ __html: moduleDescriptionHtml }}
                                 />
                             </div>

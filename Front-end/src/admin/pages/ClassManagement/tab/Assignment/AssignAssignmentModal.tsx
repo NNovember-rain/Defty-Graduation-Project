@@ -1,9 +1,9 @@
 import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Spin, Table} from "antd";
+import type {Key} from "react";
 import React, {useCallback, useEffect, useState} from "react";
 import type {ColumnsType} from "antd/es/table";
 import {assignAssignment, getAssignments} from "../../../../../shared/services/assignmentService.ts";
 import {useTranslation} from "react-i18next";
-import type { Key } from "react";
 
 const {RangePicker} = DatePicker;
 
@@ -15,18 +15,15 @@ interface Module {
 interface Assignment {
     id: number;
     title: string;
-    typeUmlName?: string;
-    startDate?: string | null;
-    endDate?: string | null;
     modules?: Module[];
     key?: string;
 }
 
 interface AssignAssignmentModalProps {
-    visible: boolean,
-    onClose: () => void,
-    classIds: number[],
-    onAssigned?: () => void,
+    visible: boolean;
+    onClose: () => void;
+    classIds: number[];
+    onAssigned?: () => void;
 }
 
 const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
@@ -43,10 +40,9 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(5);
-    const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedAssignments, setSelectedAssignments] = useState<number[]>([]);
+    const [selectedModules, setSelectedModules] = useState<Record<number, number[]>>({});
     const [messageApi, contextHolder] = message.useMessage();
-
 
     const columns: ColumnsType<Assignment> = [
         {title: t("Title"), dataIndex: "title", key: "title"},
@@ -56,15 +52,17 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         {title: t("Module Name"), dataIndex: "moduleName", key: "moduleName"},
     ];
 
+    // Fetch danh sách bài tập
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
         setLoading(true);
         try {
             const params = {page, limit, status: 1};
             const response = await getAssignments(params);
-            const assignmentData = Array.isArray(response) ? response : (response.assignments || []);
+            const assignmentData = Array.isArray(response)
+                ? response
+                : response.assignments || [];
             const total = response.total || assignmentData.length;
-
-            const dataWithKeys: Assignment[] = assignmentData.map((item: any) => ({
+            const dataWithKeys = assignmentData.map((item: any) => ({
                 ...item,
                 key: `assignment_${item.id}`,
             }));
@@ -72,8 +70,8 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             setAssignments(dataWithKeys);
             setTotalItems(total);
         } catch (error) {
-            console.error('Failed to load assignments:', error);
-            messageApi.error(t('apiMessages.loadAssignmentsFailed'));
+            console.error("Failed to load assignments:", error);
+            messageApi.error(t("apiMessages.loadAssignmentsFailed"));
         } finally {
             setLoading(false);
         }
@@ -82,10 +80,11 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     useEffect(() => {
         if (visible) {
             fetchAssignmentsForModal(currentPage, pageSize);
-            setSelectedRowKeys([]); // Reset selection
+            setSelectedAssignments([]);
+            setSelectedModules({});
             form.resetFields();
         }
-    }, [visible, currentPage, pageSize, searchTerm, fetchAssignmentsForModal, form]);
+    }, [visible, currentPage, pageSize, fetchAssignmentsForModal, form]);
 
     const handleAssign = async () => {
         try {
@@ -93,102 +92,98 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             setAssignLoading(true);
 
             const dateRange = values.dateRange || [];
-            const startDate = dateRange.length > 0 ? dateRange[0].toISOString() : null;
-            const endDate = dateRange.length > 1 ? dateRange[1].toISOString() : null;
-            const checkTest = false
+            const startDate = dateRange[0]?.toISOString() || null;
+            const endDate = dateRange[1]?.toISOString() || null;
+            const checkedTest = values.checkedTest || false;
 
-            const assignmentIds: number[] = selectedRowKeys
-                .filter(key => key.startsWith('assignment_'))
-                .map(key => Number(key.split('_')[1]));
+            if (selectedAssignments.length === 0) {
+                messageApi.warning(t("validation.selectAssignmentRequired") || "Vui lòng chọn ít nhất một Bài tập để giao.");
+                setAssignLoading(false);
+                return;
+            }
 
-            const moduleIds: number[] = selectedRowKeys
-                .filter(key => key.startsWith('module_'))
-                .map(key => Number(key.split('_')[1]));
+            for (const assignmentId of selectedAssignments) {
+                const moduleIds = selectedModules[assignmentId];
+                if (!moduleIds || moduleIds.length === 0) {
+                    const assignment = assignments.find(a => a.id === assignmentId);
+                    const assignmentTitle = assignment ? assignment.title : assignmentId;
 
-            await assignAssignment({
-                assignmentIds,
-                moduleIds,
-                classIds,
-                startDate,
-                endDate,
-                checkTest
+                    messageApi.warning(
+                        t("validation.moduleSelectionRequired") || `Bài tập "${assignmentTitle}" phải có ít nhất một Module được chọn.`
+                    );
+                    setAssignLoading(false);
+                    return;
+                }
+            }
+
+
+            const assignmentsPayload = selectedAssignments.map((assignmentId) => {
+                const moduleIds = selectedModules[assignmentId] || [];
+                return {
+                    assignmentId,
+                    modules: moduleIds.map((id) => ({moduleId: id})),
+                    startDate,
+                    endDate,
+                    checkedTest,
+                };
             });
 
-            messageApi.success(t('apiMessages.assignSuccess'));
+            const payload = {
+                classIds,
+                assignments: assignmentsPayload,
+            };
+
+            console.log("Sending payload:", payload);
+            await assignAssignment(payload);
+
+            messageApi.success(t("apiMessages.assignSuccess"));
             onAssigned?.();
             onClose();
         } catch (error) {
             console.error(error);
-            messageApi.error(t("Failed to assign assignment"));
+            if (error && (error as any).errorFields) {
+            } else {
+                messageApi.error(t("Failed to assign assignment"));
+            }
         } finally {
             setAssignLoading(false);
         }
     };
 
     const expandedRowRender = (record: Assignment) => {
-        const assignmentKey = `assignment_${record.id}`;
-        const isAssignmentSelected = selectedRowKeys.includes(assignmentKey);
-        if (!isAssignmentSelected) {
-            return (
-                <p style={{margin: 0, paddingLeft: 40, color: 'gray'}}>
-                    {t('Please select the assignment to view/select its modules.')}
-                </p>
-            );
-        }
-
-        if (!record.modules || record.modules.length === 0) {
-            return (
-                <p style={{margin: 0, paddingLeft: 40, color: 'gray'}}>
-                    {t('No modules found for this assignment.')}
-                </p>
-            );
-        }
-
-        const modulesWithKeys: Module[] = record.modules.map(mod => ({
+        const modulesWithKeys: Module[] = record.modules?.map((mod) => ({
             ...mod,
-            key: `module_${mod.id}` as unknown as number,
-        }));
+            key: mod.id,
+        })) || [];
+
+        const selectedModuleIds = selectedModules[record.id] || [];
 
         return (
             <Table
                 columns={moduleColumns}
                 dataSource={modulesWithKeys}
                 pagination={false}
-                rowKey={(record) => `module_${record.id}`}
+                rowKey={(record) => record.id.toString()}
                 rowSelection={{
-                    selectedRowKeys: selectedRowKeys.filter(key => key.startsWith('module_')),
-                    onChange: (selectedKeys: Key[]) => {
-                        const otherKeys = selectedRowKeys.filter(key => !key.startsWith('module_'));
-                        setSelectedRowKeys([...otherKeys, ...selectedKeys] as string[]);
+                    selectedRowKeys: selectedModuleIds,
+                    onChange: (selectedKeys) => {
+                        setSelectedModules((prev) => ({
+                            ...prev,
+                            [record.id]: selectedKeys as number[],
+                        }));
                     },
                 }}
                 size="small"
-                style={{margin: '10px 0', backgroundColor: '#fafafa'}}
+                style={{margin: "10px 0", backgroundColor: "#fafafa"}}
             />
         );
     };
 
-
-    const onSearch = (value: string) => {
-        setSearchTerm(value);
-        setCurrentPage(1);
-    };
-
-    const onSelectChange = (selectedKeys: Key[]) => {
-        const assignmentKeys = selectedKeys
-            .filter(key => key.toString().startsWith('assignment_'))
-            .map(key => key.toString());
-
-        const moduleKeys = selectedRowKeys.filter(key => key.startsWith('module_'));
-        setSelectedRowKeys([...assignmentKeys, ...moduleKeys]);
-    };
-
     const rowSelection = {
-        selectedRowKeys,
-        onChange: onSelectChange,
-        getCheckboxProps: (record: Assignment) => ({
-            key: `assignment_${record.id}`,
-        }),
+        selectedRowKeys: selectedAssignments,
+        onChange: (selectedKeys: Key[]) => {
+            setSelectedAssignments(selectedKeys as number[]);
+        },
     };
 
     const handleTableChange = (pagination: any) => {
@@ -204,16 +199,18 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                 open={visible}
                 onCancel={onClose}
                 footer={[
-                    <Button key="close" onClick={onClose}>{t('Close')}</Button>,
+                    <Button key="close" onClick={onClose}>
+                        {t("Close")}
+                    </Button>,
                     <Button
                         key="assign"
                         type="primary"
                         onClick={handleAssign}
-                        disabled={selectedRowKeys.length === 0}
+                        disabled={selectedAssignments.length === 0}
                         loading={assignLoading}
                     >
-                        {t('Assign')}
-                    </Button>
+                        {t("Assign")}
+                    </Button>,
                 ]}
                 width={800}
             >
@@ -226,7 +223,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                                     allowClear
                                     enterButton={t("Search")}
                                     size="middle"
-                                    onSearch={onSearch}
+                                    onSearch={(value) => console.log(value)}
                                 />
                             </Col>
                             <Col span={12}>
@@ -238,16 +235,17 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                                                 if (!value || value.length < 2) return Promise.resolve();
                                                 const [start, end] = value;
                                                 if (start && end && end.isAfter(start)) return Promise.resolve();
-
-                                                return Promise.reject(new Error(t('End date must be after start date!') || 'Ngày kết thúc phải sau ngày bắt đầu!'));
-                                            }
-                                        })
+                                                return Promise.reject(
+                                                    new Error(t("End date must be after start date!"))
+                                                );
+                                            },
+                                        }),
                                     ]}
                                 >
                                     <RangePicker
-                                        style={{width: '100%'}}
+                                        style={{width: "100%"}}
                                         format="YYYY-MM-DD"
-                                        placeholder={[t('Start Date'), t('End Date')]}
+                                        placeholder={[t("Start Date"), t("End Date")]}
                                     />
                                 </Form.Item>
                             </Col>
@@ -258,13 +256,13 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                         <Table
                             dataSource={assignments}
                             columns={columns}
-                            rowKey="key"
+                            rowKey={(record) => record.id}
                             pagination={{
                                 current: currentPage,
                                 pageSize,
                                 total: totalItems,
                                 showSizeChanger: true,
-                                pageSizeOptions: ['5', '10', '20', '50'],
+                                pageSizeOptions: ["5", "10", "20", "50"],
                             }}
                             rowSelection={rowSelection}
                             onChange={handleTableChange}
