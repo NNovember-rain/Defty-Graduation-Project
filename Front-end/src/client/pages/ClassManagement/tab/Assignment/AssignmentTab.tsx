@@ -7,29 +7,13 @@ import {
     type IAssignment
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
-import {
-    Button,
-    Card,
-    Col,
-    List,
-    Pagination,
-    Row,
-    Select,
-    Space,
-    Tooltip,
-    Typography,
-    Tabs, // Thêm Tabs
-    type TabsProps
-} from "antd";
+import {Button, Card, List, Pagination, Tabs, type TabsProps, Tag, Typography} from "antd";
 import {IoCalendarOutline} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
-import {AppstoreOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
-// import SubmissionModal from "./SubmissionModal"; // Bỏ Modal
 import "./AssignmentTabUser.scss";
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 interface AssignmentTabProps {
     classId: number;
@@ -37,16 +21,41 @@ interface AssignmentTabProps {
 
 type AssignmentType = "ASSIGNMENT" | "TEST";
 
-// Cập nhật interface để làm phẳng và chứa thông tin loại bài tập
+interface AssignedModule {
+    moduleId: number;
+    moduleName: string;
+    checkedTest: boolean;
+    typeUmls: string[];
+    startDate: string | null;
+    endDate: string | null;
+    assignmentClassDetailId: number; // Đã thêm vào interface trong lần sửa trước
+}
+
 interface IAssignmentExtended extends IAssignment {
-    id: string; // ID làm phẳng (assignmentId-classInfoId)
-    originalId: number; // ID gốc của bài tập
+    id: string;
+    originalId: number;
     type: AssignmentType;
     startDate: string | null;
     endDate: string | null;
     classInfoId: number;
+    assignmentClassId: number; // 🔥 Đã thêm trường này để lấy từ API
+    modules: AssignedModule[];
 }
 
+interface ProcessedAssignmentItem {
+    key: string;
+    assignmentId: number;
+    assignmentClassDetailId: number;
+    assignmentClassId: number;
+    assignmentTitle: string;
+    assignmentCode: string;
+    startDate: string | null;
+    endDate: string | null;
+    isModuleTest: boolean;
+    displayModuleId: number;
+    displayModuleName: string;
+    displayTypeUmls: string[];
+}
 
 const DEFAULT_PAGE_SIZE = 9;
 
@@ -60,42 +69,29 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [page, setPage] = useState<number>(1);
     const [size, setSize] = useState<number>(DEFAULT_PAGE_SIZE);
     const [total, setTotal] = useState<number>(0);
-    const [view, setView] = useState<"grid" | "list">("grid");
-    const [sortBy, setSortBy] = useState<string | undefined>("createdDate");
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
+    const [view] = useState<"grid" | "list">("list");
 
-    // Giữ nguyên activeTab
-    const [activeTab, setActiveTab] = useState<string>('test');
+    const [sortBy] = useState<string | undefined>("createdDate");
+    const [sortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
-    // BỎ CÁC STATE CỦA MODAL SUBMISSION
-    // const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
-    // const [selectedAssignment, setSelectedAssignment] = useState<IAssignmentExtended | null>(null);
+    const [activeTab, setActiveTab] = useState<string>('test'); // Mặc định là 'test'
 
-    // --- KHÔI PHỤC LOGIC GỐC handleViewAssignmentDetails ---
     const handleViewAssignmentDetails = useCallback(
-        (rowData: IAssignmentExtended) => {
-            // Xác định mode dựa trên type của bài tập
-            const mode = rowData.type === 'TEST' ? 'test' : 'practice';
-            // Sử dụng originalId và mode cho navigation
-            const url = `/class/${classId}/problem/${rowData.originalId}`;
+        (rowData: ProcessedAssignmentItem) => {
+            const mode = rowData.isModuleTest ? 'test' : 'practice';
+
+            // 🔥 LOGIC SỬA ĐỔI: Chọn ID dựa trên chế độ
+            const idToUse = rowData.isModuleTest
+                ? rowData.assignmentClassDetailId
+                : rowData.assignmentClassId;
+
+            const url = `/class/${classId}/problem/${idToUse}`;
             navigate(url + `?mode=${mode}`);
+            console.log(url)
         },
         [navigate, classId]
     );
 
-    // BỎ CÁC HÀM CỦA MODAL SUBMISSION
-    // const handleOpenSubmissionModal = useCallback((assignment: IAssignmentExtended) => {
-    //     setSelectedAssignment(assignment);
-    //     setSubmissionModalVisible(true);
-    // }, []);
-
-    // const handleCloseSubmissionModal = useCallback(() => {
-    //     setSubmissionModalVisible(false);
-    //     setSelectedAssignment(null);
-    // }, []);
-    // --- KẾT THÚC KHÔI PHỤC ---
-
-    // Logic fetchData làm phẳng dữ liệu (giữ nguyên)
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -107,41 +103,54 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             };
 
             const response = await getAssignmentsByClassId(classId, options);
+            console.log("Fetched assignments:", response);
 
-            const combinedAssignments: IAssignmentExtended[] = [];
+            const finalAssignments: IAssignmentExtended[] = [];
 
-            (response.assignments || []).forEach((a: IAssignment) => {
-                const classInfosForCurrentClass = a.assignmentClasses?.filter(
-                    (ac: any) => ac.classId === classId
-                ) || [];
+            (response.assignments || []).forEach((a: any) => {
+                // Giả định API trả về đủ các trường trong modules, bao gồm assignmentClassDetailId
+                const modules: AssignedModule[] = (a.modules || []).map((m: any) => ({
+                    ...m,
+                    assignmentClassDetailId: m.assignmentClassDetailId || 0,
+                }));
 
-                if (classInfosForCurrentClass.length === 0) {
-                    return;
+                const hasTestModules = modules.some((m: any) => m.checkedTest === true);
+                const assignmentType: AssignmentType = hasTestModules ? "TEST" : "ASSIGNMENT";
+
+                const allDates = modules
+                    .map((m: any) => ({ start: m.startDate, end: m.endDate }))
+                    .filter((d: any) => d.start || d.end);
+
+                let displayStartDate: string | null = null;
+                let displayEndDate: string | null = null;
+
+                if (allDates.length > 0) {
+                    const validStartDates = allDates.map((d: any) => d.start).filter(Boolean).map((d: string) => dayjs(d).valueOf());
+                    const validEndDates = allDates.map((d: any) => d.end).filter(Boolean).map((d: string) => dayjs(d).valueOf());
+
+                    if (validStartDates.length > 0) {
+                        displayStartDate = dayjs(Math.min(...validStartDates)).toISOString();
+                    }
+                    if (validEndDates.length > 0) {
+                        displayEndDate = dayjs(Math.max(...validEndDates)).toISOString();
+                    }
                 }
 
-                classInfosForCurrentClass.forEach((classInfo: any) => {
-                    const isTest = classInfo.checkedTest === true;
-                    const assignmentType: AssignmentType = isTest ? "TEST" : "ASSIGNMENT";
-
-                    const startDate = classInfo.startDate ? dayjs(classInfo.startDate).toISOString() : null;
-                    const endDate = classInfo.endDate ? dayjs(classInfo.endDate).toISOString() : null;
-
-                    const uniqueId = `${a.id}-${classInfo.id}`;
-
-                    combinedAssignments.push({
-                        ...a,
-                        id: uniqueId,
-                        originalId: a.id, // Lưu ID gốc
-                        classInfoId: classInfo.id,
-                        type: assignmentType,
-                        createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
-                        startDate: startDate,
-                        endDate: endDate,
-                    } as IAssignmentExtended);
-                });
+                finalAssignments.push({
+                    ...a,
+                    id: String(a.assignmentId),
+                    originalId: a.assignmentId,
+                    classInfoId: classId,
+                    type: assignmentType,
+                    createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
+                    startDate: displayStartDate,
+                    endDate: displayEndDate,
+                    assignmentClassId: a.assignmentClassId, // Lấy assignmentClassId từ response API
+                    modules: modules,
+                } as IAssignmentExtended);
             });
 
-            setAssignments(combinedAssignments);
+            setAssignments(finalAssignments);
 
         } catch (err) {
             console.error("Failed to fetch assignments:", err);
@@ -155,36 +164,38 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
         fetchData();
     }, [fetchData]);
 
-    // Logic phân loại và phân trang client-side (giữ nguyên)
-    const filteredAssignments = useMemo(() => {
-        let filtered = assignments;
-
-        if (activeTab === 'assignment') {
-            filtered = assignments.filter(a => a.type === "ASSIGNMENT");
-        } else if (activeTab === 'test') {
-            filtered = assignments.filter(a => a.type === "TEST");
-        }
-
-        const sorted = [...filtered].sort((a, b) => {
+    const applySortingAndPagination = useCallback((
+        data: ProcessedAssignmentItem[],
+        sortField: string | undefined,
+        sortOrder: "asc" | "desc" | undefined,
+        page: number,
+        size: number,
+        setTotal: (total: number) => void
+    ) => {
+        const sorted = [...data].sort((a, b) => {
             let valA: any, valB: any;
+            let comparison = 0;
 
-            switch (sortBy) {
-                case "startDate":
-                case "endDate":
-                case "createdDate":
-                    valA = a[sortBy as keyof IAssignmentExtended] ? new Date(a[sortBy as keyof IAssignmentExtended] as string).getTime() : 0;
-                    valB = b[sortBy as keyof IAssignmentExtended] ? new Date(b[sortBy as keyof IAssignmentExtended] as string).getTime() : 0;
-                    break;
-                case "title":
-                default:
-                    valA = a.title?.toLowerCase() || "";
-                    valB = b.title?.toLowerCase() || "";
-                    break;
+            if (sortField === "endDate") {
+                valA = a.endDate ? dayjs(a.endDate).valueOf() : (sortOrder === "asc" ? Infinity : -Infinity);
+                valB = b.endDate ? dayjs(b.endDate).valueOf() : (sortOrder === "asc" ? Infinity : -Infinity);
+                comparison = valA - valB;
+            }
+            else if (sortField === "startDate") {
+                valA = a.startDate ? dayjs(a.startDate).valueOf() : (sortOrder === "asc" ? Infinity : -Infinity);
+                valB = b.startDate ? dayjs(b.startDate).valueOf() : (sortOrder === "asc" ? Infinity : -Infinity);
+                comparison = valA - valB;
+            }
+            else {
+                valA = a.assignmentTitle?.toLowerCase() || "";
+                valB = b.assignmentTitle?.toLowerCase() || "";
+
+                if (valA < valB) comparison = -1;
+                else if (valA > valB) comparison = 1;
+                else comparison = 0;
             }
 
-            if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-            if (valA > valB) return sortOrder === "asc" ? 1 : -1;
-            return 0;
+            return sortOrder === "asc" ? comparison : -comparison;
         });
 
         setTotal(sorted.length);
@@ -194,13 +205,100 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
 
         return sorted.slice(startIndex, endIndex);
 
-    }, [assignments, activeTab, page, size, sortBy, sortOrder]);
+    }, [page, size]);
 
 
-    const gridColumns = useMemo(() => {
-        if (view === "list") return 1;
-        return 3;
-    }, [view]);
+    const processedAssignments = useMemo(() => {
+        const isFilteringTest = activeTab === 'test';
+
+        if (isFilteringTest) {
+            const flattened: ProcessedAssignmentItem[] = assignments.flatMap(a => {
+                const relevantModules = a.modules
+                    .filter(m => m.checkedTest === true);
+
+                return relevantModules.flatMap(m => {
+                    const baseItem: ProcessedAssignmentItem = {
+                        key: '', // Sẽ được set sau
+                        assignmentId: a.originalId,
+                        assignmentClassDetailId: m.assignmentClassDetailId,
+                        assignmentClassId: a.assignmentClassId, // Lấy từ Assignment Extended
+                        assignmentTitle: a.assignmentTitle,
+                        assignmentCode: a.assignmentCode,
+                        startDate: m.startDate,
+                        endDate: m.endDate,
+                        isModuleTest: true,
+                        displayModuleId: m.moduleId,
+                        displayModuleName: m.moduleName,
+                        displayTypeUmls: [], // Sẽ được set sau
+                    };
+                    console.log("Processing module:", m, "for assignment:", a);
+
+                    return m.typeUmls.map((typeUml, typeIndex) => ({
+                        ...baseItem,
+                        key: `${a.id}-${m.moduleId}-${typeUml}-${typeIndex}`,
+                        displayTypeUmls: [typeUml],
+                    }));
+                });
+            });
+            return applySortingAndPagination(flattened, sortBy, sortOrder, page, size, setTotal);
+
+        } else {
+            const assignmentMap = new Map<number, ProcessedAssignmentItem>();
+
+            assignments.forEach(a => {
+                const practiceModules = a.modules.filter(m => m.checkedTest === false);
+
+                if (practiceModules.length > 0) {
+                    const allPracticeUmls = Array.from(new Set(practiceModules.flatMap(m => m.typeUmls))); // Dùng Set để tránh UML trùng lặp
+
+                    let displayStartDate: string | null = null;
+                    let displayEndDate: string | null = null;
+
+                    const allDates = practiceModules
+                        .map(m => ({ start: m.startDate, end: m.endDate }))
+                        .filter(d => d.start || d.end);
+
+                    if (allDates.length > 0) {
+                        const validStartDates = allDates.map(d => d.start).filter(Boolean).map(d => dayjs(d!).valueOf());
+                        const validEndDates = allDates.map(d => d.end).filter(Boolean).map(d => dayjs(d!).valueOf());
+
+                        if (validStartDates.length > 0) {
+                            displayStartDate = dayjs(Math.min(...validStartDates)).toISOString();
+                        }
+                        if (validEndDates.length > 0) {
+                            displayEndDate = dayjs(Math.max(...validEndDates)).toISOString();
+                        }
+                    }
+
+                    // Lấy assignmentClassDetailId từ module đầu tiên để đảm bảo có ID hợp lệ
+                    const firstModule = practiceModules[0];
+                    const detailId = firstModule.assignmentClassDetailId;
+
+                    const practiceItem: ProcessedAssignmentItem = {
+                        key: `${a.id}-practice-group`,
+                        assignmentId: a.originalId,
+                        assignmentTitle: a.assignmentTitle,
+                        assignmentCode: a.assignmentCode,
+                        assignmentClassId: a.assignmentClassId, // Lấy từ Assignment Extended
+                        assignmentClassDetailId: detailId, // Dùng tạm ID chi tiết đầu tiên (chủ yếu cho URL mặc định)
+                        startDate: displayStartDate,
+                        endDate: displayEndDate,
+                        isModuleTest: false,
+                        displayModuleId: a.originalId,
+                        displayModuleName: a.assignmentTitle,
+                        displayTypeUmls: allPracticeUmls,
+                    };
+
+                    assignmentMap.set(a.originalId, practiceItem);
+                }
+            });
+
+            const flattened = Array.from(assignmentMap.values());
+            return applySortingAndPagination(flattened, sortBy, sortOrder, page, size, setTotal);
+        }
+
+    }, [assignments, activeTab, page, size, sortBy, sortOrder, applySortingAndPagination]);
+
 
     const onChangePage = (p: number, pageSize?: number) => {
         setPage(p);
@@ -210,122 +308,113 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
     };
 
-    const onToggleView = (v: "grid" | "list") => {
-        setView(v);
-    };
+    const renderAssignmentCard = (item: ProcessedAssignmentItem, isListView: boolean) => {
+        const isTest = item.isModuleTest;
+        const hasNoDeadline = !item.startDate && !item.endDate;
 
-    const onSortChange = (value: string) => {
-        const [field, order] = value.split("_");
-        setSortBy(field);
-        setSortOrder(order as "asc" | "desc");
-        setPage(1);
-    };
+        const statusClass = 'status-default';
 
-    // --- SỬA ĐỔI renderAssignmentCard ĐỂ ĐẢM BẢO NÚT BẤM CHÍNH XÁC ---
-    const renderAssignmentCard = (a: IAssignmentExtended, isListView: boolean) => {
-        const isTest = a.type === 'TEST';
-        const titleLevel = isListView ? 5 : 5;
-        const buttonSize = isListView ? undefined : 'small';
+        const cardClassName = `assignment-card ${isTest ? 'is-test' : 'is-practice'} ${statusClass} ${isListView ? 'is-list-view' : 'is-grid-view'}`;
+        const buttonText = isTest ? (t("classDetail.assignment.submit") || "Nộp bài") : (t("classDetail.assignment.practice") || "Luyện tập");
+
 
         const cardContent = (
-            <>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
-                    <div className="assignment-icon" style={{ width: "36px", height: "36px", fontSize: "1.25rem" }}>
+            <div className="card-content-wrapper">
+                <div className={`status-bar-strip ${statusClass}`} />
+
+                <div className="card-header">
+                    <div className="assignment-icon">
                         <MdOutlineAssignment />
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <Title level={titleLevel} className="assignment-title" style={{ margin: 0 }}>
-                            {a.title}
+                    <div className="assignment-info">
+                        <Title level={5} className="assignment-title">
+                            {item.assignmentTitle}
                         </Title>
-                        <Text type="secondary" style={{ display: "block", color: "#aaa", fontSize: isListView ? 'inherit' : '0.85rem' }}>
-                            [{isTest ? t("classDetail.type.test") || "KIỂM TRA" : t("classDetail.type.assignment") || "LUYỆN TẬP"}]
-                        </Text>
-                        <Text className="assignment-date" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: isListView ? 'inherit' : '0.85rem' }}>
-                            <IoCalendarOutline />
-                            {a.startDate && a.endDate
-                                ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
-                                : t("classDetail.assignment.noDeadline") || "No deadline"}
+                        <Text className="assignment-type-tag" type="secondary">
+                            {isTest ? (
+                                `[Module - ${item.displayModuleName}]`
+                            ) : (
+                                `[${t("classDetail.type.assignment") || "LUYỆN TẬP"}]`
+                            )}
                         </Text>
                     </div>
                 </div>
 
-                <Space size={isListView ? 'middle' : 'small'}>
-                    {/* NÚT HÀNH ĐỘNG 1: LUYỆN TẬP (Chỉ hiển thị ở tab Luyện tập) */}
-                    {!isTest && (
-                        <Button
-                            size={buttonSize}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewAssignmentDetails(a); // Mode practice được xử lý trong handleViewAssignmentDetails
-                            }}
-                        >
-                            {t("classDetail.assignment.practice") || "Luyện tập"}
-                        </Button>
-                    )}
+                <div className="card-body">
+                    <div className="uml-info">
+                        {item.isModuleTest && (
+                            <div className="uml-tags">
+                                {item.displayTypeUmls.map((name, index) => (
+                                    <Tag key={`${item.key}-uml-${name}-${index}`} className="uml-tag">
+                                        {name}
+                                    </Tag>
+                                ))}
+                            </div>
+                        )}
 
-                    {/* NÚT HÀNH ĐỘNG 2: TEST (Chỉ hiển thị ở tab Kiểm tra) */}
-                    {isTest && (
-                        <Button
-                            size={buttonSize}
-                            type="primary"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewAssignmentDetails(a); // Gọi hàm chuyển hướng, hàm này đã tự động thêm ?mode=test
-                            }}
-                        >
-                            {t("classDetail.assignment.submit") || "Test"}
-                        </Button>
-                    )}
-                </Space>
-            </>
+                        <div className="assignment-dates-list">
+                            <Text type="secondary" className="date-item date-range">
+                                <IoCalendarOutline />
+                                <span className="date-range-value">
+                                    {hasNoDeadline ? (
+                                        t("classDetail.assignment.noDeadline") || "Không có deadline"
+                                    ) : (
+                                        <>
+                                            {item.startDate ? dayjs(item.startDate).format("DD/MM/YYYY") : '—'}
+                                            {' → '}
+                                            {item.endDate ? dayjs(item.endDate).format("DD/MM/YYYY") : '—'}
+                                        </>
+                                    )}
+                                </span>
+                            </Text>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card-footer">
+                    <Button
+                        className="action-button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewAssignmentDetails(item);
+                        }}
+                    >
+                        {buttonText}
+                    </Button>
+                </div>
+            </div>
         );
 
-        if (isListView) {
-            return (
-                <List.Item key={a.id}>
-                    <Card style={{ marginBottom: "16px" }} hoverable className="assignment-card">
-                        <Row gutter={[16, 16]} align="middle">
-                            <Col xs={24} sm={24}>
-                                {cardContent}
-                            </Col>
-                        </Row>
-                    </Card>
-                </List.Item>
-            );
-        }
-
         return (
-            <List.Item key={a.id}>
-                <Card hoverable className="assignment-card">
+            <List.Item key={item.key} className={view === 'list' ? 'full-width' : ''}>
+                <Card hoverable className={cardClassName}>
                     {cardContent}
                 </Card>
             </List.Item>
         );
     };
-    // --- KẾT THÚC SỬA ĐỔI renderAssignmentCard ---
 
-    // Cấu hình Tabs (giữ nguyên)
     const tabItems: TabsProps['items'] = [
         {
             key: 'test',
-            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${assignments.filter(a => a.type === 'TEST').length})`,
+            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${assignments.flatMap(a => a.modules.filter(m => m.checkedTest)).flatMap(m => m.typeUmls).length})`,
             children: (
                 <List
-                    grid={{ gutter: 16, column: gridColumns }}
-                    dataSource={filteredAssignments}
-                    locale={{ emptyText: t("common.noData") || "No assignments" }}
+                    grid={view === 'grid' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 4 } : undefined}
+                    dataSource={processedAssignments}
+                    locale={{ emptyText: t("common.noTests") || "Chưa có bài tập kiểm tra nào." }}
                     renderItem={(a) => renderAssignmentCard(a, view === 'list')}
                 />
             ),
         },
         {
             key: 'assignment',
-            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${assignments.filter(a => a.type === 'ASSIGNMENT').length})`,
+            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${assignments.flatMap(a => a.modules.filter(m => !m.checkedTest)).length})`,
             children: (
                 <List
-                    grid={{ gutter: 16, column: gridColumns }}
-                    dataSource={filteredAssignments}
-                    locale={{ emptyText: t("common.noData") || "No assignments" }}
+                    grid={view === 'grid' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 4 } : undefined}
+                    dataSource={processedAssignments}
+                    locale={{ emptyText: t("common.noAssignments") || "Chưa có bài tập luyện tập nào." }}
                     renderItem={(a) => renderAssignmentCard(a, view === 'list')}
                 />
             ),
@@ -334,18 +423,26 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     if (loading) {
         return (
-            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ padding: "2rem", display: "flex", justifyContent: "center", alignItems: "center", gap: '8px' }}>
                 <Spinner animation="border" />
-                <span style={{ marginLeft: '0.5rem' }}>
-                    {t('assignmentForm.assignmentLoading')}
-                </span>
+                <Text style={{ color: 'white' }}>
+                    {t('common.loading') || 'Đang tải bài tập...'}
+                </Text>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="p-4 text-red-600 bg-red-100 border border-red-300 rounded-md">
+            <div
+                style={{
+                    padding: "1rem",
+                    color: "#dc3545",
+                    backgroundColor: "#f8d7da",
+                    border: "1px solid #f5c6cb",
+                    margin: "2rem"
+                }}
+            >
                 {error}
             </div>
         );
@@ -354,74 +451,18 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     return (
         <div className="assignment-tab-container">
             <main className="assignment-content">
-                {/* Header controls (giữ nguyên) */}
-                <div className="header-controls">
-                    <Title level={3} style={{ margin: 0, color: "#fff" }}>
-                        {t("classDetail.tabs.classwork") || "Classwork"}
-                    </Title>
 
-                    <Space>
-                        <Select
-                            value={`${sortBy}_${sortOrder}`}
-                            onChange={onSortChange}
-                            style={{ minWidth: 200 }}
-                        >
-                            <Option value="createdDate_desc">
-                                {t("classDetail.sort.newest") || "Newest"}
-                            </Option>
-                            <Option value="createdDate_asc">
-                                {t("classDetail.sort.oldest") || "Oldest"}
-                            </Option>
-                            <Option value="title_asc">
-                                {t("classDetail.sort.titleAsc") || "Title A→Z"}
-                            </Option>
-                            <Option value="title_desc">
-                                {t("classDetail.sort.titleDesc") || "Title Z→A"}
-                            </Option>
-                            <Option value="startDate_asc">
-                                {t("assignmentPage.sort.startSoonest") || "Start date ↑"}
-                            </Option>
-                            <Option value="startDate_desc">
-                                {t("assignmentPage.sort.startLatest") || "Start date ↓"}
-                            </Option>
-                            <Option value="endDate_asc">
-                                {t("assignmentPage.sort.endSoonest") || "End date ↑"}
-                            </Option>
-                            <Option value="endDate_desc">
-                                {t("assignmentPage.sort.endLatest") || "End date ↓"}
-                            </Option>
-                        </Select>
 
-                        <Tooltip title={t("classDetail.view.list") || "List"}>
-                            <Button
-                                type={view === "list" ? "primary" : "default"}
-                                icon={<UnorderedListOutlined />}
-                                onClick={() => onToggleView("list")}
-                            />
-                        </Tooltip>
-
-                        <Tooltip title={t("classDetail.view.grid") || "Grid"}>
-                            <Button
-                                type={view === "grid" ? "primary" : "default"}
-                                icon={<AppstoreOutlined />}
-                                onClick={() => onToggleView("grid")}
-                            />
-                        </Tooltip>
-                    </Space>
-                </div>
-
-                {/* Tabs */}
                 <Tabs
                     activeKey={activeTab}
                     items={tabItems}
                     onChange={(key) => {
                         setActiveTab(key);
-                        setPage(1); // Reset page khi đổi tab
+                        setPage(1);
                     }}
                     className="assignment-tabs"
                 />
 
-                {/* Pagination (giữ nguyên) */}
                 <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end" }}>
                     <Pagination
                         current={page}
@@ -432,21 +473,11 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                         onChange={onChangePage}
                         onShowSizeChange={onChangePage}
                         showTotal={(total) =>
-                            `${total} ${total > 1 ? "items" : "item"}`
+                            `${t("common.total") || "Tổng"} ${total} ${total > 1 ? t("common.items") || "mục" : t("common.item") || "mục"}`
                         }
                     />
                 </div>
             </main>
-
-            {/* BỎ MODAL SUBMISSION */}
-            {/* {selectedAssignment && (
-                <SubmissionModal
-                    visible={submissionModalVisible}
-                    onCancel={handleCloseSubmissionModal}
-                    assignment={selectedAssignment}
-                    classId={classId}
-                />
-            )} */}
         </div>
     );
 };

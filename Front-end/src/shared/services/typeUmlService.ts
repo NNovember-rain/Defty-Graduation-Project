@@ -21,11 +21,7 @@ export interface GetTypeUmlResult {
 }
 
 export interface ITypeUml {
-    id: number;
     name: string;
-    description: string;
-    createdDate: string;
-    isActive: boolean;
 }
 
 export const createTypeUml = async (data: Omit<ITypeUml, '_id' | 'createdAt' | 'updatedAt'>): Promise<ITypeUml> => {
@@ -33,23 +29,12 @@ export const createTypeUml = async (data: Omit<ITypeUml, '_id' | 'createdAt' | '
     return await response.json() as Promise<ITypeUml>;
 };
 
-export const getTypeUmls = async (options: GetTypeUmlOptions = {}): Promise<GetTypeUmlResult> => {
-    const params = {
-        page: (options.page || 1) - 1,
-        limit: options.limit,
-        name: options.name,
-        sortBy: options.sortBy,
-        sortOrder: options.sortOrder,
-    };
-
-    const response = await handleRequest(getWithParams(`${PREFIX_CONTENT}/${PREFIX_TYPEUML}`, params));
-    const data = await response.json();
+export const getTypeUmls = async () => {
+    const res = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_TYPEUML}`));
+    const { result } = await res.json();
     return {
-        typeUmls: data.result.content,
-        total: data.result.totalElements,
-        // page: data.result.number - 1,
-        limit: data.result.size
-    } as GetTypeUmlResult;
+        typeUmls: result,
+    };
 };
 
 export const getTypeUmlById = async (id: string | number): Promise<ITypeUml> => {

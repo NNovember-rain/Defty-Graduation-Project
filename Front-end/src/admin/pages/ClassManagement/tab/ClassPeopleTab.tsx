@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from 'react-bootstrap';
 import {
@@ -9,8 +9,9 @@ import {
 } from '../../../../shared/services/classManagementService';
 import { getUserById, IUser } from '../../../../shared/services/userService';
 import * as XLSX from 'xlsx';
-import {Button, Upload } from 'antd';
+import {Button, Upload, Modal} from 'antd';
 import {useNotification} from "../../../../shared/notification/useNotification.ts";
+import {LoadingOutlined, UploadOutlined} from "@ant-design/icons";
 
 // Interface cho Teacher (sử dụng IUser từ userService)
 interface ITeacher extends IUser {
@@ -46,6 +47,11 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const [teacherLoading, setTeacherLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // 🚀 TRẠNG THÁI LOADING MỚI
+    const [isImporting, setIsImporting] = useState(false);
+    const [isRemoving, setIsRemoving] = useState(false);
+
+
     // Modal states
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [studentsToRemove, setStudentsToRemove] = useState<string[]>([]);
@@ -60,13 +66,61 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const [pageSize] = useState(10);
 
     // Sorting states
-    const [sortBy, setSortBy] = useState<string>('fullName');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [sortBy] = useState<string>('fullName');
+    const [sortOrder] = useState<'asc' | 'desc'>('asc');
+
+    // 🚨 SỬ DỤNG useCallback CHO fetchPeople
+    const fetchPeople = useCallback(async () => {
+        setLoading(true); // 🚀 Bật loading fetch
+        setError(null);
+
+        try {
+            const options: GetStudentsInClassOptions = {
+                page: currentPage,
+                limit: pageSize,
+                sortBy: sortBy,
+                sortOrder: sortOrder
+            };
+
+            const result = await getStudentsInClass(classId, options);
+
+            setStudents(result.content);
+            setTotalElements(result.totalElements);
+            setTotalPages(result.totalPages);
+
+        } catch (err: any) {
+            console.error("Failed to fetch class people:", err);
+            setError(err.message || t('common.errorFetchingData'));
+        } finally {
+            setLoading(false); // 🚀 Tắt loading fetch
+        }
+    }, [classId, currentPage, pageSize, sortBy, sortOrder, t]); // Thêm dependencies
+
+    const fetchTeacher = async () => {
+        setTeacherLoading(true);
+        try {
+            const classInfo = await getClassById(classId);
+            if (classInfo.teacherId) {
+                const teacherInfo = await getUserById(classInfo.teacherId);
+                const teacher: ITeacher = {
+                    ...teacherInfo,
+                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(teacherInfo.fullName || teacherInfo.username)}&size=48&background=2563eb&color=fff`
+                };
+                setTeachers([teacher]);
+            }
+        } catch (err: any) {
+            console.error("Failed to fetch teacher:", err);
+            setTeachers([]);
+        } finally {
+            setTeacherLoading(false);
+        }
+    };
+
 
     useEffect(() => {
         fetchPeople();
         fetchTeacher();
-    }, [classId, currentPage, sortBy, sortOrder]);
+    }, [classId, currentPage, sortBy, sortOrder, fetchPeople]); // Thêm fetchPeople vào dependencies
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -97,67 +151,24 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
             handleImport(studentsToImport);
         };
         reader.readAsBinaryString(file);
+        // Ngăn chặn Ant Design Upload tự xử lý
+        return false;
     };
 
     const handleImport = async (students: StudentImportRequest[]) => {
-        setLoading(true);
+        setIsImporting(true); // 🚀 Bật loading import
         try {
             await importStudentsToClass(classId, students);
-            message.success('Import thành công!');
+            message.success(t('apiMessages.importSuccess') || 'Import thành công!');
             fetchPeople();
         } catch (err) {
             console.error(err);
-            message.error('Import thất bại!');
+            message.error(t('apiMessages.importFailed') || 'Import thất bại!');
         } finally {
-            setLoading(false);
+            setIsImporting(false); // 🚀 Tắt loading import
         }
     };
 
-    const fetchTeacher = async () => {
-        setTeacherLoading(true);
-        try {
-            const classInfo = await getClassById(classId);
-            if (classInfo.teacherId) {
-                const teacherInfo = await getUserById(classInfo.teacherId);
-                const teacher: ITeacher = {
-                    ...teacherInfo,
-                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(teacherInfo.fullName || teacherInfo.username)}&size=48&background=2563eb&color=fff`
-                };
-                setTeachers([teacher]);
-            }
-        } catch (err: any) {
-            console.error("Failed to fetch teacher:", err);
-            setTeachers([]);
-        } finally {
-            setTeacherLoading(false);
-        }
-    };
-
-    const fetchPeople = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const options: GetStudentsInClassOptions = {
-                page: currentPage,
-                limit: pageSize,
-                sortBy: sortBy,
-                sortOrder: sortOrder
-            };
-
-            const result = await getStudentsInClass(classId, options);
-
-            setStudents(result.content);
-            setTotalElements(result.totalElements);
-            setTotalPages(result.totalPages);
-
-        } catch (err: any) {
-            console.error("Failed to fetch class people:", err);
-            setError(err.message || t('common.errorFetchingData'));
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSelectStudent = (studentId: string) => {
         if (selectedStudents.includes(studentId)) {
@@ -168,7 +179,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     };
 
     const handleSelectAllStudents = () => {
-        if (selectedStudents.length === students.length) {
+        if (selectedStudents.length === students.length && students.length > 0) {
             setSelectedStudents([]);
         } else {
             setSelectedStudents(students.map(student => student.studentId));
@@ -182,6 +193,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         try {
+            // Đảm bảo định dạng ngày tháng phù hợp với locale
             return new Date(dateString).toLocaleDateString('vi-VN');
         } catch {
             return dateString;
@@ -223,8 +235,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         );
         const emails = selectedStudentsData.map(student => student.email).join(',');
 
-        const defaultSubject = 'Thông báo từ lớp học';
-        const defaultBody = 'Xin chào các em,\n\nTôi có thông báo quan trọng muốn chia sẻ với các em.\n\nTrân trọng,\nGiáo viên';
+        const defaultSubject = t('email.defaultSubject') || 'Thông báo từ lớp học';
+        const defaultBody = t('email.defaultBody') || 'Xin chào các em,\n\nTôi có thông báo quan trọng muốn chia sẻ với các em.\n\nTrân trọng,\nGiáo viên';
 
         const gmailUrl = `https://mail.google.com/mail/u/0/?view=cm&to=${encodeURIComponent(emails)}&su=${encodeURIComponent(defaultSubject)}&body=${encodeURIComponent(defaultBody)}`;
 
@@ -232,18 +244,29 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     };
 
     const handleRemoveStudents = async () => {
-        try {
-            console.log('Removing students:', studentsToRemove);
+        if (studentsToRemove.length === 0) return;
 
-            await fetchPeople();
+        setIsRemoving(true); // 🚀 Bật loading xóa
+
+        try {
+            // 🚨 LOGIC GỌI API XÓA HỌC SINH CẦN ĐƯỢC THÊM VÀO ĐÂY
+            // Ví dụ: await removeStudentsFromClass(classId, studentsToRemove);
+
+            // Hiện tại, chỉ mô phỏng thành công
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            message.success(t('classDetail.peopleTab.removeSuccess') || 'Xóa học sinh thành công!');
+
+            fetchPeople(); // Cập nhật danh sách
             setSelectedStudents([]);
             setShowConfirmModal(false);
             setStudentsToRemove([]);
 
-            alert(t('classDetail.peopleTab.removeSuccess'));
         } catch (error) {
             console.error('Failed to remove students:', error);
-            alert(t('classDetail.peopleTab.removeError'));
+            message.error(t('classDetail.peopleTab.removeError') || 'Lỗi khi xóa học sinh.');
+        } finally {
+            setIsRemoving(false); // 🚀 Tắt loading xóa
         }
     };
 
@@ -252,7 +275,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         setOpenDropdown(openDropdown === studentId ? null : studentId);
     };
 
-    if (loading || teacherLoading) {
+    // Trường hợp LOADING LẦN ĐẦU (khi students.length === 0)
+    if (loading && currentPage === 1 && students.length === 0) {
         return (
             <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Spinner animation="border" style={{ color: '#3b82f6' }} />
@@ -301,7 +325,11 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                     </h2>
                 </div>
 
-                {teachers.length === 0 ? (
+                {teacherLoading ? (
+                    <div style={{ padding: '1rem', textAlign: 'center' }}>
+                        <Spinner animation="border" size="sm" style={{ color: '#3b82f6' }} />
+                    </div>
+                ) : teachers.length === 0 ? (
                     <div style={{
                         padding: '2rem',
                         textAlign: 'center',
@@ -386,13 +414,12 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                     <Upload
                         accept=".xlsx,.xls"
                         showUploadList={false}
-                        beforeUpload={(file) => {
-                            handleFileUpload(file);
-                            return false;
-                        }}
+                        beforeUpload={(file) => handleFileUpload(file)} // Sử dụng hàm handleFileUpload
                     >
                         <Button
                             type="primary"
+                            loading={isImporting} // 🚀 Áp dụng loading
+                            icon={<UploadOutlined />}
                             style={{
                                 backgroundColor: '#3b82f6',
                                 borderColor: '#3b82f6',
@@ -401,11 +428,9 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                 height: 'auto',
                                 fontWeight: '500'
                             }}
+                            disabled={isImporting}
                         >
-                            <svg style={{ width: '16px', height: '16px', marginRight: '0.5rem', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                            Upload File
+                            {isImporting ? (t('common.importing') || 'Đang Import...') : (t('classDetail.peopleTab.uploadFile') || 'Upload File')}
                         </Button>
                     </Upload>
                 </div>
@@ -434,7 +459,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                 }}
                             />
                             <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                                Chọn tất cả
+                                {t('classDetail.peopleTab.selectAll')}
                             </span>
                         </label>
                         {selectedStudents.length > 0 && (
@@ -447,10 +472,10 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                     fontSize: '0.875rem',
                                     fontWeight: '600'
                                 }}>
-                                    {selectedStudents.length} đã chọn
+                                    {selectedStudents.length} {t('classDetail.peopleTab.selectedCount')}
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    {/* <button
+                                    <button
                                         onClick={() => handleBulkAction('email')}
                                         style={{
                                             padding: '0.5rem 1rem',
@@ -469,8 +494,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                         <svg style={{ width: '14px', height: '14px', marginRight: '0.375rem', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
-                                        Gửi email
-                                    </button> */}
+                                        {t('classDetail.peopleTab.sendEmail')}
+                                    </button>
                                     <button
                                         onClick={() => handleBulkAction('remove')}
                                         style={{
@@ -490,7 +515,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                         <svg style={{ width: '14px', height: '14px', marginRight: '0.375rem', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
-                                        Xóa
+                                        {t('common.remove')}
                                     </button>
                                 </div>
                             </>
@@ -499,7 +524,25 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                 </div>
 
                 {/* Danh sách học sinh */}
-                <div>
+                <div style={{ position: 'relative' }}> {/* 🚨 CONTAINER CẦN CÓ position: 'relative' */}
+                    {loading && students.length > 0 && ( // 🚀 Thêm overlay loading khi chuyển trang/sắp xếp
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 10,
+                            borderRadius: '8px'
+                        }}>
+                            <Spinner animation="border" style={{ color: '#3b82f6' }} />
+                        </div>
+                    )}
+
                     {students.length === 0 ? (
                         <div style={{
                             padding: '3rem',
@@ -524,7 +567,9 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                     backgroundColor: '#fff',
                                     border: '1px solid #e2e8f0',
                                     borderRadius: '8px',
-                                    transition: 'all 0.2s'
+                                    transition: 'all 0.2s',
+                                    // 🚨 Chỉ làm mờ nhẹ, không dùng opacity nếu có overlay loading
+                                    opacity: loading && students.length > 0 ? 0.8 : 1,
                                 }}
                                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
@@ -568,7 +613,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                                 {student.email}
                                             </div>
                                             <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                                {student.userCode} • Tham gia: {formatDate(student.enrolledAt)}
+                                                {student.userCode} • {t('classDetail.peopleTab.joined')}: {formatDate(student.enrolledAt)}
                                             </div>
                                         </div>
                                     </div>
@@ -643,6 +688,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                                     onClick={(e) => handleSingleAction('remove', student.studentId, e)}
                                                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
                                                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                    disabled={isRemoving}
                                                 >
                                                     <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -669,15 +715,15 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                         padding: '1rem 0'
                     }}>
                         <button
-                            disabled={currentPage === 1}
+                            disabled={currentPage === 1 || loading}
                             onClick={() => handlePageChange(currentPage - 1)}
                             style={{
                                 padding: '0.5rem 1rem',
                                 border: '1px solid #e2e8f0',
                                 borderRadius: '6px',
-                                backgroundColor: currentPage === 1 ? '#f8fafc' : 'white',
-                                color: currentPage === 1 ? '#94a3b8' : '#475569',
-                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                backgroundColor: (currentPage === 1 || loading) ? '#f8fafc' : 'white',
+                                color: (currentPage === 1 || loading) ? '#94a3b8' : '#475569',
+                                cursor: (currentPage === 1 || loading) ? 'not-allowed' : 'pointer',
                                 fontSize: '0.875rem',
                                 fontWeight: '500'
                             }}
@@ -694,13 +740,14 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                 <button
                                     key={pageNum}
                                     onClick={() => handlePageChange(pageNum)}
+                                    disabled={loading}
                                     style={{
                                         padding: '0.5rem 0.875rem',
                                         border: '1px solid #e2e8f0',
                                         borderRadius: '6px',
                                         backgroundColor: pageNum === currentPage ? '#3b82f6' : 'white',
                                         color: pageNum === currentPage ? 'white' : '#475569',
-                                        cursor: 'pointer',
+                                        cursor: loading ? 'not-allowed' : 'pointer',
                                         fontSize: '0.875rem',
                                         fontWeight: '500',
                                         minWidth: '40px'
@@ -712,15 +759,15 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                         })}
 
                         <button
-                            disabled={currentPage === totalPages}
+                            disabled={currentPage === totalPages || loading}
                             onClick={() => handlePageChange(currentPage + 1)}
                             style={{
                                 padding: '0.5rem 1rem',
                                 border: '1px solid #e2e8f0',
                                 borderRadius: '6px',
-                                backgroundColor: currentPage === totalPages ? '#f8fafc' : 'white',
-                                color: currentPage === totalPages ? '#94a3b8' : '#475569',
-                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                backgroundColor: (currentPage === totalPages || loading) ? '#f8fafc' : 'white',
+                                color: (currentPage === totalPages || loading) ? '#94a3b8' : '#475569',
+                                cursor: (currentPage === totalPages || loading) ? 'not-allowed' : 'pointer',
                                 fontSize: '0.875rem',
                                 fontWeight: '500'
                             }}
@@ -807,6 +854,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                                disabled={isRemoving}
                             >
                                 {t('common.cancel')}
                             </button>
@@ -815,17 +863,23 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                     padding: '0.625rem 1.5rem',
                                     border: 'none',
                                     borderRadius: '8px',
-                                    backgroundColor: '#dc2626',
+                                    backgroundColor: isRemoving ? '#f87171' : '#dc2626', // Màu xám hơn khi loading
                                     color: 'white',
-                                    cursor: 'pointer',
+                                    cursor: isRemoving ? 'not-allowed' : 'pointer',
                                     fontSize: '0.875rem',
                                     fontWeight: '500',
-                                    transition: 'all 0.2s'
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
                                 }}
                                 onClick={handleRemoveStudents}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isRemoving ? '#f87171' : '#b91c1c'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isRemoving ? '#f87171' : '#dc2626'}
+                                disabled={isRemoving}
                             >
+                                {isRemoving && <LoadingOutlined style={{ fontSize: 16 }} />}
                                 {t('common.confirm')}
                             </button>
                         </div>
