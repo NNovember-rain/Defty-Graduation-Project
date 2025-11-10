@@ -2,10 +2,7 @@ package com.defty.content_service.controller;
 
 import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
-import com.defty.content_service.dto.response.ApiResponse;
-import com.defty.content_service.dto.response.AssignmentResponse;
-import com.defty.content_service.dto.response.MaterialUploadResponse;
-import com.defty.content_service.dto.response.ModuleResponse;
+import com.defty.content_service.dto.response.*;
 import com.defty.content_service.service.AssignmentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -75,12 +72,12 @@ public class AssignmentController {
     }
 
     @GetMapping("/class/{classId}")
-    public ApiResponse<Page<AssignmentResponse>> getAllAssignmentsByClassId(@RequestParam(value = "page", defaultValue = "0") int page,
+    public ApiResponse<Page<AssignmentClassDetailResponse>> getAllAssignmentsByClassId(@RequestParam(value = "page", defaultValue = "0") int page,
                                                                             @RequestParam(value = "size", defaultValue = "10") int size,
                                                                             @PathVariable Long classId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<AssignmentResponse> responsePage = assignmentService.getAssignmentsByClassId(classId, pageable);
-        return ApiResponse.<Page<AssignmentResponse>>builder()
+        Page<AssignmentClassDetailResponse> responsePage = assignmentService.getAssignmentsByClassId(classId, pageable);
+        return ApiResponse.<Page<AssignmentClassDetailResponse>>builder()
                 .result(responsePage)
                 .build();
     }
@@ -93,10 +90,26 @@ public class AssignmentController {
                 .build();
     }
 
+    @GetMapping("/detail/all-module/{assignmentClassId}")
+    ApiResponse<AssignmentResponseByClass> getAssignmentModule(@PathVariable Long assignmentClassId) {
+        AssignmentResponseByClass response = assignmentService.getAssignmentAllModule(assignmentClassId);
+        return ApiResponse.<AssignmentResponseByClass>builder()
+                .result(response)
+                .build();
+    }
+
     @GetMapping("/{classId}/{assignmentId}")
-    ApiResponse<AssignmentResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
-        AssignmentResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
-        return ApiResponse.<AssignmentResponse>builder()
+    ApiResponse<AssignmentClassDetailResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
+        AssignmentClassDetailResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
+        return ApiResponse.<AssignmentClassDetailResponse>builder()
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/detail/{assignmentClassDetailId}")
+    ApiResponse<AssignmentClassDetailResponse> getAssignmentByClassId( @PathVariable Long assignmentClassDetailId) {
+        AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetailId(assignmentClassDetailId);
+        return ApiResponse.<AssignmentClassDetailResponse>builder()
                 .result(response)
                 .build();
     }

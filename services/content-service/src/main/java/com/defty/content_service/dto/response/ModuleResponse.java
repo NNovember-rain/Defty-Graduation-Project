@@ -15,6 +15,5 @@ public class ModuleResponse {
     Long id;
     String moduleName;
     String moduleDescription;
-    String solutionCode;
-    List<Long> typeUmlIds;
+    List<SolutionResponse> solutionResponses;
 }

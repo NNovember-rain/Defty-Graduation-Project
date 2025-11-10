@@ -12,13 +12,17 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AssignmentClassResponse {
-    Long id;
-    Long classId;
+public class AssignmentClassDetailResponse {
     Long assignmentId;
+    String assignmentTitle;
+    String assignmentDescription;
+    String assignmentCode;
+    Long classId;
+    Long assignmentClassId;
+
     Date startDate;
     Date endDate;
-    Long assignmentClassId;
-    List<ModuleResponse> moduleResponses;
-    TypeUMLResponse typeUmlResponse;
+    boolean checkedTest;
+
+    List<ModuleClassResponse> modules;
 }

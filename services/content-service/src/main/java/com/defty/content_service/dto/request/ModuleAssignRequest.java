@@ -11,9 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AssignmentRequest {
-    String title;
-    String description;
-    List<Long> classIds;
-    List<ModuleRequest> modules;
+public class ModuleAssignRequest {
+    Long moduleId;
+    List<String> typeUmls;
 }

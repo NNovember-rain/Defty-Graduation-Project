@@ -1,28 +1,19 @@
 package com.defty.content_service.service.impl;
 
 import com.defty.content_service.client.ClassServiceClient;
-import com.defty.content_service.dto.request.AssignRequest;
-import com.defty.content_service.dto.request.AssignmentRequest;
-import com.defty.content_service.dto.request.ModuleRequest;
-import com.defty.content_service.dto.response.AssignmentClassResponse;
-import com.defty.content_service.dto.response.AssignmentResponse;
-import com.defty.content_service.dto.response.ModuleResponse;
-import com.defty.content_service.dto.response.TypeUMLResponse;
-import com.defty.content_service.entity.Assignment;
-import com.defty.content_service.entity.AssignmentClass;
-import com.defty.content_service.entity.ModuleEntity;
-import com.defty.content_service.entity.TypeUML;
+import com.defty.content_service.dto.request.*;
+import com.defty.content_service.dto.response.*;
+import com.defty.content_service.entity.*;
+import com.defty.content_service.enums.TypeUml;
 import com.defty.content_service.exception.AppException;
 import com.defty.content_service.exception.ErrorCode;
-import com.defty.content_service.repository.AssignmentClassRepository;
-import com.defty.content_service.repository.AssignmentRepository;
-import com.defty.content_service.repository.ModuleRepository;
-import com.defty.content_service.repository.TypeUMLRepository;
+import com.defty.content_service.repository.*;
 import com.defty.content_service.service.AssignmentService;
 import com.defty.content_service.specification.AssignmentSpecification;
 import com.example.common_library.exceptions.NotFoundException;
 import com.example.common_library.utils.UserUtils;
 import feign.FeignException;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,18 +26,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class AssignmentServiceImpl implements AssignmentService {
+class AssignmentServiceImpl implements AssignmentService {
     AssignmentRepository assignmentRepository;
     AssignmentClassRepository assignmentClassRepository;
-    TypeUMLRepository typeUMLRepository;
     ClassServiceClient classServiceClient;
     ModuleRepository moduleRepository;
+    ModuleSolutionRepository moduleSolutionRepository;
+    AssignmentClassDetailRepository assignmentClassDetailRepository;
+
 
     @Override
     public Page<AssignmentResponse> getAllAssignments(Long classId, Long typeUmlId, String title, Pageable pageable) {
@@ -70,69 +62,90 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Override
     public List<AssignmentResponse> assignAssignment(AssignRequest assignRequest) {
         validateClassIds(assignRequest.getClassIds());
+        List<AssignmentResponse> responses = new ArrayList<>();
 
-        List<Assignment> assignments = assignmentRepository.findAllById(assignRequest.getAssignmentIds());
-        if (assignments.isEmpty()) {
-            throw new IllegalArgumentException("No assignments found for given ids");
-        }
-        List<Long> moduleIds = assignRequest.getModuleIds();
-        List<AssignmentClass> assignmentClasses = new ArrayList<>();
+        for (AssignmentAssignRequest assignmentReq : assignRequest.getAssignments()) {
+            Long assignmentId = assignmentReq.getAssignmentId();
+            Assignment assignment = assignmentRepository.findById(assignmentId)
+                    .orElseThrow(() -> new NotFoundException("Assignment not found with id: " + assignmentId));
 
-        boolean isTestAssignment = assignRequest.isCheckedTest();
+            for (Long classId : assignRequest.getClassIds()) {
+                AssignmentClass assignmentClass = assignmentClassRepository
+                        .findByAssignmentIdAndClassId(assignmentId, classId)
+                        .orElseGet(() -> {
+                            AssignmentClass newClass = AssignmentClass.builder()
+                                    .assignment(assignment)
+                                    .classId(classId)
+                                    .build();
+                            return assignmentClassRepository.save(newClass);
+                        });
 
-        if (moduleIds != null && !moduleIds.isEmpty()) {
-            List<ModuleEntity> modules = moduleRepository.findAllById(moduleIds);
-            if (modules.isEmpty()) {
-                throw new IllegalArgumentException("No modules found for given ids");
-            }
+                if (assignmentReq.getModules() != null && !assignmentReq.getModules().isEmpty()) {
+                    for (ModuleAssignRequest moduleReq : assignmentReq.getModules()) {
+                        ModuleEntity module = moduleRepository.findById(moduleReq.getModuleId())
+                                .orElseThrow(() -> new NotFoundException(
+                                        "Module not found with id: " + moduleReq.getModuleId()
+                                ));
 
-            List<AssignmentClass> existing = assignmentClassRepository
-                    .findByModuleIdInAndClassIdInAndCheckedAndTypeUmlId(moduleIds, assignRequest.getClassIds(), isTestAssignment, assignRequest.getTypeUmlId());
-            if (!existing.isEmpty()) {
-                throw new IllegalArgumentException("Some modules are already assigned to the specified classes");
-            }
+                        if (moduleReq.getTypeUmls() != null && !moduleReq.getTypeUmls().isEmpty()) {
+                            for (String typeName : moduleReq.getTypeUmls()) {
+                                TypeUml type;
+                                try {
+                                    type = TypeUml.valueOf(typeName);
+                                } catch (IllegalArgumentException e) {
+                                    throw new AppException(ErrorCode.INVALID_TYPE_UML);
+                                }
 
-            for (ModuleEntity module : modules) {
-                for (Long classId : assignRequest.getClassIds()) {
-                    assignmentClasses.add(AssignmentClass.builder()
-                            .assignment(module.getAssignment())
-                            .module(module)
-                            .classId(classId)
-                            .startDate(assignRequest.getStartDate())
-                            .endDate(assignRequest.getEndDate())
-                            .checked(isTestAssignment)
-                            .typeUmlId(assignRequest.getTypeUmlId())
-                            .build());
+                                boolean exists = assignmentClass.getAssignmentClassDetails() != null &&
+                                        assignmentClass.getAssignmentClassDetails().stream()
+                                                .anyMatch(d ->
+                                                        d.getModule().getId().equals(module.getId())
+                                                                && d.getTypeUml() == type
+                                                );
+
+                                if (!exists) {
+                                    AssignmentClassDetail detail = AssignmentClassDetail.builder()
+                                            .assignmentClass(assignmentClass)
+                                            .module(module)
+                                            .typeUml(type)
+                                            .startDate(assignmentReq.getStartDate())
+                                            .endDate(assignmentReq.getEndDate())
+                                            .checked(true)
+                                            .build();
+                                    assignmentClassDetailRepository.save(detail);
+                                }
+                            }
+                        } else {
+                            boolean exists = assignmentClass.getAssignmentClassDetails() != null &&
+                                    assignmentClass.getAssignmentClassDetails().stream()
+                                            .anyMatch(d -> d.getModule().getId().equals(module.getId())
+                                                    && d.getTypeUml() == null);
+
+                            if (!exists) {
+                                AssignmentClassDetail detail = AssignmentClassDetail.builder()
+                                        .assignmentClass(assignmentClass)
+                                        .module(module)
+                                        .typeUml(null)
+                                        .checked(false)
+                                        .startDate(assignmentReq.getStartDate())
+                                        .endDate(assignmentReq.getEndDate())
+                                        .build();
+                                assignmentClassDetailRepository.save(detail);
+                            }
+                        }
+                    }
                 }
             }
+
+            responses.add(toAssignmentResponse(assignment));
         }
-        assignmentClassRepository.saveAll(assignmentClasses);
 
-        return assignments.stream()
-                .map(this::toAssignmentResponse)
-                .collect(Collectors.toList());
+        return responses;
     }
-
 
     @Override
     public AssignmentResponse unassignAssignment(AssignmentRequest request) {
-        validateClassIds(request.getClassIds());
-        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
-        if (currentUser == null) {
-            throw new AppException(ErrorCode.USER_NOT_EXISTED);
-        }
-        Long userId = currentUser.userId();
-
-        Assignment assignment = assignmentRepository
-                .findByUserIdAndTitle(userId, request.getTitle())
-                .orElseThrow(() -> new NotFoundException("Assignment not found"));
-
-        List<AssignmentClass> assignmentClassesToDelete = assignmentClassRepository
-                .findByAssignmentAndClassIdIn(assignment, request.getClassIds());
-
-        assignmentClassRepository.deleteAll(assignmentClassesToDelete);
-
-        return toAssignmentResponse(assignment);
+        return null;
     }
 
     @Override
@@ -161,123 +174,402 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public Page<AssignmentResponse> getAssignmentsByClassId(Long classId, Pageable pageable) {
-        try {
-            classServiceClient.getClassById(classId);
-        } catch (FeignException.NotFound ex) {
-            throw new IllegalArgumentException("Class not found with id: " + classId);
-        }
+    public Page<AssignmentClassDetailResponse> getAssignmentsByClassId(Long classId, Pageable pageable) {
+        List<AssignmentClass> assignmentClasses = assignmentClassRepository.findAllByClassIdFetch(classId, pageable);
+        long total = assignmentClassRepository.countByClassId(classId);
 
-        List<AssignmentClass> assignmentClassesForClass = assignmentClassRepository.findByClassId(classId);
-
-        List<Assignment> assignments = assignmentClassesForClass.stream()
-                .map(ac -> assignmentRepository.findById(ac.getAssignment().getId())
-                        .orElseThrow(() -> new NotFoundException(
-                                "Assignment not found with ID: " + ac.getAssignment().getId())))
-                .filter(a -> a.getIsActive() != null && a.getIsActive() == 1)
-                .distinct()
-                .toList();
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), assignments.size());
-        List<Assignment> pagedAssignments = assignments.subList(start, end);
-
-        List<AssignmentResponse> responses = pagedAssignments.stream()
-                .map(assignment -> {
-                    List<AssignmentClass> classesForAssignment = assignmentClassesForClass.stream()
-                            .filter(ac -> ac.getAssignment().getId().equals(assignment.getId()))
-                            .toList();
-                    return toAssignmentResponseWithClassModules(assignment, classesForAssignment);
-                })
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(responses, pageable, assignments.size());
-    }
-
-    @Override
-    public AssignmentResponse getAssignmentByClassId(Long classId, Long assignmentId) {
-        Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new NotFoundException("Assignment not found"));
-        List<AssignmentClass> assignmentClassesForClass = assignmentClassRepository
-                .findByClassId(classId);
-
-        return toAssignmentResponseWithClassModules(assignment, assignmentClassesForClass);
-    }
-
-    private AssignmentResponse toAssignmentResponseWithClassModules(Assignment assignment, List<AssignmentClass> assignmentClassesForClass) {
-        List<Long> classIds = assignmentClassesForClass.stream()
-                .map(AssignmentClass::getClassId)
-                .distinct()
-                .toList();
-
-        List<ModuleResponse> commonModules = assignment.getModules() != null
-                ? assignment.getModules().stream()
-                .map(m -> ModuleResponse.builder()
-                        .id(m.getId())
-                        .moduleName(m.getModuleName())
-                        .moduleDescription(m.getModuleDescription())
-                        .solutionCode(m.getSolutionCode())
-                        .typeUmlIds(
-                                m.getTypeUMLs() != null
-                                        ? m.getTypeUMLs().stream().map(TypeUML::getId).toList()
-                                        : List.of()
-                        )
-                        .build())
-                .toList()
-                : List.of();
-
-        List<AssignmentClassResponse> assignmentClassResponses = assignmentClassesForClass.stream()
+        List<AssignmentClassDetailResponse> responses = assignmentClasses.stream()
                 .map(ac -> {
-                    List<ModuleResponse> moduleResponses = ac.getModule() != null
-                            ? List.of(ModuleResponse.builder()
-                            .id(ac.getModule().getId())
-                            .moduleName(ac.getModule().getModuleName())
-                            .moduleDescription(ac.getModule().getModuleDescription())
-                            .solutionCode(ac.getModule().getSolutionCode())
-                            .typeUmlIds(
-                                    ac.getModule().getTypeUMLs() != null
-                                            ? ac.getModule().getTypeUMLs().stream().map(TypeUML::getId).toList()
-                                            : List.of()
-                            )
-                            .build())
-                            : List.of();
+                    Assignment assignment = ac.getAssignment();
 
-                    TypeUMLResponse typeUMLResponse = null;
-                    if(ac.isChecked()){
-                        TypeUML typeUML = typeUMLRepository.findById(ac.getTypeUmlId())
-                                .orElseThrow(() -> new NotFoundException("TypeUML not found with ID: " + ac.getTypeUmlId()));
-                        typeUMLResponse = TypeUMLResponse.builder()
-                                .id(typeUML.getId())
-                                .name(typeUML.getName())
-                                .description(typeUML.getDescription())
-                                .build();
-                    }
+                    Map<Long, Map<Boolean, List<AssignmentClassDetail>>> groupedByModuleAndChecked = ac.getAssignmentClassDetails().stream()
+                            .collect(Collectors.groupingBy(
+                                    detail -> detail.getModule().getId(),
+                                    Collectors.groupingBy(AssignmentClassDetail::isChecked)
+                            ));
 
-                    return AssignmentClassResponse.builder()
-                            .id(ac.getId())
-                            .classId(ac.getClassId())
-                            .assignmentId(ac.getAssignment().getId())
-                            .startDate(ac.getStartDate())
-                            .endDate(ac.getEndDate())
-                            .moduleResponses(moduleResponses)
-                            .typeUmlResponse(typeUMLResponse)
-                            .checkedTest(ac.isChecked())
+                    List<ModuleClassResponse> moduleResponses = new ArrayList<>();
+
+                    groupedByModuleAndChecked.forEach((moduleId, checkedMap) -> {
+                        ModuleEntity module = ac.getAssignmentClassDetails().stream()
+                                .filter(d -> d.getModule().getId().equals(moduleId))
+                                .findFirst()
+                                .map(AssignmentClassDetail::getModule)
+                                .orElse(null);
+
+                        if (module == null) return;
+
+                        checkedMap.forEach((isChecked, details) -> {
+
+                            if (isChecked) {
+                                details.forEach(detail -> {
+                                    List<String> singleTypeUmlList = new ArrayList<>();
+
+                                    String typeUmlName = detail.getTypeUml() != null ? detail.getTypeUml().name() : "NO_TYPE";
+                                    singleTypeUmlList.add(typeUmlName);
+
+                                    ModuleClassResponse response = ModuleClassResponse.builder()
+                                            .moduleId(moduleId)
+                                            .moduleName(module.getModuleName())
+                                            .moduleDescription(module.getModuleDescription())
+                                            .typeUmls(singleTypeUmlList)
+                                            .checkedTest(true)
+                                            .assignmentClassDetailId(detail.getId())
+                                            .startDate(detail.getStartDate())
+                                            .endDate(detail.getEndDate())
+                                            .build();
+                                    moduleResponses.add(response);
+                                });
+
+                            } else {
+                                List<String> typeUmls = details.stream()
+                                        .map(detail -> detail.getTypeUml() != null ? detail.getTypeUml().name() : "NO_TYPE")
+                                        .toList();
+
+                                AssignmentClassDetail firstDetail = details.stream().findFirst().orElse(null);
+
+                                ModuleClassResponse response = ModuleClassResponse.builder()
+                                        .moduleId(moduleId)
+                                        .moduleName(module.getModuleName())
+                                        .moduleDescription(module.getModuleDescription())
+                                        .typeUmls(typeUmls)
+                                        .checkedTest(false)
+                                        .assignmentClassDetailId(firstDetail != null ? firstDetail.getId() : null)
+                                        .startDate(firstDetail != null ? firstDetail.getStartDate() : null)
+                                        .endDate(firstDetail != null ? firstDetail.getEndDate() : null)
+                                        .build();
+
+                                moduleResponses.add(response);
+                            }
+                        });
+                    });
+
+                    return AssignmentClassDetailResponse.builder()
+                            .assignmentId(assignment.getId())
+                            .assignmentTitle(assignment.getTitle())
+                            .assignmentDescription(assignment.getDescription())
+                            .assignmentCode(assignment.getAssignmentCode())
+                            .startDate(assignment.getStartDate())
+                            .classId(classId)
+                            .endDate(assignment.getEndDate())
+                            .assignmentClassId(ac.getId())
+                            .modules(moduleResponses)
                             .build();
                 })
                 .toList();
 
-        Map<Long, ModuleResponse> mergedModulesMap = Stream.concat(
-                        commonModules.stream(),
-                        assignmentClassResponses.stream()
-                                .flatMap(acResp -> acResp.getModuleResponses().stream())
-                )
-                .collect(Collectors.toMap(
-                        ModuleResponse::getId,
-                        moduleResponse -> moduleResponse,
-                        (m1, m2) -> m1
+        return new PageImpl<>(responses, pageable, total);
+    }
+
+    @Override
+    public AssignmentClassDetailResponse getAssignmentByClassId(Long classId, Long assignmentId) {
+        AssignmentClass assignmentClass = assignmentClassRepository
+                .findByAssignmentIdAndClassId(assignmentId, classId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Assignment with id " + assignmentId + " not found in class " + classId));
+
+        Assignment assignment = assignmentClass.getAssignment();
+
+        Map<Long, List<String>> moduleUmlMap = assignmentClass.getAssignmentClassDetails().stream()
+                .collect(Collectors.groupingBy(
+                        detail -> detail.getModule().getId(),
+                        Collectors.mapping(detail -> detail.getTypeUml() != null
+                                        ? detail.getTypeUml().name()
+                                        : "NO_TYPE",
+                                Collectors.toList())
                 ));
 
-        List<ModuleResponse> mergedModules = new ArrayList<>(mergedModulesMap.values());
+        List<ModuleClassResponse> moduleResponses = moduleUmlMap.entrySet().stream()
+                .map(entry -> {
+                    ModuleEntity module = assignmentClass.getAssignmentClassDetails().stream()
+                            .filter(d -> d.getModule().getId().equals(entry.getKey()))
+                            .findFirst()
+                            .map(AssignmentClassDetail::getModule)
+                            .orElse(null);
+
+                    return ModuleClassResponse.builder()
+                            .moduleId(module.getId())
+                            .moduleName(module.getModuleName())
+                            .moduleDescription(module.getModuleDescription())
+                            .typeUmls(entry.getValue())
+                            .build();
+                })
+                .toList();
+
+        return AssignmentClassDetailResponse.builder()
+                .assignmentId(assignment.getId())
+                .assignmentTitle(assignment.getTitle())
+                .assignmentDescription(assignment.getDescription())
+                .assignmentCode(assignment.getAssignmentCode())
+                .startDate(assignment.getStartDate())
+                .endDate(assignment.getEndDate())
+                .modules(moduleResponses)
+                .build();
+    }
+
+    @Override
+    public AssignmentClassDetailResponse getAssignmentClassDetailId(Long assignmentClassDetailId) {
+        AssignmentClassDetail assignmentClassDetail = assignmentClassDetailRepository.findById(assignmentClassDetailId)
+                .orElseThrow(() -> new NotFoundException("AssignmentClassDetail not found with id: " + assignmentClassDetailId));
+        return AssignmentClassDetailResponse.builder()
+                .assignmentId(assignmentClassDetail.getAssignmentClass().getAssignment().getId())
+                .assignmentTitle(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
+                .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
+                .assignmentCode(assignmentClassDetail.getAssignmentClass().getAssignment().getAssignmentCode())
+                .startDate(assignmentClassDetail.getStartDate())
+                .endDate(assignmentClassDetail.getEndDate())
+                .checkedTest(assignmentClassDetail.isChecked())
+                .classId(assignmentClassDetail.getAssignmentClass().getClassId())
+                .modules(List.of(
+                        ModuleClassResponse.builder()
+                                .moduleId(assignmentClassDetail.getModule().getId())
+                                .moduleName(assignmentClassDetail.getModule().getModuleName())
+                                .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
+                                .typeUmls(List.of(
+                                        assignmentClassDetail.getTypeUml() != null
+                                                ? assignmentClassDetail.getTypeUml().name()
+                                                : "NO_TYPE"
+                                ))
+                                .checkedTest(assignmentClassDetail.isChecked())
+                                .startDate(assignmentClassDetail.getStartDate())
+                                .endDate(assignmentClassDetail.getEndDate())
+                                .build()
+                ))
+                .build();
+    }
+
+    @Override
+    public AssignmentResponseByClass getAssignmentAllModule(Long assignmentClassId) {
+        AssignmentClass assignmentClass = assignmentClassRepository.findById(assignmentClassId)
+                .orElseThrow(() -> new NotFoundException("AssignmentClass not found with id: " + assignmentClassId));
+        List<ModuleResponse> moduleResponses = assignmentClass.getAssignment().getModules() != null
+                ? assignmentClass.getAssignment().getModules().stream()
+                .map(m -> {
+                    List<SolutionResponse> solutionResponses = m.getModuleSolutions() != null
+                            ? m.getModuleSolutions().stream()
+                            .map(s -> SolutionResponse.builder()
+                                    .id(s.getId())
+                                    .solutionCode(s.getSolutionCode())
+                                    .typeUml(s.getTypeUml() != null ? s.getTypeUml().name() : null)
+                                    .build())
+                            .toList()
+                            : List.of();
+
+                    return ModuleResponse.builder()
+                            .id(m.getId())
+                            .moduleName(m.getModuleName())
+                            .moduleDescription(m.getModuleDescription())
+                            .solutionResponses(solutionResponses)
+                            .build();
+                })
+                .toList()
+                : List.of();
+        return AssignmentResponseByClass.builder()
+                .modules(moduleResponses)
+                .build();
+    }
+
+    @Override
+    public AssignmentResponse createAssignment(AssignmentRequest request) {
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new IllegalArgumentException("Only instructors can upload materials.");
+        }
+        Long userId = currentUser.userId();
+
+        Assignment assignment = Assignment.builder()
+                .userId(userId)
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .assignmentCode(assignmentCode())
+                .build();
+
+        Assignment savedAssignment = assignmentRepository.save(assignment);
+
+        List<ModuleRequest> moduleRequests = request.getModules();
+        if (moduleRequests != null && !moduleRequests.isEmpty()) {
+            for (ModuleRequest moduleRequest : moduleRequests) {
+                ModuleEntity module = ModuleEntity.builder()
+                        .moduleCode(assignmentCode())
+                        .moduleName(moduleRequest.getModuleName())
+                        .moduleDescription(moduleRequest.getModuleDescription())
+                        .assignment(savedAssignment)
+                        .build();
+
+                ModuleEntity savedModule = moduleRepository.save(module);
+
+                List<SolutionRequest> solutionRequests = moduleRequest.getSolutions();
+                if (solutionRequests != null && !solutionRequests.isEmpty()) {
+                    List<ModuleSolution> solutions = new ArrayList<>();
+                    for (SolutionRequest solReq : solutionRequests) {
+                        TypeUml type;
+                        try {
+                            type = TypeUml.valueOf(solReq.getTypeUml());
+                        } catch (IllegalArgumentException e) {
+                            throw new AppException(ErrorCode.INVALID_TYPE_UML);
+                        }
+
+                        ModuleSolution solution = ModuleSolution.builder()
+                                .solutionCode(solReq.getSolutionCode())
+                                .typeUml(type)
+                                .module(savedModule)
+                                .build();
+                        solutions.add(solution);
+                    }
+                    moduleSolutionRepository.saveAll(solutions);
+                }
+            }
+        }
+        return toAssignmentResponse(savedAssignment);
+    }
+
+
+    @Override
+    @Transactional
+    public AssignmentResponse updateAssignment(Long id, AssignmentRequest request) {
+        Assignment assignment = assignmentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Assignment not found with id: " + id));
+
+        assignment.setTitle(request.getTitle());
+        assignment.setDescription(request.getDescription());
+        assignmentRepository.save(assignment);
+
+        List<ModuleRequest> moduleRequests = request.getModules();
+        List<ModuleEntity> existingModules = moduleRepository.findByAssignmentId(assignment.getId());
+
+        Set<String> incomingModuleNames = moduleRequests != null
+                ? moduleRequests.stream().map(ModuleRequest::getModuleName).collect(Collectors.toSet())
+                : Collections.emptySet();
+
+        List<ModuleEntity> modulesToDelete = existingModules.stream()
+                .filter(m -> !incomingModuleNames.contains(m.getModuleName()))
+                .toList();
+
+        if (!modulesToDelete.isEmpty()) {
+            List<Long> moduleIdsToDelete = modulesToDelete.stream()
+                    .map(ModuleEntity::getId)
+                    .toList();
+            List<ModuleSolution> solutionsToDelete = moduleSolutionRepository.findByModuleIdIn(moduleIdsToDelete);
+            moduleSolutionRepository.deleteAll(solutionsToDelete);
+            moduleRepository.deleteAll(modulesToDelete);
+        }
+
+        if (moduleRequests != null) {
+            for (ModuleRequest moduleRequest : moduleRequests) {
+                ModuleEntity module = existingModules.stream()
+                        .filter(m -> m.getModuleName().equals(moduleRequest.getModuleName()))
+                        .findFirst()
+                        .orElseGet(() -> ModuleEntity.builder()
+                                .moduleCode(assignmentCode())
+                                .assignment(assignment)
+                                .build());
+
+                module.setModuleName(moduleRequest.getModuleName());
+                module.setModuleDescription(moduleRequest.getModuleDescription());
+                ModuleEntity savedModule = moduleRepository.save(module);
+
+                // --- 3️⃣ Xử lý solution ---
+                List<SolutionRequest> solutionRequests = moduleRequest.getSolutions();
+                List<ModuleSolution> existingSolutions = moduleSolutionRepository.findByModuleId(savedModule.getId());
+
+                Set<TypeUml> incomingTypes = solutionRequests != null
+                        ? solutionRequests.stream()
+                        .map(sol -> {
+                            try {
+                                return TypeUml.valueOf(sol.getTypeUml());
+                            } catch (IllegalArgumentException e) {
+                                throw new AppException(ErrorCode.INVALID_TYPE_UML);
+                            }
+                        })
+                        .collect(Collectors.toSet())
+                        : Collections.emptySet();
+
+                List<ModuleSolution> toDelete = existingSolutions.stream()
+                        .filter(s -> !incomingTypes.contains(s.getTypeUml()))
+                        .toList();
+                moduleSolutionRepository.deleteAll(toDelete);
+
+                if (solutionRequests != null) {
+                    for (SolutionRequest solReq : solutionRequests) {
+                        TypeUml type;
+                        try {
+                            type = TypeUml.valueOf(solReq.getTypeUml());
+                        } catch (IllegalArgumentException e) {
+                            throw new AppException(ErrorCode.INVALID_TYPE_UML);
+                        }
+
+                        ModuleSolution solution = existingSolutions.stream()
+                                .filter(s -> s.getTypeUml() == type)
+                                .findFirst()
+                                .orElseGet(() -> ModuleSolution.builder()
+                                        .module(savedModule)
+                                        .typeUml(type)
+                                        .build());
+
+                        solution.setSolutionCode(solReq.getSolutionCode());
+                        moduleSolutionRepository.save(solution);
+                    }
+                }
+            }
+        }
+
+        return toAssignmentResponse(assignment);
+    }
+
+
+
+    @Override
+    public Map<Long, AssignmentResponse> getAssignmentsByIds(List<Long> assignmentIds) {
+        return Map.of();
+    }
+
+    @Override
+    public ModuleResponse getAssignmentModule(Long moduleId) {
+        return null;
+    }
+
+    private String assignmentCode(){
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < 5; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+
+        int randomNum = (int) (Math.random() * 90000) + 10000;
+        return sb + "-" + randomNum;
+    }
+
+    private AssignmentResponse toAssignmentResponse(Assignment assignment) {
+        List<AssignmentClass> assignmentClasses = assignmentClassRepository.findByAssignmentId(assignment.getId());
+
+        List<Long> classIds = assignmentClasses.stream()
+                .map(AssignmentClass::getClassId)
+                .toList();
+
+        List<ModuleResponse> moduleResponses = assignment.getModules() != null
+                ? assignment.getModules().stream()
+                .map(m -> {
+                    List<SolutionResponse> solutionResponses = m.getModuleSolutions() != null
+                            ? m.getModuleSolutions().stream()
+                            .map(s -> SolutionResponse.builder()
+                                    .id(s.getId())
+                                    .solutionCode(s.getSolutionCode())
+                                    .typeUml(s.getTypeUml() != null ? s.getTypeUml().name() : null)
+                                    .build())
+                            .toList()
+                            : List.of();
+
+                    return ModuleResponse.builder()
+                            .id(m.getId())
+                            .moduleName(m.getModuleName())
+                            .moduleDescription(m.getModuleDescription())
+                            .solutionResponses(solutionResponses)
+                            .build();
+                })
+                .toList()
+                : List.of();
+
 
         return AssignmentResponse.builder()
                 .id(assignment.getId())
@@ -288,154 +580,9 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .assignmentCode(assignment.getAssignmentCode())
                 .createdDate(assignment.getCreatedDate())
                 .classIds(classIds)
-                .assignmentClasses(assignmentClassResponses)
-                .modules(mergedModules)
+                .modules(moduleResponses)
                 .build();
     }
-
-
-    @Override
-    public AssignmentResponse createAssignment(AssignmentRequest request) {
-        Assignment assignment = createOrUpdateAssignment(new Assignment(), request);
-        return toAssignmentResponse(assignment);
-    }
-
-    @Override
-    public AssignmentResponse updateAssignment(Long id, AssignmentRequest request) {
-        Assignment assignment = assignmentRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Assignment not found with ID: " + id));
-
-        Assignment updatedAssignment = createOrUpdateAssignment(assignment, request);
-        return toAssignmentResponse(updatedAssignment);
-    }
-
-    @Override
-    public Map<Long, AssignmentResponse> getAssignmentsByIds(List<Long> assignmentIds) {
-        if (assignmentIds == null || assignmentIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        List<Assignment> assignments = assignmentRepository.findAllById(assignmentIds);
-
-        return assignments.stream()
-                .collect(Collectors.toMap(
-                        Assignment::getId,
-                        this::toAssignmentResponse
-                ));
-    }
-
-    private Assignment createOrUpdateAssignment(Assignment assignment, AssignmentRequest request) {
-        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
-        if (currentUser == null) {
-            throw new IllegalArgumentException("Only instructors can upload materials.");
-        }
-        Long userId = currentUser.userId();
-
-        assignment.setUserId(userId);
-        assignment.setTitle(request.getTitle());
-        assignment.setDescription(request.getDescription());
-
-        if (request.getModules() == null || request.getModules().isEmpty()) {
-            throw new IllegalArgumentException("Modules cannot be empty");
-        }
-
-        // 🔹 Sinh assignmentCode nếu chưa có
-        if (assignment.getAssignmentCode() == null || assignment.getAssignmentCode().isEmpty()) {
-            ModuleRequest firstModuleReq = request.getModules().get(0);
-            if (firstModuleReq.getTypeUmlIds() == null || firstModuleReq.getTypeUmlIds().isEmpty()) {
-                throw new IllegalArgumentException("Module must have at least one TypeUML");
-            }
-
-            TypeUML firstTypeUML = typeUMLRepository.findById(firstModuleReq.getTypeUmlIds().get(0))
-                    .orElseThrow(() -> new NotFoundException("TypeUML not found"));
-
-            String prefix = firstTypeUML.getName().replaceAll("\\s+", "").chars()
-                    .filter(Character::isUpperCase)
-                    .mapToObj(c -> String.valueOf((char) c))
-                    .collect(Collectors.joining());
-            if (prefix.isEmpty()) {
-                prefix = firstTypeUML.getName()
-                        .substring(0, Math.min(firstTypeUML.getName().length(), 3))
-                        .toUpperCase();
-            }
-
-            int randomNum = (int) (Math.random() * 90000) + 10000;
-            assignment.setAssignmentCode(prefix + "-" + randomNum);
-        }
-
-        // 🔹 Luôn dùng cùng collection cũ, không tạo mới
-        List<ModuleEntity> modules = assignment.getModules();
-        if (modules == null) {
-            modules = new ArrayList<>();
-            assignment.setModules(modules);
-        }
-
-        // 🔹 Map module cũ theo tên
-        Map<String, ModuleEntity> existingModulesByName = modules.stream()
-                .filter(m -> m.getModuleName() != null)
-                .collect(Collectors.toMap(
-                        m -> m.getModuleName().strip().toLowerCase(),
-                        m -> m,
-                        (a, b) -> a
-                ));
-
-        // 🔹 Tập module mới để thay thế nội dung (chứ không gán list mới)
-        List<ModuleEntity> newModules = new ArrayList<>();
-
-        for (ModuleRequest moduleReq : request.getModules()) {
-            String nameKey = moduleReq.getModuleName().strip().toLowerCase();
-            ModuleEntity module;
-
-            if (existingModulesByName.containsKey(nameKey)) {
-                // Cập nhật module cũ
-                module = existingModulesByName.get(nameKey);
-                module.setModuleDescription(moduleReq.getModuleDescription());
-                module.setSolutionCode(moduleReq.getSolutionCode());
-            } else {
-                // Thêm module mới
-                module = new ModuleEntity();
-                module.setModuleName(moduleReq.getModuleName());
-                module.setModuleDescription(moduleReq.getModuleDescription());
-                module.setSolutionCode(moduleReq.getSolutionCode());
-                module.setAssignment(assignment);
-            }
-
-            // Mapping TypeUMLs
-            Set<TypeUML> typeUMLs = new HashSet<>();
-            for (Long typeId : moduleReq.getTypeUmlIds()) {
-                TypeUML typeUML = typeUMLRepository.findById(typeId)
-                        .orElseThrow(() -> new NotFoundException("TypeUML not found: " + typeId));
-                typeUMLs.add(typeUML);
-            }
-            module.setTypeUMLs(typeUMLs);
-
-            newModules.add(module);
-        }
-
-        // 🔹 Xóa các module cũ không còn tồn tại trong request
-        modules.removeIf(m -> newModules.stream()
-                .noneMatch(n -> n.getModuleName().equalsIgnoreCase(m.getModuleName())));
-
-        // 🔹 Thêm/cập nhật module mới vào danh sách cũ
-        for (ModuleEntity newModule : newModules) {
-            if (!modules.contains(newModule)) {
-                modules.add(newModule);
-            }
-        }
-
-        // 🔹 Lưu assignment + module code
-        assignment = assignmentRepository.save(assignment);
-
-        for (ModuleEntity module : assignment.getModules()) {
-            if (module.getModuleCode() == null || module.getModuleCode().isEmpty()) {
-                module.setModuleCode(assignment.getAssignmentCode() + "-" + module.getId());
-            }
-        }
-
-        return assignmentRepository.save(assignment);
-    }
-
-
 
     private void validateClassIds(List<Long> classIds) {
         if (classIds != null) {
@@ -447,74 +594,5 @@ public class AssignmentServiceImpl implements AssignmentService {
                 }
             });
         }
-    }
-
-    private AssignmentResponse toAssignmentResponse(Assignment assignment) {
-        List<AssignmentClass> assignmentClasses = assignmentClassRepository.findByAssignmentId(assignment.getId());
-
-        List<Long> classIds = assignmentClasses.stream()
-                .map(AssignmentClass::getClassId)
-                .toList();
-
-        List<AssignmentClassResponse> assignmentClassResponses = assignmentClasses.stream()
-                .map(ac -> AssignmentClassResponse.builder()
-                        .id(ac.getId())
-                        .classId(ac.getClassId())
-                        .assignmentId(ac.getAssignment().getId())
-                        .startDate(ac.getStartDate())
-                        .endDate(ac.getEndDate())
-                        .build())
-                .toList();
-
-        List<ModuleResponse> moduleResponses = assignment.getModules() != null
-                ? assignment.getModules().stream()
-                .map(m -> ModuleResponse.builder()
-                        .id(m.getId())
-                        .moduleName(m.getModuleName())
-                        .moduleDescription(m.getModuleDescription())
-                        .solutionCode(m.getSolutionCode())
-                        .typeUmlIds(
-                                m.getTypeUMLs() != null
-                                        ? m.getTypeUMLs().stream()
-                                        .map(TypeUML::getId)
-                                        .toList()
-                                        : List.of()
-                        )
-                        .build())
-                .toList()
-                : List.of();
-
-        return AssignmentResponse.builder()
-                .id(assignment.getId())
-                .title(assignment.getTitle())
-                .commonDescription(assignment.getDescription())
-                .userId(assignment.getUserId())
-                .isActive(assignment.getIsActive())
-                .assignmentCode(assignment.getAssignmentCode())
-                .createdDate(assignment.getCreatedDate())
-                .classIds(classIds)
-                .assignmentClasses(assignmentClassResponses)
-                .modules(moduleResponses)
-                .build();
-    }
-
-    @Override
-    public ModuleResponse getAssignmentModule(Long moduleId) {
-        ModuleEntity module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new NotFoundException("Module not found with ID: " + moduleId));
-
-        return ModuleResponse.builder()
-                .id(module.getId())
-                .moduleName(module.getModuleName())
-                .moduleDescription(module.getModuleDescription())
-                .solutionCode(module.getSolutionCode())
-                .typeUmlIds(
-                        module.getTypeUMLs() != null
-                                ? module.getTypeUMLs().stream()
-                                .map(TypeUML::getId)
-                                .toList()
-                                : List.of()
-                )
-                .build();
     }
 }

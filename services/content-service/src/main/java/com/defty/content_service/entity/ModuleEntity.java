@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
-import java.util.Set;
-
+import java.util.List;
 
 @Entity
 @Getter
@@ -16,31 +14,16 @@ import java.util.Set;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ModuleEntity extends BaseEntity {
-
+    @Column(columnDefinition = "TEXT")
     String moduleCode;
     String moduleName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignment_id")
     Assignment assignment;
 
     @Column(columnDefinition = "TEXT")
     String moduleDescription;
 
-    @Column(columnDefinition = "TEXT")
-    String solutionCode;
-
-    @Column
-    Date startDate;
-
-    @Column
-    Date endDate;
-
-    @ManyToMany
-    @JoinTable(
-            name = "module_typeuml",
-            joinColumns = @JoinColumn(name = "module_id"),
-            inverseJoinColumns = @JoinColumn(name = "typeuml_id")
-    )
-    Set<TypeUML> typeUMLs;
+    @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<ModuleSolution> moduleSolutions;
 }
