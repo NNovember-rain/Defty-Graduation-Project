@@ -22,7 +22,8 @@ import {
     FaRegListAlt,
     FaQuestionCircle,
     FaEnvelope, FaBoxes, FaCog,
-    FaSync
+    FaSync,
+    FaBook
 } from 'react-icons/fa';
 import { MdDashboard, MdOutlineSettings } from 'react-icons/md';
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
@@ -104,36 +105,19 @@ const sidebarContentConfig: SidebarItem[] = [
         ,
         children: [
             {
+                id: 'courseManagement',
+                labelKey: 'Quản lý khóa học',
+                icon: <FaBook />,
+                path: '/admin/course',
+                requiredAnyOfRoles: ['system-admin', 'admin']
+            },
+            {
                 id: 'classList',
                 labelKey: 'sidebar.classList',
                 icon: <FaBookOpen />,
-                path: '/admin/class/list',
+                path: '/admin/class',
                 requiredAnyOfRoles: ['admin', 'teacher', 'student']
             },
-            {
-                id: 'courseCategories',
-                labelKey: 'sidebar.courseCategories', // "Danh mục khóa học"
-                icon: <FaBoxes />, // Biểu tượng hộp (cho danh mục)
-                path: '/admin/class/categories', // Trang quản lý danh mục/chương trình
-                requiredAnyOfRoles: ['admin'] // Chỉ admin
-            },
-            // 3. Thống kê / Báo cáo lớp học (Class Statistics / Reports) (Tùy chọn)
-            // Có thể là báo cáo tổng hợp riêng cho lớp học, nếu mục "Báo cáo & Thống kê" chung quá rộng
-            {
-                id: 'classReports',
-                labelKey: 'sidebar.classReports', // "Báo cáo lớp học"
-                icon: <FaChartBar />, // Biểu tượng biểu đồ cột
-                path: '/admin/class/reports', // Trang báo cáo thống kê lớp học
-                requiredAnyOfRoles: ['admin', 'teacher'] // Admin và giáo viên có thể xem
-            },
-            // 4. Cài đặt chung cho lớp học (Global Class Settings) (Chỉ Admin)
-            {
-                id: 'globalClassSettings',
-                labelKey: 'sidebar.globalClassSettings', // "Cài đặt chung lớp học"
-                icon: <FaCog />, // Biểu tượng bánh răng
-                path: '/admin/class/settings', // Trang cài đặt chung
-                requiredAnyOfRoles: ['admin'] // Chỉ admin
-            }
         ]
     },
     { 
