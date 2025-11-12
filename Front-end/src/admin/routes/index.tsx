@@ -29,6 +29,7 @@ import SubmissionDetail from "../pages/Submission/SubmissionDetail.tsx";
 import StudentAssignmentManagerAntD from "../pages/ClassManagement/tab/Assignment/StudentAssignmentManagerAntD.tsx";
 import CourseForm from "../pages/ClassManagement/courseForm.tsx";
 import CourseLvManagement from "../pages/ClassManagement/courseIndex.tsx";
+import AutoFeedbackJob from "../pages/AutoFeedbackJob";
 
 
 interface AppRoute {
@@ -241,6 +242,11 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: "/admin/submissions/detail/:id",
         component: SubmissionDetail,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'submission/auto',
+        component: AutoFeedbackJob,
         requiredAnyOfRoles: ['admin', 'teacher'],
     }
 ];

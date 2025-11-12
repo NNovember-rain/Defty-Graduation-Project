@@ -156,7 +156,6 @@ const AutoFeedbackJob: React.FC = () => {
             // Generate Excel file
             await ExcelGenerator.generateAutoFeedbackJobTemplate(sampleData);
             
-            notification.success("Thành công", "Template Excel đã được tải xuống");
         } catch (error) {
             console.error("Error generating Excel template:", error);
             notification.error("Lỗi", "Không thể tạo template Excel");
@@ -409,6 +408,7 @@ const AutoFeedbackJob: React.FC = () => {
                                 type="primary"
                                 icon={<UploadOutlined />}
                                 loading={uploading}
+                                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: 'white' }}
                             >
                                 {t('autoFeedbackJobPage.uploadButton')}
                             </Button>
