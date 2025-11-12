@@ -3,6 +3,12 @@ server:
   servlet:
     context-path: /class-management-service
 
+spring:
+  application:
+    name: class-management-service
+  profiles:
+    active: dev
+
 springdoc:
   api-docs:
     enabled: true
@@ -11,28 +17,7 @@ springdoc:
     enabled: true
     path: /swagger-ui.html
 
-spring:
-  application:
-    name: class-management-service
-  datasource:
-    url: jdbc:mysql://class-management-duduongvanptit.d.aivencloud.com:17141/class_management_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: avnadmin
-    password: AVNS_U0bNQ72ZG3tSO6YW_RE
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update # Tự động tạo/cập nhật bảng
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect # Chọn Dialect phù hợp với phiên bản MySQL của bạn
-
-# --- Bỏ hoặc Comment phần Eureka khi chạy riêng lẻ ---
 eureka:
-  #  instance:
-  #    prefer-ip-address: true
-  #    ip-address: ${HOST_IP_ADDRESS}
   client:
     fetch-registry: true
     register-with-eureka: true

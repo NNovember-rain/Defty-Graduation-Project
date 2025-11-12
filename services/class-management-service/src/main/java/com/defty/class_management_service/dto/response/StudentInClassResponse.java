@@ -12,16 +12,15 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StudentInClassResponse {
+public class StudentInClassResponse extends BaseResponse{
     private Long studentId;
     private String username;
     private String fullName;
     private String email;
-//    private LocalDate dob;
-    private String userCode;
-//    private Date createdDate;
+    private LocalDate dob;
+    private String avatarUrl;
+    private String userCode; // nếu có trong UserResponse
     private Integer isActive;
-    private Date enrolledAt;
     private Integer enrollmentStatus;
-//    private Set<RoleResponse> roles;
+    private LocalDate enrollmentDate;
 }

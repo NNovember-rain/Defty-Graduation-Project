@@ -77,8 +77,9 @@ const FormTemplate = <T extends Record<string, any>>({
     const getInitialFormState = useCallback(() => {
         const initialFormState: Partial<T> = {};
         formFields.forEach(field => {
-            if (field.type === 'select' && field.options && field.options.length > 0) {
-                initialFormState[field.key as keyof T] = field.options[0].value as T[keyof T];
+            if (field.type === 'select') {
+                // Không tự động chọn giá trị đầu tiên, để trống để hiển thị placeholder
+                initialFormState[field.key as keyof T] = '' as T[keyof T];
             } else if (field.type === 'number') {
                 initialFormState[field.key as keyof T] = undefined as T[keyof T];
             } else {
@@ -327,20 +328,49 @@ const FormTemplate = <T extends Record<string, any>>({
                                     )}
 
                                     {field.type === 'select' && (
-                                        <select
-                                            id={field.key}
-                                            name={field.key}
-                                            value={formData[field.key as keyof T] || ''}
-                                            onChange={(e) => handleChange(field.key, e.target.value)}
-                                            className="form-template__input form-template__select"
-                                            disabled={loading}
-                                        >
-                                            {field.options?.map((option: any) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {t(option.label)}
+                                        <div className="form-template__select-wrapper">
+                                            {field.loading && (
+                                                <div className="form-template__select-loading">
+                                                    <Spin size="small" />
+                                                </div>
+                                            )}
+                                            <select
+                                                id={field.key}
+                                                name={field.key}
+                                                value={formData[field.key as keyof T]?.toString() ?? ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (value === '') {
+                                                        handleChange(field.key, '');
+                                                        return;
+                                                    }
+
+                                                    const option = field.options?.find(opt => opt.value.toString() === value);
+                                                    if (option) {
+                                                        handleChange(field.key, option.value);
+                                                    } else {
+                                                        handleChange(field.key, value);
+                                                    }
+                                                }}
+                                                className="form-template__input form-template__select"
+                                                disabled={loading || field.disabled || field.loading}
+                                            >
+                                                <option value="">
+                                                    {field.loading
+                                                        ? t('common.loading')
+                                                        : (field.placeholder || (field.placeholderKey ? t(field.placeholderKey) : ''))
+                                                    }
                                                 </option>
-                                            ))}
-                                        </select>
+                                                {field.options?.map(option => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {field.error && (
+                                                <p className="form-template__error-text">{field.error}</p>
+                                            )}
+                                        </div>
                                     )}
 
                                     {field.type === 'datetime' && (

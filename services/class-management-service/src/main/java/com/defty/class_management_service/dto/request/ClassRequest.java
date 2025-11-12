@@ -6,16 +6,15 @@ import lombok.experimental.FieldDefaults;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ClassRequest {
-    Long teacherId;
-    String name;
-    String description;
-//    String section;
-//    String subject;
-//    String room;
+    private Long teacherId;
+    private Long courseId;
+    private String className;
+    private String description;
 }
