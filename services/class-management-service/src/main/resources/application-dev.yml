@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:mysql://class-management-duduongvanptit.d.aivencloud.com:17141/class_management_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: avnadmin
+    password: AVNS_U0bNQ72ZG3tSO6YW_RE
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect

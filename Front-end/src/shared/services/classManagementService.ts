@@ -3,43 +3,46 @@ import { getWithParams } from "./getWithParams";
 import handleRequest from "./handleRequest";
 
 const CLASS_SERVICE_PREFIX: string = import.meta.env.VITE_PREFIX_CLASS_SERVICE as string;
-const TEACHER_ROLE_ID: number = 3;
 
 // --- 1. Định nghĩa Interfaces cho Dữ liệu Lớp học ---
 export interface IClass {
     id: number;
     teacherId: number;
-    name: string;
-    description: string | null; // Cập nhật có thể null
-    section: string | null;     // Cập nhật có thể null
-    subject: string | null;     // Cập nhật có thể null
-    room: string | null;        // Cập nhật có thể null
-    // inviteCode?: string; // Đã bỏ nếu không dùng
-
-    // Các trường từ BaseEntity (theo response của bạn, có thể là null nếu chưa hoạt động)
+    courseId?: number;
+    courseColor?:string;
+    inviteCode: string;
+    className: string;
+    classType: string;
+    description: string | null;
+    startDate: string;
+    endDate: string;
+    scheduleJson: any | null;
+    currentStudents: number;
+    // Các trường từ BaseEntity
     createdDate: string | null;
     createdBy: string | null;
     modifiedDate: string | null;
     modifiedBy: string | null;
-    status: number; // Thêm trường status nếu có trong Entity của bạn
+    status: number;
 }
 
 // Interface cho Student từ API response (dựa vào StudentInClassResponse từ backend)
 export interface StudentInClassResponse {
+    id: number;
+    firstName: string;
+    lastName: string;
     studentId: string;
     username: string;
     fullName: string;
     email: string;
-    dob: string; // LocalDate từ backend
+    dob: string;
     userCode: string;
-    createdDate: string; // Date từ backend
-    isActive: number; // 1 for active, 0 for inactive, -1 for deleted
-    enrolledAt: string; // LocalDateTime từ backend
-    enrollmentStatus: string;
-    roles: any[]; // Set<RoleResponse> từ backend
+    createdDate: string;
+    isActive: number;
+    enrolledAt: string;
+    enrollmentStatus: number;
+    roles: any[];
 }
-
-// Cập nhật interface GetStudentsInClassResult
 export interface GetStudentsInClassResult {
     content: StudentInClassResponse[];
     totalElements: number;
@@ -48,32 +51,42 @@ export interface GetStudentsInClassResult {
     size: number;
 }
 
-// Request DTO cho việc tạo/cập nhật lớp
+export interface GetStudentsInClassOptions {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
+
+export interface UpdateEnrollmentStatusRequest {
+    status: number;
+}
+export interface JoinClassResponse {
+    classId: number;
+}
+
 export type CreateClassRequest = Omit<IClass, 'id' | 'createdDate' | 'createdBy' | 'modifiedDate' | 'modifiedBy' | 'status'>;
 export type UpdateClassRequest = Partial<CreateClassRequest>;
 
 // --- 2. Định nghĩa Interfaces cho Phân trang và Kết quả API ---
-// Cập nhật GetClassesOptions để thêm các filter mới
 export interface GetClassesOptions {
     page?: number;
     limit?: number;
-    name?: string;
+    className?: string;
     teacherId?: number;
-    section?: string;
-    subject?: string;
+    courseId?: number;
+    classType?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     status?: number;
 }
 
-// Cập nhật GetClassesResult để khớp với RESPONSE BACKEND HIỆN TẠI VÀ TỰ TÍNH TOÁN
 export interface GetClassesResult {
     content: IClass[];
     totalElements: number;
-    // Các trường dưới đây sẽ được TÍNH TOÁN ở frontend, không phải lấy trực tiếp từ backend
     totalPages: number;
-    number: number; // Trang hiện tại (0-indexed)
-    size: number;   // Kích thước trang
+    number: number;
+    size: number;
 }
 
 export interface ClassInEnrollment {
@@ -93,19 +106,31 @@ export interface ApiResponse<T> {
 }
 
 // --- 3. Các hàm gọi API cho Quản lý Lớp học ---
-
 export const createClass = async (data: CreateClassRequest): Promise<ApiResponse<number>> => {
-    const formData = convertToFormData(data); // ← convert từ object sang FormData
-    const response = await handleRequest(postFormData(`${CLASS_SERVICE_PREFIX}/class`, formData));
-    return await response.json() as ApiResponse<number>;
+    const response = await handleRequest(postJsonData(`${CLASS_SERVICE_PREFIX}/class`, data));
+    const result = await response.json() as ApiResponse<number>;
+
+    if (result.code !== 201) {
+        const rawMessage = result.message || 'Tạo lớp học thất bại';
+        const formattedMessage = rawMessage.includes(':')
+            ? rawMessage.split(':').slice(1).join(':').trim()
+            : rawMessage;
+
+        console.log(formattedMessage);
+        throw new Error(formattedMessage);
+    }
+
+    return result;
 };
 export const updateClass = async (id: number, data: UpdateClassRequest): Promise<ApiResponse<number>> => {
-
     console.log(data);
+    const response = await handleRequest(patchJsonData(`${CLASS_SERVICE_PREFIX}/class/${id}`, data));
+    const result = await response.json() as ApiResponse<number>;
+    if (result.code !== 200) {
+        throw new Error(result.message || 'Cập nhật lớp học thất bại');
+    }
 
-    const formData = convertToFormData(data);
-    const response = await handleRequest(putFormData(`${CLASS_SERVICE_PREFIX}/class/${id}`, formData));
-    return await response.json() as ApiResponse<number>;
+    return result;
 };
 
 const convertToFormData = (data: Record<string, any>): FormData => {
@@ -129,10 +154,8 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
     const params = {
         page: currentPage - 1, // Backend dùng 0-indexed
         size: entriesPerPage,
-        class_name: options.name,
+        class_name: options.className,
         teacher_id: options.teacherId,
-        section: options.section,
-        subject: options.subject,
         sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
         status: options.status !== undefined ? options.status : undefined
     };

@@ -27,6 +27,8 @@ import AssignmentDetail from "../pages/ClassManagement/tab/Assignment/Assignment
 import AssignmentForm from "../pages/Assignment/assignmentForm.tsx";
 import SubmissionDetail from "../pages/Submission/SubmissionDetail.tsx";
 import StudentAssignmentManagerAntD from "../pages/ClassManagement/tab/Assignment/StudentAssignmentManagerAntD.tsx";
+import CourseForm from "../pages/ClassManagement/courseForm.tsx";
+import CourseLvManagement from "../pages/ClassManagement/courseIndex.tsx";
 
 
 interface AppRoute {
@@ -117,24 +119,9 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         requiredAnyOfRoles: ['admin'],
     },
     {
-        path: 'class/list',
+        path: 'class',
         component: ClassManagement,
         requiredAnyOfRoles: ['admin', 'teacher'],
-    },
-    {
-        path: 'class/categories',
-        component: ClassManagement,
-        requiredAnyOfRoles: ['admin'],
-    },
-    {
-        path: 'class/reports',
-        component: ClassManagement,
-        requiredAnyOfRoles: ['admin', 'teacher'],
-    },
-    {
-        path: 'class/settings',
-        component: ClassManagement,
-        requiredAnyOfRoles: ['admin'],
     },
     {
         path: 'class/create',
@@ -144,6 +131,21 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'class/update/:id',
         component: classForm,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'course',
+        component: CourseLvManagement,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'course/create',
+        component: CourseForm,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'course/update/:id',
+        component: CourseForm,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {

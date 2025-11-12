@@ -66,8 +66,8 @@ const ClassDetailPage: React.FC = () => {
     const breadcrumbItems: BreadcrumbItem[] = [
         { label: t('classPage.breadcrumb.home'), path: '/' },
         { label: t('classPage.breadcrumb.adminDashboard'), path: '/admin' },
-        { label: t('classPage.breadcrumb.classManagement'), path: '/admin/class/list' },
-        { label: classData?.name || '', path: undefined }
+        { label: t('classPage.breadcrumb.classManagement'), path: '/admin/class' },
+        { label: classData?.className || '', path: undefined }
     ];
 
     useEffect(() => {

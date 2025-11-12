@@ -1,92 +1,36 @@
-import React, {useEffect, useCallback} from "react";
+import React, { useEffect, useCallback } from "react";
 import ManagementTemplate, { type ActionButton } from "../../template/ManagementTemplate";
 import type { SearchField, SortField } from "../../template/ManagementTemplate/FilterOption.tsx";
 import { useTranslation } from "react-i18next";
 import { FaEdit, FaTrash, FaEye, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import dayjs from 'dayjs';
 
-import {getClasses, deleteClass, type IClass, type GetClassesOptions, toggleClassStatus} from "../../../shared/services/classManagementService.ts";
-
-import { getUsers, type IUser } from '../../../shared/services/userService.ts';
-import { getActiveCourses, type ICourse } from '../../../shared/services/courseService.ts';
+import {
+    getCourses,
+    deleteCourse,
+    type ICourse,
+    type GetCoursesOptions,
+    toggleCourseStatus
+} from "../../../shared/services/courseService.ts";
 
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
-import {getUsersByRole} from "../../../shared/services/authService.ts";
 
-const ClassManagement: React.FC = () => {
+const CourseLvManagement: React.FC = () => {
     const { message, modal } = useNotification();
     const { t } = useTranslation();
     const navigate = useNavigate();
 
-    const [classes, setClasses] = React.useState<IClass[]>([]);
-    const [totalClasses, setTotalClasses] = React.useState(0);
+    const [courses, setCourses] = React.useState<ICourse[]>([]);
+    const [totalCourses, setTotalCourses] = React.useState(0);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
-
-    const [teachers, setTeachers] = React.useState<IUser[]>([]);
-    const [courses, setCourses] = React.useState<ICourse[]>([]);
-    const [teachersLoaded, setTeachersLoaded] = React.useState(false);
-    const [coursesLoaded, setCoursesLoaded] = React.useState(false);
 
     const [currentFilters, setCurrentFilters] = React.useState<Record<string, any>>({});
     const [currentPage, setCurrentPage] = React.useState(1);
     const [entriesPerPage, setEntriesPerPage] = React.useState(10);
     const [currentSortColumn, setCurrentSortColumn] = React.useState<string | null>(null);
     const [currentSortOrder, setCurrentSortOrder] = React.useState<'asc' | 'desc' | null>(null);
-
-    // Hàm để lấy tên giáo viên từ ID
-    const getTeacherName = useCallback((teacherId: number | string): string => {
-        if (!teachersLoaded) return 'Loading...';
-
-        const teacher = teachers.find(t => t.id === teacherId.toString() || t.id === teacherId);
-        return teacher ? teacher.fullName : `Unknown (ID: ${teacherId})`;
-    }, [teachers, teachersLoaded]);
-
-
-    const getCourseName = useCallback((courseId: number | string): string => {
-        if (!coursesLoaded) return "Loading...";
-        if (!courseId) return "-";
-
-        const course = courses.find(
-            (c) => String(c.id).trim() === String(courseId).trim()
-        );
-
-        if (!course) {
-            console.warn(`Không tìm thấy courseId=${courseId}`);
-            return `Unknown (ID: ${courseId})`;
-        }
-
-        return course.courseName;
-    }, [courses, coursesLoaded]);
-
-    // Load teachers, assistants and courses
-    useEffect(() => {
-        const fetchTeachers = async () => {
-            try {
-                const teacherList = await getUsersByRole(3); // Role 3 = teacher
-                setTeachers(teacherList);
-                setTeachersLoaded(true);
-            } catch (err) {
-                console.error("Failed to fetch teachers:", err);
-                setTeachersLoaded(true); // Set true để không hiển thị "Loading..." mãi
-            }
-        };
-
-        const fetchCoursesData = async () => {
-            try {
-                const coursesData = await getActiveCourses();
-                setCourses(coursesData);
-                setCoursesLoaded(true);
-            } catch (err) {
-                console.error("Failed to fetch courses:", err);
-                setCoursesLoaded(true);
-            }
-        };
-
-        fetchTeachers();
-        fetchCoursesData();
-    }, []);
 
     const updateUrl = useCallback(() => {
         const params = new URLSearchParams();
@@ -160,37 +104,36 @@ const ClassManagement: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const options: GetClassesOptions = {
+            const options: GetCoursesOptions = {
                 page: currentPage,
                 limit: entriesPerPage,
                 sortBy: currentSortColumn || undefined,
                 sortOrder: currentSortOrder || undefined,
-                className: currentFilters.className || undefined,
-                teacherId: currentFilters.teacherId ? parseInt(currentFilters.teacherId, 10) : undefined,
-                courseId: currentFilters.courseId ? parseInt(currentFilters.courseId, 10) : undefined, // Thêm courseId filter
+                courseName: currentFilters.courseName || undefined,
                 status: currentFilters.status !== '' && currentFilters.status !== undefined
                     ? parseInt(currentFilters.status, 10)
                     : undefined,
             };
 
-            const result = await getClasses(options);
+            const result = await getCourses(options);
+            console.log(result);
 
             if (result && result.content) {
-                setClasses(result.content || []);
-                setTotalClasses(result.totalElements || 0);
+                setCourses(result.content || []);
+                setTotalCourses(result.totalElements || 0);
             } else {
                 console.error('Unexpected API response structure:', result);
-                setError(t('common.errorFetchingData'));
+                setError('Có lỗi khi tải dữ liệu');
             }
         } catch (err: any) {
-            console.error("Failed to fetch classes:", err);
-            const errorMessage = err?.response?.data?.message || err?.message || t('common.errorFetchingData');
+            console.error("Failed to fetch courses:", err);
+            const errorMessage = err?.response?.data?.message || err?.message || 'Có lỗi khi tải dữ liệu';
             setError(errorMessage);
             message.error(errorMessage);
         } finally {
             setLoading(false);
         }
-    }, [currentPage, entriesPerPage, currentSortColumn, currentSortOrder, currentFilters, t, message]);
+    }, [currentPage, entriesPerPage, currentSortColumn, currentSortOrder, currentFilters, message]);
 
     useEffect(() => {
         fetchData();
@@ -202,27 +145,46 @@ const ClassManagement: React.FC = () => {
 
     const dataTableColumns = React.useMemo(() => [
         {
-            key: 'className',
-            label: 'Tên lớp học',
+            key: 'courseName',
+            label: 'Tên khóa học',
             sortable: true
         },
         {
-            key: 'courseId',
-            label: 'Khóa học',
-            sortable: true,
-            render: (value: number | string) => getCourseName(value)
+            key: 'description',
+            label: 'Mô tả',
+            sortable: false,
+            render: (value: string) => {
+                if (!value) return '-';
+                return value.length > 100 ? `${value.substring(0, 100)}...` : value;
+            }
         },
-        {
-            key: 'teacherId',
-            label: 'Giáo viên',
-            sortable: true,
-            render: (value: number | string) => getTeacherName(value)
-        },
-        {
-            key: 'currentStudents',
-            label: 'Số học viên',
-            sortable: true
-        },
+        // {
+        //     key: 'color',
+        //     label: 'Màu sắc',
+        //     sortable: false,
+        //     render: (value: string) => {
+        //         if (!value) return '-';
+        //
+        //         // Validate if it's a valid hex color
+        //         const hexColorRegex = /^#([0-9A-F]{3}|[0-9A-F]{6})$/i;
+        //         const isValidHex = hexColorRegex.test(value);
+        //
+        //         return (
+        //             <div className="flex items-center gap-2">
+        //                 <div
+        //                     className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
+        //                     style={{
+        //                         backgroundColor: isValidHex ? value : '#cccccc',
+        //                     }}
+        //                     title={isValidHex ? value : 'Màu không hợp lệ'}
+        //                 />
+        //                 <span className="text-sm font-mono text-gray-600">
+        //                     {isValidHex ? value : 'N/A'}
+        //                 </span>
+        //             </div>
+        //         );
+        //     }
+        // },
         {
             key: 'createdDate',
             label: 'Ngày tạo',
@@ -248,64 +210,15 @@ const ClassManagement: React.FC = () => {
                 }
             }
         },
-    ], [getTeacherName, getCourseName]);
+    ], []);
 
     const searchFields: SearchField[] = React.useMemo(() => [
         {
-            key: 'className',
-            label: 'Tên lớp học',
+            key: 'courseName',
+            label: 'Tên khóa học',
             type: 'text',
-            placeholder: 'Nhập tên lớp học',
+            placeholder: 'Nhập tên khóa học',
             gridSpan: 1
-        },
-        {
-            key: 'courseId',
-            label: 'Khóa học',
-            type: 'select',
-            placeholder: 'Chọn khóa học',
-            gridSpan: 1,
-            searchable: true,
-            showSearch: true,
-            filterOption: true,
-            options: [
-                { value: '', label: t('common.all') },
-                ...courses.map(course => ({
-                    value: course.id.toString(),
-                    label: course.courseName
-                }))
-            ]
-        },
-        {
-            key: 'teacherId',
-            label: 'Giáo viên',
-            type: 'select',
-            placeholder: 'Chọn giáo viên',
-            gridSpan: 1,
-            searchable: true,
-            showSearch: true,
-            filterOption: true,
-            options: [
-                { value: '', label: t('common.all') },
-                ...teachers.map(teacher => ({
-                    value: teacher.id,
-                    label: teacher.fullName
-                }))
-            ]
-        },
-        {
-            key: 'classType',
-            label: 'Loại lớp',
-            type: 'select',
-            placeholder: 'Chọn loại lớp',
-            gridSpan: 1,
-            searchable: true,
-            showSearch: true,
-            filterOption: true,
-            options: [
-                { value: 'ONLINE', label: 'Trực tuyến' },
-                { value: 'OFFLINE', label: 'Trực tiếp' },
-                { value: 'ONEONONE', label: '1 kèm 1' }
-            ]
         },
         {
             key: 'status',
@@ -318,7 +231,7 @@ const ClassManagement: React.FC = () => {
                 { value: '0', label: 'Ngừng hoạt động' }
             ]
         },
-    ], [teachers, courses]);
+    ], []);
 
     const sortFields: SortField[] = React.useMemo(() => [], []);
 
@@ -356,43 +269,43 @@ const ClassManagement: React.FC = () => {
     }, []);
 
     const handleCreateNew = useCallback(() => {
-        navigate("/admin/class/create");
+        navigate("/admin/course/create");
     }, [navigate]);
 
-    const handleViewClassDetails = useCallback((rowData: IClass) => {
-        navigate(`/admin/class/view/${rowData.id}`);
+    // const handleViewCourseDetails = useCallback((rowData: ICourse) => {
+    //     navigate(`/admin/course/view/${rowData.id}`);
+    // }, [navigate]);
+
+    const handleEditCourse = useCallback((rowData: ICourse) => {
+        navigate(`/admin/course/update/${rowData.id}`);
     }, [navigate]);
 
-    const handleEditClass = useCallback((rowData: IClass) => {
-        navigate(`/admin/class/update/${rowData.id}`);
-    }, [navigate]);
-
-    const handleDeleteClass = useCallback(async (rowData: IClass) => {
+    const handleDeleteCourse = useCallback(async (rowData: ICourse) => {
         if (!rowData.id) {
-            console.error("Attempted to delete class with no ID:", rowData);
-            message.error(t('common.errorNoIdToDelete'));
+            console.error("Attempted to delete course with no ID:", rowData);
+            message.error('Không thể xóa khóa học');
             return;
         }
 
         modal.deleteConfirm(
-            t('classPage.deleteTooltip'),
+            'Xóa khóa học',
             async () => {
                 try {
                     setLoading(true);
-                    await deleteClass(rowData.id);
-                    message.success(t('classPage.deleteSuccess'));
+                    await deleteCourse(rowData.id);
+                    message.success('Xóa khóa học thành công');
                     await fetchData();
                 } catch (error: any) {
-                    const errorMessage = error?.response?.data?.message || error?.message || t('common.errorDeletingData');
+                    const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi khi xóa dữ liệu';
                     setError(errorMessage);
                     message.error(errorMessage);
                 } finally {
                     setLoading(false);
                 }
             },
-            `${t('classPage.confirmDelete')} ${rowData.className || rowData.id}?`
+            `Bạn có chắc chắn muốn xóa khóa học "${rowData.courseName}" không?`
         );
-    }, [t, fetchData, modal, message]);
+    }, [fetchData, modal, message]);
 
     const handleBulkDelete = useCallback(async (ids: string[]) => {
         if (ids.length === 0) return;
@@ -400,46 +313,46 @@ const ClassManagement: React.FC = () => {
         const numericIds = ids.map(id => Number(id));
 
         modal.deleteConfirm(
-            t('dataTable.bulkDeleteTitle'),
+            'Xóa nhiều khóa học',
             async () => {
                 try {
                     setLoading(true);
-                    await deleteClass(numericIds);
-                    message.success(t('dataTable.bulkDeleteSuccess', { count: numericIds.length }));
+                    await deleteCourse(numericIds);
+                    message.success(`Xóa thành công ${numericIds.length} khóa học`);
                     await fetchData();
                 } catch (error: any) {
-                    const errorMessage = error?.response?.data?.message || error?.message || t('common.errorDeletingData');
+                    const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi khi xóa dữ liệu';
                     setError(errorMessage);
                     message.error(errorMessage);
                 } finally {
                     setLoading(false);
                 }
             },
-            `${t('dataTable.confirmBulkDelete')} ${ids.length} ${t('dataTable.selectedItems')}`
+            `Bạn có chắc chắn muốn xóa ${ids.length} khóa học đã chọn không?`
         );
-    }, [t, fetchData, modal, message]);
+    }, [fetchData, modal, message]);
 
-    const handleToggleActiveStatus = useCallback(async (rowData: IClass) => {
+    const handleToggleActiveStatus = useCallback(async (rowData: ICourse) => {
         if (!rowData.id) return;
         const newStatus = rowData.status === 1 ? 0 : 1;
 
         const confirmMessage = newStatus
-            ? `Bạn có chắc chắn muốn kích hoạt lớp học "${rowData.className}" không?`
-            : `Bạn có chắc chắn muốn ngưng hoạt động lớp học "${rowData.className}" không?`;
+            ? `Bạn có chắc chắn muốn kích hoạt khóa học "${rowData.courseName}" không?`
+            : `Bạn có chắc chắn muốn ngưng hoạt động khóa học "${rowData.courseName}" không?`;
 
         modal.confirm({
-            title: 'Xác nhận thay đổi trạng thái lớp học',
+            title: 'Xác nhận thay đổi trạng thái khóa học',
             content: confirmMessage,
             onOk: async () => {
                 try {
                     setLoading(true);
-                    await toggleClassStatus(rowData.id as number, newStatus);
+                    await toggleCourseStatus(rowData.id as number, newStatus);
 
                     message.success(`Cập nhật thành công, trạng thái: ${newStatus ? 'Đang hoạt động' : 'Ngưng hoạt động'}`);
 
                     await fetchData();
                 } catch (error: any) {
-                    console.error("Error toggling class active status:", error);
+                    console.error("Error toggling course status:", error);
                     const errorMessage = error?.response?.data?.message || error?.message || "Có lỗi xảy ra khi cập nhật dữ liệu";
                     setError(errorMessage);
                     message.error(errorMessage);
@@ -448,60 +361,59 @@ const ClassManagement: React.FC = () => {
                 }
             },
         });
+    }, [fetchData, modal, message]);
 
-    }, [t, fetchData, modal, message]);
-
-    const classActions = React.useMemo(() => [
+    const courseActions = React.useMemo(() => [
         {
-            icon: (rowData: IClass) => rowData.status ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
+            icon: (rowData: ICourse) => rowData.status ? <FaToggleOn fontSize={17} /> : <FaToggleOff fontSize={17} />,
             onClick: handleToggleActiveStatus,
-            className: (rowData: IClass) => rowData.status ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
-            tooltip: (rowData: IClass) => rowData.status ? 'Ngưng hoạt động' : 'Kích hoạt',
+            className: (rowData: ICourse) => rowData.status ? 'text-green-500 hover:text-green-700' : 'text-gray-500 hover:text-gray-700',
+            tooltip: (rowData: ICourse) => rowData.status ? 'Ngưng hoạt động' : 'Kích hoạt',
             color: '#63782b'
         },
-        {
-            icon: <FaEye />,
-            onClick: handleViewClassDetails,
-            className: 'text-gray-600 hover:text-gray-900 ml-2',
-            tooltip: t('classPage.viewDetailsTooltip'),
-            color: '#6c757d'
-        },
+        // {
+        //     icon: <FaEye />,
+        //     onClick: handleViewCourseDetails,
+        //     className: 'text-gray-600 hover:text-gray-900 ml-2',
+        //     tooltip: 'Xem chi tiết',
+        //     color: '#6c757d'
+        // },
         {
             icon: <FaEdit />,
-            onClick: handleEditClass,
+            onClick: handleEditCourse,
             className: 'text-blue-500 hover:text-blue-700 ml-2',
-            tooltip: t('classPage.editTooltip'),
+            tooltip: 'Chỉnh sửa',
             color: '#7600ff'
         },
         {
             icon: <FaTrash />,
-            onClick: handleDeleteClass,
+            onClick: handleDeleteCourse,
             className: 'text-red-500 hover:text-red-700 ml-2',
-            tooltip: t('classPage.deleteTooltip'),
+            tooltip: 'Xóa',
             color: '#f62626'
         },
-    ], [handleEditClass, handleDeleteClass, handleViewClassDetails, handleToggleActiveStatus, t]);
+    ], [handleEditCourse, handleDeleteCourse, handleToggleActiveStatus]);
 
     // Loading and error states
-    if (loading && classes.length === 0) {
+    if (loading && courses.length === 0) {
         return (
             <div className="flex justify-center items-center min-h-screen">
-                <div className="text-lg">{t('common.loadingData')}</div>
+                <div className="text-lg">Đang tải dữ liệu...</div>
             </div>
         );
     }
 
-    if (error && classes.length === 0) {
+    if (error && courses.length === 0) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="text-red-500 text-center">
-                    <p className="text-lg font-semibold">{t('common.error')}</p>
+                    <p className="text-lg font-semibold">Có lỗi xảy ra</p>
                     <p className="mt-2">{error}</p>
                     <button
                         onClick={fetchData}
                         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                     >
-                        {t('common.retry')}
+                        Thử lại
                     </button>
                 </div>
             </div>
@@ -510,19 +422,19 @@ const ClassManagement: React.FC = () => {
 
     return (
         <ManagementTemplate
-            pageTitle={t('classPage.title')}
+            pageTitle="Quản lý khóa học"
             breadcrumbItems={[
-                { label: t('classPage.breadcrumb.home'), path: '/' },
-                { label: t('classPage.breadcrumb.adminDashboard'), path: '/admin' },
-                { label: t('classPage.breadcrumb.classManagement') },
+                { label: 'Trang chủ', path: '/' },
+                { label: 'Quản trị viên', path: '/admin' },
+                { label: 'Quản lý khóa học' },
             ]}
             searchFields={searchFields}
             sortFields={sortFields}
             onSearch={handleSearch}
             onClear={handleClear}
             columns={dataTableColumns}
-            data={classes}
-            totalEntries={totalClasses}
+            data={courses}
+            totalEntries={totalCourses}
             entriesPerPage={entriesPerPage}
             currentPage={currentPage}
             onPageChange={handlePageChange}
@@ -530,7 +442,7 @@ const ClassManagement: React.FC = () => {
             currentSortOrder={currentSortOrder}
             onCreateNew={handleCreateNew}
             onEntriesPerPageChange={handleEntriesPerPageChange}
-            actions={classActions as ActionButton[]}
+            actions={courseActions as ActionButton[]}
             initialFilters={currentFilters}
             initialSortBy={currentSortColumn}
             initialSortOrder={currentSortOrder}
@@ -539,4 +451,4 @@ const ClassManagement: React.FC = () => {
     );
 }
 
-export default ClassManagement;
+export default CourseLvManagement;
