@@ -25,7 +25,6 @@ public interface ICourseRepository extends JpaRepository<CourseEntity, Long> {
                                    Pageable pageable);
 
     @Query("SELECT DISTINCT c FROM CourseEntity c " +
-            "LEFT JOIN FETCH c.collectionMappings m " +
             "WHERE c.status != -1 " +
             "AND (:courseName IS NULL OR LOWER(c.courseName) LIKE LOWER(CONCAT('%', :courseName, '%'))) " +
             "AND (:status IS NULL OR c.status = :status)")
