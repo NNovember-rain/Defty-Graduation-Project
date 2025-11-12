@@ -71,6 +71,7 @@
     "submissionManagement": "Submission Management",
     "submissionList": "Submission List",
     "manualGrading": "Manual Grading",
+    "submissionAutoManagement": "Submission Auto Management",
     "feedbackAndComments": "Feedback & Comments",
     "manageAIFeedback": "Manage AI Feedback",
     "studentFeedbackOnAI": "Student Feedback on AI",
@@ -733,5 +734,59 @@
   },
   "umlKnowledge": {
     "title": "UML knowledge"
+  },
+  "autoFeedbackJobPage": {
+    "title": "Auto Feedback Job Management",
+    "breadcrumb": "Auto Feedback Jobs",
+    "downloadTemplateButton": "Download Excel Template",
+    "uploadButton": "Upload File Excel",
+    "download": {
+      "started": "Download started",
+      "preparingFile": "Preparing file...",
+      "success": "Success",
+      "fileDownloaded": "File downloaded successfully",
+      "error": "Download error",
+      "failed": "Download failed"
+    },
+    "actions": {
+      "view": "View",
+      "downloadResult": "Download Result",
+      "delete": "Delete"
+    },
+    "delete": {
+      "successMessage": "Auto feedback job deleted successfully!",
+      "confirmContent": "Are you sure you want to delete '{{title}}'?"
+    },
+    "columns": {
+      "title": "Title",
+      "typeUml": "UML Diagram Type",
+      "createdDate": "Created Date"
+    },
+    "search": {
+      "title": "Title",
+      "titlePlaceholder": "Enter job title...",
+      "typeUml": "UML Diagram Type",
+      "fromDate": "From Date",
+      "toDate": "To Date"
+    },
+    "sort": {
+      "order": "Sort Order",
+      "ascending": "Ascending",
+      "descending": "Descending",
+      "by": "Sort By",
+      "title": "Title",
+      "typeUml": "UML Diagram Type",
+      "createdDate": "Created Date"
+    },
+    "entries": {
+      "title": "Feedback Entries",
+      "studentInfo": "Student Info",
+      "studentCode": "Student Code",
+      "feedback": "Feedback",
+      "createdDate": "Created Date",
+      "studentInfoPlaceholder": "Search by student name or code...",
+      "fromDate": "From Date",
+      "toDate": "To Date"
+    }
   }
 }
