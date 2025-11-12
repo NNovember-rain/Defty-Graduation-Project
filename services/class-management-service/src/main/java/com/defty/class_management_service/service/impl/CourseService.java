@@ -3,7 +3,6 @@ import com.defty.class_management_service.dto.request.CourseRequest;
 import com.defty.class_management_service.dto.response.CourseResponse;
 import com.defty.class_management_service.entity.CourseEntity;
 import com.defty.class_management_service.mapper.CourseMapper;
-import com.defty.class_management_service.repository.ICourseCollectionMappingRepository;
 import com.defty.class_management_service.repository.ICourseRepository;
 import com.defty.class_management_service.service.ICourseService;
 import com.defty.class_management_service.validation.CourseValidation;
@@ -38,7 +37,6 @@ public class CourseService implements ICourseService {
     CourseValidation courseValidation;
     CourseMapper courseMapper;
     ICourseRepository courseRepository;
-    ICourseCollectionMappingRepository courseCollectionMappingRepository;
 
     @Override
     @Transactional
@@ -164,11 +162,6 @@ public class CourseService implements ICourseService {
 
             // 3. Save updated course (Lưu các thay đổi cơ bản của Course)
             CourseEntity savedCourse = courseRepository.save(updatedCourse);
-
-            // 4. Handle Test Collection Mappings
-            // Xóa tất cả mapping cũ trước (Dùng Repository method đã định nghĩa)
-            courseCollectionMappingRepository.deleteByCourseEntity(savedCourse);
-            log.info("Deleted existing collection mappings for course ID: {}", savedCourse.getId());
 
             return new ApiResponse<>(200, "Cập nhật khóa học thành công", savedCourse.getId());
 
