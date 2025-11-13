@@ -12,7 +12,8 @@ import java.util.Map;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackAi extends BaseEntity {
+@Table(name = "feedback_llm_")
+public class FeedbackLLM extends BaseEntity {
 
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
@@ -20,7 +21,7 @@ public class FeedbackAi extends BaseEntity {
 
     String aiModalName;
 
-    @OneToOne(mappedBy = "feedbackAi")
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "submission_id", referencedColumnName = "id")
     private Submission submission;
-
 }
