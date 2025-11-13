@@ -1,425 +1,622 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate hook
-import {getClassesByStudentId} from "../../../shared/services/classManagementService.ts";
-import {getUserById} from "../../../shared/services/userService.ts";
-import {useUserStore} from "../../../shared/authentication/useUserStore.ts";
+import React, { useState, useEffect, useMemo } from 'react';
+import { FaSearch, FaUsers, FaCalendar, FaBookOpen, FaPlus, FaTimes, FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { getClasses, type IClass, joinClassByInvite } from '../../../shared/services/classManagementService.ts';
+import { getActiveCourses, type ICourse } from '../../../shared/services/courseService.ts';
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useUserStore } from '../../../shared/authentication/useUserStore.ts';
+// import Pagination from '../../../shared/components/Pagination';
 
-interface Class {
-    classId: number;
-    className: string;
-    classCode: string;
-    teacherName: string;
-    newAssignments: number | null;
-}
+// Import SCSS styles
+import './style.scss';
+const ClassCardSkeleton = () => (
+    <div className="my-classes__card-skeleton">
+        <div className="skeleton-header"></div>
+        <div className="skeleton-content">
+            <div className="skeleton-title"></div>
+            <div className="skeleton-stats"></div>
+            <div className="skeleton-dates"></div>
+            <div className="skeleton-button"></div>
+        </div>
+    </div>
+);
 
-interface UserInfo {
-    id: string;
-    username: string;
-    fullName: string;
-    userCode: string;
-    email: string;
-}
-
-interface ApiResponse<T> {
-    code: number;
-    message?: string;
-    result: T;
-}
-
-interface ClassesResponse {
-    content: Class[];
-    totalElements: number;
-}
-
-const Home: React.FC = () => {
-    const [classes, setClasses] = useState<Class[]>([]);
-    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    // Initialize navigate hook
+const MyClasses = () => {
+    const {hasRole} = useUserStore();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+    const [classes, setClasses] = useState<IClass[]>([]);
+    const [courses, setCourses] = useState<ICourse[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>('');
+    const [totalClasses, setTotalClasses] = useState(0);
 
-    // Get user ID from localStorage, context, or props - replace with your actual method
-    // const userId = "13";
-    // This should come from your auth context or storage
+    const [isJoinPopupOpen, setIsJoinPopupOpen] = useState(false);
+    const [classCode, setClassCode] = useState('');
+    const [joinError, setJoinError] = useState('');
+    const [isJoining, setIsJoining] = useState(false);
+    const [joinSuccess, setJoinSuccess] = useState<{show: boolean; message: string}>({ show: false, message: '' });
 
-    const user = useUserStore.getState().user;
-    const userId = user?.id ?? null;
+    const pageSize = 8;
 
-    console.log("userId: " + userId);
+    // Sync currentPage with URL
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
-
+    // Load courses khi component mount
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchCourses = async () => {
             try {
-                setLoading(true);
-
-                // Fetch both APIs simultaneously using your existing API functions
-                const [classesResult, userData] = await Promise.all([
-                    getClassesByStudentId(),
-                    getUserById(userId)
-                ]);
-
-                setClasses(classesResult.content);
-                setUserInfo(userData);
+                const coursesData = await getActiveCourses();
+                setCourses(coursesData);
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'An error occurred');
-            } finally {
-                setLoading(false);
+                console.error('Error loading courses:', err);
             }
         };
+        fetchCourses();
+    }, []);
 
-        fetchData();
-    }, [userId]);
+    useEffect(() => {
+        loadClasses(currentPage);
+    }, [selectedCourseId, currentPage]);
 
-    // Handle class card click
-    const handleClassClick = (classId: number) => {
-        navigate(`/class/${classId}`);
-    };
+    const loadClasses = async (page: number) => {
+        try {
+            setLoading(true);
+            setError('');
 
-    // Calculate stats from actual data
-    const pendingAssignments = classes.reduce((total, cls) => total + (cls.newAssignments || 0), 0);
-    const totalClasses = classes.length;
+            // Scroll to top when page changes
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const containerStyle: React.CSSProperties = {
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)',
-        color: 'white',
-        padding: '2rem',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    };
+            const result = await getClasses({
+                page: page,
+                limit: pageSize,
+                sortBy: 'className',
+                sortOrder: 'asc',
+                courseId: selectedCourseId ? parseInt(selectedCourseId, 10) : undefined
+            });
 
-    const welcomeSectionStyle: React.CSSProperties = {
-        marginBottom: '2rem'
-    };
-
-    const welcomeMessageStyle: React.CSSProperties = {
-        fontSize: '2rem',
-        fontWeight: 'bold',
-        marginBottom: '0.5rem',
-        color: 'white'
-    };
-
-    const welcomeSubtitleStyle: React.CSSProperties = {
-        color: '#ccc',
-        fontSize: '1rem'
-    };
-
-    const quickStatsStyle: React.CSSProperties = {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '2rem'
-    };
-
-    const statCardStyle: React.CSSProperties = {
-        background: '#3a3a3a',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        transition: 'transform 0.3s',
-        cursor: 'pointer'
-    };
-
-    const statCardAssignmentsStyle: React.CSSProperties = {
-        ...statCardStyle,
-        borderLeft: '4px solid #dc3545'
-    };
-
-    const statCardGradesStyle: React.CSSProperties = {
-        ...statCardStyle,
-        borderLeft: '4px solid #28a745'
-    };
-
-    const statCardDeadlinesStyle: React.CSSProperties = {
-        ...statCardStyle,
-        borderLeft: '4px solid #ffc107'
-    };
-
-    const statNumberStyle: React.CSSProperties = {
-        fontSize: '2rem',
-        fontWeight: 'bold',
-        marginBottom: '0.5rem'
-    };
-
-    const statLabelStyle: React.CSSProperties = {
-        color: '#ccc',
-        fontSize: '0.9rem'
-    };
-
-    const sectionTitleStyle: React.CSSProperties = {
-        fontSize: '1.5rem',
-        marginBottom: '1.5rem',
-        color: 'white',
-        fontWeight: 'bold'
-    };
-
-    const classesGridStyle: React.CSSProperties = {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: '1.5rem'
-    };
-
-    const classCardStyle: React.CSSProperties = {
-        background: '#3a3a3a',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        transition: 'all 0.3s',
-        position: 'relative',
-        overflow: 'hidden',
-        cursor: 'pointer'
-    };
-
-    const classCardTopBorderStyle: React.CSSProperties = {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '4px',
-        background: 'linear-gradient(90deg, #007bff, #0056b3)'
-    };
-
-    const classHeaderStyle: React.CSSProperties = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '1rem'
-    };
-
-    const classInfoStyle: React.CSSProperties = {
-        flex: 1
-    };
-
-    const classTitleStyle: React.CSSProperties = {
-        color: 'white',
-        fontSize: '1.2rem',
-        fontWeight: 'bold',
-        marginBottom: '0.5rem'
-    };
-
-    const teacherNameStyle: React.CSSProperties = {
-        color: '#ccc',
-        fontSize: '0.9rem'
-    };
-
-    const umlIconStyle: React.CSSProperties = {
-        width: '40px',
-        height: '40px',
-        background: 'linear-gradient(45deg, #007bff, #0056b3)',
-        borderRadius: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white'
-    };
-
-    const classFooterStyle: React.CSSProperties = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: '1rem'
-    };
-
-    const subjectCodeStyle: React.CSSProperties = {
-        background: 'rgba(0, 123, 255, 0.2)',
-        color: '#007bff',
-        padding: '0.3rem 0.8rem',
-        borderRadius: '15px',
-        fontSize: '0.8rem',
-        fontWeight: '500'
-    };
-
-    const assignmentBadgeStyle: React.CSSProperties = {
-        background: '#dc3545',
-        color: 'white',
-        padding: '0.3rem 0.8rem',
-        borderRadius: '15px',
-        fontSize: '0.8rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.3rem'
-    };
-
-    const dotStyle: React.CSSProperties = {
-        width: '6px',
-        height: '6px',
-        background: 'white',
-        borderRadius: '50%'
-    };
-
-    const loadingStyle: React.CSSProperties = {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '200px',
-        fontSize: '1.2rem',
-        color: '#ccc'
-    };
-
-    const errorStyle: React.CSSProperties = {
-        background: '#dc3545',
-        color: 'white',
-        padding: '1rem',
-        borderRadius: '8px',
-        marginBottom: '2rem',
-        textAlign: 'center'
-    };
-
-    const emptyStateStyle: React.CSSProperties = {
-        textAlign: 'center',
-        padding: '3rem',
-        color: '#ccc'
-    };
-
-    const handleCardHover = (e: React.MouseEvent<HTMLDivElement>) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 123, 255, 0.3)';
-    };
-
-    const handleCardLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-        e.currentTarget.style.transform = 'none';
-        e.currentTarget.style.boxShadow = 'none';
-    };
-
-    const handleStatCardHover = (e: React.MouseEvent<HTMLDivElement>) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
-    };
-
-    const handleStatCardLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-        e.currentTarget.style.transform = 'none';
-        e.currentTarget.style.boxShadow = 'none';
-    };
-
-    const getSubjectIcon = (className: string) => {
-        // Simple logic to choose icons based on class name
-        if (className.toLowerCase().includes('java') || className.toLowerCase().includes('lập trình')) {
-            return (
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-            );
-        } else if (className.toLowerCase().includes('database') || className.toLowerCase().includes('dữ liệu')) {
-            return (
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
-                    <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
-                    <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
-                </svg>
-            );
-        } else {
-            return (
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3 4a1 1 0 000 2h4a1 1 0 100-2H3zm0 4a1 1 0 000 2h4a1 1 0 100-2H3zm0 4a1 1 0 100 2h4a1 1 0 100-2H3zm6 0a1 1 0 011-1h6a1 1 0 110 2h-6a1 1 0 01-1-1zM9 8a1 1 0 011-1h6a1 1 0 110 2h-6a1 1 0 01-1-1zM10 5a1 1 0 100 2h6a1 1 0 100-2h-6z" clipRule="evenodd" />
-                </svg>
-            );
+            setClasses(result.content);
+            setTotalClasses(result.totalElements);
+        } catch (err: any) {
+            console.error('Error loading classes:', err);
+            setError(err.message || 'Không thể tải danh sách lớp học');
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div style={containerStyle}>
-                <div style={loadingStyle}>
-                    Đang tải dữ liệu...
-                </div>
-            </div>
-        );
-    }
+    const handleSearch = async () => {
+        // Reset về trang 1 khi search
+        setSearchParams({ page: '1' });
 
-    if (error) {
-        return (
-            <div style={containerStyle}>
-                <div style={errorStyle}>
-                    Lỗi: {error}
-                </div>
-            </div>
-        );
-    }
+        if (!searchTerm.trim() && !selectedCourseId) {
+            loadClasses(1);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError('');
+
+            const result = await getClasses({
+                page: 1,
+                limit: pageSize,
+                sortBy: 'className',
+                sortOrder: 'asc',
+                courseId: selectedCourseId ? parseInt(selectedCourseId, 10) : undefined
+            });
+
+            const filteredClasses = result.content.filter(classItem =>
+                classItem.className.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            setClasses(filteredClasses);
+            setTotalClasses(filteredClasses.length);
+        } catch (err: any) {
+            console.error('Error searching classes:', err);
+            setError(err.message || 'Không thể tìm kiếm lớp học');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
+    // Helper function để tính màu chữ dựa trên độ sáng của background
+    const getTextColor = (bgColor: string): string => {
+        const hex = bgColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128 ? '#1a1a1a' : '#ffffff';
+    };
+
+    // Helper function để tạo màu đậm hơn cho gradient
+    const darkenColor = (color: string, percent: number): string => {
+        const hex = color.replace('#', '');
+        const r = Math.max(0, parseInt(hex.substr(0, 2), 16) * (1 - percent / 100));
+        const g = Math.max(0, parseInt(hex.substr(2, 2), 16) * (1 - percent / 100));
+        const b = Math.max(0, parseInt(hex.substr(4, 2), 16) * (1 - percent / 100));
+        return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
+    };
+
+    const transformClassData = (apiClass: IClass) => {
+        const getStatusInfo = (status: number) => {
+            const now = new Date();
+            const startDate = apiClass.startDate ? new Date(apiClass.startDate) : null;
+            const endDate = apiClass.endDate ? new Date(apiClass.endDate) : null;
+
+            if (status === 0) {
+                return {
+                    status: 'inactive',
+                    statusLabel: 'Inactive',
+                    statusClass: 'my-classes__card-status-badge--inactive'
+                };
+            }
+
+            if (!startDate || !endDate) {
+                return {
+                    status: 'unscheduled',
+                    statusLabel: 'Chưa xác định',
+                    statusClass: 'my-classes__card-status-badge--upcoming'
+                };
+            }
+
+            if (now < startDate) {
+                return {
+                    status: 'upcoming',
+                    statusLabel: 'Sắp bắt đầu',
+                    statusClass: 'my-classes__card-status-badge--upcoming'
+                };
+            } else if (now > endDate) {
+                return {
+                    status: 'completed',
+                    statusLabel: 'Đã kết thúc',
+                    statusClass: 'my-classes__card-status-badge--completed'
+                };
+            } else {
+                return {
+                    status: 'active',
+                    statusLabel: 'Đang diễn ra',
+                    statusClass: 'my-classes__card-status-badge--active'
+                };
+            }
+        };
+
+        const statusInfo = getStatusInfo(apiClass.status);
+
+        const getInitials = (name: string) => {
+            return name.split(' ')
+                .map(word => word[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase();
+        };
+
+        // Lấy màu từ courseColor, nếu không có thì dùng màu mặc định
+        const courseColor = apiClass.courseColor || '#f97316';
+
+        return {
+            id: apiClass.id,
+            title: apiClass.className,
+            level: apiClass.classType || 'general',
+            levelLabel: apiClass.classType || 'General',
+            ...statusInfo,
+            courseColor: courseColor,
+            teacher: {
+                name: "Giảng viên",
+                initials: getInitials(apiClass.className)
+            },
+            startDate: apiClass.startDate
+                ? new Date(apiClass.startDate).toLocaleDateString('vi-VN')
+                : "Chưa xác định",
+            endDate: apiClass.endDate
+                ? new Date(apiClass.endDate).toLocaleDateString('vi-VN')
+                : "Chưa xác định",
+            students: apiClass.currentStudents || 0,
+            inviteCode: apiClass.inviteCode
+        };
+    };
+
+    const transformedClasses = useMemo(() => {
+        return classes.map(transformClassData);
+    }, [classes]);
+
+    const handleButtonClick = (classId?: number) => {
+        if (classId) {
+            navigate(`/class/${classId}`);
+        } else {
+            alert('Class ID not found');
+        }
+    };
+
+    const handleJoinClass = async () => {
+        setJoinError('');
+        setJoinSuccess({ show: false, message: '' });
+
+        if (!classCode.trim()) {
+            setJoinError('Vui lòng nhập mã lớp học');
+            return;
+        }
+
+        if (classCode.trim().length < 5) {
+            setJoinError('Mã lớp học phải có ít nhất 5 ký tự');
+            return;
+        }
+
+        setIsJoining(true);
+
+        try {
+            const response = await joinClassByInvite(classCode.trim());
+
+            if (response.code === 200) {
+                if (response.message.includes("already active")) {
+                    setJoinSuccess({
+                        show: true,
+                        message: 'Bạn đã là thành viên của lớp học này rồi.'
+                    });
+                } else if (response.message.includes("pending approval")) {
+                    setJoinSuccess({
+                        show: true,
+                        message: 'Bạn đã gửi yêu cầu tham gia rồi, vui lòng chờ giảng viên phê duyệt.'
+                    });
+                } else if (response.message.includes("rejected")) {
+                    setJoinError('Yêu cầu tham gia trước đó đã bị từ chối. Vui lòng liên hệ giảng viên.');
+                }
+            } else if (response.code === 201) {
+                setJoinSuccess({
+                    show: true,
+                    message: response.message.includes("re-sent")
+                        ? "Bạn đã gửi lại yêu cầu tham gia, vui lòng chờ giảng viên phê duyệt."
+                        : "Yêu cầu tham gia đã được gửi, vui lòng chờ giảng viên phê duyệt."
+                });
+            }
+        } catch (error: any) {
+            console.error('Error joining class:', error);
+            setJoinError(error.message || 'Có lỗi xảy ra khi tham gia lớp học');
+        } finally {
+            setIsJoining(false);
+        }
+    };
+
+    const handleJoinOrClose = async () => {
+        if (joinSuccess.show) {
+            // Nếu đã join thành công, reload và đóng popup
+            await loadClasses(currentPage);
+            handleCancelJoin();
+        } else {
+            // Nếu chưa join, thực hiện join
+            await handleJoinClass();
+        }
+    };
+
+    const handleCancelJoin = () => {
+        setIsJoinPopupOpen(false);
+        setClassCode('');
+        setJoinError('');
+        setJoinSuccess({ show: false, message: '' });
+        setIsJoining(false);
+    };
+
+    const handleClassCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setClassCode(e.target.value);
+        if (joinError) {
+            setJoinError('');
+        }
+        if (joinSuccess.show) {
+            setJoinSuccess({ show: false, message: '' });
+        }
+    };
 
     return (
-        <div style={containerStyle}>
-            {/* Welcome Section */}
-            <div style={welcomeSectionStyle}>
-                <h1 style={welcomeMessageStyle}>
-                    Chào mừng, {userInfo?.fullName || 'Sinh viên'}
-                </h1>
-                {/*<p style={welcomeSubtitleStyle}>*/}
-                {/*    Hôm nay là ngày tuyệt vời để học tập! ({userInfo?.userCode})*/}
-                {/*</p>*/}
-            </div>
-
-            {/* Quick Stats */}
-            <div style={quickStatsStyle}>
-                <div
-                    style={statCardAssignmentsStyle}
-                    onMouseEnter={handleStatCardHover}
-                    onMouseLeave={handleStatCardLeave}
-                >
-                    <div style={statNumberStyle}>{pendingAssignments}</div>
-                    <div style={statLabelStyle}>Bài tập mới</div>
-                </div>
-                <div
-                    style={statCardGradesStyle}
-                    onMouseEnter={handleStatCardHover}
-                    onMouseLeave={handleStatCardLeave}
-                >
-                    <div style={statNumberStyle}>{totalClasses}</div>
-                    <div style={statLabelStyle}>Lớp đã đăng ký</div>
-                </div>
-                <div
-                    style={statCardDeadlinesStyle}
-                    onMouseEnter={handleStatCardHover}
-                    onMouseLeave={handleStatCardLeave}
-                >
-                    <div style={statNumberStyle}>0</div>
-                    <div style={statLabelStyle}>Deadline sắp tới</div>
-                </div>
-            </div>
-
-            {/* Classes Section */}
-            <div>
-                <h2 style={sectionTitleStyle}>Lớp học của bạn</h2>
-                {classes.length === 0 ? (
-                    <div style={emptyStateStyle}>
-                        <h3>Chưa có lớp học nào</h3>
-                        <p>Bạn chưa đăng ký lớp học nào. Vui lòng liên hệ giáo vụ để đăng ký.</p>
-                    </div>
-                ) : (
-                    <div style={classesGridStyle}>
-                        {classes.map((classItem) => (
-                            <div
-                                key={classItem.classId}
-                                style={classCardStyle}
-                                onMouseEnter={handleCardHover}
-                                onMouseLeave={handleCardLeave}
-                                onClick={() => handleClassClick(classItem.classId)} // Add click handler
-                            >
-                                <div style={classCardTopBorderStyle}></div>
-                                <div style={classHeaderStyle}>
-                                    <div style={classInfoStyle}>
-                                        <h3 style={classTitleStyle}>{classItem.className}</h3>
-                                        <p style={teacherNameStyle}>{classItem.teacherName}</p>
-                                    </div>
-                                    <div style={umlIconStyle}>
-                                        {getSubjectIcon(classItem.className)}
-                                    </div>
+        <div className="my-classes">
+            {/* Header with Search */}
+            <div className="my-classes__header">
+                <div className="my-classes__header-content">
+                    <div className="my-classes__header-flex">
+                        {/* Left side - Search Row */}
+                        <div className="flex-center my-classes__search-row">
+                            <div className="my-classes__search-container">
+                                <div className="my-classes__search-icon">
+                                    <FaSearch className="icon"/>
                                 </div>
-                                <div style={classFooterStyle}>
-                                    <span style={subjectCodeStyle}>{classItem.classCode}</span>
-                                    {classItem.newAssignments && classItem.newAssignments > 0 && (
-                                        <div style={assignmentBadgeStyle}>
-                                            <div style={dotStyle}></div>
-                                            <span>{classItem.newAssignments} bài tập mới</span>
-                                        </div>
-                                    )}
-                                </div>
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    className="my-classes__search-input"
+                                    placeholder="Tìm kiếm lớp học..."
+                                />
                             </div>
+
+                            {/* Course Filter - Only visible on desktop */}
+                            <select
+                                value={selectedCourseId}
+                                onChange={(e) => {
+                                    setSelectedCourseId(e.target.value);
+                                    setSearchParams({page: '1'});
+                                }}
+                                className="my-classes__search-input my-classes__course-filter"
+                            >
+                                <option value="">Tất cả khóa học</option>
+                                {courses.map(course => (
+                                    <option key={course.id} value={course.id.toString()}>
+                                        {course.courseName}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <button onClick={handleSearch} className="my-classes__search-button">
+                                <FaSearch className="icon"/>
+                                <span>Tìm kiếm</span>
+                            </button>
+                        </div>
+
+                        {/* Right side - Teacher Stats or Join Class Button */}
+                        {(hasRole('admin') || hasRole('teacher') || hasRole('ta')) ? (
+                            <div
+                                className="flex items-center bg-white border border-gray-200 rounded-md px-4 py-2 shadow-sm text-gray-800">
+                                <span className="font-medium">Tổng số lớp:</span>
+                                <span className="ml-2 text-xl font-bold text-primary-700">{totalClasses}</span>
+                            </div>
+                        ) : (hasRole('student')) && (
+                            <button
+                                onClick={() => setIsJoinPopupOpen(true)}
+                                className="my-classes__join-button"
+                            >
+                                <FaPlus className="icon"/>
+                                <span>Tham gia lớp học</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Join Class Popup */}
+            {isJoinPopupOpen && (
+                <div className="my-classes__modal-overlay">
+                    <div className="my-classes__modal-container">
+                        <div className="my-classes__modal-header">
+                            <h2 className="my-classes__modal-title vietnamese">
+                                Tham gia lớp học
+                            </h2>
+                            <button
+                                onClick={handleCancelJoin}
+                                className="my-classes__modal-close"
+                                disabled={isJoining}
+                            >
+                                <FaTimes className="icon"/>
+                            </button>
+                        </div>
+
+                        <div className="my-classes__modal-content">
+                            {/* Success Message */}
+                            {joinSuccess.show && (
+                                <div className="my-classes__alert--success">
+                                    <FaCheckCircle className="icon"/>
+                                    <p className="text">{joinSuccess.message}</p>
+                                </div>
+                            )}
+
+                            <div className="my-classes__form-group">
+                                <label className="my-classes__form-label">
+                                    Mã lớp
+                                </label>
+                                <div className="my-classes__form-description">
+                                    Nhập mã lớp học mà giảng viên đã cung cấp để tham gia.
+                                </div>
+                                <input
+                                    type="text"
+                                    value={classCode}
+                                    onChange={handleClassCodeChange}
+                                    placeholder="Mã lớp"
+                                    disabled={isJoining || joinSuccess.show}
+                                    className={`my-classes__form-input ${
+                                        joinError ? 'my-classes__form-input--error' :
+                                            joinSuccess.show ? 'my-classes__form-input--success' : ''
+                                    }`}
+                                />
+
+                                {/* Error Message */}
+                                {joinError && (
+                                    <div className="my-classes__alert--error">
+                                        <FaExclamationTriangle className="icon"/>
+                                        <p className="text">{joinError}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="my-classes__form-actions">
+                                <button
+                                    onClick={handleCancelJoin}
+                                    disabled={isJoining}
+                                    className="my-classes__button--secondary"
+                                >
+                                    {joinSuccess.show ? 'Đóng' : 'Hủy'}
+                                </button>
+                                <button
+                                    onClick={handleJoinOrClose}
+                                    disabled={isJoining}
+                                    className="my-classes__button--primary"
+                                >
+                                    {isJoining && <FaSpinner className="spinner"/>}
+                                    {isJoining ? 'Đang tham gia...' : joinSuccess.show ? 'Xong' : 'Tham gia'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Main Content */}
+            <main className="my-classes__main">
+                {/* Loading State */}
+                {loading && (
+                    <div className="my-classes__grid">
+                        {[...Array(4)].map((_, i) => (
+                            <ClassCardSkeleton key={i}/>
                         ))}
                     </div>
                 )}
-            </div>
+
+                {/* Error State */}
+                {error && !loading && (
+                    <div className="my-classes__error">
+                        <div className="my-classes__error-content">
+                            <div className="my-classes__error-icon">
+                                <FaTimes className="icon"/>
+                            </div>
+                            <h3 className="my-classes__error-title vietnamese">Có lỗi xảy ra</h3>
+                            <p className="my-classes__error-description">{error}</p>
+                            <button
+                                onClick={() => loadClasses(currentPage)}
+                                className="my-classes__button--primary"
+                            >
+                                Thử lại
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Classes Grid */}
+                {!loading && !error && transformedClasses.length > 0 && (
+                    <>
+                        <div className="my-classes__grid">
+                            {transformedClasses.map((classItem) => {
+                                const textColor = getTextColor(classItem.courseColor);
+                                const darkerColor = darkenColor(classItem.courseColor, 15);
+
+                                return (
+                                    <div key={classItem.id} className="my-classes__card">
+                                        {/* Card Header với màu động từ courseColor */}
+                                        <div
+                                            className="my-classes__card-header"
+                                            style={{
+                                                background: `linear-gradient(135deg, ${classItem.courseColor}, ${darkerColor})`
+                                            }}
+                                        >
+                                            {/* Class Level Badge */}
+                                            <div className="my-classes__card-level-badge">
+                                                <span>{classItem.levelLabel}</span>
+                                            </div>
+
+                                            {/* Status Badge */}
+                                            <div className={`my-classes__card-status-badge ${classItem.statusClass}`}>
+                                                <span>{classItem.statusLabel}</span>
+                                            </div>
+
+                                            {/* Teacher Avatar với màu động */}
+                                            <div
+                                                className="my-classes__card-avatar"
+                                                style={{
+                                                    backgroundColor: classItem.courseColor,
+                                                    color: textColor,
+                                                    filter: 'brightness(0.9)'
+                                                }}
+                                            >
+                                                {classItem.teacher.initials}
+                                            </div>
+                                        </div>
+
+                                        {/* Card Content */}
+                                        <div className="my-classes__card-content">
+                                            {/* Class Title */}
+                                            <h3 className="my-classes__card-title vietnamese">
+                                                {classItem.title}
+                                            </h3>
+
+                                            {/* Class Stats */}
+                                            <div className="my-classes__card-stats">
+                                                <div className="stat">
+                                                    <FaUsers/>
+                                                    <span>{classItem.students} học viên</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="my-classes__card-dates">
+                                                <div className="date-row">
+                                                    <FaCalendar/>
+                                                    <span>Bắt đầu: {classItem.startDate}</span>
+                                                </div>
+                                                <div className="date-row">
+                                                    <FaCalendar/>
+                                                    <span>Kết thúc: {classItem.endDate}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Button */}
+                                            <button
+                                                onClick={() => handleButtonClick(classItem.id)}
+                                                className="my-classes__card-action"
+                                            >
+                                                Xem chi tiết
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Pagination */}
+                        {/*<div className="flex justify-center mt-8 mb-8">*/}
+                        {/*    <Pagination*/}
+                        {/*        currentPage={currentPage}*/}
+                        {/*        totalPages={Math.ceil(totalClasses / pageSize)}*/}
+                        {/*        onPageChange={(page) => {*/}
+                        {/*            setSearchParams({page: page.toString()});*/}
+                        {/*        }}*/}
+                        {/*    />*/}
+                        {/*</div>*/}
+                    </>
+                )}
+
+                {/* Empty State */}
+                {!loading && !error && transformedClasses.length === 0 && (
+                    <div className="my-classes__empty">
+                        <div className="my-classes__empty-content">
+                            <div className="my-classes__empty-icon">
+                                <FaBookOpen className="icon"/>
+                            </div>
+                            <h3 className="my-classes__empty-title vietnamese">
+                                {searchTerm ? 'Không tìm thấy lớp học' : 'Trống'}
+                            </h3>
+                            <p className="my-classes__empty-description">
+                                {searchTerm
+                                    ? 'Hãy thử với từ khóa khác hoặc tham gia lớp học mới.'
+                                    : ''}
+                            </p>
+                            <div className="my-classes__empty-actions">
+                                {searchTerm && (
+                                    <button
+                                        onClick={() => {
+                                            setSearchTerm('');
+                                            loadClasses(1);
+                                        }}
+                                        className="my-classes__button--secondary"
+                                    >
+                                        Xóa tìm kiếm
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setIsJoinPopupOpen(true)}
+                                    className="my-classes__join-button"
+                                >
+                                    Tham gia lớp học
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
         </div>
     );
 };
 
-export default Home;
+export default MyClasses;

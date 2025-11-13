@@ -26,6 +26,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -198,6 +200,9 @@ public class EnrollmentService implements IEnrollmentService {
                     .map(enrollment -> {
                         UserResponse user = userMap.get(enrollment.getStudentId());
                         if (user != null) {
+                            LocalDate createdDate = Optional.ofNullable(enrollment.getCreatedDate())
+                                    .map(LocalDateTime::toLocalDate)
+                                    .orElse(null);
                             return new StudentInClassResponse(
                                     enrollment.getStudentId(),
                                     user.getUsername(),
@@ -208,7 +213,7 @@ public class EnrollmentService implements IEnrollmentService {
                                     user.getUserCode(),
                                     user.getIsActive(),
                                     enrollment.getStatus(),
-                                    enrollment.getCreatedDate().toLocalDate()
+                                    createdDate
                             );
                         }
                         return null;

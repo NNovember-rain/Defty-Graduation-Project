@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {createClass, getClassById, updateClass, type IClass, type CreateClassRequest, type UpdateClassRequest,}
-    from '../../../shared/services/classManagementService.ts';
+import {
+    createClass,
+    getClassById,
+    updateClass,
+    type IClass,
+    type CreateClassRequest,
+    type UpdateClassRequest,
+} from '../../../shared/services/classManagementService.ts';
 import { getActiveCourses, type ICourse } from '../../../shared/services/courseService.ts';
 import FormTemplate, { type FormField } from '../../template/ManagementTemplate/FormTemplate.tsx';
 import { getUsersByRole, type IUser } from '../../../shared/services/authService.ts';
@@ -36,7 +42,6 @@ const ClassForm: React.FC = () => {
         fetchTeachers();
     }, [t]);
 
-
     // Fetch courses
     useEffect(() => {
         const fetchCourses = async () => {
@@ -70,7 +75,6 @@ const ClassForm: React.FC = () => {
             labelKey: 'Khóa học',
             type: 'select',
             placeholderKey: 'Chọn khóa học',
-            // required: true,
             gridSpan: 12,
             options: courses.map(course => ({
                 value: String(course.id),
@@ -110,12 +114,6 @@ const ClassForm: React.FC = () => {
     ], [teachers, courses, loadingTeachers, loadingCourses, teachersError, coursesError]);
 
     const classValidationSchema = React.useMemo(() => ({
-        // courseId: (value: any, t: any) => {
-        //     if (!value || value === '') {
-        //         return t ? t('Khóa học là bắt buộc') : 'Khóa học là bắt buộc';
-        //     }
-        //     return null;
-        // },
         teacherId: (value: any, t: any) => {
             if (!value || value === '') {
                 return t ? t('Giáo viên là bắt buộc') : 'Giáo viên là bắt buộc';
@@ -134,18 +132,12 @@ const ClassForm: React.FC = () => {
             }
             return null;
         },
-        // classType: (value: any, t: any) => {
-        //     if (!value || value === '') {
-        //         return t ? t('Loại lớp học là bắt buộc') : 'Loại lớp học là bắt buộc';
-        //     }
-        //     return null;
-        // },
     }), [t]);
 
     const breadcrumbItems = [
         { label: 'Home', path: '/' },
         { label: 'Admin Dashboard', path: '/admin' },
-        { label: 'Class Management', path: '/admin/class'},
+        { label: 'Class Management', path: '/admin/class' },
     ];
 
     // Utility function để format date
@@ -167,9 +159,16 @@ const ClassForm: React.FC = () => {
         }
     }, []);
 
-    // Adapter cho serviceGetById
+    // Adapter cho serviceGetById - WITH VALIDATION
     const adaptedGetServiceGetById = useCallback(async (id: number): Promise<IClass> => {
         try {
+            // Validate the ID before making the API call
+            if (!id || isNaN(id) || id <= 0) {
+                console.error('Invalid ID passed to adaptedGetServiceGetById:', id);
+                throw new Error(`Invalid class ID: ${id}`);
+            }
+
+            console.log('Fetching class with ID:', id);
             const classData = await getClassById(id);
 
             const processedClassData: IClass = {
@@ -185,7 +184,7 @@ const ClassForm: React.FC = () => {
             console.error("Adapter failed to fetch class:", error);
             throw error;
         }
-    }, [teachers, courses, formatDateForInput]);
+    }, [formatDateForInput]);
 
     return (
         <FormTemplate<IClass, CreateClassRequest, UpdateClassRequest>

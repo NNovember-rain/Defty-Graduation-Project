@@ -44,21 +44,21 @@ public class CourseController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasPermission(null, 'course.update')")
+//    @PreAuthorize("hasPermission(null, 'course.update')")
     public ApiResponse<Long> updateCourse(@PathVariable Long id, @RequestBody CourseRequest courseRequest) {
         log.info("Request to update course with ID {}: {}", id, courseRequest);
         return courseService.updateCourse(id, courseRequest);
     }
 
     @DeleteMapping("/{ids}")
-    @PreAuthorize("hasPermission(null, 'course.delete')")
+//    @PreAuthorize("hasPermission(null, 'course.delete')")
     public ApiResponse<List<Long>> deleteCourses(@PathVariable List<Long> ids) {
         log.info("Request to delete courses with IDs {}", ids);
         return courseService.deleteCourses(ids);
     }
 
     @PatchMapping("/toggle-status/{id}")
-    @PreAuthorize("hasPermission(null, 'course.toggle.status')")
+//    @PreAuthorize("hasPermission(null, 'course.toggle.status')")
     public ApiResponse<Long> toggleActiveStatus(@PathVariable Long id) {
         return courseService.toggleActiveStatus(id);
     }

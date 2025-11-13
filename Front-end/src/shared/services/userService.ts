@@ -66,6 +66,14 @@ export const getUserById = async (id: string | number): Promise<IUser> => {
     const data = await response.json();
     return data.result as IUser;
 };
+export const getUsersByIds = async (ids: (number | string)[]): Promise<IUser[]> => {
+    const query = ids.map(id => `ids=${id}`).join("&");
+    const response = await handleRequest(
+        get(`${PREFIX_IDENTITY}/${PREFIX_USER}/by-ids?${query}`)
+    );
+    const data = await response.json();
+    return data.data as IUser[];
+};
 
 export const updateUser = async (id: string | number, data: Partial<Omit<IUser, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IUser> => {
     const response = await handleRequest(patchJsonData(`${PREFIX_IDENTITY}/${PREFIX_USER}/${id}`, data));
