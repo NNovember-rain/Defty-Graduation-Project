@@ -98,10 +98,10 @@ export const processUmlWithAI = async (
     input: UmlInput
 ): Promise<UmlProcessedResult | null> => {
     switch (input.typeUmlName) {
-        case "use-case":
+        case "USE_CASE_DIAGRAM":
             return await processUseCaseUmlWithAI(input);
 
-        case "class":
+        case "CLASS_DIAGRAM":
             return await processClassDiagramAnalysisPhaseWithAI(input);
 
         default:
