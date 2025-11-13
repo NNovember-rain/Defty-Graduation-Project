@@ -1,45 +1,53 @@
-import {get, postJsonData, putJsonData, del, bulkDelete, postFormData, putFormData, patchJsonData} from "./request";
+import {
+    get,
+    postJsonData,
+    del,
+    patchJsonData,
+} from "./request";
 import { getWithParams } from "./getWithParams";
 import handleRequest from "./handleRequest";
 
 const CLASS_SERVICE_PREFIX: string = import.meta.env.VITE_PREFIX_CLASS_SERVICE as string;
-const TEACHER_ROLE_ID: number = 3;
 
-// --- 1. Định nghĩa Interfaces cho Dữ liệu Lớp học ---
+
 export interface IClass {
     id: number;
+    assistantIds: string[];
     teacherId: number;
-    name: string;
-    description: string | null; // Cập nhật có thể null
-    section: string | null;     // Cập nhật có thể null
-    subject: string | null;     // Cập nhật có thể null
-    room: string | null;        // Cập nhật có thể null
-    // inviteCode?: string; // Đã bỏ nếu không dùng
-
-    // Các trường từ BaseEntity (theo response của bạn, có thể là null nếu chưa hoạt động)
+    courseId?: number;
+    courseColor?:string;
+    inviteCode: string;
+    className: string;
+    classType: string;
+    description: string | null;
+    startDate: string;
+    endDate: string;
+    scheduleJson: any | null;
+    currentStudents: number;
+    // Các trường từ BaseEntity
     createdDate: string | null;
     createdBy: string | null;
     modifiedDate: string | null;
     modifiedBy: string | null;
-    status: number; // Thêm trường status nếu có trong Entity của bạn
+    status: number;
 }
 
-// Interface cho Student từ API response (dựa vào StudentInClassResponse từ backend)
 export interface StudentInClassResponse {
+    id: number;
+    firstName: string;
+    lastName: string;
     studentId: string;
     username: string;
     fullName: string;
     email: string;
-    dob: string; // LocalDate từ backend
+    dob: string;
     userCode: string;
-    createdDate: string; // Date từ backend
-    isActive: number; // 1 for active, 0 for inactive, -1 for deleted
-    enrolledAt: string; // LocalDateTime từ backend
-    enrollmentStatus: string;
-    roles: any[]; // Set<RoleResponse> từ backend
+    createdDate: string;
+    isActive: number;
+    enrolledAt: string;
+    enrollmentStatus: number;
+    roles: any[];
 }
-
-// Cập nhật interface GetStudentsInClassResult
 export interface GetStudentsInClassResult {
     content: StudentInClassResponse[];
     totalElements: number;
@@ -47,33 +55,42 @@ export interface GetStudentsInClassResult {
     number: number;
     size: number;
 }
+export interface GetStudentsInClassOptions {
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
 
-// Request DTO cho việc tạo/cập nhật lớp
-export type CreateClassRequest = Omit<IClass, 'id' | 'createdDate' | 'createdBy' | 'modifiedDate' | 'modifiedBy' | 'status'>;
+export interface UpdateEnrollmentStatusRequest {
+    status: number;
+}
+export interface JoinClassResponse {
+    classId: number;
+}
+
+export type CreateClassRequest = Omit<IClass, 'id' | 'createdDate' | 'createdBy' | 'modifiedDate' | 'modifiedBy' | 'status' | 'currentStudents' | 'inviteCode'>;
 export type UpdateClassRequest = Partial<CreateClassRequest>;
 
 // --- 2. Định nghĩa Interfaces cho Phân trang và Kết quả API ---
-// Cập nhật GetClassesOptions để thêm các filter mới
 export interface GetClassesOptions {
     page?: number;
     limit?: number;
-    name?: string;
+    className?: string;
     teacherId?: number;
-    section?: string;
-    subject?: string;
+    courseId?: number;
+    classType?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     status?: number;
 }
 
-// Cập nhật GetClassesResult để khớp với RESPONSE BACKEND HIỆN TẠI VÀ TỰ TÍNH TOÁN
 export interface GetClassesResult {
     content: IClass[];
     totalElements: number;
-    // Các trường dưới đây sẽ được TÍNH TOÁN ở frontend, không phải lấy trực tiếp từ backend
     totalPages: number;
-    number: number; // Trang hiện tại (0-indexed)
-    size: number;   // Kích thước trang
+    number: number;
+    size: number;
 }
 
 export interface ClassInEnrollment {
@@ -84,7 +101,6 @@ export interface ClassInEnrollment {
     newAssignments: number | null;
 }
 
-// API Response chung từ Backend (để cast response)
 export interface ApiResponse<T> {
     code: number;
     message: string;
@@ -93,67 +109,52 @@ export interface ApiResponse<T> {
 }
 
 // --- 3. Các hàm gọi API cho Quản lý Lớp học ---
-
 export const createClass = async (data: CreateClassRequest): Promise<ApiResponse<number>> => {
-    const formData = convertToFormData(data); // ← convert từ object sang FormData
-    const response = await handleRequest(postFormData(`${CLASS_SERVICE_PREFIX}/class`, formData));
-    return await response.json() as ApiResponse<number>;
-};
-export const updateClass = async (id: number, data: UpdateClassRequest): Promise<ApiResponse<number>> => {
+    const response = await handleRequest(postJsonData(`${CLASS_SERVICE_PREFIX}/class`, data));
+    const result = await response.json() as ApiResponse<number>;
 
-    console.log(data);
+    if (result.code !== 201) {
+        const rawMessage = result.message || 'Tạo lớp học thất bại';
+        const formattedMessage = rawMessage.includes(':')
+            ? rawMessage.split(':').slice(1).join(':').trim()
+            : rawMessage;
 
-    const formData = convertToFormData(data);
-    const response = await handleRequest(putFormData(`${CLASS_SERVICE_PREFIX}/class/${id}`, formData));
-    return await response.json() as ApiResponse<number>;
-};
-
-const convertToFormData = (data: Record<string, any>): FormData => {
-    const formData = new FormData();
-    for (const key in data) {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-            const value = data[key];
-            if (value !== null && value !== undefined) {
-                formData.append(key, value);
-            }
-        }
+        console.log(formattedMessage);
+        throw new Error(formattedMessage);
     }
-    return formData;
+
+    return result;
 };
 
-// Hàm lấy danh sách lớp học được điều chỉnh
-export const getClasses = async (options: GetClassesOptions = {}): Promise<GetClassesResult> => {
-    const currentPage = options.page || 1; // Sử dụng trang 1-indexed của frontend
-    const entriesPerPage = options.limit || 10; // Giới hạn mặc định
+export const updateClass = async (id: number, data: UpdateClassRequest): Promise<ApiResponse<number>> => {
+    console.log(data);
+    const response = await handleRequest(patchJsonData(`${CLASS_SERVICE_PREFIX}/class/${id}`, data));
+    const result = await response.json() as ApiResponse<number>;
 
+    // Kiểm tra status trong ApiResponse thay vì HTTP status
+    if (result.code !== 200) {
+        throw new Error(result.message || 'Cập nhật lớp học thất bại');
+    }
+
+    return result;
+};
+export const getClasses = async (options: GetClassesOptions = {}): Promise<GetClassesResult> => {
+    const currentPage = options.page || 1;
+    const entriesPerPage = options.limit || 10;
     const params = {
-        page: currentPage - 1, // Backend dùng 0-indexed
+        page: currentPage - 1,
         size: entriesPerPage,
-        class_name: options.name,
+        class_name: options.className,
         teacher_id: options.teacherId,
-        section: options.section,
-        subject: options.subject,
+        course_id: options.courseId,
+        class_type: options.classType,
         sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
         status: options.status !== undefined ? options.status : undefined
     };
 
-    // Giả định API endpoint là `/class/teacher/{teacherId}` nếu có filter teacherId,
-    // hoặc `/class` nếu là API tổng hợp có thể filter
-    // Hiện tại, bạn đã có endpoint `/class/teacher/{teacherId}`
-    // và `/class` (cho POST). Cần một GET `/class` chung có phân trang.
-    // Nếu chưa có GET /class chung, bạn có thể gọi getClassesByTeacherId và hardcode teacherId tạm thời.
-
-    // Giả định API GET /api/v1/class có thể nhận các params page, size, sort, name, etc.
-    // Nếu bạn chỉ có /teacher/{teacherId}, bạn cần chọn một teacherId mặc định/tạm thời
-    // hoặc tạo một endpoint GET /class chung có phân trang.
-
-    // Tạm thời, tôi sẽ giả định có một endpoint GET ${CLASS_SERVICE_PREFIX}/class
-    // có thể nhận các tham số filter và phân trang.
-    // Nếu bạn chỉ có `getClassesByTeacherId`, bạn sẽ cần điều chỉnh ở đây.
-
     const response = await handleRequest(getWithParams(`${CLASS_SERVICE_PREFIX}/class`, params));
-    const apiResponse = await response.json() as ApiResponse<{ content: IClass[], totalElements: number }>; // Cast đúng với response backend
 
+    const apiResponse = await response.json() as ApiResponse<{ content: IClass[], totalElements: number }>;
 
     if (apiResponse.code === 200 && apiResponse.result) {
         const totalElements = apiResponse.result.totalElements || 0;
@@ -163,7 +164,7 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
             content: apiResponse.result.content || [],
             totalElements: totalElements,
             totalPages: totalPages,
-            number: currentPage - 1, // Lưu trữ 0-indexed page number
+            number: currentPage - 1,
             size: entriesPerPage,
         } as GetClassesResult;
     } else {
@@ -173,14 +174,18 @@ export const getClasses = async (options: GetClassesOptions = {}): Promise<GetCl
 
 export const getClassById = async (id: number): Promise<IClass> => {
     const response = await handleRequest(get(`${CLASS_SERVICE_PREFIX}/class/${id}`));
+    const data = await response.json() as ApiResponse<IClass>;
 
-    const data = await response.json();
     console.log("Dữ liệu trả về:", data);
 
-    return data.result as IClass;
+    if (data.code === 200 && data.result) {
+        return data.result;
+    } else {
+        throw new Error(data.message || "Failed to fetch class.");
+    }
 };
 
-export const deleteClass = async (ids: number | number[], teacherId: number): Promise<ApiResponse<void>> => {
+export const deleteClass = async (ids: number | number[]): Promise<ApiResponse<void>> => {
     let pathIds: string;
 
     if (Array.isArray(ids)) {
@@ -194,109 +199,247 @@ export const deleteClass = async (ids: number | number[], teacherId: number): Pr
 
 export const toggleClassStatus = async (id: number, status: 0 | 1): Promise<IClass> => {
     const response = await handleRequest(
-        patchJsonData(`${CLASS_SERVICE_PREFIX}/class/${id}/toggle-status`, { status })
+        patchJsonData(`${CLASS_SERVICE_PREFIX}/class/toggle-status/${id}`, { status })
     );
-    const updatedData = await response.json();
-    return updatedData.result as IClass;
+    const updatedData = await response.json() as ApiResponse<IClass>;
+
+    if (updatedData.code === 200 && updatedData.result) {
+        return updatedData.result;
+    } else {
+        throw new Error(updatedData.message || "Failed to toggle class status.");
+    }
 };
 
-// ... Các hàm API cho Enrollment (addStudentsToClass, getStudentsInClass, getClassesByStudentId, leaveClass)
+// --- API cho Enrollment ---
 
-// API để thêm danh sách sinh viên vào lớp (POST /api/v1/class/{classId}/enrollments/add-students)
 export const addStudentsToClass = async (classId: number, studentIds: number[]): Promise<ApiResponse<any>> => {
     const response = await handleRequest(postJsonData(`${CLASS_SERVICE_PREFIX}/class/${classId}/enrollments/add-students`, { studentIds }));
-    return await response.json() as ApiResponse<any>; // Tùy thuộc vào EnrollmentDto bạn định nghĩa
+    return await response.json() as ApiResponse<any>;
 };
+export const getStudentsInClass = async (
+    classId: number,
+    options: GetStudentsInClassOptions = {}
+): Promise<GetStudentsInClassResult> => {
+    // Input validation
+    if (!classId || classId <= 0) {
+        throw new Error("Invalid class ID provided");
+    }
 
-// API để lấy danh sách sinh viên trong lớp (GET /api/v1/class/{classId}/enrollments/students)
-export interface GetStudentsInClassOptions {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-}
+    if (options.limit && (options.limit < 1 || options.limit > 100)) {
+        throw new Error("Limit must be between 1 and 100");
+    }
 
-export interface GetStudentsInClassResult {
-    content: any[]; // Thay thế bằng IEnrollment hoặc StudentInClass DTO sau này
-    totalElements: number;
-    totalPages: number;
-    number: number;
-    size: number;
-}
+    if (options.page && options.page < 1) {
+        throw new Error("Page number must be greater than 0");
+    }
 
-// Cập nhật hàm getStudentsInClass để gọi endpoint mới
-export const getStudentsInClass = async (classId: number, options: GetStudentsInClassOptions = {}): Promise<GetStudentsInClassResult> => {
     const params = {
-        page: options.page ? options.page - 1 : 0, // Backend sử dụng 0-indexed
+        page: options.page ? options.page - 1 : 0,
         size: options.limit || 10,
-        // sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
+        sortBy: options.sortBy || 'fullName',
+        sortOrder: options.sortOrder || 'asc'
     };
 
-    // Gọi endpoint mới: /enrollment/class/{classId}/students
-    const response = await handleRequest(
-        getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/class/${classId}/students`, params)
-    );
+    try {
+        const response = await handleRequest(
+            getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/${classId}/students`, params)
+        );
 
-    const apiResponse = await response.json() as ApiResponse<{
-        content: StudentInClassResponse[],
-        totalElements: number
-    }>;
+        // Check response status
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error("Class not found or you don't have access to it");
+            } else if (response.status === 403) {
+                throw new Error("You don't have permission to view students in this class");
+            } else if (response.status >= 500) {
+                throw new Error("Server error occurred. Please try again later");
+            } else {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+        }
 
-    if (apiResponse.code === 200 && apiResponse.result) {
-        const totalElements = apiResponse.result.totalElements || 0;
-        const totalPages = Math.ceil(totalElements / (options.limit || 10));
+        const apiResponse = await response.json() as ApiResponse<{
+            content: StudentInClassResponse[],
+            totalElements: number,
+            totalPages?: number,
+            number?: number,
+            size?: number
+        }>;
+
+        // Validate API response structure
+        if (!apiResponse) {
+            throw new Error("No response received from server");
+        }
+
+        if (apiResponse.code !== 200) {
+            throw new Error(apiResponse.message || "API returned error status");
+        }
+
+        if (!apiResponse.result) {
+            throw new Error("No data received from server");
+        }
+
+        // Extract and validate data
+        const data = apiResponse.result;
+        const content = Array.isArray(data.content) ? data.content : [];
+        const totalElements = typeof data.totalElements === 'number' ? data.totalElements : 0;
+        const pageSize = options.limit || 10;
+        const totalPages = data.totalPages ?? Math.ceil(totalElements / pageSize);
+        const currentPageNumber = data.number ?? (options.page ? options.page - 1 : 0);
+
+        // Additional validation
+        if (totalElements < 0) {
+            console.warn("Received negative totalElements, setting to 0");
+        }
+
+        if (totalPages < 0) {
+            console.warn("Received negative totalPages, calculating from totalElements");
+        }
+
+        // Validate content array
+        const validatedContent = content.filter(student => {
+            if (!student) return false;
+            if (!student.studentId) {
+                console.warn("Student without ID found, filtering out:", student);
+                return false;
+            }
+            return true;
+        });
+
+        // Log warning if some students were filtered out
+        if (validatedContent.length !== content.length) {
+            console.warn(`Filtered out ${content.length - validatedContent.length} invalid students`);
+        }
 
         return {
-            content: apiResponse.result.content || [],
-            totalElements: totalElements,
-            totalPages: totalPages,
-            number: options.page ? options.page - 1 : 0,
-            size: options.limit || 10,
+            content: validatedContent,
+            totalElements: Math.max(0, totalElements),
+            totalPages: Math.max(0, totalPages),
+            number: Math.max(0, currentPageNumber),
+            size: pageSize,
         } as GetStudentsInClassResult;
-    } else {
-        throw new Error(apiResponse.message || "Failed to fetch students in class.");
+
+    } catch (error: any) {
+        // Enhanced error handling
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            throw new Error("Network error: Please check your internet connection");
+        }
+
+        if (error.name === 'SyntaxError') {
+            throw new Error("Server returned invalid response format");
+        }
+
+        if (error.message) {
+            throw error; // Re-throw with existing message
+        }
+
+        throw new Error("Failed to fetch students in class");
     }
 };
+// export const getClassesByStudentId = async (options: GetClassesOptions = {}): Promise<GetClassesResult> => {
+//     const params = {
+//         page: options.page ? options.page - 1 : 0,
+//         size: options.limit || 10,
+//         sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
+//     };
+//
+//     const response = await handleRequest(
+//         getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/student/classes`, params)
+//     );
+//
+//     const apiResponse = await response.json() as ApiResponse<{
+//         content: ClassInEnrollment[],
+//         totalElements: number
+//     }>;
+//
+//     if (apiResponse.status === 200 && apiResponse.data) {
+//         const totalElements = apiResponse.data.totalElements || 0;
+//         const totalPages = Math.ceil(totalElements / (options.limit || 10));
+//
+//         return {
+//             content: apiResponse.data.content || [],
+//             totalElements: totalElements,
+//             totalPages: totalPages,
+//             number: options.page ? options.page - 1 : 0,
+//             size: options.limit || 10,
+//         } as GetClassesResult;
+//     } else {
+//         throw new Error(apiResponse.message || "Failed to fetch classes for student.");
+//     }
+// };
 
-
-// API để lấy danh sách lớp theo ID sinh viên (GET /api/v1/enrollments/student/{studentId}/class)
-export const getClassesByStudentId = async (options: GetClassesOptions = {}): Promise<GetClassesResult> => {
-    const params = {
-        page: options.page ? options.page - 1 : 0, // Backend sử dụng 0-indexed
-        size: options.limit || 10,
-        sort: options.sortBy && options.sortOrder ? `${options.sortBy},${options.sortOrder}` : undefined,
-    };
-
-    // Sử dụng endpoint chính xác từ API response bạn cung cấp
-    const response = await handleRequest(
-        getWithParams(`${CLASS_SERVICE_PREFIX}/enrollment/student/classes`, params)
-    );
-
-    const apiResponse = await response.json() as ApiResponse<{
-        content: ClassInEnrollment[],
-        totalElements: number
-    }>;
-
-    if (apiResponse.code === 200 && apiResponse.result) {
-        const totalElements = apiResponse.result.totalElements || 0;
-        const totalPages = Math.ceil(totalElements / (options.limit || 10));
-
-        return {
-            content: apiResponse.result.content || [],
-            totalElements: totalElements,
-            totalPages: totalPages,
-            number: options.page ? options.page - 1 : 0,
-            size: options.limit || 10,
-        } as GetClassesResult;
-    } else {
-        throw new Error(apiResponse.message || "Failed to fetch classes for student.");
-    }
-};
-
-// API để sinh viên rời lớp (DELETE /api/v1/class/{classId}/enrollments/students/{studentId}/leave)
 export const leaveClass = async (classId: number, studentId: number): Promise<ApiResponse<void>> => {
     const response = await handleRequest(del(`${CLASS_SERVICE_PREFIX}/class/${classId}/enrollments/students/${studentId}/leave`));
     return await response.json() as ApiResponse<void>;
+};
+export const updateEnrollmentStatus = async (classId: number, studentId: number, status: number): Promise<ApiResponse<any>> => {
+    const requestData: UpdateEnrollmentStatusRequest = { status };
+
+    const response = await handleRequest(
+        patchJsonData(`${CLASS_SERVICE_PREFIX}/enrollment/class/${classId}/student/${studentId}/status`, requestData)
+    );
+
+    return await response.json() as ApiResponse<any>;
+};
+export const joinClassByInvite = async (inviteCode: string): Promise<ApiResponse<JoinClassResponse>> => {
+    // Validate input
+    if (!inviteCode || inviteCode.trim().length === 0) {
+        throw new Error("Mã mời không được để trống");
+    }
+
+    if (inviteCode.trim().length < 5) {
+        throw new Error("Mã mời phải có ít nhất 5 ký tự");
+    }
+
+    try {
+        const response = await handleRequest(
+            postJsonData(`${CLASS_SERVICE_PREFIX}/enrollment/join/${inviteCode.trim()}`, {})
+        );
+
+        const result = await response.json() as ApiResponse<JoinClassResponse>;
+
+        if (result.code === 200) {
+            // Student already in class
+            console.log("Student already enrolled in class:", result.result);
+            return result;
+        } else if (result.code === 201) {
+            // Join request sent, pending approval
+            console.log("Join request sent successfully:", result.result);
+            return result;
+        } else {
+            // Handle other status codes
+            throw new Error(result.message || "Không thể tham gia lớp học");
+        }
+
+    } catch (error: any) {
+        // Enhanced error handling
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            throw new Error("Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet của bạn");
+        }
+
+        if (error.name === 'SyntaxError') {
+            throw new Error("Server trả về dữ liệu không hợp lệ");
+        }
+
+        // Check for specific HTTP status codes if available
+        if (error.response) {
+            switch (error.response.status) {
+                case 404:
+                    throw new Error("Mã mời không hợp lệ hoặc đã hết hạn");
+                case 403:
+                    throw new Error("Bạn không có quyền tham gia lớp học này");
+                case 409:
+                    throw new Error("Bạn đã tham gia lớp học này rồi");
+                case 500:
+                    throw new Error("Lỗi server. Vui lòng thử lại sau");
+                default:
+                    throw new Error(error.message || "Có lỗi xảy ra khi tham gia lớp học");
+            }
+        }
+
+        // Re-throw the error if it has a message, otherwise create a generic one
+        throw new Error(error.message || "Không thể tham gia lớp học. Vui lòng thử lại");
+    }
 };
 
 // API để import danh sách sinh viên vào lớp

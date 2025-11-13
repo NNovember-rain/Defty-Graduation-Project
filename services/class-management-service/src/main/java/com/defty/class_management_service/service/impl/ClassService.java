@@ -3,25 +3,33 @@ package com.defty.class_management_service.service.impl;
 import com.defty.class_management_service.dto.request.ClassRequest;
 import com.defty.class_management_service.dto.response.ClassResponse;
 import com.defty.class_management_service.entity.ClassEntity;
+import com.defty.class_management_service.entity.CourseEntity;
 import com.defty.class_management_service.mapper.ClassMapper;
 import com.defty.class_management_service.repository.IClassRepository;
+import com.defty.class_management_service.repository.ICourseRepository;
 import com.defty.class_management_service.service.IClassService;
+import com.defty.class_management_service.utils.InviteCodeUtil;
 import com.defty.class_management_service.validation.ClassValidation;
 import com.example.common_library.dto.response.PageableResponse;
+import com.example.common_library.exceptions.FieldRequiredException;
 import com.example.common_library.exceptions.NotFoundException;
+import com.example.common_library.exceptions.ValidationException;
 import com.example.common_library.response.ApiResponse;
 import com.example.common_library.utils.CopyUtil;
+import com.example.common_library.utils.UserUtils;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -32,55 +40,136 @@ public class ClassService implements IClassService {
     ClassValidation classValidation;
     ClassMapper classMapper;
     IClassRepository classRepository;
+    ICourseRepository courseRepository;
+    InviteCodeUtil inviteCodeUtil;
 //    ClassEnrollmentRepository enrollmentRepository;
 
     @Override
-    @Transactional
     public ApiResponse<Long> createClass(ClassRequest classRequest) {
-
-        classValidation.fieldValidation(classRequest);
-
-        ClassEntity classEntity = classMapper.toClassEntity(classRequest);
+        log.info("Request received to create class: {}", classRequest.getClassName());
 
         try {
-            classRepository.save(classEntity);
+            // 1. Validate required fields
+            classValidation.fieldValidation(classRequest);
+
+            // 2. Validate course
+            CourseEntity courseEntity = null;
+            if (classRequest.getCourseId() != null) {
+                courseEntity = courseRepository.findActiveById(classRequest.getCourseId())
+                        .orElseThrow(() -> new NotFoundException("Khoá học không tồn tại hoặc đã bị xóa, courseId: " + classRequest.getCourseId()));
+            }
+
+            // 3. Map DTO -> Entity
+            ClassEntity classEntity = classMapper.toClassEntity(classRequest);
+
+            // 4. Gắn course
+            classEntity.setCourseEntity(courseEntity);
+
+            // 5. Auto create inviteCode (unique)
+            String inviteCode = inviteCodeUtil.generateUniqueInviteCode();
+            classEntity.setInviteCode(inviteCode);
+
+            // 6. Save DB
+            classEntity = classRepository.save(classEntity);
+            log.info("Class '{}' saved successfully with ID: {}", classEntity.getClassName(), classEntity.getId());
+
+            return new ApiResponse<>(201, "Tạo lớp học thành công.", classEntity.getId());
+
+        } catch (FieldRequiredException e) {
+            log.warn("Validation failed for class creation: {}", e.getMessage());
+            return new ApiResponse<>(400, e.getMessage(), null);
+        } catch (DataAccessException e) {
+            log.error("Database error occurred while saving class '{}': {}", classRequest.getClassName(), e.getMessage(), e);
+            return new ApiResponse<>(500, "Lỗi cơ sở dữ liệu khi lưu lớp học.", null);
         } catch (Exception e) {
-            log.error("Error saving classEntity: {}", e.getMessage(), e);
-            throw e;
+            log.error("Unexpected error while creating class '{}': {}", classRequest.getClassName(), e.getMessage(), e);
+            return new ApiResponse<>(500, "Có lỗi bất ngờ xảy ra khi tạo lớp học.", null);
         }
-
-        return new ApiResponse<>(201, "Created", classEntity.getId());
-
     }
     @Override
-    public ApiResponse getClassById(Long id) {
-        Optional<ClassEntity> classEntity = classRepository.findActiveById(id);
-        if(!classEntity.isPresent()){
-            throw new NotFoundException("Class doesn't exist, " + "class id: " + id);
+    public ApiResponse<ClassResponse> getClassById(Long id) {
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        Long currentUserId = currentUser.userId();
+        Set<String> roles = new HashSet<>(currentUser.roles());
+
+        log.info("Current User: {}", currentUser);
+
+        Optional<ClassEntity> classEntityOpt;
+
+        if (roles.contains("ROLE_admin")) {
+            classEntityOpt = classRepository.findActiveById(id);
+
+        } else if (roles.contains("ROLE_teacher")) {
+            // Teacher chỉ xem lớp được gán + status = 1
+            classEntityOpt = classRepository.findByActiveByTeacherId(id, currentUserId);
+
+        } else if (roles.contains("ROLE_student")) {
+            // Student chỉ xem lớp nếu đã được phê duyệt
+            classEntityOpt = classRepository.findApprovedClassByStudentId(id, currentUserId);
+
+        } else {
+//            throw new ForbiddenException("Bạn không có quyền xem thông tin lớp học này");
+            return null;
         }
-        ClassResponse classResponse = classMapper.toClassResponse(classEntity.get());
-        return new ApiResponse<>(200, "get class successfully", classResponse);
+
+        if (classEntityOpt.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy lớp học hoặc bạn không có quyền truy cập. class id: " + id);
+        }
+
+        ClassResponse classResponse = classMapper.toClassResponse(classEntityOpt.get());
+        return new ApiResponse<>(200, "Lấy thông tin lớp học thành công", classResponse);
     }
 
     @Override
-    public ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable, String className, Long teacherId, Integer status) {
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("createdDate").descending());
+    public ApiResponse<PageableResponse<ClassResponse>> getClasses(Pageable pageable,
+                                                                   String className,
+                                                                   Long teacherId,
+                                                                   Long courseId,
+                                                                   Integer status) {
+        UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        Long currentUserId = currentUser.userId();
+        Set<String> roles = new HashSet<>(currentUser.roles());
 
-        Page<ClassEntity> classEntities = classRepository.findClasses(
-                className, teacherId, status, sortedPageable
+        log.info("Current User: {}", currentUser);
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by("createdDate").descending()
         );
-//        if(classEntities.isEmpty()){
-//            return new ApiResponse<>(404, "Class doesn't exist", null);
-//        }
-        List<ClassResponse> classResponses = new ArrayList<>();
 
-        for(ClassEntity c : classEntities){
-            classResponses.add(classMapper.toClassResponse(c));
+        Page<ClassEntity> classEntities;
+
+        // ✅ Phân quyền theo role
+        if (roles.contains("ROLE_admin") || roles.contains("system-admin")) {
+            // Admin xem tất cả
+            classEntities = classRepository.findClasses(className, teacherId, courseId, status, sortedPageable);
+
+        } else if (roles.contains("ROLE_teacer")) {
+            // Giáo viên chỉ xem lớp của mình - fix status = 1 (active)
+            classEntities = classRepository.findClasses(className, currentUserId, courseId, 1, sortedPageable);
+
+        }else if (roles.contains("ROLE_student")) {
+            // Học viên xem lớp mà mình đang học
+            classEntities = classRepository.findClassesByStudentId(currentUserId, className, courseId, 1, sortedPageable);
+
+        } else {
+            // Role không hợp lệ → Không cho xem
+            return new ApiResponse<>(403, "Forbidden: Role does not have access", null);
         }
-        PageableResponse<ClassResponse> pageableResponse = new PageableResponse<>(classResponses, classEntities.getTotalElements());
-        ApiResponse<PageableResponse<ClassResponse>> apiResponse = new ApiResponse<>(200, "OK", pageableResponse);
-        return apiResponse;
+
+        // Mapping sang DTO
+        List<ClassResponse> classResponses = classEntities
+                .stream()
+                .map(classMapper::toClassResponse)
+                .toList();
+
+        PageableResponse<ClassResponse> pageableResponse =
+                new PageableResponse<>(classResponses, classEntities.getTotalElements());
+
+        return new ApiResponse<>(200, "OK", pageableResponse);
     }
+
 
     @Override
     public ApiResponse<PageableResponse<ClassResponse>> getClassesByTeacherId(Pageable pageable, Long teacherId, Integer status) {
@@ -99,26 +188,38 @@ public class ClassService implements IClassService {
         return apiResponse;
     }
 
-    @Override
     @Transactional
+    @Override
     public ApiResponse<Long> updateClass(Long id, ClassRequest classRequest) {
-        classValidation.fieldValidation(classRequest);
-        Optional<ClassEntity> classEntity = classRepository.findById(id);
+        try {
+            classValidation.fieldValidation(classRequest, id);
 
-        if(classEntity.isPresent()){
-            ClassEntity updatedClass = classEntity.get();
+            // Find existing class
+            ClassEntity updatedClass = classRepository.findActiveById(id)
+                    .orElseThrow(() -> new NotFoundException("Lớp học không tồn tại hoặc đã bị xóa, class id: " + id));
+
             CopyUtil.copyPropertiesIgnoreNull(classRequest, updatedClass);
-            try{
-                classRepository.save(updatedClass);
+
+            // Update course nếu có
+            if (classRequest.getCourseId() != null) {
+                CourseEntity courseEntity = courseRepository.findActiveById(classRequest.getCourseId())
+                        .orElseThrow(() -> new NotFoundException("Khoá học không tồn tại hoặc đã bị xóa, courseId: " + classRequest.getCourseId()));
+                updatedClass.setCourseEntity(courseEntity);
             }
-            catch (Exception e){
-                return new ApiResponse<>(500, e.getMessage(), id);
-            }
+
+            // Save updated class
+            ClassEntity savedClass = classRepository.save(updatedClass);
+
+            return new ApiResponse<>(200, "Update class successfully", savedClass.getId());
+
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (ValidationException e) {
+            return new ApiResponse<>(400, "Validation error: " + e.getMessage(), null);
+        } catch (Exception e) {
+            log.error("Error updating class with id: " + id, e);
+            return new ApiResponse<>(500, "Internal server error: " + e.getMessage(), null);
         }
-        else{
-            throw new NotFoundException("Class doesn't exist" + ", class id: " + id);
-        }
-        return new ApiResponse<>(200, "update class successfully", id);
     }
 
     @Override
@@ -161,83 +262,4 @@ public class ClassService implements IClassService {
 
         return new ApiResponse<>(200, "Get active classes by IDs successfully", resultMap);
     }
-
-
-
-//    @Transactional
-//    public ApiResponse<List<EnrollmentDto>> addStudentsToClass(Long classId, List<Long> studentIds) {
-//        Class classroom = classRepository.findById(classId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
-//
-//        List<EnrollmentDto> createdEnrollments = new java.util.ArrayList<>();
-//        List<Long> failedStudentIds = new java.util.ArrayList<>();
-//
-//        for (Long studentId : studentIds) {
-//            boolean alreadyEnrolled = enrollmentRepository.findByClassroomIdAndStudentId(classroom.getId(), studentId).isPresent();
-//            if (alreadyEnrolled) {
-//                log.warn("Student ID {} is already enrolled in class {}. Skipping enrollment.", studentId, classId);
-//                failedStudentIds.add(studentId);
-//                continue;
-//            }
-//
-//            ClassEnrollment enrollment = new ClassEnrollment();
-//            enrollment.setClassroom(classroom);
-//            enrollment.setStudentId(studentId);
-//            enrollment.setStatus("ACTIVE");
-//
-//            try {
-//                ClassEnrollment savedEnrollment = enrollmentRepository.save(enrollment);
-//                createdEnrollments.add(classMapper.toEnrollmentDto(savedEnrollment));
-//            } catch (DataIntegrityViolationException e) {
-//                log.error("Failed to enroll student {} in class {} due to DB constraint: {}", studentId, classId, e.getMessage());
-//                failedStudentIds.add(studentId);
-//            } catch (Exception e) {
-//                log.error("An unexpected error occurred while enrolling student {} in class {}: {}", studentId, classId, e.getMessage(), e);
-//                failedStudentIds.add(studentId);
-//            }
-//        }
-//
-//        String message = "Students enrolled successfully.";
-//        if (!failedStudentIds.isEmpty()) {
-//            message += " Some students could not be enrolled: " + failedStudentIds;
-//            return ApiResponse.error(message, "PARTIAL_ENROLLMENT_ERROR");
-//        }
-//        return ApiResponse.success(createdEnrollments, message);
-//    }
-//
-//    @Override
-//    public EnrollmentDto enrollStudentInClass(String inviteCode, Long studentId) {
-//        throw new UnsupportedOperationException("This method is deprecated for current business logic. Use addStudentsToClass instead.");
-//    }
-//
-//    @Override
-//    public List<EnrollmentDto> getStudentsInClass(Long classId) {
-//        classRepository.findById(classId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
-//
-//        List<ClassEnrollment> enrollments = enrollmentRepository.findByClassroomId(classId);
-//        return enrollments.stream()
-//                .map(classMapper::toEnrollmentDto)
-//                .collect(Collectors.toList());
-//    }
-//
-//    @Override
-//    public List<ClassResponse> getClassesByStudentId(Long studentId) {
-//        List<ClassEnrollment> enrollments = enrollmentRepository.findByStudentId(studentId);
-//        List<Class> classes = enrollments.stream()
-//                .map(ClassEnrollment::getClassroom)
-//                .collect(Collectors.toList());
-//        return classes.stream()
-//                .map(classMapper::toClassResponse)
-//                .collect(Collectors.toList());
-//    }
-//
-//    @Override
-//    @Transactional
-//    public void leaveClass(Long classId, Long studentId) {
-//        ClassEnrollment enrollment = enrollmentRepository.findByClassroomIdAndStudentId(classId, studentId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found for student " + studentId + " in class " + classId));
-//        enrollmentRepository.delete(enrollment);
-//    }
-
 }

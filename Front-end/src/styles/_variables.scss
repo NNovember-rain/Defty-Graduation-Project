@@ -1,0 +1,398 @@
+// _variables.scss - CHAM TOEIC Design System Variables
+
+// ===== COLORS =====
+
+// Primary Colors
+$primary-50: #fef2f2;
+$primary-100: #fee2e2;
+$primary-200: #fecaca;
+$primary-300: #fca5a5;
+$primary-400: #f87171;
+$primary-500: #ef4444;
+$primary-600: #dc2626; // Light Red
+$primary-700: #b91c1c; // Brand Red
+$primary-800: #991b1b; // Deep Red
+$primary-900: #7f1d1d; // Dark Red
+
+// Secondary Colors
+$secondary-orange: #ea580c; // Pre-TOEIC
+$secondary-blue: #2563eb;   // Level 1
+$secondary-green: #059669;  // Success
+$secondary-yellow: #d97706; // Level 2, Warning
+
+// Admin Panel Colors
+$admin-primary: #374151;
+$admin-secondary: #6b7280;
+$admin-success: #10b981;
+$admin-warning: #f59e0b;
+$admin-danger: #ef4444;
+$admin-info: #3b82f6;
+
+// Neutral Colors
+$gray-50: #f9fafb;
+$gray-100: #f3f4f6;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+
+// Base Colors
+$white: #ffffff;
+$black: #000000;
+
+// State Colors
+$success: #10b981;
+$warning: #f59e0b;
+$error: #ef4444;
+$info: #3b82f6;
+
+// ===== TYPOGRAPHY =====
+
+// Font Families
+$font-inter: 'Inter', sans-serif;
+$font-roboto: 'Roboto', sans-serif;
+
+// Font Sizes
+$font-size-h1: 48px;
+$font-size-h2: 36px;
+$font-size-h3: 24px;
+$font-size-h4: 20px;
+$font-size-body-large: 18px;
+$font-size-body-regular: 16px;
+$font-size-body-small: 14px;
+$font-size-caption: 12px;
+
+// Line Heights
+$line-height-h1: 56px;
+$line-height-h2: 44px;
+$line-height-h3: 32px;
+$line-height-h4: 28px;
+$line-height-body-large: 28px;
+$line-height-body-regular: 24px;
+$line-height-body-small: 20px;
+$line-height-caption: 16px;
+
+// Vietnamese Line Heights (+4px)
+$line-height-vietnamese-h1: 60px;
+$line-height-vietnamese-h2: 48px;
+$line-height-vietnamese-h3: 36px;
+$line-height-vietnamese-h4: 32px;
+$line-height-vietnamese-body-large: 32px;
+$line-height-vietnamese-body-regular: 28px;
+$line-height-vietnamese-body-small: 24px;
+$line-height-vietnamese-caption: 20px;
+
+// Font Weights
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Letter Spacing
+$letter-spacing-tight: -0.01em;
+
+// ===== SPACING =====
+
+// 8-Point Grid System
+$spacing-xs: 4px;   // 0.25rem
+$spacing-sm: 8px;   // 0.5rem
+$spacing-md: 16px;  // 1rem
+$spacing-lg: 24px;  // 1.5rem
+$spacing-xl: 32px;  // 2rem
+$spacing-2xl: 48px; // 3rem
+$spacing-3xl: 64px; // 4rem
+$spacing-4xl: 96px; // 6rem
+
+// Component Spacing
+$button-padding-y: 6px;
+$button-padding-x: 12px;
+$button-icon-spacing: 8px;
+$card-padding: 24px;
+$form-field-margin: 16px;
+$section-margin: 48px;
+
+// ===== BREAKPOINTS =====
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// ===== SHADOWS =====
+$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+$shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+$shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+$shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+// ===== BORDER RADIUS =====
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-full: 9999px;
+
+// ===== ANIMATION =====
+$animation-duration-fast: 150ms;
+$animation-duration-normal: 300ms;
+$animation-duration-slow: 500ms;
+
+$animation-easing-ease: ease;
+$animation-easing-ease-in: ease-in;
+$animation-easing-ease-out: ease-out;
+$animation-easing-ease-in-out: ease-in-out;
+
+// ===== MIXINS =====
+
+// Typography Mixins
+@mixin heading-1 {
+  font-family: $font-inter;
+  font-size: $font-size-h1;
+  line-height: $line-height-h1;
+  font-weight: $font-weight-bold;
+  letter-spacing: $letter-spacing-tight;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-h1;
+  }
+}
+
+@mixin heading-2 {
+  font-family: $font-inter;
+  font-size: $font-size-h2;
+  line-height: $line-height-h2;
+  font-weight: $font-weight-semibold;
+  letter-spacing: $letter-spacing-tight;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-h2;
+  }
+}
+
+@mixin heading-3 {
+  font-family: $font-inter;
+  font-size: $font-size-h3;
+  line-height: $line-height-h3;
+  font-weight: $font-weight-semibold;
+  letter-spacing: $letter-spacing-tight;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-h3;
+  }
+}
+
+@mixin heading-4 {
+  font-family: $font-inter;
+  font-size: $font-size-h4;
+  line-height: $line-height-h4;
+  font-weight: $font-weight-medium;
+  letter-spacing: $letter-spacing-tight;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-h4;
+  }
+}
+
+@mixin body-large {
+  font-family: $font-inter;
+  font-size: $font-size-body-large;
+  line-height: $line-height-body-large;
+  font-weight: $font-weight-regular;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-body-large;
+  }
+}
+
+@mixin body-regular {
+  font-family: $font-inter;
+  font-size: $font-size-body-regular;
+  line-height: $line-height-body-regular;
+  font-weight: $font-weight-regular;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-body-regular;
+  }
+}
+
+@mixin body-small {
+  font-family: $font-inter;
+  font-size: $font-size-body-small;
+  line-height: $line-height-body-small;
+  font-weight: $font-weight-regular;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-body-small;
+  }
+}
+
+@mixin caption {
+  font-family: $font-roboto;
+  font-size: $font-size-caption;
+  line-height: $line-height-caption;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+
+  &.vietnamese {
+    line-height: $line-height-vietnamese-caption;
+  }
+}
+
+// Button Mixins
+@mixin button-base {
+  padding: $button-padding-y $button-padding-x;
+  border-radius: $border-radius-lg;
+  font-family: $font-roboto;
+  font-weight: $font-weight-medium;
+  font-size: $font-size-body-regular;
+  line-height: $line-height-body-regular;
+  transition: all $animation-duration-normal $animation-easing-ease;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .icon {
+    margin-right: $button-icon-spacing;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background-color: $primary-700;
+  color: $white;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-800;
+  }
+
+  &:active {
+    background-color: $primary-900;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background-color: $primary-600;
+  color: $white;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-700;
+  }
+}
+
+@mixin button-outline {
+  @include button-base;
+  background-color: transparent;
+  color: $primary-700;
+  border: 2px solid $primary-700;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-700;
+    color: $white;
+  }
+}
+
+@mixin button-success {
+  @include button-base;
+  background-color: $success;
+  color: $white;
+
+  &:hover:not(:disabled) {
+    background-color: darken($success, 10%);
+  }
+}
+
+// Card Mixin
+@mixin card {
+  background-color: $white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+  padding: $card-padding;
+  border: 1px solid $gray-200;
+  transition: all $animation-duration-normal $animation-easing-ease;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+    transform: translateY(-2px);
+  }
+}
+
+// Form Field Mixin
+@mixin form-field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-family: $font-inter;
+  font-size: $font-size-body-regular;
+  line-height: $line-height-body-regular;
+  transition: border-color $animation-duration-fast $animation-easing-ease;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-700;
+    box-shadow: 0 0 0 2px rgba($primary-700, 0.2);
+  }
+
+  &.error {
+    border-color: $error;
+  }
+
+  &.success {
+    border-color: $success;
+  }
+}
+
+// Alert Mixins
+@mixin alert-base {
+  padding: 16px;
+  border-radius: $border-radius-lg;
+  font-family: $font-inter;
+  font-size: $font-size-body-regular;
+  font-weight: $font-weight-medium;
+  display: flex;
+  align-items: center;
+
+  .icon {
+    margin-right: $spacing-sm;
+  }
+}
+
+@mixin alert-success {
+  @include alert-base;
+  background-color: lighten($success, 45%);
+  color: darken($success, 10%);
+  border: 1px solid $success;
+}
+
+@mixin alert-warning {
+  @include alert-base;
+  background-color: lighten($warning, 35%);
+  color: darken($warning, 10%);
+  border: 1px solid $warning;
+}
+
+@mixin alert-error {
+  @include alert-base;
+  background-color: lighten($error, 35%);
+  color: darken($error, 10%);
+  border: 1px solid $error;
+}
+
+@mixin alert-info {
+  @include alert-base;
+  background-color: lighten($info, 35%);
+  color: darken($info, 10%);
+  border: 1px solid $info;
+}

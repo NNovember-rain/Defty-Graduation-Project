@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {useParams, useNavigate, useSearchParams} from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import Split from "react-split";
 import Description from "./Description";
 import CodeEditor from "./CodeEditor.tsx";
@@ -10,19 +10,10 @@ import "./ProblemDetail.scss";
 import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
-import { getAssignmentById, type IAssignment } from "../../../shared/services/assignmentService";
+import { getAssignmentDetail, type IAssignment } from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
 import { createSubmission, type SubmissionRequest, getLastSubmissionExamMode, type LastSubmissionResponse } from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
-
-// KHAI BÁO INTERFACE ĐỂ DÙNG TRONG STATE VÀ LOGIC
-interface IAssignmentClass {
-    classId: number;
-    moduleName: string;
-    moduleDescription: string;
-}
-type IAssignmentWithClasses = IAssignment & { assignmentClasses?: IAssignmentClass[] };
-// END KHAI BÁO
 
 /** ========= PlantUML helpers (Giữ nguyên) ========= */
 const plantUmlEncTable = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
@@ -62,18 +53,25 @@ Alice -> Bob : Hi
 
 const ProblemDetail: React.FC = () => {
     const { message, notification } = useNotification();
+
+    // Lấy classId và assignmentClassDetailId (từ problemId trong URL)
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
-    const currentClassId = Number(classId); // Lấy classId dưới dạng số
+    const currentClassId = Number(classId);
+    const assignmentClassDetailId = Number(problemId); // ID chi tiết lớp/gán bài tập
+
     const navigate = useNavigate();
     const { t } = useTranslation();
 
     const [searchParams] = useSearchParams();
     const isTestMode = searchParams.get("mode") === "test";
+    const assignmentClassId = searchParams.get("problemId");
     const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
 
-    // state - KHÔNG khởi tạo code mặc định nếu là Test Mode
     const [code, setCode] = useState<string>("");
     const [imageUrl, setImageUrl] = useState<string | null>(null);
+    // Assignment gốc (chứa commonDescription, title)
+    const problemIdNumber = Number(problemId);
+    const assignmentClassIdForPractice = !isTestMode ? problemIdNumber : 0;
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
@@ -84,57 +82,34 @@ const ProblemDetail: React.FC = () => {
     const [isRendering, setIsRendering] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // THÊM STATE ĐỂ LƯU THÔNG TIN MODULE CỦA CLASS
-    const [assignmentClassModule, setAssignmentClassModule] = useState<IAssignmentClass | null>(null);
-
-    // NEW STATES cho Type UML và Module
+    // State cho Module/UML Type (giữ nguyên để kiểm soát Select/CodeEditor)
     const [umlType, setUmlType] = useState<string>("");
-    const [module, setModule] = useState<string>(""); // Module được chọn
+    const [module, setModule] = useState<string>("");
     const [typeUmlName, setTypeUmlName] = useState<string>("");
-    
-    // STATE để kiểm tra xem bài đã được chấm điểm chưa (trong test mode)
+
     const [isGraded, setIsGraded] = useState<boolean>(false);
-    
-    // STATE để lưu submission data cho FeedbackPanel
     const [lastSubmission, setLastSubmission] = useState<LastSubmissionResponse | null>(null);
-    
-    // STATE để track việc đã load initial data cho Test Mode chưa
     const [isInitialDataLoaded, setIsInitialDataLoaded] = useState<boolean>(false);
 
-    // === BƯỚC SỬA CHỮA LỖI VÒNG LẶP: DÙNG useCallback ĐỂ ỔN ĐỊNH CÁC HÀM SETTER ===
-
-    // 1. Ổn định hàm setModule (prop onModuleChange)
     const handleModuleChange = useCallback((value: string) => {
         setModule(value);
     }, []);
 
-    // 2. Ổn định hàm setUmlType (prop onUmlTypeChange)
     const handleUmlTypeChange = useCallback((value: string) => {
         setUmlType(value);
     }, []);
 
-    // 3. Callback cho typeUmlName
     const handleTypeUmlNameChange = useCallback((name: string) => {
         setTypeUmlName(name);
     }, []);
 
-    // 4. Callback cho moduleName
     const handleModuleNameChange = useCallback((name: string) => {
-        console.log('Module name changed:', name);
     }, []);
 
-    // =========================================================================
-
-    // responsive orientation
     const [isNarrow, setIsNarrow] = useState<boolean>(() => window.innerWidth < 1024);
-
-    // submission history modal state
     const [showHistoryModal, setShowHistoryModal] = useState(false);
-
-    // Get current user info
     const { user } = useUserStore();
 
-    // Trigger để refresh FeedbackPanel sau khi submit
     const [feedbackRefreshTrigger, setFeedbackRefreshTrigger] = useState(0);
 
     useEffect(() => {
@@ -143,7 +118,6 @@ const ProblemDetail: React.FC = () => {
         return () => window.removeEventListener("resize", onResize);
     }, []);
 
-    // split sizes (persist)
     const [sizesOuter, setSizesOuter] = useState<number[]>(
         () => JSON.parse(localStorage.getItem(isNarrow ? "pd-sizes-outer-v" : "pd-sizes-outer-h") || "[35,65]")
     );
@@ -151,14 +125,11 @@ const ProblemDetail: React.FC = () => {
         () => JSON.parse(localStorage.getItem("pd-sizes-inner-v") || "[55,45]")
     );
 
-    // Tỉ lệ riêng cho Test Mode
     const effectiveSizesInner = isTestMode ? [65, 35] : sizesInner;
 
-    // helpers
     const getHttpStatus = (e: any): number | undefined =>
         e?.response?.status ?? e?.status ?? e?.data?.status ?? e?.code;
 
-    // Cập nhật hàm renderWithKroki để sử dụng umlType
     const renderWithKroki = async (uml: string, type: string) => {
         setIsRendering(true);
         setRenderErr(null);
@@ -174,11 +145,9 @@ const ProblemDetail: React.FC = () => {
 
             if (!res.ok) {
                 setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }));
-                // Fallback chỉ dùng được cho PlantUML, các loại khác sẽ hiện PlantUML lỗi.
                 if (type === 'plantuml') {
                     setImageUrl(plantUmlSvgUrl(uml));
                 } else {
-                    // Đối với các loại khác, hiển thị lỗi API text
                     const errorText = await res.text();
                     setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }) + `: ${errorText.substring(0, 100)}`);
                 }
@@ -191,7 +160,6 @@ const ProblemDetail: React.FC = () => {
         } catch (e: any) {
             setRenderErr(t("problemDetail.result.renderFailed"));
             setSvgMarkup(null);
-            // Fallback chỉ dùng được cho PlantUML
             if (type === 'plantuml') {
                 setImageUrl(plantUmlSvgUrl(uml));
             }
@@ -200,17 +168,9 @@ const ProblemDetail: React.FC = () => {
         }
     };
 
-    // Truyền umlType vào hàm run
     const handleRunCode = () => renderWithKroki(code, umlType);
 
-    // Handle view submission history (giữ nguyên)
     const handleViewHistory = () => {
-        console.log('📖 handleViewHistory clicked');
-        console.log('Props that will be passed:', {
-            classId: currentClassId,
-            problemId: Number(problemId),
-            studentId: Number(user?.id) || 1
-        });
         setShowHistoryModal(true);
     };
 
@@ -218,27 +178,25 @@ const ProblemDetail: React.FC = () => {
         setShowHistoryModal(false);
     };
 
-    // Handle submit code (giữ nguyên)
     const handleSubmitCode = async () => {
-        // Kiểm tra nếu đã được chấm điểm thì không cho nộp
         if (isTestMode && isGraded) {
             message.warning("Bài tập đã được chấm điểm, không thể nộp lại!");
             return;
         }
-        
+
         setIsSubmitting(true);
         try {
             const submissionData: SubmissionRequest = {
-                classId: currentClassId, // Chuyển đổi URL param sang số
-                assignmentId: Number(problemId), // Chuyển đổi URL param sang số
-                studentPlantUmlCode: code, // Code PlantUML từ editor
-                examMode: isTestMode, // Dùng isTestMode cho examMode
+                classId: currentClassId,
+                // Dùng assignmentClassDetailId làm ID bài tập nộp
+                assignmentId: assignmentClassDetailId,
+                studentPlantUmlCode: code,
+                examMode: isTestMode,
                 moduleId: Number(module),
                 typeUmlId: Number(umlType),
                 typeUmlName: typeUmlName
             };
 
-            // Bước 1: Validate dữ liệu trước khi gửi đi
             if (!submissionData.studentPlantUmlCode) {
                 message.error("Mã PlantUML không được để trống!");
                 return;
@@ -249,31 +207,29 @@ const ProblemDetail: React.FC = () => {
                 return;
             }
 
+            // Kiểm tra Module và UML Type đã chọn chưa
             if (!module || !umlType) {
                 message.error("Vui lòng chọn Module và UML Type trước khi nộp bài!");
                 return;
             }
 
-            // Bước 2: Gọi API nếu dữ liệu hợp lệ
             await createSubmission(submissionData);
 
-            // Bước 3: Thông báo thành công nếu API trả về OK
             notification.success(
                 "Nộp bài thành công",
                 `Hệ thống sẽ xử lý và thông báo kết quả cho bạn sớm!`,
                 { duration: 5, placement: 'topRight' }
             );
 
-            // Bước 4: Reload submission data và trigger refresh FeedbackPanel nếu đang ở Test Mode
             if (isTestMode) {
-                // Reload submission data sau khi submit
                 try {
-                    const newSubmission = await getLastSubmissionExamMode(currentClassId, Number(problemId));
+                    // Dùng assignmentClassDetailId khi reload submission
+                    const newSubmission = await getLastSubmissionExamMode(currentClassId, assignmentClassDetailId);
                     setLastSubmission(newSubmission);
                 } catch (err) {
                     console.error('Error reloading submission after submit:', err);
                 }
-                
+
                 setFeedbackRefreshTrigger(prev => prev + 1);
             }
 
@@ -284,7 +240,6 @@ const ProblemDetail: React.FC = () => {
         }
     };
 
-    // Tách function fetch (giữ nguyên)
     const fetchClassInfo = async (cid: number) => {
         try {
             const cls = await getClassById(cid);
@@ -300,22 +255,10 @@ const ProblemDetail: React.FC = () => {
         }
     };
 
-    // SỬA HÀM fetchAssignmentInfo để lấy thông tin module của class
-    const fetchAssignmentInfo = async (pid: number) => {
+    // Gọi API chỉ bằng ID chi tiết
+    const fetchAssignmentInfo = async (detailId: number) => {
         try {
-            // Ép kiểu để có assignmentClasses
-            const asg = (await getAssignmentById(pid)) as IAssignmentWithClasses;
-
-            // LOGIC MỚI: TÌM THÔNG TIN MODULE DỰA TRÊN classId
-            const classModuleInfo = asg.assignmentClasses?.find((ac: IAssignmentClass) => ac.classId === currentClassId);
-
-            // LƯU Ý: setAssignmentClassModule nhận IAssignmentClass, không cần bọc trong object mới
-            if (classModuleInfo) {
-                setAssignmentClassModule(classModuleInfo);
-            } else {
-                setAssignmentClassModule(null);
-            }
-
+            const asg = (await getAssignmentDetail(detailId));
             setAssignment(asg);
             return true;
         } catch (e: any) {
@@ -327,16 +270,16 @@ const ProblemDetail: React.FC = () => {
             throw e;
         }
     };
-    // END SỬA HÀM fetchAssignmentInfo
 
     const fetchAll = useCallback(
-        async (cid: number, pid: number) => {
+        async (cid: number, detailId: number) => {
             setLoading(true);
             setErr(null);
             try {
                 const okClass = await fetchClassInfo(cid);
                 if (!okClass) return;
-                const okAsg = await fetchAssignmentInfo(pid);
+                // Truyền ID chi tiết vào fetchAssignmentInfo
+                const okAsg = await fetchAssignmentInfo(detailId);
                 if (!okAsg) return;
             } catch (e: any) {
                 setErr(e?.message ?? "Failed to load data");
@@ -344,69 +287,61 @@ const ProblemDetail: React.FC = () => {
                 setLoading(false);
             }
         },
-        [navigate, currentClassId] // THÊM currentClassId vào dependencies
+        [navigate]
     );
 
     useEffect(() => {
         const cid = Number(classId);
-        const pid = Number(problemId);
-        if (!Number.isFinite(cid) || !Number.isFinite(pid)) {
+        const detailId = Number(problemId);
+        if (!Number.isFinite(cid) || !Number.isFinite(detailId)) {
             navigate("/not-found");
             return;
         }
-        fetchAll(cid, pid);
+        // Truyền ID chi tiết vào fetchAll
+        fetchAll(cid, detailId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [classId, problemId, fetchAll]); // Đảm bảo fetchAll là dependency
+    }, [classId, problemId, fetchAll]);
 
-    // Load submitted code in Test Mode - CHẠY SỚM HƠN VÀ SET CODE MẶC ĐỊNH
+    // Load submitted code in Test Mode
     useEffect(() => {
         const loadSubmittedCode = async () => {
-            if (!assignment?.id) return;
-            
+            if (isNaN(assignmentClassDetailId)) return;
+
             if (isTestMode) {
-                // Test Mode: Load code đã nộp
                 try {
-                    const submission: LastSubmissionResponse | null = await getLastSubmissionExamMode(currentClassId, assignment.id);
-                    
-                    // Lưu submission vào state để truyền cho FeedbackPanel
+                    // Dùng assignmentClassDetailId khi lấy submission
+                    const submission: LastSubmissionResponse | null = await getLastSubmissionExamMode(currentClassId, assignmentClassDetailId);
+
                     setLastSubmission(submission);
-                    
+
                     if (submission?.studentPlantUMLCode) {
                         setCode(submission.studentPlantUMLCode);
-                        console.log('✅ Loaded submitted code in Test Mode');
-                        
-                        // THÊM: Load module và umlType từ submission nếu có
+
                         if (submission.moduleId) {
                             setModule(String(submission.moduleId));
-                            console.log('✅ Loaded module from submission:', submission.moduleId);
                         }
                         if (submission.typeUmlId) {
                             setUmlType(String(submission.typeUmlId));
-                            console.log('✅ Loaded umlType from submission:', submission.typeUmlId);
                         }
                     } else {
-                        // Nếu chưa có submission, set code mặc định
                         setCode(initialPlantUml);
-                        console.log('⚠️ No submission found, using default code');
                     }
-                    
-                    // Kiểm tra xem bài đã được chấm điểm chưa
+
                     if (submission?.score !== undefined && submission?.score !== null) {
                         setIsGraded(true);
                     } else {
                         setIsGraded(false);
                     }
-                    
+
                     setIsInitialDataLoaded(true);
                 } catch (error) {
-                    console.log('No previous submission found in test mode');
+                    console.log('No previous submission found in test mode, using default code', error);
                     setCode(initialPlantUml);
                     setIsGraded(false);
                     setLastSubmission(null);
                     setIsInitialDataLoaded(true);
                 }
             } else {
-                // Practice Mode: Dùng code mặc định
                 if (!code) {
                     setCode(initialPlantUml);
                 }
@@ -415,7 +350,7 @@ const ProblemDetail: React.FC = () => {
         };
 
         loadSubmittedCode();
-    }, [isTestMode, assignment?.id, currentClassId]);
+    }, [isTestMode, assignmentClassDetailId, currentClassId]);
 
     if (loading || !isInitialDataLoaded) return <div className="problem-detail__loading">Loading…</div>;
     if (err) return <div className="problem-detail__error">Error: {err}</div>;
@@ -436,16 +371,16 @@ const ProblemDetail: React.FC = () => {
                     }
                 }}
             >
-                {/* LEFT - Description */}
                 <div className="panel panel--left scrollable">
                     <Description assignment={assignment} isLoading={loading} error={err}
                                  mode={currentMode}
-                                 assignmentClassModule={assignmentClassModule}
-                                 umlType={umlType}
+                                 umlTypes={assignment?.modules.find(m => String(m.id) === module)?.typeUmls || []}
+                                 assignmentClassId={assignmentClassIdForPractice}
                                  onUmlTypeChange={handleUmlTypeChange}
                                  module={module}
                                  onModuleChange={handleModuleChange}
                                  classId={currentClassId}
+                                 assignmentClassDetailId={assignmentClassDetailId}
                                  isRenderingOrSubmitting={isRendering || isSubmitting}
                                  onTypeUmlNameChange={handleTypeUmlNameChange}
                                  onModuleNameChange={handleModuleNameChange}
@@ -478,6 +413,7 @@ const ProblemDetail: React.FC = () => {
                             isSubmitting={isSubmitting}
                             isTestMode={isTestMode}
                             isGraded={isGraded}
+                            // Chỉ cho ReadOnly khi ở Test Mode VÀ đã được chấm điểm
                             readOnly={isTestMode && isGraded}
                         />
                     </div>
@@ -493,7 +429,7 @@ const ProblemDetail: React.FC = () => {
                     <div className="panel panel--feedback scrollable">
                         <FeedbackPanel
                             classId={currentClassId}
-                            assignmentId={Number(problemId)}
+                            assignmentId={assignmentClassDetailId} // Dùng ID chi tiết
                             refreshTrigger={feedbackRefreshTrigger}
                             submissionData={lastSubmission}
                         />
@@ -505,10 +441,10 @@ const ProblemDetail: React.FC = () => {
             <SubmissionHistory
                 visible={showHistoryModal}
                 onClose={handleCloseHistoryModal}
-                assignmentId={Number(problemId)}
+                assignmentId={assignmentClassDetailId} // Dùng ID chi tiết
                 classId={currentClassId}
-                studentId={Number(user?.id) || 1} // Use actual student ID from auth context
-                examMode={false}
+                studentId={Number(user?.id) || 1}
+                examMode={isTestMode} // Chỉ xem lịch sử ở mode hiện tại
             />
         </div>
     );

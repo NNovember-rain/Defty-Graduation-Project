@@ -18,7 +18,7 @@ public class AssignmentClassResponse {
     Long assignmentId;
     Date startDate;
     Date endDate;
+    Long assignmentClassId;
     List<ModuleResponse> moduleResponses;
-    boolean checkedTest;
     TypeUMLResponse typeUmlResponse;
 }

@@ -1,76 +1,51 @@
 package com.defty.content_service.controller;
 
-import com.defty.content_service.dto.request.TypeUMLRequest;
+import com.defty.content_service.enums.TypeUml;
 import com.defty.content_service.dto.response.ApiResponse;
-import com.defty.content_service.dto.response.AssignmentResponse;
 import com.defty.content_service.dto.response.TypeUMLResponse;
-import com.defty.content_service.service.TypeUMLService;
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/type-uml")
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class TypeUMLController {
-    TypeUMLService typeUMLService;
-
-    @PostMapping
-    ApiResponse<TypeUMLResponse> create(@RequestBody TypeUMLRequest request) {
-        return ApiResponse.<TypeUMLResponse>builder()
-                .result(typeUMLService.create(request))
-                .build();
-    }
-
-    @PatchMapping("/{id}")
-    ApiResponse<TypeUMLResponse> update(@PathVariable Long id, @RequestBody TypeUMLRequest request) {
-        return ApiResponse.<TypeUMLResponse>builder()
-                .result(typeUMLService.update(id, request))
-                .build();
-    }
-
-    @DeleteMapping("/{id}")
-    ApiResponse<String> delete(@PathVariable Long id) {
-        typeUMLService.delete(id);
-        return ApiResponse.<String>builder()
-                .result("Deleted successfully")
-                .build();
-    }
-
-    @PatchMapping("/{id}/toggle-active")
-    public ApiResponse<TypeUMLResponse> toggleActiveStatus(@PathVariable Long id) {
-        TypeUMLResponse updateTypeUml = typeUMLService.toggleActive(id);
-        return ApiResponse.<TypeUMLResponse>builder()
-                .result(updateTypeUml)
-                .message("Type Uml status updated successfully")
-                .build();
-    }
-
-    @GetMapping("/{id}")
-    ApiResponse<TypeUMLResponse> getById(@PathVariable Long id) {
-        return ApiResponse.<TypeUMLResponse>builder()
-                .result(typeUMLService.getById(id))
-                .build();
-    }
 
     @GetMapping
-    ApiResponse<Page<TypeUMLResponse>> getAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(value = "name", required = false) String name
-    ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-        Page<TypeUMLResponse> result = typeUMLService.getAll(name, pageable);
-        return ApiResponse.<Page<TypeUMLResponse>>builder()
+    public ApiResponse<List<TypeUMLResponse>> getAll() {
+        List<TypeUMLResponse> result = Arrays.stream(TypeUml.values())
+                .map(t -> TypeUMLResponse.builder()
+                        .name(t.name())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ApiResponse.<List<TypeUMLResponse>>builder()
                 .result(result)
                 .build();
     }
 
-}
+    @GetMapping("/{name}")
+    public ApiResponse<TypeUMLResponse> getByName(@PathVariable String name) {
+        TypeUml typeUml;
+        try {
+            typeUml = TypeUml.valueOf(name.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.<TypeUMLResponse>builder()
+                    .message("TypeUml not found: " + name)
+                    .build();
+        }
 
+        TypeUMLResponse response = TypeUMLResponse.builder()
+                .name(typeUml.name())
+                .build();
+
+        return ApiResponse.<TypeUMLResponse>builder()
+                .result(response)
+                .build();
+    }
+}

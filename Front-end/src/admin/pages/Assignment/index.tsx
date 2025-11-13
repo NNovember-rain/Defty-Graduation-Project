@@ -124,6 +124,7 @@ const Assignment: React.FC = () => {
                     ? dayjs(assignment.createdDate).format('YYYY-MM-DD HH:mm:ss')
                     : '',
             }));
+            console.log("Fetched assignments:", formattedAssignments);
 
             setAssignments(formattedAssignments);
             setTotalAssignments(response.total || 0);

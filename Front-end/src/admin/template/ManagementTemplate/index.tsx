@@ -66,6 +66,9 @@ interface ManagementTemplateProps {
     // NEW: Add actions prop
     actions?: ActionButton[]; // Optional array of action buttons
     onBulkDelete?: (ids: string[]) => void;
+
+    // NEW: Add customActions prop
+    customActions?: ReactNode; // Optional custom actions to render
 }
 
 const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
@@ -92,6 +95,7 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    onEntriesPerPageChange, // NEW: Destructure prop này
                                                                    actions, // NEW: Destructure actions prop
                                                                    onBulkDelete,
+                                                                   customActions, // NEW: Destructure customActions prop
                                                                }) => {
     const [isFilterVisible, setIsFilterVisible] = useState(true);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -157,6 +161,13 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                     initialSortOrder={initialSortOrder} // NEW: Truyền prop này
                 />
             </div>
+
+            {/* Custom Actions Section - Moved here (after filters, before table) */}
+            {customActions && (
+                <div className="management-template__custom-actions">
+                    {customActions}
+                </div>
+            )}
 
             {/* Data Table Section */}
             <DataTable

@@ -14,6 +14,5 @@ import java.util.List;
 public class ModuleRequest {
     String moduleName;
     String moduleDescription;
-    List<Long> typeUmlIds;
-    String solutionCode;
+    List<SolutionRequest> solutions;
 }

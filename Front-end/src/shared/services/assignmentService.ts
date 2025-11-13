@@ -20,41 +20,11 @@ export interface GetAssignmentsResult {
     limit: number;
 }
 
-export interface ITypeUML {
-    id: number;
-    name: string;
-    description?: string;
-    solutionCode?: string; // nếu mỗi typeUML trong module có solution riêng
-}
-
-export interface IAssignmentClass {
-    id: number;
-    classId: number;
-    assignmentId: number;
-    startDate: string;
-    endDate: string;
-}
-
 export interface IModule {
     id: number;
     moduleName: string;
     moduleDescription: string;
     solutionCode?: string;
-    typeUMLs: ITypeUML[]; // mỗi module có nhiều UML
-}
-
-export interface IModuleRequest {
-    moduleName: string;
-    moduleDescription: string;
-    solutionCode?: string;
-    typeUmlIds: number[]; // mỗi module có nhiều TypeUML
-}
-
-export interface IAssignmentRequest {
-    title: string;
-    description: string;
-    solutionCode?: string;
-    modules: IModuleRequest[];
 }
 
 export interface IAssignment {
@@ -65,12 +35,14 @@ export interface IAssignment {
     typeUmlName: number;
     solutionCode: string;
     assignmentCode: string;
+    assignmentTitle: string;
+    assignmentClassId: number;
+    assignmentClassDetailId: number;
     createdDate: string;
     isActive: number;
     startDate: string | null;
     endDate: string | null;
     modules: IModule[];
-    // assignmentClasses: IAssignmentClass[]
 }
 
 export interface IAssignAssignment {
@@ -80,12 +52,32 @@ export interface IAssignAssignment {
     endDate: string;
 }
 
+export interface ISolutionRequest {
+    typeUml: string;
+    solutionCode: string;
+}
+
+export interface IModuleRequest {
+    moduleName: string;
+    moduleDescription: string;
+    solutionResponses: ISolutionRequest[];
+}
+
+export interface IAssignmentRequest {
+    title: string;
+    description: string;
+    classIds: number[];
+    modules: IModuleRequest[];
+}
+
 export const createAssignment = async (data: IAssignmentRequest): Promise<IAssignment> => {
     const response = await handleRequest(
         postJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}`, data)
     );
-    return await response.json() as IAssignment;
+    const result = await response.json();
+    return result.result as IAssignment;
 };
+
 export const assignAssignment = async (data: Omit<IAssignAssignment, '_id' | 'createdAt' | 'updatedAt'>): Promise<IAssignAssignment> => {
     const response = await handleRequest(postJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/assign`, data));
     return await response.json() as Promise<IAssignAssignment>;
@@ -139,6 +131,18 @@ export const getAssignmentById = async (id: string | number): Promise<IAssignmen
 
 export const getAssignmentByClassId = async (classId: string | number, assignmentId: string | number): Promise<IAssignment> => {
     const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/${classId}/${assignmentId}`));
+    const data = await response.json();
+    return data.result as IAssignment;
+};
+
+export const getAssignmentDetail = async (assignmentClassDetailId: string | number): Promise<IAssignment> => {
+    const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/detail/${assignmentClassDetailId}`));
+    const data = await response.json();
+    return data.result as IAssignment;
+};
+
+export const getAssignmentAllModule = async (assignmentClassId: string | number): Promise<IAssignment> => {
+    const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/detail/all-module/${assignmentClassId}`));
     const data = await response.json();
     return data.result as IAssignment;
 };

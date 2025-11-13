@@ -1,0 +1,1112 @@
+// MyClasses.scss - Dark Mode Optimized
+@import '../../../styles/variables';
+
+.my-classes {
+  background-color: #1a1a1a; // Dark background
+  min-height: 100vh;
+
+  // Header
+  &__header {
+    background-color: #2a2a2a; // Dark card background
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    &-content {
+      //max-width: 1280px;
+      margin: 0 auto;
+      padding: $spacing-sm $spacing-md;
+
+      @media (min-width: $breakpoint-sm) {
+        padding: $spacing-sm $spacing-lg;
+      }
+
+      @media (min-width: $breakpoint-lg) {
+        padding: $spacing-sm $spacing-xl;
+      }
+    }
+
+    &-flex {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-md;
+
+      @media (min-width: $breakpoint-md) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+        gap: $spacing-lg;
+      }
+    }
+  }
+
+  // Search
+  &__search {
+
+    &-row {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+      width: 100%;
+
+      @media (min-width: $breakpoint-md) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start !important;
+        gap: $spacing-lg;
+        width: auto;
+        flex: 1;
+      }
+    }
+
+    &-actions {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+      width: 100%;
+
+      @media (min-width: $breakpoint-md) {
+        flex-direction: row;
+        align-items: center;
+        gap: $spacing-sm;
+        width: auto;
+      }
+    }
+
+    &-container {
+      position: relative;
+      width: 100%;
+
+      @media (min-width: $breakpoint-sm) {
+        width: auto;
+        min-width: 200px;
+      }
+    }
+
+    &-icon {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      color: #9ca3af; // Light gray for dark mode
+      pointer-events: none;
+      font-size: 14px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 16px;
+      }
+    }
+
+    &-input {
+      width: 100%;
+      padding: $spacing-sm $spacing-sm $spacing-sm 36px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: $border-radius-md;
+      background-color: #1a1a1a;
+      color: #ffffff;
+      @include body-regular;
+      font-size: 14px;
+      transition: all $animation-duration-fast $animation-easing-ease;
+
+      @media (min-width: $breakpoint-sm) {
+        width: 256px;
+        padding: $spacing-sm $spacing-md $spacing-sm 40px;
+        font-size: 15px;
+        min-height: 44px;
+      }
+
+      &::placeholder {
+        color: #6b7280;
+        font-size: 14px;
+
+        @media (min-width: $breakpoint-sm) {
+          font-size: 16px;
+        }
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $primary-500;
+        box-shadow: 0 0 0 1px $primary-500;
+        background-color: #2a2a2a;
+      }
+    }
+
+    &-button {
+      @include button-primary;
+      width: 100%;
+      margin-left: 0;
+      margin-top: $spacing-xs;
+      padding: $spacing-sm $spacing-md;
+      font-size: 14px;
+      min-height: 44px;
+
+      @media (min-width: $breakpoint-sm) {
+        width: auto;
+        margin-left: $spacing-xs;
+        margin-top: 0;
+        font-size: 15px;
+        min-height: 44px;
+      }
+
+      .icon {
+        margin-right: $spacing-xs;
+        font-size: 14px;
+
+        @media (min-width: $breakpoint-sm) {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  &__course-filter {
+    padding-left: 5px !important;
+    margin-left: $spacing-md !important;
+    margin-right: $spacing-md !important;
+    min-height: 44px;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    @media (min-width: $breakpoint-md) {
+      width: 200px;
+      font-size: 14px;
+    }
+
+    @media (max-width: $breakpoint-md - 1) {
+      display: none;
+    }
+
+    option {
+      background-color: #2a2a2a;
+      color: #ffffff;
+    }
+  }
+
+  // Join Class Button
+  &__join-button {
+    @include button-success;
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    font-size: 14px;
+    min-height: 44px;
+
+    @media (min-width: $breakpoint-md) {
+      width: auto;
+      font-size: 16px;
+    }
+
+    .icon {
+      margin-right: $spacing-xs;
+      font-size: 14px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 16px;
+      }
+    }
+  }
+
+  // Total Classes Stats (for teachers/admin)
+  .flex.items-center.bg-white {
+    background-color: #2a2a2a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+
+    .text-primary-700 {
+      color: $primary-500 !important;
+    }
+  }
+
+  // Modal
+  &__modal {
+    &-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: $spacing-md;
+
+      @media (max-width: $breakpoint-sm) {
+        padding: $spacing-sm;
+        align-items: flex-end;
+      }
+    }
+
+    &-container {
+      background-color: #2a2a2a;
+      border-radius: $border-radius-xl;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      max-width: 448px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+
+      @media (max-width: $breakpoint-sm) {
+        border-radius: $border-radius-xl $border-radius-xl 0 0;
+        max-height: 85vh;
+      }
+    }
+
+    &-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: $spacing-md;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      @media (min-width: $breakpoint-sm) {
+        padding: $spacing-lg;
+      }
+    }
+
+    &-title {
+      @include heading-4;
+      color: #ffffff;
+      font-size: 18px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 20px;
+      }
+
+      &.vietnamese {
+        font-family: $font-roboto;
+      }
+    }
+
+    &-close {
+      padding: $spacing-sm;
+      border-radius: $border-radius-full;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background-color $animation-duration-normal $animation-easing-ease;
+      min-width: 40px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover:not(:disabled) {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .icon {
+        color: #9ca3af;
+        font-size: 18px;
+
+        @media (min-width: $breakpoint-sm) {
+          font-size: 20px;
+        }
+      }
+    }
+
+    &-content {
+      padding: $spacing-md;
+
+      @media (min-width: $breakpoint-sm) {
+        padding: $spacing-lg;
+      }
+    }
+  }
+
+  // Form
+  &__form {
+    &-group {
+      margin-bottom: $spacing-lg;
+    }
+
+    &-label {
+      display: block;
+      @include body-small;
+      font-weight: $font-weight-medium;
+      color: #e5e7eb;
+      margin-bottom: $spacing-sm;
+      font-size: 14px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 15px;
+      }
+    }
+
+    &-description {
+      @include body-small;
+      color: #9ca3af;
+      margin-bottom: $spacing-md;
+      font-size: 13px;
+      line-height: 1.5;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 14px;
+      }
+    }
+
+    &-input {
+      @include form-field;
+      font-size: 15px;
+      padding: $spacing-sm $spacing-md;
+      min-height: 44px;
+      background-color: #1a1a1a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 16px;
+      }
+
+      &::placeholder {
+        color: #6b7280;
+      }
+
+      &:focus {
+        background-color: #2a2a2a;
+        border-color: $primary-500;
+        box-shadow: 0 0 0 2px rgba($primary-500, 0.2);
+      }
+
+      &--error {
+        border-color: $primary-500;
+
+        &:focus {
+          border-color: $primary-500;
+          box-shadow: 0 0 0 2px rgba($primary-500, 0.2);
+        }
+      }
+
+      &--success {
+        border-color: $secondary-green;
+
+        &:focus {
+          border-color: $secondary-green;
+          box-shadow: 0 0 0 2px rgba($secondary-green, 0.2);
+        }
+      }
+
+      &:disabled {
+        background-color: #1a1a1a;
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+    }
+
+    &-actions {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+
+      @media (min-width: $breakpoint-sm) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        gap: $spacing-md;
+      }
+    }
+  }
+
+  // Alerts
+  &__alert {
+    &--success {
+      @include alert-success;
+      margin-bottom: $spacing-md;
+      padding: $spacing-sm;
+      font-size: 13px;
+      background-color: rgba($secondary-green, 0.15);
+      border: 1px solid rgba($secondary-green, 0.3);
+
+      @media (min-width: $breakpoint-sm) {
+        padding: $spacing-md;
+        font-size: 14px;
+      }
+    }
+
+    &--error {
+      margin-top: $spacing-sm;
+      display: flex;
+      align-items: flex-start;
+
+      .icon {
+        color: #ef4444;
+        margin-right: $spacing-sm;
+        flex-shrink: 0;
+        margin-top: 2px;
+        font-size: 14px;
+      }
+
+      .text {
+        @include body-small;
+        color: #fca5a5;
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.5;
+
+        @media (min-width: $breakpoint-sm) {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  // Buttons
+  &__button {
+    &--primary {
+      @include button-primary;
+      width: 100%;
+      min-height: 44px;
+      font-size: 14px;
+
+      @media (min-width: $breakpoint-sm) {
+        width: auto;
+        font-size: 16px;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &.loading {
+        .spinner {
+          animation: spin 1s linear infinite;
+          margin-right: $spacing-sm;
+        }
+      }
+    }
+
+    &--secondary {
+      @include button-outline;
+      width: 100%;
+      min-height: 44px;
+      font-size: 14px;
+      background-color: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+
+      @media (min-width: $breakpoint-sm) {
+        width: auto;
+        font-size: 16px;
+      }
+
+      &:hover:not(:disabled) {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  // Main Content
+  &__main {
+    //max-width: 1280px;
+    margin: 0 auto;
+    padding: $spacing-md;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: $spacing-lg;
+    }
+
+    @media (min-width: $breakpoint-md) {
+      padding: $spacing-xl $spacing-lg;
+    }
+
+    @media (min-width: $breakpoint-lg) {
+      padding: $spacing-xl $spacing-xl;
+    }
+  }
+
+  // Loading State
+  &__loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: $spacing-3xl 0;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: $spacing-4xl 0;
+    }
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: $spacing-sm;
+
+      @media (min-width: $breakpoint-sm) {
+        flex-direction: row;
+        gap: $spacing-md;
+      }
+    }
+
+    &-text {
+      @include body-regular;
+      color: #9ca3af;
+      font-size: 14px;
+      text-align: center;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 16px;
+      }
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+      color: $primary-500;
+      font-size: 20px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 24px;
+      }
+    }
+  }
+
+  // Error State
+  &__error {
+    text-align: center;
+    padding: $spacing-3xl $spacing-md;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: $spacing-4xl 0;
+    }
+
+    &-content {
+      max-width: 448px;
+      margin: 0 auto;
+    }
+
+    &-icon {
+      width: 64px;
+      height: 64px;
+      background-color: rgba(#ef4444, 0.15);
+      border-radius: $border-radius-full;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto $spacing-md;
+
+      @media (min-width: $breakpoint-sm) {
+        width: 96px;
+        height: 96px;
+        margin-bottom: $spacing-lg;
+      }
+
+      .icon {
+        color: #ef4444;
+        font-size: 24px;
+
+        @media (min-width: $breakpoint-sm) {
+          font-size: 32px;
+        }
+      }
+    }
+
+    &-title {
+      @include heading-4;
+      color: #ffffff;
+      margin-bottom: $spacing-sm;
+      font-size: 18px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 20px;
+      }
+
+      &.vietnamese {
+        font-family: $font-roboto;
+      }
+    }
+
+    &-description {
+      @include body-regular;
+      color: #9ca3af;
+      margin-bottom: $spacing-lg;
+      font-size: 14px;
+      line-height: 1.5;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 16px;
+      }
+    }
+  }
+
+  // Empty State
+  &__empty {
+    text-align: center;
+    padding: $spacing-3xl $spacing-md;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: $spacing-4xl 0;
+    }
+
+    &-content {
+      max-width: 448px;
+      margin: 0 auto;
+    }
+
+    &-icon {
+      width: 64px;
+      height: 64px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: $border-radius-full;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto $spacing-md;
+
+      @media (min-width: $breakpoint-sm) {
+        width: 96px;
+        height: 96px;
+        margin-bottom: $spacing-lg;
+      }
+
+      .icon {
+        color: #6b7280;
+        font-size: 24px;
+
+        @media (min-width: $breakpoint-sm) {
+          font-size: 32px;
+        }
+      }
+    }
+
+    &-title {
+      @include heading-4;
+      color: #ffffff;
+      margin-bottom: $spacing-sm;
+      font-size: 18px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 20px;
+      }
+
+      &.vietnamese {
+        font-family: $font-roboto;
+      }
+    }
+
+    &-description {
+      @include body-regular;
+      color: #9ca3af;
+      margin-bottom: $spacing-lg;
+      font-size: 14px;
+      line-height: 1.5;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 16px;
+      }
+    }
+
+    &-actions {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+
+      @media (min-width: $breakpoint-sm) {
+        flex-direction: row;
+        justify-content: center;
+        gap: $spacing-md;
+      }
+    }
+  }
+
+  // Classes Grid
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: $spacing-md;
+
+    @media (min-width: $breakpoint-sm) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: $spacing-lg;
+    }
+
+    @media (min-width: $breakpoint-md) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: $breakpoint-lg) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (min-width: $breakpoint-xl) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  // Class Card
+  &__card {
+    @include card;
+    padding: 0;
+    overflow: hidden;
+    transition: all $animation-duration-normal $animation-easing-ease;
+    background-color: #2a2a2a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    @media (hover: hover) {
+      &:hover {
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    @media (hover: none) {
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
+    &-header {
+      height: 80px;
+      position: relative;
+      background: linear-gradient(135deg, $secondary-orange, darken($secondary-orange, 15%));
+
+      @media (min-width: $breakpoint-sm) {
+        height: 96px;
+      }
+
+      &--blue {
+        background: linear-gradient(135deg, $secondary-blue, darken($secondary-blue, 15%));
+      }
+
+      &--green {
+        background: linear-gradient(135deg, $secondary-green, darken($secondary-green, 15%));
+      }
+
+      &--red {
+        background: linear-gradient(135deg, $primary-600, $primary-800);
+      }
+    }
+
+    &-level-badge {
+      position: absolute;
+      top: $spacing-sm;
+      left: $spacing-sm;
+      padding: 4px $spacing-sm;
+      border-radius: $border-radius-full;
+      @include caption;
+      font-size: 11px;
+      color: $white;
+      background-color: rgba($black, 0.3);
+
+      @media (min-width: $breakpoint-sm) {
+        top: $spacing-md;
+        left: $spacing-md;
+        padding: $spacing-xs $spacing-sm;
+        font-size: 12px;
+      }
+    }
+
+    &-status-badge {
+      position: absolute;
+      top: $spacing-sm;
+      right: $spacing-sm;
+      padding: 4px $spacing-sm;
+      border-radius: $border-radius-full;
+      @include caption;
+      font-size: 11px;
+      background-color: rgba(255, 255, 255, 0.95);
+
+      @media (min-width: $breakpoint-sm) {
+        top: $spacing-md;
+        right: $spacing-md;
+        padding: $spacing-xs $spacing-sm;
+        font-size: 12px;
+      }
+
+      &--active {
+        color: $secondary-green;
+      }
+
+      &--upcoming {
+        color: $secondary-yellow;
+      }
+
+      &--completed {
+        color: $gray-500;
+      }
+
+      &--inactive {
+        color: $gray-500;
+      }
+    }
+
+    &-avatar {
+      position: absolute;
+      bottom: -20px;
+      left: $spacing-sm;
+      width: 40px;
+      height: 40px;
+      border-radius: $border-radius-full;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $white;
+      font-weight: $font-weight-semibold;
+      @include body-small;
+      font-size: 13px;
+      border: 3px solid #2a2a2a;
+      box-shadow: $shadow-sm;
+      background-color: $secondary-orange;
+
+      @media (min-width: $breakpoint-sm) {
+        bottom: -24px;
+        left: $spacing-md;
+        width: 48px;
+        height: 48px;
+        font-size: 14px;
+        border-width: 4px;
+      }
+
+      &--blue {
+        background-color: $secondary-blue;
+      }
+
+      &--green {
+        background-color: $secondary-green;
+      }
+    }
+
+    &-content {
+      padding: $spacing-lg $spacing-sm $spacing-sm;
+
+      @media (min-width: $breakpoint-sm) {
+        padding: $spacing-xl $spacing-md $spacing-md;
+      }
+    }
+
+    &-title {
+      @include heading-4;
+      color: #ffffff;
+      margin-bottom: $spacing-sm;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      transition: color $animation-duration-normal $animation-easing-ease;
+      font-size: 16px;
+      line-height: 1.4;
+      min-height: 44px;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 18px;
+      }
+
+      &.vietnamese {
+        font-family: $font-inter;
+      }
+    }
+
+    @media (hover: hover) {
+      &:hover &-title {
+        color: $primary-400;
+      }
+    }
+
+    &-stats {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $spacing-md;
+      @include body-small;
+      font-size: 13px;
+      color: #9ca3af;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 14px;
+      }
+
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+
+        svg {
+          font-size: 13px;
+
+          @media (min-width: $breakpoint-sm) {
+            font-size: 14px;
+          }
+        }
+      }
+    }
+
+    &-dates {
+      margin-bottom: $spacing-md;
+
+      .date-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        @include caption;
+        font-size: 12px;
+        color: #9ca3af;
+        margin-bottom: $spacing-xs;
+
+        @media (min-width: $breakpoint-sm) {
+          gap: $spacing-sm;
+          font-size: 13px;
+        }
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        svg {
+          font-size: 12px;
+          flex-shrink: 0;
+
+          @media (min-width: $breakpoint-sm) {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+
+    &-action {
+      width: 100%;
+      @include button-base;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 14px;
+      min-height: 40px;
+      padding: $spacing-sm $spacing-md;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 15px;
+        min-height: 44px;
+      }
+
+      @media (hover: hover) {
+        &:hover:not(:disabled) {
+          background-color: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+      }
+
+      @media (hover: none) {
+        &:active:not(:disabled) {
+          background-color: rgba(255, 255, 255, 0.15);
+        }
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+      100% {
+        background-position: 200% 0;
+      }
+    }
+  }
+
+  &__card-skeleton {
+    @include card;
+    padding: 0;
+    overflow: hidden;
+    background-color: #2a2a2a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    .skeleton-header {
+      height: 80px;
+      background: linear-gradient(90deg, #333333 25%, #3a3a3a 50%, #333333 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+
+      @media (min-width: $breakpoint-sm) {
+        height: 96px;
+      }
+    }
+
+    .skeleton-content {
+      padding: $spacing-lg $spacing-sm $spacing-sm;
+
+      @media (min-width: $breakpoint-sm) {
+        padding: $spacing-xl $spacing-md $spacing-md;
+      }
+    }
+
+    .skeleton-title,
+    .skeleton-stats,
+    .skeleton-dates,
+    .skeleton-button {
+      background: linear-gradient(90deg, #333333 25%, #3a3a3a 50%, #333333 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: $border-radius-sm;
+    }
+
+    .skeleton-title {
+      height: 44px;
+      margin-bottom: $spacing-sm;
+    }
+
+    .skeleton-stats {
+      height: 20px;
+      width: 60%;
+      margin-bottom: $spacing-md;
+    }
+
+    .skeleton-dates {
+      height: 40px;
+      margin-bottom: $spacing-md;
+    }
+
+    .skeleton-button {
+      height: 40px;
+
+      @media (min-width: $breakpoint-sm) {
+        height: 44px;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Utility classes for this component
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+
+  @media (min-width: $breakpoint-md) {
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

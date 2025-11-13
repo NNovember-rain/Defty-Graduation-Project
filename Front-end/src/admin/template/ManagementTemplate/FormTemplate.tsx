@@ -11,6 +11,7 @@ import './FormTemplate.scss';
 import DualListBox from "../../components/DualListBox/DualListBox.tsx";
 import TextEditor from "../../components/TextEditor/TextEditor.tsx";
 import PasswordInput from "../../components/PasswordInput/PasswordInput.tsx";
+import AssignmentModulesEditor from "../../pages/Assignment/AssignmentModulesEditor.tsx";
 
 export interface FormField {
     key: string;
@@ -44,6 +45,8 @@ interface FormTemplateProps<T extends Record<string, any>> {
     serviceUpdate?: (id: string | number, data: Partial<Omit<T, '_id' | 'createdAt' | 'updatedAt'>>) => Promise<T>;
     validationSchema?: ValidationSchema<T>;
     redirectPath: string;
+    initialData?: T | null;
+    customErrorExtractor?: (error: any) => Promise<string> | string;
 }
 
 const FormTemplate = <T extends Record<string, any>>({
@@ -55,6 +58,8 @@ const FormTemplate = <T extends Record<string, any>>({
                                                          serviceUpdate,
                                                          validationSchema,
                                                          redirectPath,
+                                                         initialData,
+                                                         customErrorExtractor
                                                      }: React.PropsWithChildren<FormTemplateProps<T>>) => {
     const { t } = useTranslation();
     const { id } = useParams<{ id?: string }>();
@@ -77,8 +82,9 @@ const FormTemplate = <T extends Record<string, any>>({
     const getInitialFormState = useCallback(() => {
         const initialFormState: Partial<T> = {};
         formFields.forEach(field => {
-            if (field.type === 'select' && field.options && field.options.length > 0) {
-                initialFormState[field.key as keyof T] = field.options[0].value as T[keyof T];
+            if (field.type === 'select') {
+                // Không tự động chọn giá trị đầu tiên, để trống để hiển thị placeholder
+                initialFormState[field.key as keyof T] = '' as T[keyof T];
             } else if (field.type === 'number') {
                 initialFormState[field.key as keyof T] = undefined as T[keyof T];
             } else {
@@ -184,35 +190,59 @@ const FormTemplate = <T extends Record<string, any>>({
     };
 
     // --- Hàm xử lý submit form (Tạo mới hoặc Cập nhật) ---
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        setSaveError(null); // Reset lỗi lưu trước khi submit
+        setSaveError(null);
 
         if (!validateForm()) {
-            return; // Dừng nếu validation thất bại
+            return;
         }
 
         setLoading(true);
         try {
             if (isEditMode && serviceUpdate && id) {
-                await serviceUpdate(id, formData);
+                const response = await serviceUpdate(id, formData);
                 message.success(t('apiMessages.updateSuccess'));
+                let finalRedirectPath = redirectPath;
+                if (response && response.result && redirectPath.includes(':id')) {
+                    finalRedirectPath = redirectPath.replace(':id', response.result.toString());
+                } else if (response && response.result && redirectPath.endsWith('/id')) {
+                    finalRedirectPath = redirectPath.replace('/id', `/${response.result}`);
+                }
+
+                navigate(finalRedirectPath);
             } else if (!isEditMode && serviceCreate) {
-                await serviceCreate(formData as Omit<T, '_id' | 'createdAt' | 'updatedAt'>);
+                const response = await serviceCreate(formData as Omit<T, '_id' | 'createdAt' | 'updatedAt'>);
                 message.success(t('apiMessages.createSuccess'));
-                navigate(redirectPath);
+
+                // Support dynamic redirectPath với placeholder
+                let finalRedirectPath = redirectPath;
+                if (response && response.result && redirectPath.includes(':id')) {
+                    finalRedirectPath = redirectPath.replace(':id', response.result.toString());
+                } else if (response && response.result && redirectPath.endsWith('/id')) {
+                    finalRedirectPath = redirectPath.replace('/id', `/${response.result}`);
+                }
+
+                navigate(finalRedirectPath);
             } else {
                 message.error(t('apiMessages.fail'));
                 throw new Error("Service functions not provided for this operation.");
             }
         } catch (err: any) {
-            const errorMessage = await extractErrorMessage(err);
+            let errorMessage = "";
+
+            if (customErrorExtractor) {
+                errorMessage = await Promise.resolve(customErrorExtractor(err));
+            } else {
+                errorMessage = await extractErrorMessage(err);
+            }
+
             message.error(t('apiMessages.fail'));
             setSaveError(t('formTemplate.saveError', { message: errorMessage }));
         } finally {
             setLoading(false);
         }
-    };
+    }, [validateForm, isEditMode, serviceUpdate, id, formData, serviceCreate, message, t, navigate, redirectPath, extractErrorMessage]);
 
     // --- Hàm xử lý Clear form ---
     const handleClear = useCallback(() => {
@@ -327,20 +357,49 @@ const FormTemplate = <T extends Record<string, any>>({
                                     )}
 
                                     {field.type === 'select' && (
-                                        <select
-                                            id={field.key}
-                                            name={field.key}
-                                            value={formData[field.key as keyof T] || ''}
-                                            onChange={(e) => handleChange(field.key, e.target.value)}
-                                            className="form-template__input form-template__select"
-                                            disabled={loading}
-                                        >
-                                            {field.options?.map((option: any) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {t(option.label)}
+                                        <div className="form-template__select-wrapper">
+                                            {field.loading && (
+                                                <div className="form-template__select-loading">
+                                                    <Spin size="small" />
+                                                </div>
+                                            )}
+                                            <select
+                                                id={field.key}
+                                                name={field.key}
+                                                value={formData[field.key as keyof T]?.toString() ?? ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (value === '') {
+                                                        handleChange(field.key, '');
+                                                        return;
+                                                    }
+
+                                                    const option = field.options?.find(opt => opt.value.toString() === value);
+                                                    if (option) {
+                                                        handleChange(field.key, option.value);
+                                                    } else {
+                                                        handleChange(field.key, value);
+                                                    }
+                                                }}
+                                                className="form-template__input form-template__select"
+                                                disabled={loading || field.disabled || field.loading}
+                                            >
+                                                <option value="">
+                                                    {field.loading
+                                                        ? t('common.loading')
+                                                        : (field.placeholder || (field.placeholderKey ? t(field.placeholderKey) : ''))
+                                                    }
                                                 </option>
-                                            ))}
-                                        </select>
+                                                {field.options?.map(option => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {field.error && (
+                                                <p className="form-template__error-text">{field.error}</p>
+                                            )}
+                                        </div>
                                     )}
 
                                     {field.type === 'datetime' && (
@@ -639,6 +698,14 @@ const FormTemplate = <T extends Record<string, any>>({
                                         />
                                     )}
 
+                                    {field.type === 'assignmentModules' as 'text' && (
+                                        <AssignmentModulesEditor
+                                            value={formData[field.key as keyof T] as any[]}
+                                            onChange={val => handleChange(field.key, val)}
+                                            disabled={loading}
+                                            typeUmlOptions={field.props?.typeUmlOptions || []}
+                                        />
+                                    )}
 
                                     {validationErrors[field.key] && (
                                         <p className="form-template__error-text">{validationErrors[field.key]}</p>
