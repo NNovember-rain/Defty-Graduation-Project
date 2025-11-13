@@ -116,7 +116,6 @@ const CourseLvManagement: React.FC = () => {
             };
 
             const result = await getCourses(options);
-            console.log(result);
 
             if (result && result.content) {
                 setCourses(result.content || []);
@@ -158,33 +157,38 @@ const CourseLvManagement: React.FC = () => {
                 return value.length > 100 ? `${value.substring(0, 100)}...` : value;
             }
         },
-        // {
-        //     key: 'color',
-        //     label: 'Màu sắc',
-        //     sortable: false,
-        //     render: (value: string) => {
-        //         if (!value) return '-';
-        //
-        //         // Validate if it's a valid hex color
-        //         const hexColorRegex = /^#([0-9A-F]{3}|[0-9A-F]{6})$/i;
-        //         const isValidHex = hexColorRegex.test(value);
-        //
-        //         return (
-        //             <div className="flex items-center gap-2">
-        //                 <div
-        //                     className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
-        //                     style={{
-        //                         backgroundColor: isValidHex ? value : '#cccccc',
-        //                     }}
-        //                     title={isValidHex ? value : 'Màu không hợp lệ'}
-        //                 />
-        //                 <span className="text-sm font-mono text-gray-600">
-        //                     {isValidHex ? value : 'N/A'}
-        //                 </span>
-        //             </div>
-        //         );
-        //     }
-        // },
+        {
+            key: 'color',
+            label: 'Màu sắc',
+            sortable: false,
+            render: (value: string) => {
+                if (!value) return '-';
+
+                const hexColorRegex = /^#([0-9A-F]{3}|[0-9A-F]{6})$/i;
+                const isValidHex = hexColorRegex.test(value);
+
+                return (
+                    <div className="flex items-center gap-2">
+                        <div
+                            className="rounded border border-gray-300"
+                            style={{
+                                backgroundColor: isValidHex ? value : '#cccccc',
+                                width: '24px !important',
+                                height: '24px !important',
+                                minWidth: '24px',
+                                minHeight: '24px',
+                                flexShrink: 0,
+                                display: 'block'
+                            }}
+                            title={isValidHex ? value : 'Màu không hợp lệ'}
+                        />
+                        <span className="text-sm font-mono text-gray-600">
+                    {isValidHex ? value : 'N/A'}
+                </span>
+                    </div>
+                );
+            }
+        },
         {
             key: 'createdDate',
             label: 'Ngày tạo',

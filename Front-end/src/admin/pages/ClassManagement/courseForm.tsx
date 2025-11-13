@@ -23,15 +23,15 @@ const CourseForm: React.FC = () => {
             gridSpan: 12,
             realTimeValidation: true,
         },
-        // {
-        //     key: 'color',
-        //     labelKey: 'Màu sắc (Mã Hex)',
-        //     type: 'text',
-        //     placeholderKey: 'Ví dụ: #FF5733',
-        //     required: false,
-        //     gridSpan: 4,
-        //     realTimeValidation: true,
-        // },
+        {
+            key: 'color',
+            labelKey: 'Màu sắc (Mã Hex)',
+            type: 'text',
+            placeholderKey: 'Ví dụ: #FF5733',
+            required: false,
+            gridSpan: 4,
+            realTimeValidation: true,
+        },
         {
             key: 'description',
             labelKey: 'Mô tả',
@@ -68,12 +68,26 @@ const CourseForm: React.FC = () => {
         { label: 'Course Management', path: '/admin/course' },
     ];
 
+    const adaptedGetServiceGetById = React.useCallback(async (id: number): Promise<ICourse> => {
+        try {
+            const courseData = await getCourseById(id);
+
+            const processedCourseData: ICourse = {
+                ...courseData,
+            };
+            return processedCourseData;
+        } catch (error) {
+            console.error("Adapter failed to fetch course:", error);
+            throw error;
+        }
+    }, []);
 
     return (
         <FormTemplate<ICourse>
             pageTitleKey="khóa học"
             breadcrumbItems={breadcrumbItems}
             formFields={courseFormFields}
+            serviceGetById={adaptedGetServiceGetById}
             serviceCreate={createCourse}
             serviceUpdate={updateCourse}
             validationSchema={courseValidationSchema}

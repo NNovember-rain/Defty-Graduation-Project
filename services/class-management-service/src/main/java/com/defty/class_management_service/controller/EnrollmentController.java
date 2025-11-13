@@ -56,7 +56,7 @@ public class EnrollmentController {
 
 
     @PatchMapping("/class/{classId}/student/{studentId}/status")
-    @PreAuthorize("hasPermission(null, 'class.enrollment.update.status')")
+//    @PreAuthorize("hasPermission(null, 'class.enrollment.update.status')")
     public ApiResponse<Object> updateStudentStatus(@PathVariable Long classId,
                                                    @PathVariable Long studentId,
                                                    @Valid @RequestBody UpdateStudentStatusRequest request) {

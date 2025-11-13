@@ -278,7 +278,7 @@ const StudentClassDetailPage: React.FC = () => {
                         {/* Class Code */}
                         <div style={{ padding: '1.25rem', backgroundColor: '#2a2a2a', border: '1px solid #3f3f3f', borderRadius: '12px' }}>
                             <h5 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#94a3b8', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                {t('classDetail.classCode')}
+                                MÃ LỚP HỌC
                             </h5>
                             <div style={{
                                 padding: '0.75rem',
@@ -299,29 +299,20 @@ const StudentClassDetailPage: React.FC = () => {
                                 Thông tin lớp
                             </h5>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                {classData?.section && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                        </svg>
-                                        <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Phòng: {classData.section}</span>
-                                    </div>
-                                )}
-                                {classData?.subject && (
+                                {/*{classData?.section && (*/}
+                                {/*    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>*/}
+                                {/*        <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">*/}
+                                {/*            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />*/}
+                                {/*        </svg>*/}
+                                {/*        <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Phòng: {classData.section}</span>*/}
+                                {/*    </div>*/}
+                                {/*)}*/}
+                                {classData?.className && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                         <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                         </svg>
-                                        <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Môn: {classData.subject}</span>
-                                    </div>
-                                )}
-                                {classData?.room && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Phòng: {classData.room}</span>
+                                        <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Môn: {classData.className}</span>
                                     </div>
                                 )}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -335,29 +326,47 @@ const StudentClassDetailPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Quick Links */}
-                        <div style={{ padding: '1.25rem', backgroundColor: '#2a2a2a', border: '1px solid #3f3f3f', borderRadius: '12px' }}>
-                            <h5 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#94a3b8', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                Liên kết nhanh
+                        {/* Class Description (moved here) */}
+                        <div style={{
+                            padding: '1.25rem',
+                            backgroundColor: '#2a2a2a',
+                            border: '1px solid #3f3f3f',
+                            borderRadius: '12px'
+                        }}>
+                            <h5 style={{
+                                fontSize: '0.875rem',
+                                fontWeight: '600',
+                                color: '#94a3b8',
+                                marginBottom: '1rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em'
+                            }}>
+                                Mô tả lớp học
                             </h5>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                <a href="#" style={{ padding: '0.625rem', color: '#60a5fa', textDecoration: 'none', fontSize: '0.875rem', borderRadius: '6px', transition: 'background-color 0.2s' }}
-                                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e3a8a'}
-                                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                                    Tài liệu khóa học
-                                </a>
-                                <a href="#" style={{ padding: '0.625rem', color: '#60a5fa', textDecoration: 'none', fontSize: '0.875rem', borderRadius: '6px', transition: 'background-color 0.2s' }}
-                                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e3a8a'}
-                                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                                    Lịch học
-                                </a>
-                                <a href="#" style={{ padding: '0.625rem', color: '#60a5fa', textDecoration: 'none', fontSize: '0.875rem', borderRadius: '6px', transition: 'background-color 0.2s' }}
-                                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e3a8a'}
-                                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                                    Bảng điểm
-                                </a>
-                            </div>
+
+                            {classData?.description ? (
+                                <div
+                                    style={{
+                                        fontSize: '0.95rem',
+                                        color: '#cbd5e1',
+                                        lineHeight: 1.6,
+                                        backgroundColor: '#1e293b',
+                                        borderRadius: '8px',
+                                        padding: '0.75rem 1rem',
+                                        maxHeight: '240px',
+                                        overflowY: 'auto',
+                                        whiteSpace: 'normal',
+                                    }}
+                                    className="class-description"
+                                    dangerouslySetInnerHTML={{ __html: classData.description }}
+                                />
+                            ) : (
+                                <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                                    Chưa có mô tả cho lớp học này.
+                                </p>
+                            )}
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -415,11 +424,8 @@ const StudentClassDetailPage: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div>
                         <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#e2e8f0', margin: '0 0 0.5rem 0' }}>
-                            {classData.name}
+                            {classData.className}
                         </h1>
-                        {classData.description && (
-                            <p style={{ fontSize: '1rem', color: '#94a3b8', margin: 0 }}>{classData.description}</p>
-                        )}
                     </div>
                 </div>
 

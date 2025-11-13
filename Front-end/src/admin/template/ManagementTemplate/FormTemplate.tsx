@@ -45,6 +45,8 @@ interface FormTemplateProps<T extends Record<string, any>> {
     serviceUpdate?: (id: string | number, data: Partial<Omit<T, '_id' | 'createdAt' | 'updatedAt'>>) => Promise<T>;
     validationSchema?: ValidationSchema<T>;
     redirectPath: string;
+    initialData?: T | null;
+    customErrorExtractor?: (error: any) => Promise<string> | string;
 }
 
 const FormTemplate = <T extends Record<string, any>>({
@@ -56,6 +58,8 @@ const FormTemplate = <T extends Record<string, any>>({
                                                          serviceUpdate,
                                                          validationSchema,
                                                          redirectPath,
+                                                         initialData,
+                                                         customErrorExtractor
                                                      }: React.PropsWithChildren<FormTemplateProps<T>>) => {
     const { t } = useTranslation();
     const { id } = useParams<{ id?: string }>();
@@ -186,35 +190,59 @@ const FormTemplate = <T extends Record<string, any>>({
     };
 
     // --- Hàm xử lý submit form (Tạo mới hoặc Cập nhật) ---
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        setSaveError(null); // Reset lỗi lưu trước khi submit
+        setSaveError(null);
 
         if (!validateForm()) {
-            return; // Dừng nếu validation thất bại
+            return;
         }
 
         setLoading(true);
         try {
             if (isEditMode && serviceUpdate && id) {
-                await serviceUpdate(id, formData);
+                const response = await serviceUpdate(id, formData);
                 message.success(t('apiMessages.updateSuccess'));
+                let finalRedirectPath = redirectPath;
+                if (response && response.result && redirectPath.includes(':id')) {
+                    finalRedirectPath = redirectPath.replace(':id', response.result.toString());
+                } else if (response && response.result && redirectPath.endsWith('/id')) {
+                    finalRedirectPath = redirectPath.replace('/id', `/${response.result}`);
+                }
+
+                navigate(finalRedirectPath);
             } else if (!isEditMode && serviceCreate) {
-                await serviceCreate(formData as Omit<T, '_id' | 'createdAt' | 'updatedAt'>);
+                const response = await serviceCreate(formData as Omit<T, '_id' | 'createdAt' | 'updatedAt'>);
                 message.success(t('apiMessages.createSuccess'));
-                navigate(redirectPath);
+
+                // Support dynamic redirectPath với placeholder
+                let finalRedirectPath = redirectPath;
+                if (response && response.result && redirectPath.includes(':id')) {
+                    finalRedirectPath = redirectPath.replace(':id', response.result.toString());
+                } else if (response && response.result && redirectPath.endsWith('/id')) {
+                    finalRedirectPath = redirectPath.replace('/id', `/${response.result}`);
+                }
+
+                navigate(finalRedirectPath);
             } else {
                 message.error(t('apiMessages.fail'));
                 throw new Error("Service functions not provided for this operation.");
             }
         } catch (err: any) {
-            const errorMessage = await extractErrorMessage(err);
+            let errorMessage = "";
+
+            if (customErrorExtractor) {
+                errorMessage = await Promise.resolve(customErrorExtractor(err));
+            } else {
+                errorMessage = await extractErrorMessage(err);
+            }
+
             message.error(t('apiMessages.fail'));
             setSaveError(t('formTemplate.saveError', { message: errorMessage }));
         } finally {
             setLoading(false);
         }
-    };
+    }, [validateForm, isEditMode, serviceUpdate, id, formData, serviceCreate, message, t, navigate, redirectPath, extractErrorMessage]);
 
     // --- Hàm xử lý Clear form ---
     const handleClear = useCallback(() => {
