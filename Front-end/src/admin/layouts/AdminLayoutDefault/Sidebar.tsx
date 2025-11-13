@@ -21,11 +21,12 @@ import {
     FaTools,
     FaRegListAlt,
     FaQuestionCircle,
-    FaEnvelope, FaBoxes, FaCog, FaBook
+    FaEnvelope, FaBoxes, FaCog,
+    FaSync,
+    FaBook
 } from 'react-icons/fa';
 import { MdDashboard, MdOutlineSettings } from 'react-icons/md';
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
-import {FaB} from "react-icons/fa6";
 
 interface SidebarItem {
     id: string;
@@ -119,15 +120,19 @@ const sidebarContentConfig: SidebarItem[] = [
             },
         ]
     },
+    { 
+        id: 'submissionList', 
+        labelKey: 'sidebar.submissionList', 
+        icon: <FaClipboardList />, 
+        path: '/admin/submissions', 
+        requiredAnyOfRoles: ['admin', 'teacher'] 
+    },
     {
-        id: 'submissionManagement',
-        labelKey: 'sidebar.submissionManagement',
-        icon: <FaClipboardList />,
+        id: 'submissionAutoManagement',
+        labelKey: 'sidebar.submissionAutoManagement',
+        icon: <FaSync />,
+        path: '/admin/submission/auto',
         requiredAnyOfRoles: ['admin', 'teacher'],
-        children: [
-            { id: 'submissionList', labelKey: 'sidebar.submissionList', icon: <FaClipboardList />, path: '/admin/submissions', requiredAnyOfRoles: ['admin', 'teacher'] },
-            { id: 'manualGrading', labelKey: 'sidebar.manualGrading', icon: <FaFileAlt />, path: '/admin/submission/manual-grading', requiredAnyOfRoles: ['admin', 'teacher'] },
-        ]
     },
     {
         id: 'feedbackAndComments',
@@ -177,6 +182,16 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(({ isCollapsed, classNa
     const [searchTerm, setSearchTerm] = useState<string>('');
 
     const { isAuthenticated, isLoading, hasRole, hasAnyRole, hasPermission } = useUserStore();
+
+    // Debug user roles
+    React.useEffect(() => {
+        if (!isLoading && isAuthenticated) {
+            console.log('Current user roles:', useUserStore.getState().user?.roles?.map(r => r.name));
+            console.log('Has admin role:', hasRole('admin'));
+            console.log('Has teacher role:', hasRole('teacher'));
+            console.log('Has any admin/teacher role:', hasAnyRole(['admin', 'teacher']));
+        }
+    }, [isAuthenticated, isLoading, hasRole, hasAnyRole]);
 
     React.useEffect(() => {
         if (isCollapsed) {

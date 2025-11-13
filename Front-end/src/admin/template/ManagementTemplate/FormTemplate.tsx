@@ -11,6 +11,7 @@ import './FormTemplate.scss';
 import DualListBox from "../../components/DualListBox/DualListBox.tsx";
 import TextEditor from "../../components/TextEditor/TextEditor.tsx";
 import PasswordInput from "../../components/PasswordInput/PasswordInput.tsx";
+import AssignmentModulesEditor from "../../pages/Assignment/AssignmentModulesEditor.tsx";
 
 export interface FormField {
     key: string;
@@ -697,6 +698,14 @@ const FormTemplate = <T extends Record<string, any>>({
                                         />
                                     )}
 
+                                    {field.type === 'assignmentModules' as 'text' && (
+                                        <AssignmentModulesEditor
+                                            value={formData[field.key as keyof T] as any[]}
+                                            onChange={val => handleChange(field.key, val)}
+                                            disabled={loading}
+                                            typeUmlOptions={field.props?.typeUmlOptions || []}
+                                        />
+                                    )}
 
                                     {validationErrors[field.key] && (
                                         <p className="form-template__error-text">{validationErrors[field.key]}</p>

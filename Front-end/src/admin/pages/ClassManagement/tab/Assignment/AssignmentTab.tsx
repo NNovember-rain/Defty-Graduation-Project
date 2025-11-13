@@ -24,8 +24,8 @@ import {
     Typography,
     Tag
 } from "antd";
-import {IoCalendarOutline, IoFileTrayFull} from "react-icons/io5";
-import {MdOutlineAssignment} from "react-icons/md";
+import {IoCalendarOutline, IoFileTrayFull, IoTimeOutline, IoCheckmarkCircleOutline} from "react-icons/io5";
+import {MdOutlineAssignment, MdAssignmentTurnedIn} from "react-icons/md";
 import {AppstoreOutlined, DownOutlined, UnorderedListOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
 import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
@@ -33,12 +33,22 @@ import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+const { TabPane } = Tabs; // Đảm bảo Tabs có TabPane
 
 interface AssignmentTabProps {
     classId: number;
 }
 
 type AssignmentType = "ASSIGNMENT" | "TEST";
+
+interface AssignedModule {
+    moduleId: number;
+    moduleName: string;
+    checkedTest: boolean;
+    typeUmls: string[];
+    startDate: string | null;
+    endDate: string | null;
+}
 
 interface IAssignmentExtended extends IAssignment {
     id: string;
@@ -47,8 +57,22 @@ interface IAssignmentExtended extends IAssignment {
     endDate: string | null;
     classInfoId: number;
 
-    assignedModules: any[];
+    assignedModules: AssignedModule[];
     assignedUmlType: { name: string; } | null;
+}
+
+interface ProcessedAssignmentItem {
+    key: string;
+    assignmentId: string;
+    assignmentTitle: string;
+    assignmentCode: string;
+    startDate: string | null;
+    endDate: string | null;
+    type: AssignmentType;
+
+    moduleName: string;
+    typeUmls: string[];
+    isModuleTest: boolean;
 }
 
 const DEFAULT_PAGE_SIZE = 9;
@@ -77,8 +101,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     };
 
     const handleViewAssignmentDetails = useCallback(
-        (rowData: IAssignmentExtended) => {
-            const originalId = rowData.id.split('-')[0];
+        (rowData: ProcessedAssignmentItem) => {
+            const originalId = rowData.assignmentId.split('-')[0];
             navigate(`/admin/content/assignments/update/${originalId}`);
         },
         [navigate]
@@ -109,43 +133,31 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
             const response = await getAssignmentsByClassId(classId, options);
 
-            const combinedAssignments: IAssignmentExtended[] = [];
+            const data = response.assignments || [];
 
-            (response.assignments || []).forEach((a: IAssignment) => {
-                const classInfosForCurrentClass = a.assignmentClasses?.filter(
-                    (ac: any) => ac.classId === classId
-                ) || [];
+            const mappedAssignments: IAssignmentExtended[] = data.map((a: any, index: number) => {
+                const hasTestModules = (a.modules || []).some((m: any) => m.checkedTest === true);
+                const assignmentType: AssignmentType = hasTestModules ? "TEST" : "ASSIGNMENT";
 
-                if (classInfosForCurrentClass.length === 0) {
-                    return;
-                }
-
-                classInfosForCurrentClass.forEach((classInfo: any) => {
-                    const isTest = classInfo.checkedTest;
-                    const assignmentType: AssignmentType = isTest ? "TEST" : "ASSIGNMENT";
-
-                    const startDate = classInfo.startDate ? dayjs(classInfo.startDate).toISOString() : null;
-                    const endDate = classInfo.endDate ? dayjs(classInfo.endDate).toISOString() : null;
-
-                    const uniqueId = `${a.id}-${classInfo.id}`;
-
-                    combinedAssignments.push({
-                        ...a,
-                        id: uniqueId,
-                        classInfoId: classInfo.id,
-                        type: assignmentType,
-                        createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
-                        startDate: startDate,
-                        endDate: endDate,
-
-                        assignedModules: classInfo.moduleResponses || [],
-                        assignedUmlType: classInfo.typeUmlResponse || null,
-
-                    } as IAssignmentExtended);
-                });
+                return {
+                    id: String(a.assignmentId ?? index),
+                    type: assignmentType,
+                    classInfoId: classId,
+                    assignmentCode: a.assignmentCode,
+                    title: a.assignmentTitle,
+                    description: a.assignmentDescription,
+                    startDate: a.startDate ? dayjs(a.startDate).toISOString() : null,
+                    endDate: a.endDate ? dayjs(a.endDate).toISOString() : null,
+                    checkedTest: a.checkedTest,
+                    assignedModules: a.modules || [],
+                    assignedUmlType: null,
+                    createdDate: "",
+                } as unknown as IAssignmentExtended;
             });
 
-            setAssignments(combinedAssignments);
+            setAssignments(mappedAssignments);
+            setTotal(mappedAssignments.length);
+
         } catch (err) {
             console.error("Failed to fetch assignments:", err);
             setError(t("common.errorFetchingData") || "Lỗi khi lấy dữ liệu");
@@ -158,19 +170,52 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         fetchData();
     }, [fetchData]);
 
-    const filteredAssignments = useMemo(() => {
-        let filtered = assignments;
+    const processedAssignments = useMemo(() => {
+        const isFilteringTest = activeTab === 'test';
 
-        if (activeTab === 'assignment') {
-            filtered = assignments.filter(a => a.type === "ASSIGNMENT");
-        } else if (activeTab === 'test') {
-            filtered = assignments.filter(a => a.type === "TEST");
-        }
+        // 🚀 BƯỚC 1: LÀM PHẲNG (FLATTEN) ASSIGNMENTS THÀNH CÁC ITEM CẤP MODULE
+        const flattened = assignments.flatMap(a => {
+            const relevantModules = a.assignedModules
+                .filter(m => m.checkedTest === isFilteringTest); // Lọc theo tab hiện tại
 
+            return relevantModules.map((m, mIndex) => {
+                // Key cần là duy nhất: AssignmentID + ModuleID + Index (để phân biệt Type UML đã tách)
+                return {
+                    key: `${a.id}-${m.moduleId}-${mIndex}`,
+                    assignmentId: a.id,
+                    assignmentTitle: a.title,
+                    assignmentCode: a.assignmentCode,
+                    // Lấy startDate/endDate từ Module (m)
+                    startDate: m.startDate,
+                    endDate: m.endDate,
+                    type: a.type,
+                    moduleName: m.moduleName,
+                    typeUmls: m.typeUmls,
+                    isModuleTest: m.checkedTest,
+                } as ProcessedAssignmentItem;
+            });
+        });
+
+        let filtered = flattened;
+
+        // 🚀 BƯỚC 2: SẮP XẾP DỮ LIỆU ĐÃ LÀM PHẲNG
         if (sortBy) {
             filtered.sort((a, b) => {
-                const aVal = a[sortBy as keyof IAssignmentExtended] ?? "";
-                const bVal = b[sortBy as keyof IAssignmentExtended] ?? "";
+                // Sắp xếp theo ngày tạo (nếu có) hoặc tiêu đề
+                let aVal: any;
+                let bVal: any;
+
+                // Mặc định, sắp xếp theo title vì ngày tạo không có trong ProcessedItem
+                aVal = a.assignmentTitle ?? "";
+                bVal = b.assignmentTitle ?? "";
+
+                if (sortBy === 'createdDate') {
+                    // Nếu cần sắp xếp theo ngày, bạn cần truyền createdDate vào ProcessedAssignmentItem hoặc sắp xếp Assignment trước.
+                    // Hiện tại, ta sắp xếp theo tiêu đề
+                    aVal = a.assignmentTitle ?? "";
+                    bVal = b.assignmentTitle ?? "";
+                }
+
 
                 if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
                 if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
@@ -186,6 +231,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         return filtered.slice(startIndex, endIndex);
 
     }, [assignments, activeTab, page, size, sortBy, sortOrder]);
+
 
     const menuItems: MenuProps["items"] = [
         {
@@ -225,149 +271,128 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     };
 
 
-    const renderAssignmentItem = (a: IAssignmentExtended) => {
-        const moduleNames = (a.assignedModules || []).map((m: any) => m.moduleName).filter(Boolean);
-        const umlTypeName = a.assignedUmlType?.name;
+    const renderAssignmentItem = (item: ProcessedAssignmentItem) => {
+        // Thiết lập màu sắc dựa trên loại bài tập (isModuleTest)
+        const isTest = item.isModuleTest;
+        const primaryColor = isTest ? '#fa541c' : '#52c41a'; // Cam cho Test, Xanh lá cho Luyện tập
+        const secondaryColor = isTest ? '#fff1f0' : '#f6ffed';
+        const icon = isTest ? <IoTimeOutline /> : <MdAssignmentTurnedIn />;
+        const typeText = isTest ? (t("classDetail.type.test") || "KIỂM TRA") : (t("classDetail.type.assignment") || "LUYỆN TẬP");
 
-        const iconColor = "#fa8c16";
-        const iconBackground = "#fff7e6";
-        const typeTextColor = "#fa8c16";
-        const umlTagColor = "orange";
+        const keyPrefix = item.key;
 
         return (
-            <List.Item key={a.id} style={{ padding: 0 }}>
+            <List.Item key={item.key} style={{ padding: 0 }}>
                 <Card
                     hoverable
                     style={{
                         borderRadius: 12,
-                        marginBottom: 12,
-                        boxShadow: "0 6px 18px rgba(0,0,0,0.04)"
+                        marginBottom: 16,
+                        borderLeft: `5px solid ${primaryColor}`, // Thanh màu bên trái
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                        transition: 'all 0.3s ease',
                     }}
+                    bodyStyle={{ padding: '16px' }}
                 >
-                    <Row gutter={[16, 16]} align="middle">
-                        <Col xs={24} sm={21}>
-                            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                                <div style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 10,
-                                    background: iconBackground,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    color: iconColor,
-                                    fontSize: 22,
-                                    flexShrink: 0
-                                }}>
-                                    <MdOutlineAssignment />
-                                </div>
+                    <Row gutter={[16, 16]} align="top">
+                        <Col xs={24} sm={24} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
 
-                                <div style={{ flex: 1 }}>
-                                    <Title level={5} style={{ margin: 0, lineHeight: 1.2, fontSize: '18px' }}>
-                                        {a.title}
-                                    </Title>
+                            {/* Icon chính */}
+                            <div style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                background: secondaryColor,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: primaryColor,
+                                fontSize: 20,
+                                flexShrink: 0,
+                                marginTop: 4
+                            }}>
+                                {icon}
+                            </div>
 
-                                    {a.type === 'TEST' && (moduleNames.length > 0 || umlTypeName) && (
-                                        <Space size={[0, 8]} wrap style={{ marginBottom: 8, marginTop: 4 }}>
-                                            {umlTypeName && (
-                                                <Tag color={umlTagColor}>
-                                                    {t("classDetail.umlType") || "UML Type"}: {umlTypeName}
-                                                </Tag>
-                                            )}
+                            <div style={{ flex: 1 }}>
+                                {/* Tên Bài tập & Mã */}
+                                <Text type="secondary" style={{ fontSize: '12px', display: 'block', color: '#8c8c8c' }}>
+                                    {t("classDetail.assignment.code") || "Mã BT"}: {item.assignmentCode}
+                                </Text>
+                                <Title level={5} style={{ margin: '0 0 4px 0', lineHeight: 1.2, fontSize: '16px', color: '#262626' }}>
+                                    {item.assignmentTitle}
+                                </Title>
 
-                                            {moduleNames.map((name, index) => (
-                                                <Tag key={index} color={umlTagColor}>
-                                                    {t("classDetail.module") || "Module"}: {name}
-                                                </Tag>
-                                            ))}
-                                        </Space>
-                                    )}
-                                    {a.type !== 'TEST' && (moduleNames.length > 0 || umlTypeName) && (
-                                        <Space size={[0, 8]} wrap style={{ marginBottom: 8, marginTop: 4 }}>
-                                            {moduleNames.map((name, index) => (
-                                                <Tag key={index} color={umlTagColor}>
-                                                    {t("classDetail.module") || "Module"}: {name}
-                                                </Tag>
-                                            ))}
-                                        </Space>
-                                    )}
+                                {/* Module & Type UML */}
+                                <Space size={[8, 4]} wrap style={{ marginBottom: 8 }}>
 
-                                    <Space size={16}>
-                                        {/* Hiển thị loại bài tập */}
-                                        <Text type="secondary" style={{ fontWeight: 600, color: typeTextColor }}> {/* SỬ DỤNG MÀU CHUẨN */}
-                                            [{a.type === 'TEST' ? t("classDetail.type.test") || "KIỂM TRA" : t("classDetail.type.assignment") || "LUYỆN TẬP"}]
-                                        </Text>
+                                    {/* Tag Module Name */}
+                                    <Tag key={`${keyPrefix}-module-main`} color="blue" style={{ fontWeight: 500 }}>
+                                        {t("classDetail.module") || "Module"}: {item.moduleName}
+                                    </Tag>
 
-                                        {/* Ngày tháng */}
-                                        <Text type="secondary" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: '13px' }}>
-                                            <IoCalendarOutline style={{ color: '#595959' }} />
-                                            {a.startDate && a.endDate
-                                                ? `${dayjs(a.startDate).format("DD/MM/YYYY")} → ${dayjs(a.endDate).format("DD/MM/YYYY")}`
-                                                : t("classDetail.assignment.noDeadline") || "No Deadline"}
-                                        </Text>
-                                    </Space>
-                                </div>
+                                    {/* Tag Type UMLs */}
+                                    {item.typeUmls.map((name, index) => (
+                                        <Tag key={`${keyPrefix}-uml-${name}-${index}`} color="geekblue" style={{ fontWeight: 500 }}>
+                                            {name}
+                                        </Tag>
+                                    ))}
+
+                                </Space>
+
+                                <Space size={16}>
+                                    <Text style={{ fontWeight: 600, color: primaryColor, fontSize: '12px' }}>
+                                        [{typeText}]
+                                    </Text>
+
+                                    <Text type="secondary" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: '12px', color: '#595959' }}>
+                                        <IoCalendarOutline />
+                                        {item.startDate && item.endDate
+                                            ? `${dayjs(item.startDate).format("DD/MM/YYYY")} → ${dayjs(item.endDate).format("DD/MM/YYYY")}`
+                                            : t("classDetail.assignment.noDeadline") || "No Deadline"}
+                                    </Text>
+                                </Space>
                             </div>
                         </Col>
+
                         <Col
                             xs={24}
-                            sm={3}
                             style={{
-                                textAlign: "center",
+                                textAlign: "right",
                                 display: "flex",
-                                flexDirection: "row",
                                 justifyContent: "flex-end",
                                 alignItems: "center",
                                 gap: 12,
+                                borderTop: '1px solid #f0f0f0',
+                                paddingTop: '10px'
                             }}
                         >
-                            {/* Icon Xem thông tin bài tập (Chi tiết) - Luôn hiển thị */}
+
                             <Tooltip title={t("classDetail.view.assignmentInfo") || "Xem thông tin bài tập"}>
-                                <span
+                                <Button
+                                    icon={<MdOutlineAssignment />}
+                                    type="text"
+                                    shape="circle"
+                                    style={{ color: '#1890ff' }}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        handleViewAssignmentDetails(a);
+                                        handleViewAssignmentDetails(item);
                                     }}
-                                    style={{
-                                        cursor: "pointer",
-                                        fontSize: "20px",
-                                        color: "#1677ff",
-                                        backgroundColor: "rgba(22, 119, 255, 0.1)",
-                                        padding: "8px",
-                                        borderRadius: "50%",
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                        transition: "all 0.25s ease",
-                                    }}
-                                >
-                                    <MdOutlineAssignment />
-                                </span>
+                                />
                             </Tooltip>
 
-                            {/* Icon Xem danh sách bài nộp - CHỈ HIỂN THỊ KHI LÀ TEST */}
-                            {a.type === 'TEST' && (
+                            {item.isModuleTest && (
                                 <Tooltip title={t("classDetail.view.submissionDetails") || "Xem chi tiết bài nộp"}>
-                                    <span
+                                    <Button
+                                        icon={<IoFileTrayFull />}
+                                        type="text"
+                                        shape="circle"
+                                        style={{ color: primaryColor }}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            goToAssignmentDetails(a.id);
+                                            goToAssignmentDetails(item.assignmentId);
                                         }}
-                                        style={{
-                                            cursor: "pointer",
-                                            fontSize: "20px",
-                                            color: "#1890ff",
-                                            backgroundColor: "rgba(24, 144, 255, 0.1)",
-                                            padding: "8px",
-                                            borderRadius: "50%",
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                            transition: "all 0.25s ease",
-                                        }}
-                                    >
-                                        <IoFileTrayFull />
-                                    </span>
+                                    />
                                 </Tooltip>
                             )}
                         </Col>
@@ -377,14 +402,20 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     };
 
+    const countAssignments = (isTest: boolean) => {
+        return assignments.flatMap(a =>
+            a.assignedModules.filter(m => m.checkedTest === isTest)
+        ).length;
+    };
+
     const tabItems: TabsProps['items'] = [
         {
             key: 'test',
-            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${assignments.filter(a => a.type === 'TEST').length})`,
+            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${countAssignments(true)})`,
             children: (
                 <List
                     itemLayout="vertical"
-                    dataSource={filteredAssignments}
+                    dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
                     locale={{emptyText: t("common.noTests") || "Chưa có bài tập kiểm tra nào."}}
                 />
@@ -392,11 +423,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         },
         {
             key: 'assignment',
-            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${assignments.filter(a => a.type === 'ASSIGNMENT').length})`,
+            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${countAssignments(false)})`,
             children: (
                 <List
                     itemLayout="vertical"
-                    dataSource={filteredAssignments}
+                    dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
                     locale={{emptyText: t("common.noAssignments") || "Chưa có bài tập luyện tập nào."}}
                 />

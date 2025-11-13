@@ -71,6 +71,7 @@
     "submissionManagement": "Quản lý Bài nộp",
     "submissionList": "Danh sách Bài nộp",
     "manualGrading": "Chấm điểm thủ công",
+    "submissionAutoManagement": "Quản lý Bài nộp Tự động",
     "feedbackAndComments": "Phản hồi & Nhận xét",
     "manageAIFeedback": "Quản lý Nhận xét AI",
     "studentFeedbackOnAI": "Phản hồi SV về AI",
@@ -424,6 +425,7 @@
       "noId": "Không tìm thấy ID lớp học trong URL.",
       "classNotFound": "Không tìm thấy lớp học."
     },
+    "assignmentAssignment": "Danh sách bài tập",
     "umlType": "Loại UML",
     "module": "Module",
     "tabs": {
@@ -761,5 +763,59 @@
   },
   "umlKnowledge": {
     "title": "Ngữ cảnh UML"
+  },
+  "autoFeedbackJobPage": {
+    "title": "Quản lý Công việc Phản hồi Tự động",
+    "breadcrumb": "Công việc Phản hồi Tự động",
+    "downloadTemplateButton": "Tải Mẫu Excel",
+    "uploadButton": "Upload File Excel",
+    "download": {
+      "started": "Bắt đầu tải xuống",
+      "preparingFile": "Đang chuẩn bị file...",
+      "success": "Thành công",
+      "fileDownloaded": "File đã được tải xuống thành công",
+      "error": "Lỗi tải xuống",
+      "failed": "Tải xuống thất bại"
+    },
+    "actions": {
+      "view": "Xem",
+      "downloadResult": "Tải Kết quả",
+      "delete": "Xóa"
+    },
+    "delete": {
+      "successMessage": "Đã xóa công việc phản hồi tự động thành công!",
+      "confirmContent": "Bạn có chắc chắn muốn xóa '{{title}}'?"
+    },
+    "columns": {
+      "title": "Tiêu đề",
+      "typeUml": "Loại sơ đồ UML",
+      "createdDate": "Ngày tạo"
+    },
+    "search": {
+      "title": "Tiêu đề",
+      "titlePlaceholder": "Nhập tiêu đề công việc...",
+      "typeUml": "Loại sơ đồ UML",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày"
+    },
+    "sort": {
+      "order": "Thứ tự sắp xếp",
+      "ascending": "Tăng dần",
+      "descending": "Giảm dần",
+      "by": "Sắp xếp theo",
+      "title": "Tiêu đề",
+      "typeUml": "Loại sơ đồ UML",
+      "createdDate": "Ngày tạo"
+    },
+    "entries": {
+      "title": "Các mục Phản hồi",
+      "studentInfo": "Thông tin Sinh viên",
+      "studentCode": "Mã Sinh viên",
+      "feedback": "Phản hồi",
+      "createdDate": "Ngày tạo",
+      "studentInfoPlaceholder": "Tìm theo tên hoặc mã sinh viên...",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày"
+    }
   }
 }
