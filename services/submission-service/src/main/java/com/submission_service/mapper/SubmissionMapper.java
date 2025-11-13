@@ -37,7 +37,7 @@ public interface SubmissionMapper {
     );
 
     default boolean hasFeedbackTeacher(Submission submission) {
-        return submission.getFeedbackTeachers() != null && !submission.getFeedbackTeachers().isEmpty();
+        return submission.getSubmissionFeedbacks() != null && !submission.getSubmissionFeedbacks().isEmpty();
     }
 
     default String getStudentName(UserResponse user) {
