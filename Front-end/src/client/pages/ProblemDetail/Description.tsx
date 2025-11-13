@@ -47,11 +47,6 @@ const MODULE_OPTIONS: UmlTypeOption[] = [
     { value: 'server-side', label: 'Module: Server Side', key: 'server-side' },
 ];
 
-interface Option {
-    value: string;
-    label: string;
-}
-
 
 type Props = {
     assignment: IAssignment | null;
@@ -147,8 +142,8 @@ const Description: React.FC<Props> = ({
             let defaultUmlType: ITypeUmlResponse | null = null;
 
             try {
-                const isTestCondition = mode === 'test' && assignmentClassDetailId !== null && !isNaN(assignmentClassDetailId);
-                const isPracticeCondition = mode === 'practice' && assignmentClassId;
+                const isTestCondition = mode === 'test';
+                const isPracticeCondition = mode === 'practice';
 
                 if (!isTestCondition && !isPracticeCondition) {
                     return;
@@ -156,6 +151,7 @@ const Description: React.FC<Props> = ({
 
                 if (isTestCondition) {
                     data = await getAssignmentDetail(assignmentClassDetailId!);
+                    console.log("Data nhận được từ getAssignmentDetail:", data);
 
                     const assignmentClasses = data.assignmentClasses || [];
                     const assignmentClass = assignmentClasses[0];
@@ -166,8 +162,8 @@ const Description: React.FC<Props> = ({
                             ...mod,
                             typeUmlIds: new Set<number>(),
                         } as IConsolidatedModuleResponse));
-                    } else if (data.modules && Array.isArray(data.modules)) {
-                        modulesToUse = data.modules.map((mod: any) => ({
+                    } else if (data.assignmentClassDetailResponseList && Array.isArray(data.assignmentClassDetailResponseList)) {
+                        modulesToUse = data.assignmentClassDetailResponseList.map((mod: any) => ({
                             id: mod.moduleId,
                             moduleName: mod.moduleName,
                             moduleDescription: mod.moduleDescription,
@@ -179,6 +175,7 @@ const Description: React.FC<Props> = ({
                 }
                 else if (isPracticeCondition) {
                     data = await getAssignmentAllModule(assignmentClassId!);
+                    console.log("Data nhận được từ getAssignmentAllModule:", data);
 
                     if (data?.result?.modules && Array.isArray(data.result.modules)) {
                         modulesToUse = data.result.modules.map((mod: any) => ({

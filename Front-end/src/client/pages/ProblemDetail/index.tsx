@@ -65,6 +65,7 @@ const ProblemDetail: React.FC = () => {
     const [searchParams] = useSearchParams();
     const isTestMode = searchParams.get("mode") === "test";
     const assignmentClassId = searchParams.get("problemId");
+    console.log(assignmentClassId)
     const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
 
     const [code, setCode] = useState<string>("");
@@ -72,6 +73,7 @@ const ProblemDetail: React.FC = () => {
     // Assignment gốc (chứa commonDescription, title)
     const problemIdNumber = Number(problemId);
     const assignmentClassIdForPractice = !isTestMode ? problemIdNumber : 0;
+    console.log("assignmentClassIdForPractice:", assignmentClassIdForPractice);
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
@@ -257,18 +259,9 @@ const ProblemDetail: React.FC = () => {
 
     // Gọi API chỉ bằng ID chi tiết
     const fetchAssignmentInfo = async (detailId: number) => {
-        try {
-            const asg = (await getAssignmentDetail(detailId));
+            const asg = (await getAssignmentDetail(assignmentClassDetailId));
             setAssignment(asg);
             return true;
-        } catch (e: any) {
-            const s = getHttpStatus(e);
-            if (s === 400 || s === 404) {
-                navigate("/not-found");
-                return false;
-            }
-            throw e;
-        }
     };
 
     const fetchAll = useCallback(
@@ -374,7 +367,7 @@ const ProblemDetail: React.FC = () => {
                 <div className="panel panel--left scrollable">
                     <Description assignment={assignment} isLoading={loading} error={err}
                                  mode={currentMode}
-                                 umlTypes={assignment?.modules.find(m => String(m.id) === module)?.typeUmls || []}
+                                 umlTypes={assignment?.assignmentClassDetailResponseList.find(m => String(m.id) === module)?.typeUmls || []}
                                  assignmentClassId={assignmentClassIdForPractice}
                                  onUmlTypeChange={handleUmlTypeChange}
                                  module={module}
