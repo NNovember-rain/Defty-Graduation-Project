@@ -3,9 +3,7 @@ package com.submission_service.model.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Getter
 @Setter
@@ -13,7 +11,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackTeacherResponse {
+public class SubmissionFeedbackResponse {
     Long id;
     String content;
     Long teacherId;

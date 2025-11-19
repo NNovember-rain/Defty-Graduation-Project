@@ -10,7 +10,7 @@ import java.util.Map;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackAiRequest {
+public class FeedbackLLMRequest {
     private Long submissionId;
     private Map<String, Object> feedback;
     private String aiModalName;

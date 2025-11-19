@@ -36,7 +36,7 @@ public class Submission extends BaseEntity {
 
     @Column
     @Builder.Default
-    Boolean examMode=false;
+    boolean examMode=false;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     String studentPlantUMLCode;
@@ -45,11 +45,13 @@ public class Submission extends BaseEntity {
     @Enumerated(EnumType.STRING)
     SubmissionStatus submissionStatus=SubmissionStatus.SUBMITTED;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "feedback_ai_id", referencedColumnName = "id")
-    private FeedbackAi feedbackAi;
+    @OneToOne(mappedBy = "submission")
+    private FeedbackLLM feedbackLLM;
+
+    @OneToOne(mappedBy = "submission")
+    private StudentReviewLLMFeedback studentReviewLLMFeedback;
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<FeedbackTeacher> feedbackTeachers;
+    private List<SubmissionFeedback> submissionFeedbacks;
 
 }
