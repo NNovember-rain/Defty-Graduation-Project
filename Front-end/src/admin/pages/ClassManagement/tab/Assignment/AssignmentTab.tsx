@@ -132,6 +132,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             };
 
             const response = await getAssignmentsByClassId(classId, options);
+            console.log("Fetched assignments:", response);
 
             const data = response.assignments || [];
 
@@ -149,7 +150,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     startDate: a.startDate ? dayjs(a.startDate).toISOString() : null,
                     endDate: a.endDate ? dayjs(a.endDate).toISOString() : null,
                     checkedTest: a.checkedTest,
-                    assignedModules: a.modules || [],
+                    assignedModules: a.assignmentClassDetailResponseList || [],
                     assignedUmlType: null,
                     createdDate: "",
                 } as unknown as IAssignmentExtended;
@@ -198,20 +199,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
         let filtered = flattened;
 
-        // 🚀 BƯỚC 2: SẮP XẾP DỮ LIỆU ĐÃ LÀM PHẲNG
         if (sortBy) {
             filtered.sort((a, b) => {
-                // Sắp xếp theo ngày tạo (nếu có) hoặc tiêu đề
                 let aVal: any;
                 let bVal: any;
 
-                // Mặc định, sắp xếp theo title vì ngày tạo không có trong ProcessedItem
                 aVal = a.assignmentTitle ?? "";
                 bVal = b.assignmentTitle ?? "";
 
                 if (sortBy === 'createdDate') {
-                    // Nếu cần sắp xếp theo ngày, bạn cần truyền createdDate vào ProcessedAssignmentItem hoặc sắp xếp Assignment trước.
-                    // Hiện tại, ta sắp xếp theo tiêu đề
                     aVal = a.assignmentTitle ?? "";
                     bVal = b.assignmentTitle ?? "";
                 }

@@ -39,7 +39,7 @@ interface IAssignmentExtended extends IAssignment {
     endDate: string | null;
     classInfoId: number;
     assignmentClassId: number; // 🔥 Đã thêm trường này để lấy từ API
-    modules: AssignedModule[];
+    assignmentClassDetailResponseList: AssignedModule[];
 }
 
 interface ProcessedAssignmentItem {
@@ -79,18 +79,21 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     const handleViewAssignmentDetails = useCallback(
         (rowData: ProcessedAssignmentItem) => {
             const mode = rowData.isModuleTest ? 'test' : 'practice';
-
-            // 🔥 LOGIC SỬA ĐỔI: Chọn ID dựa trên chế độ
             const idToUse = rowData.isModuleTest
                 ? rowData.assignmentClassDetailId
                 : rowData.assignmentClassId;
 
             const url = `/class/${classId}/problem/${idToUse}`;
-            navigate(url + `?mode=${mode}`);
-            console.log(url)
+
+            let queryParams = `?mode=${mode}`;
+            queryParams += `&assignmentClassId=${rowData.assignmentClassDetailId}`;
+
+            navigate(url + queryParams);
+            console.log(url + queryParams);
         },
         [navigate, classId]
     );
+
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -109,7 +112,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
 
             (response.assignments || []).forEach((a: any) => {
                 // Giả định API trả về đủ các trường trong modules, bao gồm assignmentClassDetailId
-                const modules: AssignedModule[] = (a.modules || []).map((m: any) => ({
+                const modules: AssignedModule[] = (a.assignmentClassDetailResponseList || []).map((m: any) => ({
                     ...m,
                     assignmentClassDetailId: m.assignmentClassDetailId || 0,
                 }));
@@ -213,7 +216,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
 
         if (isFilteringTest) {
             const flattened: ProcessedAssignmentItem[] = assignments.flatMap(a => {
-                const relevantModules = a.modules
+                const relevantModules = a.assignmentClassDetailResponseList
                     .filter(m => m.checkedTest === true);
 
                 return relevantModules.flatMap(m => {
@@ -246,7 +249,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             const assignmentMap = new Map<number, ProcessedAssignmentItem>();
 
             assignments.forEach(a => {
-                const practiceModules = a.modules.filter(m => m.checkedTest === false);
+                const practiceModules = a.assignmentClassDetailResponseList.filter(m => m.checkedTest === false);
 
                 if (practiceModules.length > 0) {
                     const allPracticeUmls = Array.from(new Set(practiceModules.flatMap(m => m.typeUmls))); // Dùng Set để tránh UML trùng lặp
@@ -397,7 +400,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     const tabItems: TabsProps['items'] = [
         {
             key: 'test',
-            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${assignments.flatMap(a => a.modules.filter(m => m.checkedTest)).flatMap(m => m.typeUmls).length})`,
+            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${assignments.flatMap(a => a.assignmentClassDetailResponseList.filter(m => m.checkedTest)).flatMap(m => m.typeUmls).length})`,
             children: (
                 <List
                     grid={view === 'grid' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 4 } : undefined}
@@ -409,7 +412,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
         },
         {
             key: 'assignment',
-            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${assignments.flatMap(a => a.modules.filter(m => !m.checkedTest)).length})`,
+            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${assignments.flatMap(a => a.assignmentClassDetailResponseList.filter(m => !m.checkedTest)).length})`,
             children: (
                 <List
                     grid={view === 'grid' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 4 } : undefined}

@@ -1,11 +1,16 @@
 import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Spin, Table, Select, Typography} from "antd";
 import React, {useCallback, useEffect, useState} from "react";
 import type {ColumnsType} from "antd/es/table";
-import {assignAssignment, getAssignments} from "../../../../../shared/services/assignmentService.ts";
+import {
+    assignAssignment,
+    getAssignments,
+    getUnassignedAssignments
+} from "../../../../../shared/services/assignmentService.ts";
 import {useTranslation} from "react-i18next";
 import type { Key } from "react";
 import {getTypeUmls} from "../../../../../shared/services/typeUmlService.ts";
 import moment from "moment";
+import { useParams } from "react-router-dom";
 
 const {RangePicker} = DatePicker;
 
@@ -50,11 +55,9 @@ interface AssignmentConfigMap {
     [assignmentId: number]: AssignmentModuleConfig;
 }
 
-
-// 2. 🛠️ SỬA INTERFACE PAYLOAD: Đổi tên và kiểu dữ liệu cho Backend
 interface ModuleAssignRequest {
     moduleId: number;
-    typeUmls: string[]; // Thay đổi từ typeUmlIds: number[] sang typeUmls: string[]
+    typeUmls: string[];
 }
 
 interface AssignmentAssignRequest {
@@ -68,6 +71,10 @@ interface AssignmentAssignRequest {
 interface AssignRequest {
     classIds: number[];
     assignments: AssignmentAssignRequest[];
+}
+
+interface ClassDetailParams {
+    id: string;
 }
 
 const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
@@ -87,23 +94,25 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
 
     const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<number[]>([]);
     const [expandedRowKeys, setExpandedRowKeys] = useState<Key[]>([]);
-    // Sử dụng interface đã sửa (chứa string[])
     const [configMap, setConfigMap] = useState<AssignmentConfigMap>({});
 
     const [typeUMLs, setTypeUMLs] = useState<TypeUmlOption[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [messageApi, contextHolder] = message.useMessage();
 
+    const { id } = useParams<ClassDetailParams>();
+
+    const classId = Number(id);
 
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
         setLoading(true);
         try {
-            const params = {page, limit, status: 1, searchTerm};
-            const response: any = await getAssignments(params);
-
-            const assignmentData = Array.isArray(response) ? response : (response.assignments || []);
+            const params = {page, limit, status: 1};
+            const response = await getAssignments(params);
+            const assignmentData = Array.isArray(response)
+                ? response
+                : response.assignments || [];
             const total = response.total || assignmentData.length;
-
             const dataWithKeys: Assignment[] = assignmentData.map((item: any) => ({
                 ...item,
                 key: `assignment_${item.id}`,
@@ -112,12 +121,12 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
             setAssignments(dataWithKeys);
             setTotalItems(total);
         } catch (error) {
-            console.error('Failed to load assignments:', error);
-            messageApi.error(t('apiMessages.loadAssignmentsFailed') || 'Lỗi khi tải bài tập.');
+            console.error("Failed to load assignments:", error);
+            messageApi.error(t("apiMessages.loadAssignmentsFailed"));
         } finally {
             setLoading(false);
         }
-    }, [messageApi, t, searchTerm]);
+    }, [messageApi, t]);
 
     useEffect(() => {
         async function fetchTypeUMLs() {
@@ -126,7 +135,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                 console.log('Fetched Type UMLs:', response);
                 const typeUmlsArray: TypeUmlOption[] = Array.isArray(response.typeUmls)
                     ? response.typeUmls.map((t: ITypeUml) => ({
-                        // ✅ ĐÚNG: Gán tên Enum làm value và label
                         value: t.name,
                         label: t.name,
                     }))
@@ -144,7 +152,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         if (visible) {
             fetchAssignmentsForModal(currentPage, pageSize);
             setSelectedAssignmentIds([]);
-            // Rất quan trọng: Reset configMap để xóa mọi giá trị NaN cũ
             setConfigMap({});
             setExpandedRowKeys([]);
             form.resetFields();
@@ -188,7 +195,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                 for (const moduleIdKey in assignmentConfig) {
                     const moduleId = Number(moduleIdKey);
 
-                    // 3. 🛠️ SỬA LOGIC PAYLOAD: Lấy mảng chuỗi (string[]) từ configMap
                     const typeUmls: string[] = assignmentConfig[moduleId];
 
                     const moduleName = assignment.modules?.find(m => m.id === moduleId)?.moduleName || `ID ${moduleId}`;
@@ -199,7 +205,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                         break;
                     }
 
-                    // Đẩy mảng chuỗi vào payload (moduleAssignRequests)
                     moduleAssignRequests.push({ moduleId, typeUmls });
                 }
 
@@ -259,7 +264,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                 ...prevMap,
                 [assignmentRecord.id]: {
                     ...prevMap[assignmentRecord.id],
-                    [moduleId]: values, // ✅ ĐÚNG: Lưu trực tiếp mảng chuỗi (string[])
+                    [moduleId]: values,
                 },
             }));
         };
@@ -273,7 +278,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                 render: (text, moduleRecord) => {
                     const isModuleSelected = selectedModuleIds.includes(moduleRecord.id);
 
-                    // Giá trị currentValues lúc này là mảng chuỗi
                     const currentValues = isModuleSelected
                         ? currentAssignmentConfig[moduleRecord.id] || []
                         : undefined;
@@ -315,7 +319,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                             const newAssignmentConfig: AssignmentModuleConfig = {};
 
                             newModuleIds.forEach(moduleId => {
-                                // Giá trị mặc định là [] (mảng rỗng của chuỗi)
                                 newAssignmentConfig[moduleId] = currentAssignmentConfig[moduleId] || [];
                             });
 

@@ -3,6 +3,7 @@ package com.defty.content_service.controller;
 import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
 import com.defty.content_service.dto.response.*;
+import com.defty.content_service.enums.TypeUml;
 import com.defty.content_service.service.AssignmentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -71,13 +72,29 @@ public class AssignmentController {
                 .build();
     }
 
+    @GetMapping("/unassigned/{classId}")
+    public ApiResponse<Page<AssignmentResponse>> getUnassignedAssignments(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @PathVariable Long classId
+    ) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<AssignmentResponse> responsePage = assignmentService.getUnassignedAssignments(classId, pageable);
+
+        return ApiResponse.<Page<AssignmentResponse>>builder()
+                .result(responsePage)
+                .build();
+    }
+
+
     @GetMapping("/class/{classId}")
-    public ApiResponse<Page<AssignmentClassDetailResponse>> getAllAssignmentsByClassId(@RequestParam(value = "page", defaultValue = "0") int page,
+    public ApiResponse<Page<AssignmentClassResponse>> getAllAssignmentsByClassId(@RequestParam(value = "page", defaultValue = "0") int page,
                                                                             @RequestParam(value = "size", defaultValue = "10") int size,
                                                                             @PathVariable Long classId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<AssignmentClassDetailResponse> responsePage = assignmentService.getAssignmentsByClassId(classId, pageable);
-        return ApiResponse.<Page<AssignmentClassDetailResponse>>builder()
+        Page<AssignmentClassResponse> responsePage = assignmentService.getAssignmentsByClassId(classId, pageable);
+        return ApiResponse.<Page<AssignmentClassResponse>>builder()
                 .result(responsePage)
                 .build();
     }
@@ -99,17 +116,17 @@ public class AssignmentController {
     }
 
     @GetMapping("/{classId}/{assignmentId}")
-    ApiResponse<AssignmentClassDetailResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
-        AssignmentClassDetailResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
-        return ApiResponse.<AssignmentClassDetailResponse>builder()
+    ApiResponse<AssignmentClassResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
+        AssignmentClassResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
+        return ApiResponse.<AssignmentClassResponse>builder()
                 .result(response)
                 .build();
     }
 
     @GetMapping("/detail/{assignmentClassDetailId}")
-    ApiResponse<AssignmentClassDetailResponse> getAssignmentByClassId( @PathVariable Long assignmentClassDetailId) {
-        AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetailId(assignmentClassDetailId);
-        return ApiResponse.<AssignmentClassDetailResponse>builder()
+    ApiResponse<AssignmentClassResponse> getAssignmentByClassId( @PathVariable Long assignmentClassDetailId) {
+        AssignmentClassResponse response = assignmentService.getAssignmentClassDetailId(assignmentClassDetailId);
+        return ApiResponse.<AssignmentClassResponse>builder()
                 .result(response)
                 .build();
     }

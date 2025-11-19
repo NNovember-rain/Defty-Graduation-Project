@@ -42,7 +42,7 @@ export interface IAssignment {
     isActive: number;
     startDate: string | null;
     endDate: string | null;
-    modules: IModule[];
+    assignmentClassDetailResponseList: IModule[];
 }
 
 export interface IAssignAssignment {
@@ -101,6 +101,28 @@ export const getAssignments = async (options: GetAssignmentsOptions = {}): Promi
         limit: data.result.size
     } as GetAssignmentsResult;
 };
+
+export const getUnassignedAssignments = async (classId: number, options: GetAssignmentsOptions): Promise<GetAssignmentsResult> => {
+    const params = {
+        page: (options.page || 1) - 1,
+        size: options.limit,
+        name: options.name,
+        sortBy: options.sortBy,
+        sortOrder: options.sortOrder,
+    };
+
+    const url = `${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/unassigned/${classId}`;
+    const response = await handleRequest(getWithParams(url, params));
+    const data = await response.json();
+
+    return {
+        assignments: data.result.content,
+        total: data.result.totalElements,
+        page: data.result.number,
+        limit: data.result.size
+    } as GetAssignmentsResult;
+};
+
 
 export const getAssignmentsByClassId = async (classId: number, options: GetAssignmentsOptions = {}): Promise<GetAssignmentsResult> => {
     const params = {

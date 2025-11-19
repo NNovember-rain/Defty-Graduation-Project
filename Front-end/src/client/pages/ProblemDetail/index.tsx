@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import Split from "react-split";
 import Description from "./Description";
@@ -56,8 +56,8 @@ const ProblemDetail: React.FC = () => {
 
     // Lấy classId và assignmentClassDetailId (từ problemId trong URL)
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
-    const currentClassId = useMemo(() => Number(classId), [classId]);
-    const assignmentClassDetailId = useMemo(() => Number(problemId), [problemId]); // ID chi tiết lớp/gán bài tập
+    const currentClassId = Number(classId);
+    const assignmentClassDetailId = Number(problemId); // ID chi tiết lớp/gán bài tập
 
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -65,13 +65,15 @@ const ProblemDetail: React.FC = () => {
     const [searchParams] = useSearchParams();
     const isTestMode = searchParams.get("mode") === "test";
     const assignmentClassId = searchParams.get("problemId");
-    // Assignment gốc (chứa commonDescription, title)
-    const problemIdNumber = useMemo(() => Number(problemId), [problemId]);
-    const assignmentClassIdForPractice = useMemo(() => !isTestMode ? problemIdNumber : 0, [isTestMode, problemIdNumber]);
-    const currentMode: 'practice' | 'test' = useMemo(() => isTestMode ? 'test' : 'practice', [isTestMode]);
+    console.log(assignmentClassId)
+    const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
 
     const [code, setCode] = useState<string>("");
     const [imageUrl, setImageUrl] = useState<string | null>(null);
+    // Assignment gốc (chứa commonDescription, title)
+    const problemIdNumber = Number(problemId);
+    const assignmentClassIdForPractice = !isTestMode ? problemIdNumber : 0;
+    console.log("assignmentClassIdForPractice:", assignmentClassIdForPractice);
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
@@ -257,18 +259,9 @@ const ProblemDetail: React.FC = () => {
 
     // Gọi API chỉ bằng ID chi tiết
     const fetchAssignmentInfo = async (detailId: number) => {
-        try {
-            const asg = (await getAssignmentDetail(detailId));
+            const asg = (await getAssignmentDetail(assignmentClassDetailId));
             setAssignment(asg);
             return true;
-        } catch (e: any) {
-            const s = getHttpStatus(e);
-            if (s === 400 || s === 404) {
-                navigate("/not-found");
-                return false;
-            }
-            throw e;
-        }
     };
 
     const fetchAll = useCallback(
@@ -291,61 +284,66 @@ const ProblemDetail: React.FC = () => {
     );
 
     useEffect(() => {
-        if (!Number.isFinite(currentClassId) || !Number.isFinite(assignmentClassDetailId)) {
+        const cid = Number(classId);
+        const detailId = Number(problemId);
+        if (!Number.isFinite(cid) || !Number.isFinite(detailId)) {
             navigate("/not-found");
             return;
         }
-        // Trần ID chi tiết vào fetchAll
-        fetchAll(currentClassId, assignmentClassDetailId);
-    }, [currentClassId, assignmentClassDetailId, fetchAll]);
+        // Truyền ID chi tiết vào fetchAll
+        fetchAll(cid, detailId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [classId, problemId, fetchAll]);
 
     // Load submitted code in Test Mode
-    const loadSubmittedCode = useCallback(async () => {
-        if (isNaN(assignmentClassDetailId)) return;
+    useEffect(() => {
+        const loadSubmittedCode = async () => {
+            if (isNaN(assignmentClassDetailId)) return;
 
-        if (isTestMode) {
-            try {
-                // Dùng assignmentClassDetailId khi lấy submission
-                const submission: LastSubmissionResponse | null = await getLastSubmissionExamMode(currentClassId, assignmentClassDetailId);
+            if (isTestMode) {
+                try {
+                    // Dùng assignmentClassDetailId khi lấy submission
+                    const submission: LastSubmissionResponse | null = await getLastSubmissionExamMode(currentClassId, assignmentClassDetailId);
 
-                setLastSubmission(submission);
+                    setLastSubmission(submission);
 
-                if (submission?.studentPlantUMLCode) {
-                    setCode(submission.studentPlantUMLCode);
+                    if (submission?.studentPlantUMLCode) {
+                        setCode(submission.studentPlantUMLCode);
 
-                    if (submission.moduleId) {
-                        setModule(String(submission.moduleId));
+                        if (submission.moduleId) {
+                            setModule(String(submission.moduleId));
+                        }
+                        if (submission.typeUmlId) {
+                            setUmlType(String(submission.typeUmlId));
+                        }
+                    } else {
+                        setCode(initialPlantUml);
                     }
-                    if (submission.typeUmlId) {
-                        setUmlType(String(submission.typeUmlId));
+
+                    if (submission?.score !== undefined && submission?.score !== null) {
+                        setIsGraded(true);
+                    } else {
+                        setIsGraded(false);
                     }
-                } else {
+
+                    setIsInitialDataLoaded(true);
+                } catch (error) {
+                    console.log('No previous submission found in test mode, using default code', error);
+                    setCode(initialPlantUml);
+                    setIsGraded(false);
+                    setLastSubmission(null);
+                    setIsInitialDataLoaded(true);
+                }
+            } else {
+                if (!code) {
                     setCode(initialPlantUml);
                 }
-
-                if (submission?.score !== undefined && submission?.score !== null) {
-                    setIsGraded(true);
-                } else {
-                    setIsGraded(false);
-                }
-
-                setIsInitialDataLoaded(true);
-            } catch (error) {
-                console.log('No previous submission found in test mode, using default code', error);
-                setCode(initialPlantUml);
-                setIsGraded(false);
-                setLastSubmission(null);
                 setIsInitialDataLoaded(true);
             }
-        } else {
-            setCode((prevCode) => prevCode || initialPlantUml);
-            setIsInitialDataLoaded(true);
-        }
-    }, [isTestMode, assignmentClassDetailId, currentClassId]);
+        };
 
-    useEffect(() => {
         loadSubmittedCode();
-    }, [loadSubmittedCode]);
+    }, [isTestMode, assignmentClassDetailId, currentClassId]);
 
     if (loading || !isInitialDataLoaded) return <div className="problem-detail__loading">Loading…</div>;
     if (err) return <div className="problem-detail__error">Error: {err}</div>;
@@ -369,7 +367,7 @@ const ProblemDetail: React.FC = () => {
                 <div className="panel panel--left scrollable">
                     <Description assignment={assignment} isLoading={loading} error={err}
                                  mode={currentMode}
-                                 umlTypes={assignment?.modules.find(m => String(m.id) === module)?.typeUmls || []}
+                                 umlTypes={assignment?.assignmentClassDetailResponseList.find(m => String(m.id) === module)?.typeUmls || []}
                                  assignmentClassId={assignmentClassIdForPractice}
                                  onUmlTypeChange={handleUmlTypeChange}
                                  module={module}
