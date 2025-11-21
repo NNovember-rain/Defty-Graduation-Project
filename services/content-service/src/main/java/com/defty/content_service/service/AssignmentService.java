@@ -2,10 +2,7 @@ package com.defty.content_service.service;
 
 import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
-import com.defty.content_service.dto.response.AssignmentClassResponse;
-import com.defty.content_service.dto.response.AssignmentResponse;
-import com.defty.content_service.dto.response.AssignmentResponseByClass;
-import com.defty.content_service.dto.response.ModuleResponse;
+import com.defty.content_service.dto.response.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -28,4 +25,5 @@ public interface AssignmentService {
     ModuleResponse getAssignmentModule(Long moduleId);
     AssignmentClassResponse getAssignmentClassDetailId(Long assignmentClassDetailId);
     AssignmentResponseByClass getAssignmentAllModule(Long assignmentClassId);
+    AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId);
 }

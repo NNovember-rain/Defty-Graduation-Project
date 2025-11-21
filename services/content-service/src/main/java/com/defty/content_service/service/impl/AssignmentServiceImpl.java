@@ -214,7 +214,7 @@ class AssignmentServiceImpl implements AssignmentService {
                                     Collectors.groupingBy(AssignmentClassDetail::isChecked)
                             ));
 
-                    List<AssignmentClassDetailResponse> moduleResponses = new ArrayList<>();
+                    List<AssignmentClassDetailsResponse> moduleResponses = new ArrayList<>();
 
                     groupedByModuleAndChecked.forEach((moduleId, checkedMap) -> {
                         ModuleEntity module = ac.getAssignmentClassDetails().stream()
@@ -234,7 +234,7 @@ class AssignmentServiceImpl implements AssignmentService {
                                     String typeUmlName = detail.getTypeUml() != null ? detail.getTypeUml().name() : "NO_TYPE";
                                     singleTypeUmlList.add(typeUmlName);
 
-                                    AssignmentClassDetailResponse response = AssignmentClassDetailResponse.builder()
+                                    AssignmentClassDetailsResponse response = AssignmentClassDetailsResponse.builder()
                                             .moduleId(moduleId)
                                             .moduleName(module.getModuleName())
                                             .moduleDescription(module.getModuleDescription())
@@ -254,7 +254,7 @@ class AssignmentServiceImpl implements AssignmentService {
 
                                 AssignmentClassDetail firstDetail = details.stream().findFirst().orElse(null);
 
-                                AssignmentClassDetailResponse response = AssignmentClassDetailResponse.builder()
+                                AssignmentClassDetailsResponse response = AssignmentClassDetailsResponse.builder()
                                         .moduleId(moduleId)
                                         .moduleName(module.getModuleName())
                                         .moduleDescription(module.getModuleDescription())
@@ -305,7 +305,7 @@ class AssignmentServiceImpl implements AssignmentService {
                                 Collectors.toList())
                 ));
 
-        List<AssignmentClassDetailResponse> moduleResponses = moduleUmlMap.entrySet().stream()
+        List<AssignmentClassDetailsResponse> moduleResponses = moduleUmlMap.entrySet().stream()
                 .map(entry -> {
                     ModuleEntity module = assignmentClass.getAssignmentClassDetails().stream()
                             .filter(d -> d.getModule().getId().equals(entry.getKey()))
@@ -313,7 +313,7 @@ class AssignmentServiceImpl implements AssignmentService {
                             .map(AssignmentClassDetail::getModule)
                             .orElse(null);
 
-                    return AssignmentClassDetailResponse.builder()
+                    return AssignmentClassDetailsResponse.builder()
                             .moduleId(module.getId())
                             .moduleName(module.getModuleName())
                             .moduleDescription(module.getModuleDescription())
@@ -354,7 +354,7 @@ class AssignmentServiceImpl implements AssignmentService {
                 .checkedTest(assignmentClassDetail.isChecked())
                 .classId(assignmentClassDetail.getAssignmentClass().getClassId())
                 .assignmentClassDetailResponseList(List.of(
-                        AssignmentClassDetailResponse.builder()
+                        AssignmentClassDetailsResponse.builder()
                                 .moduleId(assignmentClassDetail.getModule().getId())
                                 .moduleName(assignmentClassDetail.getModule().getModuleName())
                                 .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
@@ -407,6 +407,22 @@ class AssignmentServiceImpl implements AssignmentService {
         // 4. Trả về kết quả
         return AssignmentResponseByClass.builder()
                 .modules(moduleResponses)
+                .build();
+    }
+
+    @Override
+    public AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId) {
+        AssignmentClassDetail assignmentClassDetail = assignmentClassDetailRepository.findById(assignmentClassDetailId)
+                .orElseThrow(() -> new NotFoundException("AssignmentClassDetail not found with id: " + assignmentClassDetailId));
+        return AssignmentClassDetailResponse.builder()
+                .moduleName(assignmentClassDetail.getModule().getModuleName())
+                .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
+                .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
+                .typeUml(String.valueOf(assignmentClassDetail.getTypeUml()))
+                .titleAssignment(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
+                .checkedTest(assignmentClassDetail.isChecked())
+                .startDate(assignmentClassDetail.getStartDate())
+                .endDate(assignmentClassDetail.getEndDate())
                 .build();
     }
 
