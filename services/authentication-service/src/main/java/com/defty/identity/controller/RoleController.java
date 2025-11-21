@@ -36,6 +36,18 @@ public class RoleController {
     }
 
     @PreAuthorize("hasRole('admin')")
+    @GetMapping("/isActive")
+    ApiResponse<Page<RoleResponse>> getAllRolesActive(@RequestParam(value = "page", defaultValue = "0") int page,
+                                                @RequestParam(value = "size", defaultValue = "10") int size,
+                                                @RequestParam(value = "name", required = false) String name) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<RoleResponse> roleResponses = roleService.findAllRolesActive(name, pageable);
+        return ApiResponse.<Page<RoleResponse>>builder()
+                .result(roleResponses)
+                .build();
+    }
+
+    @PreAuthorize("hasRole('admin')")
     @GetMapping("/{id}")
     public ApiResponse<RoleResponse> getRoleById(@PathVariable Long id) {
         RoleResponse roleResponse = roleService.getRoleById(id);

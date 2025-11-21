@@ -53,6 +53,26 @@ export const getRoles = async (options: GetRolesOptions = {}): Promise<GetRolesR
     } as GetRolesResult;
 };
 
+export const getRolesActive = async (options: GetRolesOptions = {}): Promise<GetRolesResult> => {
+    const params = {
+        page: (options.page || 1) - 1,
+        limit: options.limit,
+        name: options.name,
+        sortBy: options.sortBy,
+        sortOrder: options.sortOrder,
+    };
+
+    const response = await handleRequest(getWithParams(`${PREFIX_IDENTITY}/${PREFIX_ROLES}/isActive`, params));
+    const data = await response.json();
+    return {
+        roles: data.result.content,
+        total: data.result.totalElements,
+        // page: data.result.number - 1,
+        limit: data.result.size
+    } as GetRolesResult;
+};
+
+
 export const getRoleById = async (id: string | number): Promise<IRole> => {
     const response = await handleRequest(get(`${PREFIX_IDENTITY}/${PREFIX_ROLES}/${id}`));
     const data = await response.json();

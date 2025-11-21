@@ -295,8 +295,11 @@
       "dob": "Ngày sinh",
       "email": "Email",
       "roles": "Vai trò",
-      "creationDate": "Ngày tạo"
+      "creationDate": "Ngày tạo",
+      "userCode": "Mã học sinh"
     },
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hóa người dùng '{{name}}' không?",
     "search": {
       "username": "Tên đăng nhập",
       "namePlaceholder": "Nhập tên đăng nhập...",
@@ -334,6 +337,7 @@
     "roleLabel": "Vai trò",
     "rolePlaceholder": "Chọn vai trò",
     "userCode": "Mã học sinh",
+    "roleLabelRequired": "Vai trò là bắt buộc",
     "validation": {
       "dobLabelRequired": "Ngày sinh là bắt buộc",
       "userCodeRequired": "Mã học sinh là bắt buộc",
@@ -518,6 +522,8 @@
       "description": "Mô tả",
       "creationDate": "Ngày tạo"
     },
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hóa vai trò '{{name}}' không?",
     "search": {
       "name": "Tên vai trò",
       "namePlaceholder": "Nhập tên vai trò...",

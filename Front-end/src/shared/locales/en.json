@@ -297,8 +297,11 @@
       "dob": "Date of Birth",
       "email": "Email",
       "roles": "Roles",
-      "creationDate": "Created At"
+      "creationDate": "Created At",
+      "userCode": "User Code"
     },
+    "confirmToggleTitle": "Confirm Status Change",
+    "confirmDeactivate": "Are you sure you want to deactivate user '{{name}}'?",
     "search": {
       "username": "Username",
       "namePlaceholder": "Enter username...",
@@ -336,6 +339,7 @@
     "roleLabel": "Role",
     "rolePlaceholder": "Select role",
     "userCode": "User Code",
+    "roleLabelRequired": "Role is required",
     "validation": {
       "dobLabelRequired": "Date of birth is required",
       "userCodeRequired": "User code is required",
@@ -520,6 +524,8 @@
       "description": "Description",
       "creationDate": "Creation Date"
     },
+    "confirmToggleTitle": "Confirm Status Change",
+    "confirmDeactivate": "Are you sure you want to deactivate role '{{name}}'?",
     "search": {
       "name": "Role Name",
       "namePlaceholder": "Enter role name...",

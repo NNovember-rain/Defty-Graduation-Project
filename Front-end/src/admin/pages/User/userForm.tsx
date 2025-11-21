@@ -3,40 +3,36 @@ import { useTranslation } from 'react-i18next';
 import type { FormField } from '../../template/ManagementTemplate/FormTemplate';
 import FormTemplate from '../../template/ManagementTemplate/FormTemplate';
 import { createUser, getUserById, updateUser } from '../../../shared/services/userService';
-import { getRoles, type IRole } from '../../../shared/services/roleService';
-import { useNotification } from "../../../shared/notification/useNotification.ts";
-import {useParams} from "react-router-dom";
+import { getRolesActive, type IRole } from '../../../shared/services/roleService';
+import { useParams } from "react-router-dom";
 
 const UserForm: React.FC = () => {
     const { t } = useTranslation();
-    const { message } = useNotification();
     const [roles, setRoles] = useState<IRole[]>([]);
     const { id } = useParams<{ id?: string }>();
     const isEditMode = !!id;
 
+    // Lấy danh sách role active
     useEffect(() => {
         async function fetchRoles() {
             try {
-                const response = await getRoles();
-                const rolesArray = Array.isArray(response.roles) ? response.roles : [];
-                console.log('Fetched roles:', rolesArray);
-                setRoles(rolesArray);
+                const response = await getRolesActive();
+                setRoles(response.roles);
             } catch (error) {
                 console.error('Error fetching roles:', error);
-                message.error(t('common.errorFetchingData'));
             }
         }
         fetchRoles();
     }, [t]);
 
-    // Tạo form fields
     const userFormFields = React.useMemo<FormField[]>(() => [
         { key: 'fullName', labelKey: 'userForm.fullNameLabel', type: 'text', placeholderKey: 'userForm.fullNamePlaceholder', required: true, gridSpan: 12 },
         { key: 'email', labelKey: 'userForm.emailLabel', type: 'text', placeholderKey: 'userForm.emailPlaceholder', required: true, gridSpan: 12 },
         { key: 'username', labelKey: 'userForm.usernameLabel', type: 'text', placeholderKey: 'userForm.usernamePlaceholder', required: true, gridSpan: 12 },
         { key: 'dob', labelKey: 'userForm.dobLabel', type: 'date', placeholderKey: 'userForm.dobPlaceholder', required: true, gridSpan: 12 },
         { key: 'userCode', labelKey: 'userForm.userCodeLabel', type: 'text', placeholderKey: 'userForm.userCodePlaceholder', required: true, gridSpan: 12 },
-        { key: 'password',
+        {
+            key: 'password',
             labelKey: 'userForm.passwordLabel',
             type: 'password',
             placeholderKey: 'userForm.passwordPlaceholder',
@@ -51,7 +47,10 @@ const UserForm: React.FC = () => {
             placeholderKey: 'userForm.rolePlaceholder',
             gridSpan: 12,
             required: true,
-            options: roles.map(role => ({ value: role.id, labelKey: role.name })),
+            options: roles.map(role => ({
+                value: String(role.id),
+                label: role.name
+            })),
         },
     ], [roles, isEditMode]);
 
@@ -86,13 +85,23 @@ const UserForm: React.FC = () => {
         { label: t('userForm.breadcrumb'), path: '/admin/users' },
     ];
 
-    // --- Tùy chỉnh formData trước khi render FormTemplate ---
+    // Transform dữ liệu user để fill form
     const transformUserData = (userData: any) => {
         if (!userData) return {};
         return {
             ...userData,
             roleId: userData.roles && userData.roles.length > 0 ? String(userData.roles[0].id) : '',
         };
+    };
+
+    // Hàm xử lý update user để gửi roleId mới
+    const handleUpdateUser = async (userId: string, formData: any) => {
+        const payload = { ...formData };
+        if (payload.roleId) {
+            payload.roles = [{ id: Number(payload.roleId) }];
+            delete payload.roleId; // tránh gửi trùng
+        }
+        return updateUser(userId, payload);
     };
 
     return (
@@ -105,7 +114,7 @@ const UserForm: React.FC = () => {
                 return transformUserData(user);
             }}
             serviceCreate={createUser}
-            serviceUpdate={updateUser}
+            serviceUpdate={handleUpdateUser} // <-- dùng hàm custom
             validationSchema={userValidationSchema}
             redirectPath="/admin/users"
         />

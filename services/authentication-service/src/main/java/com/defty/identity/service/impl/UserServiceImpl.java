@@ -69,26 +69,30 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (userRepository.existsByUsernameAndIdNot(request.getUsername(), userId)) {
-            throw new AlreadyExitException("Username '" + request.getUsername() + "' already exists");
+            throw new AppException(ErrorCode.USER_EXISTED);
         }
 
         if (userRepository.existsByEmailAndIdNot(request.getEmail(), userId)) {
-            throw new AlreadyExitException("Email '" + request.getEmail() + "' already exists");
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
 
         if (userRepository.existsByUserCodeAndIdNot(request.getUserCode(), userId)) {
-            throw new AlreadyExitException("User code '" + request.getUserCode() + "' already exists");
+            throw new AppException(ErrorCode.USER_CODE_EXISTED);
         }
-
-        userMapper.updateUser(user, request);
 
         if (request.getRoles() != null) {
             List<Long> roleIds = request.getRoles().stream()
                     .map(BaseEntity::getId)
                     .toList();
+
             var roles = roleRepository.findAllById(roleIds);
-            user.setRoles(new HashSet<>(roles));
+
+            // JPA way - bảo đảm update bảng user_role
+            user.getRoles().clear();
+            user.getRoles().addAll(roles);
         }
+
+        userMapper.updateUser(user, request);
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
