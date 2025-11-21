@@ -53,16 +53,15 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     const [messageApi, contextHolder] = message.useMessage();
 
     const columns: ColumnsType<Assignment> = [
-        {title: t("Title"), dataIndex: "title", key: "title"},
+        {title: t("assignmentForm.listAssignment"), dataIndex: "title", key: "title"},
     ];
 
     const moduleColumns: ColumnsType<Module> = [
-        {title: t("Module Name"), dataIndex: "moduleName", key: "moduleName"},
+        {title: t("Module"), dataIndex: "moduleName", key: "moduleName"},
     ];
 
     const { id } = useParams<ClassDetailParams>();
 
-    const classId = Number(id);
 
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
         setLoading(true);

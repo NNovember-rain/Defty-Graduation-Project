@@ -159,7 +159,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     }, [visible, currentPage, pageSize, fetchAssignmentsForModal, form]);
 
     const columns: ColumnsType<Assignment> = [
-        {title: t("Title"), dataIndex: "title", key: "title"},
+        {title: t("assignmentForm.listAssignment"), dataIndex: "title", key: "title"},
     ];
 
 
@@ -270,9 +270,9 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         };
 
         const moduleColumnsWithSelection: ColumnsType<Module> = [
-            {title: t("Module Name"), dataIndex: "moduleName", key: "moduleName"},
+            {title: t("Module"), dataIndex: "moduleName", key: "moduleName"},
             {
-                title: t("Select Type UML") + ' *',
+                title: t("Type UML") ,
                 key: "selectTypeUml",
                 width: 200,
                 render: (text, moduleRecord) => {

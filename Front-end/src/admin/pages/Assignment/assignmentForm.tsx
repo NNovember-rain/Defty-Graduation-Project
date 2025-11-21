@@ -44,11 +44,11 @@ const AssignmentForm: React.FC = () => {
 
     const assignmentValidationSchema = {
         title: (value: string, t: (key: string) => string) => {
-            if (!value?.trim()) return t('assignmentForm.validation.titleRequired');
+            if (!value?.trim()) return t('assignmentForm.titleRequired');
             return null;
         },
         description: (value: string, t: (key: string) => string) => {
-            if (!value?.trim()) return t('assignmentForm.validation.descriptionRequired');
+            if (!value?.trim()) return t('assignmentForm.descriptionRequired');
             return null;
         },
     };

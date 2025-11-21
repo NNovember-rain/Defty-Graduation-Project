@@ -7,7 +7,7 @@ import {
     type IAssignment
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
-import {Button, Card, List, Pagination, Tabs, type TabsProps, Tag, Typography} from "antd";
+import {Button, Card, List, Pagination, Tabs, type TabsProps, Tag, Typography, Empty} from "antd";
 import {IoCalendarOutline} from "react-icons/io5";
 import {MdOutlineAssignment} from "react-icons/md";
 import {useNavigate} from "react-router-dom";
@@ -28,7 +28,7 @@ interface AssignedModule {
     typeUmls: string[];
     startDate: string | null;
     endDate: string | null;
-    assignmentClassDetailId: number; // Đã thêm vào interface trong lần sửa trước
+    assignmentClassDetailId: number;
 }
 
 interface IAssignmentExtended extends IAssignment {
@@ -38,7 +38,7 @@ interface IAssignmentExtended extends IAssignment {
     startDate: string | null;
     endDate: string | null;
     classInfoId: number;
-    assignmentClassId: number; // 🔥 Đã thêm trường này để lấy từ API
+    assignmentClassId: number;
     assignmentClassDetailResponseList: AssignedModule[];
 }
 
@@ -74,7 +74,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [sortBy] = useState<string | undefined>("createdDate");
     const [sortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
-    const [activeTab, setActiveTab] = useState<string>('test'); // Mặc định là 'test'
+    const [activeTab, setActiveTab] = useState<string>('test');
 
     const handleViewAssignmentDetails = useCallback(
         (rowData: ProcessedAssignmentItem) => {
@@ -89,7 +89,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             queryParams += `&assignmentClassId=${rowData.assignmentClassDetailId}`;
 
             navigate(url + queryParams);
-            console.log(url + queryParams);
+            // console.log(url + queryParams);
         },
         [navigate, classId]
     );
@@ -111,7 +111,6 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             const finalAssignments: IAssignmentExtended[] = [];
 
             (response.assignments || []).forEach((a: any) => {
-                // Giả định API trả về đủ các trường trong modules, bao gồm assignmentClassDetailId
                 const modules: AssignedModule[] = (a.assignmentClassDetailResponseList || []).map((m: any) => ({
                     ...m,
                     assignmentClassDetailId: m.assignmentClassDetailId || 0,
@@ -148,8 +147,8 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                     createdDate: a.createdDate ? dayjs(a.createdDate).toISOString() : "",
                     startDate: displayStartDate,
                     endDate: displayEndDate,
-                    assignmentClassId: a.assignmentClassId, // Lấy assignmentClassId từ response API
-                    modules: modules,
+                    assignmentClassId: a.assignmentClassId,
+                    assignmentClassDetailResponseList: modules, // Sử dụng tên trường đã sửa
                 } as IAssignmentExtended);
             });
 
@@ -175,6 +174,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
         size: number,
         setTotal: (total: number) => void
     ) => {
+        // ... (Giữ nguyên logic sắp xếp và phân trang)
         const sorted = [...data].sort((a, b) => {
             let valA: any, valB: any;
             let comparison = 0;
@@ -208,7 +208,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
 
         return sorted.slice(startIndex, endIndex);
 
-    }, [page, size]);
+    }, []); // Đã bỏ page, size khỏi dependencies vì chúng được truyền vào
 
 
     const processedAssignments = useMemo(() => {
@@ -221,10 +221,10 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
 
                 return relevantModules.flatMap(m => {
                     const baseItem: ProcessedAssignmentItem = {
-                        key: '', // Sẽ được set sau
+                        key: '',
                         assignmentId: a.originalId,
                         assignmentClassDetailId: m.assignmentClassDetailId,
-                        assignmentClassId: a.assignmentClassId, // Lấy từ Assignment Extended
+                        assignmentClassId: a.assignmentClassId,
                         assignmentTitle: a.assignmentTitle,
                         assignmentCode: a.assignmentCode,
                         startDate: m.startDate,
@@ -232,9 +232,8 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                         isModuleTest: true,
                         displayModuleId: m.moduleId,
                         displayModuleName: m.moduleName,
-                        displayTypeUmls: [], // Sẽ được set sau
+                        displayTypeUmls: [],
                     };
-                    console.log("Processing module:", m, "for assignment:", a);
 
                     return m.typeUmls.map((typeUml, typeIndex) => ({
                         ...baseItem,
@@ -243,6 +242,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                     }));
                 });
             });
+            // Áp dụng sắp xếp và phân trang, setTotal được gọi bên trong
             return applySortingAndPagination(flattened, sortBy, sortOrder, page, size, setTotal);
 
         } else {
@@ -252,7 +252,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                 const practiceModules = a.assignmentClassDetailResponseList.filter(m => m.checkedTest === false);
 
                 if (practiceModules.length > 0) {
-                    const allPracticeUmls = Array.from(new Set(practiceModules.flatMap(m => m.typeUmls))); // Dùng Set để tránh UML trùng lặp
+                    const allPracticeUmls = Array.from(new Set(practiceModules.flatMap(m => m.typeUmls)));
 
                     let displayStartDate: string | null = null;
                     let displayEndDate: string | null = null;
@@ -273,7 +273,6 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                         }
                     }
 
-                    // Lấy assignmentClassDetailId từ module đầu tiên để đảm bảo có ID hợp lệ
                     const firstModule = practiceModules[0];
                     const detailId = firstModule.assignmentClassDetailId;
 
@@ -282,8 +281,8 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                         assignmentId: a.originalId,
                         assignmentTitle: a.assignmentTitle,
                         assignmentCode: a.assignmentCode,
-                        assignmentClassId: a.assignmentClassId, // Lấy từ Assignment Extended
-                        assignmentClassDetailId: detailId, // Dùng tạm ID chi tiết đầu tiên (chủ yếu cho URL mặc định)
+                        assignmentClassId: a.assignmentClassId,
+                        assignmentClassDetailId: detailId,
                         startDate: displayStartDate,
                         endDate: displayEndDate,
                         isModuleTest: false,
@@ -297,6 +296,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             });
 
             const flattened = Array.from(assignmentMap.values());
+            // Áp dụng sắp xếp và phân trang, setTotal được gọi bên trong
             return applySortingAndPagination(flattened, sortBy, sortOrder, page, size, setTotal);
         }
 
@@ -312,6 +312,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     };
 
     const renderAssignmentCard = (item: ProcessedAssignmentItem, isListView: boolean) => {
+        // ... (Giữ nguyên hàm renderAssignmentCard)
         const isTest = item.isModuleTest;
         const hasNoDeadline = !item.startDate && !item.endDate;
 
@@ -397,30 +398,50 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     };
 
+    const renderTabContent = (items: ProcessedAssignmentItem[], isTestTab: boolean) => {
+        if (items.length === 0 && !loading) {
+            const descriptionText = isTestTab
+                ? t("assignmentPage.noAssignments") || "Chưa có bài tập kiểm tra nào được giao."
+                : t("assignmentPage.noAssignments") || "Chưa có bài tập luyện tập nào được giao."
+
+            return (
+                <div style={{ padding: '50px 0' }}>
+                    <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={
+                            <Text style={{color: '#aaa',}}>
+                                {descriptionText}
+                            </Text>
+                        }
+                    />
+                </div>
+            );
+        }
+
+        return (
+            <List
+                grid={view === 'grid' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 4 } : undefined}
+                dataSource={items}
+                renderItem={(a) => renderAssignmentCard(a, view === 'list')}
+                // Đã loại bỏ locale={{ emptyText: ... }} vì chúng ta dùng component Empty ở ngoài
+            />
+        );
+    };
+
+    // Tính toán tổng số lượng bài tập kiểm tra và luyện tập TỪ DỮ LIỆU GỐC (chưa phân trang/lọc)
+    const testCount = assignments.flatMap(a => a.assignmentClassDetailResponseList.filter(m => m.checkedTest)).flatMap(m => m.typeUmls).length;
+    const assignmentCount = assignments.flatMap(a => a.assignmentClassDetailResponseList.filter(m => !m.checkedTest)).length;
+
     const tabItems: TabsProps['items'] = [
         {
             key: 'test',
-            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${assignments.flatMap(a => a.assignmentClassDetailResponseList.filter(m => m.checkedTest)).flatMap(m => m.typeUmls).length})`,
-            children: (
-                <List
-                    grid={view === 'grid' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 4 } : undefined}
-                    dataSource={processedAssignments}
-                    locale={{ emptyText: t("common.noTests") || "Chưa có bài tập kiểm tra nào." }}
-                    renderItem={(a) => renderAssignmentCard(a, view === 'list')}
-                />
-            ),
+            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${testCount})`,
+            children: renderTabContent(processedAssignments, true),
         },
         {
             key: 'assignment',
-            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${assignments.flatMap(a => a.assignmentClassDetailResponseList.filter(m => !m.checkedTest)).length})`,
-            children: (
-                <List
-                    grid={view === 'grid' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 4 } : undefined}
-                    dataSource={processedAssignments}
-                    locale={{ emptyText: t("common.noAssignments") || "Chưa có bài tập luyện tập nào." }}
-                    renderItem={(a) => renderAssignmentCard(a, view === 'list')}
-                />
-            ),
+            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${assignmentCount})`,
+            children: renderTabContent(processedAssignments, false),
         },
     ];
 
@@ -451,6 +472,8 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     }
 
+    const showPagination = processedAssignments.length > 0;
+
     return (
         <div className="assignment-tab-container">
             <main className="assignment-content">
@@ -466,20 +489,23 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                     className="assignment-tabs"
                 />
 
-                <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end" }}>
-                    <Pagination
-                        current={page}
-                        pageSize={size}
-                        total={total}
-                        showSizeChanger
-                        pageSizeOptions={["6", "9", "12", "18"]}
-                        onChange={onChangePage}
-                        onShowSizeChange={onChangePage}
-                        showTotal={(total) =>
-                            `${t("common.total") || "Tổng"} ${total} ${total > 1 ? t("common.items") || "mục" : t("common.item") || "mục"}`
-                        }
-                    />
-                </div>
+                {/* Chỉ hiển thị Pagination nếu có dữ liệu */}
+                {showPagination && (
+                    <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end" }}>
+                        <Pagination
+                            current={page}
+                            pageSize={size}
+                            total={total}
+                            showSizeChanger
+                            pageSizeOptions={["6", "9", "12", "18"]}
+                            onChange={onChangePage}
+                            onShowSizeChange={onChangePage}
+                            showTotal={(total) =>
+                                `${t("common.total") || "Tổng"} ${total} ${total > 1 ? t("common.items") || "mục" : t("common.item") || "mục"}`
+                            }
+                        />
+                    </div>
+                )}
             </main>
         </div>
     );

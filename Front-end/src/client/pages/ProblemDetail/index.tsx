@@ -65,7 +65,6 @@ const ProblemDetail: React.FC = () => {
     const [searchParams] = useSearchParams();
     const isTestMode = searchParams.get("mode") === "test";
     const assignmentClassId = searchParams.get("problemId");
-    console.log(assignmentClassId)
     const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
 
     const [code, setCode] = useState<string>("");
@@ -73,7 +72,6 @@ const ProblemDetail: React.FC = () => {
     // Assignment gốc (chứa commonDescription, title)
     const problemIdNumber = Number(problemId);
     const assignmentClassIdForPractice = !isTestMode ? problemIdNumber : 0;
-    console.log("assignmentClassIdForPractice:", assignmentClassIdForPractice);
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
@@ -190,7 +188,6 @@ const ProblemDetail: React.FC = () => {
         try {
             const submissionData: SubmissionRequest = {
                 classId: currentClassId,
-                // Dùng assignmentClassDetailId làm ID bài tập nộp
                 assignmentId: assignmentClassDetailId,
                 studentPlantUmlCode: code,
                 examMode: isTestMode,

@@ -22,7 +22,8 @@ import {
     type TabsProps,
     Tooltip,
     Typography,
-    Tag
+    Tag,
+    Empty // 🔥 Đã thêm Empty
 } from "antd";
 import {IoCalendarOutline, IoFileTrayFull, IoTimeOutline, IoCheckmarkCircleOutline} from "react-icons/io5";
 import {MdOutlineAssignment, MdAssignmentTurnedIn} from "react-icons/md";
@@ -33,7 +34,7 @@ import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { TabPane } = Tabs; // Đảm bảo Tabs có TabPane
+const { TabPane } = Tabs;
 
 interface AssignmentTabProps {
     classId: number;
@@ -174,13 +175,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const processedAssignments = useMemo(() => {
         const isFilteringTest = activeTab === 'test';
 
-        // 🚀 BƯỚC 1: LÀM PHẲNG (FLATTEN) ASSIGNMENTS THÀNH CÁC ITEM CẤP MODULE
         const flattened = assignments.flatMap(a => {
             const relevantModules = a.assignedModules
-                .filter(m => m.checkedTest === isFilteringTest); // Lọc theo tab hiện tại
+                .filter(m => m.checkedTest === isFilteringTest);
 
             return relevantModules.map((m, mIndex) => {
-                // Key cần là duy nhất: AssignmentID + ModuleID + Index (để phân biệt Type UML đã tách)
                 return {
                     key: `${a.id}-${m.moduleId}-${mIndex}`,
                     assignmentId: a.id,
@@ -204,6 +203,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 let aVal: any;
                 let bVal: any;
 
+                // Giữ nguyên logic sắp xếp hiện tại (chỉ sắp xếp theo title/createdDate)
                 aVal = a.assignmentTitle ?? "";
                 bVal = b.assignmentTitle ?? "";
 
@@ -231,13 +231,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     const menuItems: MenuProps["items"] = [
         {
-            key: "create",
-            label: t("classDetail.assignment.createNew") || "Create New",
-            onClick: () => navigate(`/admin/content/assignments/create?classId=${classId}`)
-        },
-        {
             key: "assign",
-            label: t("classDetail.assignment.assign") || "Assign Assignment (Luyện tập)",
+            label: t("classDetail.assignment.assignAssignment") || "Assign Assignment (Luyện tập)",
             onClick: () => showAssignmentModal()
         },
         {
@@ -268,7 +263,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
 
     const renderAssignmentItem = (item: ProcessedAssignmentItem) => {
-        // Thiết lập màu sắc dựa trên loại bài tập (isModuleTest)
         const isTest = item.isModuleTest;
         const primaryColor = isTest ? '#fa541c' : '#52c41a'; // Cam cho Test, Xanh lá cho Luyện tập
         const secondaryColor = isTest ? '#fff1f0' : '#f6ffed';
@@ -292,8 +286,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 >
                     <Row gutter={[16, 16]} align="top">
                         <Col xs={24} sm={24} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-
-                            {/* Icon chính */}
                             <div style={{
                                 width: 40,
                                 height: 40,
@@ -311,10 +303,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             </div>
 
                             <div style={{ flex: 1 }}>
-                                {/* Tên Bài tập & Mã */}
-                                <Text type="secondary" style={{ fontSize: '12px', display: 'block', color: '#8c8c8c' }}>
-                                    {t("classDetail.assignment.code") || "Mã BT"}: {item.assignmentCode}
-                                </Text>
                                 <Title level={5} style={{ margin: '0 0 4px 0', lineHeight: 1.2, fontSize: '16px', color: '#262626' }}>
                                     {item.assignmentTitle}
                                 </Title>
@@ -360,7 +348,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 alignItems: "center",
                                 gap: 12,
                                 borderTop: '1px solid #f0f0f0',
-                                paddingTop: '10px'
+                                // paddingTop: '10px'
                             }}
                         >
 
@@ -369,7 +357,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                     icon={<MdOutlineAssignment />}
                                     type="text"
                                     shape="circle"
-                                    style={{ color: '#1890ff' }}
+                                    style={{ color: '#1890ff', fontSize: '18px' }}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleViewAssignmentDetails(item);
@@ -383,7 +371,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                         icon={<IoFileTrayFull />}
                                         type="text"
                                         shape="circle"
-                                        style={{ color: primaryColor }}
+                                        style={{ color: primaryColor, fontSize: '18px' }}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             goToAssignmentDetails(item.assignmentId);
@@ -404,6 +392,25 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         ).length;
     };
 
+    // 🔥 Hàm tạo component Empty tùy chỉnh
+    const renderEmptyContent = (isTest: boolean) => {
+        const descriptionText = isTest
+            ? t("common.noData") || "Chưa có bài tập kiểm tra nào được giao."
+            : t("common.noData") || "Chưa có bài tập luyện tập nào được giao.";
+
+        return (
+            <Empty
+                description={
+                    <Text type="secondary" style={{ color: '#8c8c8c' }}>
+                        {descriptionText}
+                    </Text>
+                }
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+        );
+    };
+
+    // 🔥 Cập nhật tabItems để sử dụng Empty component trong locale
     const tabItems: TabsProps['items'] = [
         {
             key: 'test',
@@ -413,7 +420,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     itemLayout="vertical"
                     dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
-                    locale={{emptyText: t("common.noTests") || "Chưa có bài tập kiểm tra nào."}}
+                    locale={{emptyText: renderEmptyContent(true)}} // Sửa đổi tại đây
                 />
             ),
         },
@@ -425,7 +432,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     itemLayout="vertical"
                     dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
-                    locale={{emptyText: t("common.noAssignments") || "Chưa có bài tập luyện tập nào."}}
+                    locale={{emptyText: renderEmptyContent(false)}} // Sửa đổi tại đây
                 />
             ),
         },
@@ -505,7 +512,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
                             <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={["click"]}>
                                 <Button type="primary">
-                                    {t("classDetail.assignment.create") || "Create/Assign"} <DownOutlined />
+                                    {t("classDetail.assignment.assign") || "Create/Assign"} <DownOutlined />
                                 </Button>
                             </Dropdown>
                         </Space>

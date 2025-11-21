@@ -1,5 +1,6 @@
 import React from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+import "./style.css"
 
 interface AdvancedRichTextEditorProps {
     value: string;
@@ -32,6 +33,7 @@ const TextEditor: React.FC<AdvancedRichTextEditorProps> = ({ value, onChange, di
                 readonly: disabled,
                 placeholder: placeholder,
                 height: 500,
+                elementpath: false,
             }}
         />
     );

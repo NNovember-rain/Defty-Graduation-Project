@@ -1,14 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-// Giả định TextEditor của bạn vẫn được định nghĩa tại đây
 import TextEditor from '../../components/TextEditor/TextEditor';
 import {Button, Card, Col, Collapse, Form, Input, message, Modal, Row, Select, Space, Tooltip} from 'antd';
-// Đã thêm EditOutlined để dùng cho nút chỉnh sửa thay cho PlusOutlined xoay
 import {CodeOutlined, DeleteOutlined, PlusOutlined, EditOutlined} from '@ant-design/icons';
 import {getTypeUmls, type ITypeUml} from "../../../shared/services/typeUmlService.ts";
-// Đảm bảo đường dẫn này là chính xác trong dự án của bạn
 
-// --- Interfaces Dữ Liệu (Giữ nguyên) ---
 interface Option {
     value: string;
     label: string;
@@ -26,7 +22,6 @@ interface ModuleData {
     id: number;
 }
 
-
 interface AssignmentModulesEditorProps {
     value: ModuleData[];
     onChange: (modules: ModuleData[]) => void;
@@ -34,7 +29,6 @@ interface AssignmentModulesEditorProps {
     disabled?: boolean;
 }
 
-// --- Dữ liệu Khởi tạo (Giữ nguyên) ---
 const initialUmlSolution: ModuleDetail = {
     typeUmlId: '',
     solutionCode: '',
@@ -58,7 +52,6 @@ interface ModuleModalProps {
     originalIndex: number | null;
 }
 
-// --- ModuleModal Component (Giữ nguyên logic) ---
 const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t, disabled, initialData, originalIndex }) => {
 
     const [form] = Form.useForm();
@@ -83,8 +76,6 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
     }, [t]);
 
     const typeUmlOptions: Option[] = typeUMLs.map(uml => ({
-        // LƯU Ý: Nếu getTypeUmls trả về ID, nên dùng ID cho value
-        // Giả định name là unique và là giá trị cần thiết
         value: uml.name,
         label: uml.name,
     })).filter(opt => opt.value);
@@ -107,7 +98,6 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
         try {
             const values = await form.validateFields();
 
-            // Lọc ra các Solution hợp lệ
             const validUmlSolutions = (values.umlSolutions || []).filter(
                 (sol: ModuleDetail) => sol.typeUmlId && sol.solutionCode && sol.solutionCode.trim()
             );
@@ -171,7 +161,6 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
                 </Button>,
             ]}
         >
-            {/* CONTAINER CHỨA FORM VÀ CUỘN */}
             <div style={{ maxHeight: CONTENT_HEIGHT, overflowY: 'auto', paddingBottom: 20 }}>
                 <Form
                     form={form}
@@ -179,19 +168,18 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
                     initialValues={initialData || createInitialModule()}
                     style={{ marginTop: 20 }}
                 >
-                    {/* 1. Tên Module (Giữ nguyên) */}
                     <Form.Item
                         name="moduleName"
-                        label={<span style={{ fontWeight: 600 }}>{t('assignmentForm.moduleName')}*</span>}
+                        label={<span style={{ fontWeight: 600 }}>{t('assignmentForm.moduleName')}</span>}
                         rules={[{ required: true, message: t('assignmentForm.moduleNameRequired') || 'Vui lòng nhập tên Module!' }]}
                     >
                         <Input disabled={disabled} placeholder={t('assignmentForm.moduleNamePlaceholder')}/>
                     </Form.Item>
 
-                    {/* 2. Mô tả (Giữ nguyên) */}
+
                     <Form.Item
                         name="description"
-                        label={<span style={{ fontWeight: 600 }}>{t('assignmentForm.descriptionLabel')}*</span>}
+                        label={<span style={{ fontWeight: 600 }}>{t('assignmentForm.descriptionLabel')}</span>}
                         rules={[{ required: true, message: t('assignmentForm.descriptionRequired') || 'Vui lòng nhập mô tả!' }]}
                     >
                         <TextEditor
@@ -203,9 +191,8 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
                         />
                     </Form.Item>
 
-                    {/* 3. Danh sách Solutions (Form.List) */}
                     <Card
-                        title={<h3 style={{ color: '#0056b3', margin: 0 }}>{t('assignmentForm.umlSolutionsLabel')}*</h3>}
+                        title={<h3 style={{ color: '#0056b3', margin: 0 }}>{t('assignmentForm.umlSolutionsLabel')}</h3>}
                         size="small"
                         style={{ marginBottom: 20, border: '1px solid #1890ff', backgroundColor: '#f0f9ff' }}
                     >
@@ -249,7 +236,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
                                                             {...restField}
                                                             name={[name, 'typeUmlId']}
                                                             fieldKey={[fieldKey, 'typeUmlId']}
-                                                            label={<span style={{ fontWeight: 500 }}>{t('assignmentForm.typeUmlLabel')}*</span>}
+                                                            label={<span style={{ fontWeight: 500 }}>{t('assignmentForm.typeUmlLabel')}</span>}
                                                             rules={[{ required: true, message: t('assignmentForm.typeUmlRequired') || 'Chọn Type UML!' }]}
                                                         >
                                                             <Select
@@ -266,7 +253,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
                                                             {...restField}
                                                             name={[name, 'solutionCode']}
                                                             fieldKey={[fieldKey, 'solutionCode']}
-                                                            label={<span style={{ fontWeight: 500 }}><CodeOutlined /> {t('assignmentForm.solutionCodeLabel')}*</span>}
+                                                            label={<span style={{ fontWeight: 500 }}><CodeOutlined /> {t('assignmentForm.solutionCodeLabel')}</span>}
                                                             rules={[{ required: true, message: t('assignmentForm.solutionCodeRequired') || 'Nhập Solution Code!' }]}
                                                         >
                                                             <TextEditor
@@ -289,7 +276,6 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
                                         </Collapse>
                                     ))}
 
-                                    {/* Nút Thêm Solution */}
                                     <Form.Item style={{ marginBottom: 0 }}>
                                         <Button
                                             type="dashed"
@@ -308,13 +294,11 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
                     </Card>
                 </Form>
             </div>
-            {/* END CONTAINER CUỘN */}
         </Modal>
     );
 };
 
 
-// --- Component chính AssignmentModulesEditor (ĐÃ CHỈNH SỬA TOÀN BỘ LOGIC) ---
 const AssignmentModulesEditor: React.FC<AssignmentModulesEditorProps> = ({
                                                                              value,
                                                                              onChange,
@@ -322,13 +306,10 @@ const AssignmentModulesEditor: React.FC<AssignmentModulesEditorProps> = ({
                                                                              disabled
                                                                          }) => {
     const { t } = useTranslation();
-
-    // Đảm bảo mỗi module có ID duy nhất.
     const modules = Array.isArray(value) ? value.map(m => m.id ? m : { ...m, id: Date.now() + Math.random() }) : [];
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingModule, setEditingModule] = useState<{ data: ModuleData, index: number } | null>(null);
-    // activeKey lưu key (ID của module) đang mở.
     const [activeKey, setActiveKey] = useState<string | string[]>([]);
 
     const handleDeleteModule = (moduleIndex: number) => {

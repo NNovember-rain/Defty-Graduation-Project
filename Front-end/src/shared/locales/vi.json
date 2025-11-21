@@ -150,7 +150,8 @@
     "submit": "Nộp",
     "add": "Thêm",
     "loading": "Đang tải...",
-    "items": "mục"
+    "items": "mục",
+    "total": "Tổng"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -228,6 +229,7 @@
   "assignmentPage": {
     "title": "Quản lý Bài tập",
     "breadcrumb": "Bài tập",
+    "noAssignments": "Chưa có bài tập nào được giao",
     "columns": {
       "name": "Tên bài tập",
       "description": "Mô tả",
@@ -276,14 +278,22 @@
     "moduleDescriptionsLabel": "Mô tả Module",
     "moduleName": "Tên Module",
     "descriptionLabel": "Mô tả Module",
-    "validation": {
-      "titleRequired": "Tiêu đề là bắt buộc",
-      "descriptionRequired": "Mô tả là bắt buộc",
-      "typeUmlRequired": "Loại UML là bắt buộc",
-      "moduleRequired": "Module là bắt buộc",
-      "moduleDescriptionRequired": "Mô tả module là bắt buộc"
-    },
-    "assignmentLoading": "Đang tải bài tập..."
+    "addNewModule": "Thêm Module mới",
+    "addModuleTitle": "Thêm Module",
+    "moduleNamePlaceholder": "Nhập tên module",
+    "descriptionPlaceholder": "Nhập mô tả cho module",
+    "umlSolutionsLabel": "Mã giải pháp UML",
+    "Solution": "Giải pháp",
+    "addUmlSolution": "Thêm giải pháp UML",
+    "titleRequired": "Tiêu đề là bắt buộc",
+    "descriptionRequired": "Mô tả là bắt buộc",
+    "typeUmlRequired": "Loại UML là bắt buộc",
+    "moduleRequired": "Module là bắt buộc",
+    "moduleDescriptionRequired": "Mô tả module là bắt buộc",
+    "assignmentLoading": "Đang tải bài tập...",
+    "solutionCodeRequired": "Mã giải pháp là bắt buộc",
+    "moduleNameRequired": "Tên module là bắt buộc",
+    "listAssignment": "Danh sách bài tập"
   },
 
   "userPage": {
@@ -494,7 +504,8 @@
       "submit": "Nộp bài",
       "create": "Tạo",
       "createNew": "Tạo bài tập mới",
-      "assign": "Giao bài tập",
+      "assign": "Giao",
+      "assignAssignment": "Giao bài luyện tập",
       "modulesAssigned": "Module đã được giao",
       "assignTest": "Giao bài kiểm tra",
       "noDeadline": "Không có hạn chót"
