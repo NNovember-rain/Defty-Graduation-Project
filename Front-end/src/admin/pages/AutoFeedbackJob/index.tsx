@@ -275,8 +275,8 @@ const AutoFeedbackJob: React.FC = () => {
             label: t('autoFeedbackJobPage.search.typeUml'),
             type: 'select',
             options: [
-                { value: 'CLASS', label: 'Class Diagram' },
-                { value: 'USE_CASE', label: 'Use Case' }
+                { value: 'CLASS_DIAGRAM', label: 'Class Diagram' },
+                { value: 'USE_CASE_DIAGRAM', label: 'Use Case Diagram' }
             ],
             gridSpan: 1
         },

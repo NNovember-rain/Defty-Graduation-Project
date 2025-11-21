@@ -327,7 +327,7 @@ export class ExcelGenerator {
                 title: 'Sample Auto Feedback Job Title',
                 assignment: 'Sample Assignment Name',
                 solutionCode: '@startuml\nclass Teacher {\n  +name: String\n  +subject: String\n  +teach(): void\n}\n@enduml',
-                typeUml: 'CLASS'
+                typeUml: 'CLASS_DIAGRAM'
             },
             entries: [
                 {

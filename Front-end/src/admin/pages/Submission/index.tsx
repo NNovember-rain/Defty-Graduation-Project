@@ -119,7 +119,6 @@ const Submission: React.FC = () => {
 
     const dataTableColumns = useMemo(() => [
         { key: 'studentName', label: t('submissionPage.columns.studentName'), sortable: true },
-        { key: 'studentCode', label: t('submissionPage.columns.studentCode'), sortable: true },
         { key: 'assignmentTitle', label: t('submissionPage.columns.assignmentTitle'), sortable: true },
         { key: 'classCode', label: t('submissionPage.columns.classCode'), sortable: true },
         { key: 'createdDate', label: t('submissionPage.columns.createdDate'), sortable: true, render: (value) => value ? dayjs(value).format('DD/MM/YYYY HH:mm:ss') : '' }
@@ -180,7 +179,6 @@ const Submission: React.FC = () => {
                 { value: 'studentName', label: t('submissionPage.sort.studentName') },
                 { value: 'studentCode', label: t('submissionPage.sort.studentCode') },
                 { value: 'assignmentTitle', label: t('submissionPage.sort.assignmentTitle') },
-                { value: 'classCode', label: t('submissionPage.sort.classCode') },
                 { value: 'createdDate', label: t('submissionPage.sort.createdDate')},
             ],
             gridSpan: 1

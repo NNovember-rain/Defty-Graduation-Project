@@ -1,9 +1,10 @@
-package com.defty.content_service.dto.response;
+package com.submission_service.model.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -11,14 +12,13 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AssignmentClassDetailResponse {
+public class AssignmentClassDetailsResponse {
+    Long moduleId;
     String moduleName;
     String moduleDescription;
-    String titleAssignment;
-    String solutionCode;
-    String assignmentDescription;
-    String typeUml;
+    List<String> typeUmls;
     boolean checkedTest;
+    Long assignmentClassDetailId;
     Date startDate;
     Date endDate;
 }

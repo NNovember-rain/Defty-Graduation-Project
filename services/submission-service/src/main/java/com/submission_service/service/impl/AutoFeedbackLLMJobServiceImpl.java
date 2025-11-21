@@ -106,11 +106,11 @@ public class AutoFeedbackLLMJobServiceImpl implements AutoFeedbackLLMJobService 
     }
 
     private TypeUml parseType(String type) {
-        if (type == null) return TypeUml.USE_CASE;
+        if (type == null) return TypeUml.USE_CASE_DIAGRAM;
         try {
             return TypeUml.valueOf(type.toUpperCase());
         } catch (Exception e) {
-            return TypeUml.USE_CASE;
+            return TypeUml.USE_CASE_DIAGRAM;
         }
     }
 

@@ -26,7 +26,7 @@ const SubmissionDetail: React.FC = () => {
     const actualSubmissionId = submissionId || id;
 
     // States
-    const [submission, setSubmission] = useState<ISubmission | null>(null);
+    const [submission, setSubmission] = useState<ISubmissionDetail | null>(null);
     const [teacherFeedbacks, setTeacherFeedbacks] = useState<FeedbackTeacherResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

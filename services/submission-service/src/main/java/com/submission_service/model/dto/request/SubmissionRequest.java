@@ -12,7 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SubmissionRequest {
     Long classId;
-    
+    Long assignmentId;
+    TypeUml typeUml;
+    Long assignmentClassDetailId;
     String studentPlantUmlCode;
     Boolean examMode;
 }
