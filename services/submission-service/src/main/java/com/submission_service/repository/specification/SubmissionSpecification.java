@@ -79,6 +79,15 @@ public class SubmissionSpecification {
         };
     }
 
+    public static Specification<Submission> hasAssignmentClassDetailId(Long assignmentClassDetailId) {
+        return (root, query, cb) -> {
+            if (assignmentClassDetailId == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("assignmentClassDetailId"), assignmentClassDetailId);
+        };
+    }
+
     public static Specification<Submission> isLatestSubmissionPerWithExamMode() {
         return (root, query, cb) -> {
             Subquery<LocalDateTime> subquery = query.subquery(LocalDateTime.class);

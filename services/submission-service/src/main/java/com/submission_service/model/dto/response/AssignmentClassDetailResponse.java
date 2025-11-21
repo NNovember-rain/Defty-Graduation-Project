@@ -1,4 +1,4 @@
-package com.defty.content_service.dto.response;
+package com.submission_service.model.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -15,7 +15,6 @@ public class AssignmentClassDetailResponse {
     String moduleName;
     String moduleDescription;
     String titleAssignment;
-    String solutionCode;
     String assignmentDescription;
     String typeUml;
     boolean checkedTest;

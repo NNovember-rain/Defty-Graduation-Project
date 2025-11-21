@@ -124,7 +124,8 @@ const Description: React.FC<Props> = ({
         };
 
         fetchTypeUMLs();
-    }, [t, message]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const typeUmlOptions: UmlTypeOption[] = useMemo(() => {
         return allTypeUMLs.map((uml, index) => ({
@@ -212,6 +213,8 @@ const Description: React.FC<Props> = ({
 
 
     useEffect(() => {
+        if (modules.length === 0) return;
+
         const moduleOptionsList = modules.filter(m => mode !== 'practice' || m.checkedTest === false);
 
         const uniqueModuleMap = new Map<string, IConsolidatedModuleResponse>();
@@ -221,7 +224,6 @@ const Description: React.FC<Props> = ({
             }
         });
         const uniqueModules = Array.from(uniqueModuleMap.values());
-
 
         if (uniqueModules.length > 0) {
             const firstModuleId = String(uniqueModules[0].id);
@@ -248,21 +250,15 @@ const Description: React.FC<Props> = ({
             onModuleNameChange('');
         }
 
-        if (mode === 'test' && assignedUmlType) {
-            if (localUmlType !== String(assignedUmlType.id)) {
-                setLocalUmlType(String(assignedUmlType.id));
-                onUmlTypeChange(String(assignedUmlType.id));
-                onTypeUmlNameChange(assignedUmlType.name);
-            }
+        if (mode === 'test' && assignedUmlType && localUmlType !== String(assignedUmlType.id)) {
+            setLocalUmlType(String(assignedUmlType.id));
+            onUmlTypeChange(String(assignedUmlType.id));
+            onTypeUmlNameChange(assignedUmlType.name);
         }
-    }, [modules, propModule, localModule, onModuleChange, onModuleNameChange, mode, assignedUmlType, localUmlType, onUmlTypeChange, onTypeUmlNameChange]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modules, propModule, mode, assignedUmlType]);
 
-    useEffect(() => {
-        if (allTypeUMLs.length === 0) {
-            setTypeUMLs([]);
-            return;
-        }
-    }, [allTypeUMLs, currentModuleData, mode, localUmlType, onUmlTypeChange, onTypeUmlNameChange]);
+
 
 
     const handleModuleChange = (value: string) => {

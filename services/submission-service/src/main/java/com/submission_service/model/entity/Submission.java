@@ -1,6 +1,7 @@
 package com.submission_service.model.entity;
 
 import com.submission_service.enums.SubmissionStatus;
+import com.submission_service.enums.TypeUml;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -20,16 +21,16 @@ public class Submission extends BaseEntity {
     Long studentId;
 
     @Column(nullable = false)
-    Long assignmentId;
+    Long assignmentClassDetailId;
 
     @Column(nullable = false)
     Long classId;
 
     @Column(nullable = false)
-    Long moduleId;
+    Long assignmentId;
 
     @Column(nullable = false)
-    Long typeUmlId;
+    TypeUml typeUml;
 
     @Column
     Double score;
@@ -41,9 +42,9 @@ public class Submission extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     String studentPlantUMLCode;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    SubmissionStatus submissionStatus=SubmissionStatus.SUBMITTED;
+//    @Builder.Default
+//    @Enumerated(EnumType.STRING)
+//    SubmissionStatus submissionStatus=SubmissionStatus.SUBMITTED;
 
     @OneToOne(mappedBy = "submission")
     private FeedbackLLM feedbackLLM;

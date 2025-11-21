@@ -10,12 +10,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface SubmissionMapper {
 
-    @Mapping(target = "studentName", expression = "java(getStudentName(user))")
+//    @Mapping(target = "classCode", expression = "java(getClassCode(classResponse))")
     @Mapping(target = "studentCode", expression = "java(getStudentCode(user))")
-    @Mapping(target = "classCode", expression = "java(getClassCode(classResponse))")
+    @Mapping(target = "studentName", expression = "java(getStudentName(user))")
     @Mapping(target = "assignmentTitle", expression = "java(getAssignmentTitle(assignment))")
-    @Mapping(target = "descriptionAssignment", expression = "java(getAssignmentDescription(assignment))")
-    @Mapping(target = "isfeedbackTeacher", expression = "java(hasFeedbackTeacher(submission))")
     SubmissionResponse toSubmissionResponse(
             Submission submission,
             @Context UserResponse user,
@@ -23,29 +21,32 @@ public interface SubmissionMapper {
             @Context ClassResponse classResponse
     );
 
-    @Mapping(target = "studentId", source = "userResponse.id")
-    @Mapping(target = "assignmentId", source = "assignmentResponse.id")
-    @Mapping(target = "classId", source = "classResponse.id")
-    @Mapping(target = "moduleId", source = "moduleResponse.id")
+    @Mapping(target = "studentName", expression = "java(getStudentName(user))")
+    @Mapping(target = "assignmentTitle", expression = "java(getAssignmentTitle(assignment))")
+    @Mapping(target = "descriptionAssignment", expression = "java(getCommonDescription(assignment))")
+    SubmissionDetailResponse toSubmissionDetailResponse(
+            Submission submission,
+            @Context UserResponse user,
+            @Context AssignmentResponse assignment,
+            @Context ClassResponse classResponse
+    );
+
+    @Mapping(target = "studentId", source = "userId")
+    @Mapping(target = "assignmentClassDetailId", source = "assignmentClassDetailId")
     @Mapping(target = "studentPlantUMLCode", source = "submissionRequest.studentPlantUmlCode")
     Submission submissionRequestToSubmission(
             SubmissionRequest submissionRequest,
-            UserResponse userResponse,
-            AssignmentResponse assignmentResponse,
-            ClassResponse classResponse,
-            ModuleResponse moduleResponse
+            Long userId,
+            Long assignmentClassDetailId
     );
 
-    default boolean hasFeedbackTeacher(Submission submission) {
-        return submission.getSubmissionFeedbacks() != null && !submission.getSubmissionFeedbacks().isEmpty();
+
+    default String getStudentCode(UserResponse user) {
+        return user != null ? user.getUserCode() : null;
     }
 
     default String getStudentName(UserResponse user) {
         return user != null ? user.getFullName() : null;
-    }
-
-    default String getStudentCode(UserResponse user) {
-        return user != null ? user.getUserCode() : null;
     }
 
     default String getClassCode(ClassResponse classResponse) {
@@ -56,7 +57,7 @@ public interface SubmissionMapper {
         return assignment != null ? assignment.getTitle() : null;
     }
 
-    default String getAssignmentDescription(AssignmentResponse assignment) {
+    default String getCommonDescription(AssignmentResponse assignment) {
         return assignment != null ? assignment.getCommonDescription() : null;
     }
 

@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -14,14 +15,16 @@ import java.util.Date;
 @NoArgsConstructor
 public class SubmissionDetailResponse {
     Long id;
-    String studentCode;
+    Long assignmentId;
+    String moduleName;
     String studentName;
+    String studentCode;
     String assignmentTitle;
+    String descriptionAssignment;
+    String descriptionModule;
     String typeUml;
-    String classCode;
-    Date createdDate;
-    SubmissionStatus submissionStatus;
     String studentPlantUMLCode;
     String solutionCode;
     Double score;
+    LocalDateTime createdDate;
 }

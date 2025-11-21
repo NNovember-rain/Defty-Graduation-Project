@@ -14,23 +14,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SubmissionResponse {
+public class  SubmissionResponse {
     Long id;
     Long studentId;
-    Long assignmentId;
-    Long moduleId;
-    String moduleName;
     String studentName;
     String studentCode;
-    String classCode;
     String assignmentTitle;
-    String descriptionAssignment;
-    String descriptionModule;
-    String typeUml;
     String studentPlantUMLCode;
-    String solutionCode;
     Double score;
     LocalDateTime createdDate;
-    boolean isfeedbackTeacher;
-    SubmissionStatus submissionStatus;
 }

@@ -12,8 +12,8 @@ import java.util.Date;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SubmissionHistoryResponse {
+public class SubmissionInfoResponse {
     Long id;
-    SubmissionStatus submissionStatus;
+
     Date createdDate;
 }
