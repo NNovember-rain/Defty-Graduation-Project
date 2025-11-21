@@ -9,6 +9,10 @@ public class RoleSpecification {
         return (root, query, cb) -> cb.notEqual(root.get("isActive"), -1);
     }
 
+    public static Specification<Role> isActive() {
+        return (root, query, cb) -> cb.equal(root.get("isActive"), 1);
+    }
+
     public static Specification<Role> nameContains(String name) {
         return (root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%");
     }

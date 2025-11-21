@@ -131,6 +131,14 @@ public class AssignmentController {
                 .build();
     }
 
+    @GetMapping("/assignmentClassDetail/{assignmentClassDetailId}")
+    ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(@PathVariable Long assignmentClassDetailId) {
+        AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetail(assignmentClassDetailId);
+        return ApiResponse.<AssignmentClassDetailResponse>builder()
+                .result(response)
+                .build();
+    }
+
     @PatchMapping("/{id}/toggle-active")
     public ApiResponse<AssignmentResponse> toggleActiveStatus(@PathVariable Long id) {
         AssignmentResponse updatedAssignment = assignmentService.toggleAssignmentStatus(id);

@@ -101,7 +101,7 @@ const FormTemplate = <T extends Record<string, any>>({
                 setFetchError(null);
                 try {
                     const data = await serviceGetById(id);
-                    console.log(data)
+                    // console.log(data)
                     setFormData(data);
                 } catch (err: any) {
                     console.error("Failed to fetch data:", err);
@@ -202,7 +202,7 @@ const FormTemplate = <T extends Record<string, any>>({
         try {
             if (isEditMode && serviceUpdate && id) {
                 const response = await serviceUpdate(id, formData);
-                message.success(t('apiMessages.updateSuccess'));
+                // message.success(t('apiMessages.updateSuccess'));
                 let finalRedirectPath = redirectPath;
                 if (response && response.result && redirectPath.includes(':id')) {
                     finalRedirectPath = redirectPath.replace(':id', response.result.toString());
