@@ -25,4 +25,5 @@ public interface AssignmentClassDetailRepository extends JpaRepository<Assignmen
     """)
     Set<Long> findAssignedModuleIdsByClassId(@Param("classId") Long classId);
 
+    List<AssignmentClassDetail> findAllByAssignmentClassIdAndChecked(Long assignmentClassId, boolean checked);
 }

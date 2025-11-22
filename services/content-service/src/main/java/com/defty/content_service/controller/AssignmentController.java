@@ -131,8 +131,8 @@ public class AssignmentController {
 
     @GetMapping("/assignmentClassDetail/{assignmentClassDetailId}")
     ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(@PathVariable Long assignmentClassDetailId,
-                                                                        @Param("typeUml") String typeUml,
-                                                                        @Param("moduleId") Long moduleId) {
+                                                                        @RequestParam("typeUml") String typeUml,
+                                                                        @RequestParam("moduleId") Long moduleId) {
         AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetail(assignmentClassDetailId, typeUml, moduleId);
         return ApiResponse.<AssignmentClassDetailResponse>builder()
                 .result(response)

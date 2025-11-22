@@ -373,42 +373,55 @@ class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     public AssignmentResponseByClass getAssignmentAllModule(Long assignmentClassId) {
-        AssignmentClass assignmentClass = assignmentClassRepository.findById(assignmentClassId).orElse(null);
 
-        if (assignmentClass == null) {
-            return AssignmentResponseByClass.builder()
-                    .modules(List.of())
-                    .build();
+        AssignmentClass assignmentClass = assignmentClassRepository.findById(assignmentClassId)
+                .orElseThrow(() -> new NotFoundException("Assignment class not found"));
+
+        Assignment assignment = assignmentClass.getAssignment();
+        if (assignment == null) {
+            throw new NotFoundException("Assignment not found");
         }
 
-        List<ModuleResponse> moduleResponses = assignmentClass.getAssignment().getModules() != null
-                ? assignmentClass.getAssignment().getModules().stream()
+        Map<Long, Long> moduleDetailMap = assignmentClassDetailRepository
+                .findAllByAssignmentClassIdAndChecked(assignmentClassId, false)
+                .stream()
+                .collect(Collectors.toMap(
+                        d -> d.getModule().getId(),
+                        AssignmentClassDetail::getId
+                ));
+
+        List<ModuleResponse> moduleResponses = assignment.getModules() == null
+                ? List.of()
+                : assignment.getModules().stream()
                 .map(m -> {
-                    List<SolutionResponse> solutionResponses = m.getModuleSolutions() != null
-                            ? m.getModuleSolutions().stream()
+
+                    List<SolutionResponse> solutions = (m.getModuleSolutions() == null)
+                            ? List.of()
+                            : m.getModuleSolutions().stream()
                             .map(s -> SolutionResponse.builder()
                                     .id(s.getId())
                                     .solutionCode(s.getSolutionCode())
-                                    .typeUml(s.getTypeUml() != null ? s.getTypeUml().name() : null)
+                                    .typeUml(s.getTypeUml() == null ? null : s.getTypeUml().name())
                                     .build())
-                            .toList()
-                            : List.of();
+                            .toList();
 
                     return ModuleResponse.builder()
                             .id(m.getId())
                             .moduleName(m.getModuleName())
                             .moduleDescription(m.getModuleDescription())
-                            .solutionResponses(solutionResponses)
+                            .assignmentClassDetailId(moduleDetailMap.get(m.getId()))
+                            .solutionResponses(solutions)
                             .build();
                 })
-                .toList()
-                : List.of();
+                .toList();
 
-        // 4. Trả về kết quả
         return AssignmentResponseByClass.builder()
+                .assignmentDescription(assignment.getDescription())
+                .titleAssignment(assignment.getTitle())
                 .modules(moduleResponses)
                 .build();
     }
+
 
     @Override
     public AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId, String typeUml, Long moduleId) {

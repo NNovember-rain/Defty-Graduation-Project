@@ -10,9 +10,18 @@ import "./ProblemDetail.scss";
 import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
-import { getAssignmentDetail, type IAssignment } from "../../../shared/services/assignmentService";
+import {
+    getAssignmentDetail,
+    getAssignmentAllModule,
+    type IAssignment
+} from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
-import { createSubmission, type SubmissionRequest, getLastSubmissionExamMode, type LastSubmissionResponse } from "../../../shared/services/submissionService.ts";
+import {
+    createSubmission,
+    type SubmissionRequest,
+    getLastSubmissionExamMode,
+    type LastSubmissionResponse
+} from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
 
 /** ========= PlantUML helpers (Giữ nguyên) ========= */
@@ -64,14 +73,10 @@ const ProblemDetail: React.FC = () => {
 
     const [searchParams] = useSearchParams();
     const isTestMode = searchParams.get("mode") === "test";
-    const assignmentClassId = searchParams.get("problemId");
     const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
 
     const [code, setCode] = useState<string>("");
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    // Assignment gốc (chứa commonDescription, title)
-    const problemIdNumber = Number(problemId);
-    const assignmentClassIdForPractice = !isTestMode ? problemIdNumber : 0;
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
@@ -82,7 +87,6 @@ const ProblemDetail: React.FC = () => {
     const [isRendering, setIsRendering] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // State cho Module/UML Type (giữ nguyên để kiểm soát Select/CodeEditor)
     const [umlType, setUmlType] = useState<string>("");
     const [module, setModule] = useState<string>("");
     const [typeUmlName, setTypeUmlName] = useState<string>("");
@@ -125,11 +129,18 @@ const ProblemDetail: React.FC = () => {
         () => JSON.parse(localStorage.getItem("pd-sizes-inner-v") || "[55,45]")
     );
 
+    // Kích thước panel bên ngoài
+    const sizesOuterForPractice = [40, 60];
+    // Nếu Test Mode -> 3 Panel [Description, Code/Result, Feedback]
+    // Nếu Practice Mode -> 2 Panel [Description, Code/Result]
+    const effectiveSizesOuter = isTestMode ? [35, 50, 15] : sizesOuterForPractice;
+
     const effectiveSizesInner = isTestMode ? [65, 35] : sizesInner;
 
     const getHttpStatus = (e: any): number | undefined =>
         e?.response?.status ?? e?.status ?? e?.data?.status ?? e?.code;
 
+    // ĐÃ SỬA: Cố định endpoint Kroki là 'plantuml' để tránh lỗi 404
     const renderWithKroki = async (uml: string, type: string) => {
         setIsRendering(true);
         setRenderErr(null);
@@ -137,19 +148,23 @@ const ProblemDetail: React.FC = () => {
         setImageUrl(null);
 
         try {
-            const res = await fetch("https://kroki.io/plantuml/svg", {
+            // Cố định endpoint là plantuml, vì type có thể là ID hoặc tên không hợp lệ
+            const krokiEndpoint = "plantuml";
+
+            const res = await fetch(`https://kroki.io/${krokiEndpoint}/svg`, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
                 body: uml,
             });
 
             if (!res.ok) {
-                setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }));
-                if (type === 'plantuml') {
+                const errorText = await res.text();
+                // Hiển thị lỗi render kèm status và 100 ký tự đầu tiên của nội dung lỗi
+                setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }) + `: ${errorText.substring(0, 100)}...`);
+
+                if (krokiEndpoint === 'plantuml') {
+                    // Fallback sang PlantUML server nếu Kroki lỗi
                     setImageUrl(plantUmlSvgUrl(uml));
-                } else {
-                    const errorText = await res.text();
-                    setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }) + `: ${errorText.substring(0, 100)}`);
                 }
                 return;
             }
@@ -160,7 +175,7 @@ const ProblemDetail: React.FC = () => {
         } catch (e: any) {
             setRenderErr(t("problemDetail.result.renderFailed"));
             setSvgMarkup(null);
-            if (type === 'plantuml') {
+            if (uml.startsWith('@startuml')) {
                 setImageUrl(plantUmlSvgUrl(uml));
             }
         } finally {
@@ -206,8 +221,8 @@ const ProblemDetail: React.FC = () => {
                 return;
             }
 
-            // Kiểm tra Module và UML Type đã chọn chưa
-            if (!module || !umlType) {
+            // Kiểm tra Module và UML Type đã chọn chưa (CHỈ ÁP DỤNG cho Practice Mode)
+            if (!isTestMode && (!module || !umlType)) {
                 message.error("Vui lòng chọn Module và UML Type trước khi nộp bài!");
                 return;
             }
@@ -220,11 +235,17 @@ const ProblemDetail: React.FC = () => {
                 { duration: 5, placement: 'topRight' }
             );
 
+            // Cập nhật lại kết quả cuối cùng (chủ yếu cho Test Mode)
             if (isTestMode) {
                 try {
                     // Dùng assignmentClassDetailId khi reload submission
                     const newSubmission = await getLastSubmissionExamMode(currentClassId, assignmentClassDetailId);
                     setLastSubmission(newSubmission);
+
+                    // Nếu bài tập đã được chấm điểm, cập nhật trạng thái
+                    if (newSubmission?.score !== undefined && newSubmission?.score !== null) {
+                        setIsGraded(true);
+                    }
                 } catch (err) {
                     console.error('Error reloading submission after submit:', err);
                 }
@@ -254,22 +275,31 @@ const ProblemDetail: React.FC = () => {
         }
     };
 
-    // Gọi API chỉ bằng ID chi tiết
-    const fetchAssignmentInfo = async (detailId: number) => {
-            const asg = (await getAssignmentDetail(assignmentClassDetailId));
-            setAssignment(asg);
-            return true;
+    // Logic phân biệt giữa Practice và Test Mode
+    const fetchAssignmentInfo = async (detailId: number, isTestMode: boolean) => {
+        let asg: IAssignment;
+        if (isTestMode) {
+            // TEST MODE: Chỉ lấy thông tin bài tập cụ thể
+            asg = await getAssignmentDetail(detailId);
+        } else {
+            // PRACTICE MODE: Lấy thông tin bài tập kèm theo TẤT CẢ MODULE/UML TYPE
+            asg = await getAssignmentAllModule(detailId);
+        }
+
+        setAssignment(asg);
+        return true;
     };
 
+    // Thêm tham số isCurrentTestMode
     const fetchAll = useCallback(
-        async (cid: number, detailId: number) => {
+        async (cid: number, detailId: number, isCurrentTestMode: boolean) => {
             setLoading(true);
             setErr(null);
             try {
                 const okClass = await fetchClassInfo(cid);
                 if (!okClass) return;
-                // Truyền ID chi tiết vào fetchAssignmentInfo
-                const okAsg = await fetchAssignmentInfo(detailId);
+                // Truyền ID chi tiết VÀ chế độ vào fetchAssignmentInfo
+                const okAsg = await fetchAssignmentInfo(detailId, isCurrentTestMode);
                 if (!okAsg) return;
             } catch (e: any) {
                 setErr(e?.message ?? "Failed to load data");
@@ -280,6 +310,7 @@ const ProblemDetail: React.FC = () => {
         [navigate]
     );
 
+    // Thêm isTestMode vào dependency array và truyền vào fetchAll
     useEffect(() => {
         const cid = Number(classId);
         const detailId = Number(problemId);
@@ -287,10 +318,10 @@ const ProblemDetail: React.FC = () => {
             navigate("/not-found");
             return;
         }
-        // Truyền ID chi tiết vào fetchAll
-        fetchAll(cid, detailId);
+        // Truyền ID chi tiết VÀ isTestMode vào fetchAll
+        fetchAll(cid, detailId, isTestMode);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [classId, problemId, fetchAll]);
+    }, [classId, problemId, fetchAll, isTestMode]);
 
     // Load submitted code in Test Mode
     useEffect(() => {
@@ -314,7 +345,10 @@ const ProblemDetail: React.FC = () => {
                             setUmlType(String(submission.typeUmlId));
                         }
                     } else {
+                        // Nếu không có submission trước, sử dụng code mặc định
                         setCode(initialPlantUml);
+                        setModule(""); // Reset module/umlType
+                        setUmlType("");
                     }
 
                     if (submission?.score !== undefined && submission?.score !== null) {
@@ -332,6 +366,7 @@ const ProblemDetail: React.FC = () => {
                     setIsInitialDataLoaded(true);
                 }
             } else {
+                // PRACTICE MODE: Set code mặc định và báo đã load
                 if (!code) {
                     setCode(initialPlantUml);
                 }
@@ -351,10 +386,11 @@ const ProblemDetail: React.FC = () => {
             <Split
                 className={`split-outer ${isNarrow ? "split-vertical" : "split-horizontal"}`}
                 direction={isNarrow ? "vertical" : "horizontal"}
-                sizes={isTestMode ? [35, 50, 15] : sizesOuter}
+                sizes={effectiveSizesOuter}
                 minSize={isNarrow ? 160 : 200}
                 gutterSize={8}
                 onDragEnd={(sizes) => {
+                    // Chỉ lưu kích thước nếu không phải Test Mode
                     if (!isTestMode) {
                         setSizesOuter(sizes);
                         localStorage.setItem(isNarrow ? "pd-sizes-outer-v" : "pd-sizes-outer-h", JSON.stringify(sizes));
@@ -364,8 +400,9 @@ const ProblemDetail: React.FC = () => {
                 <div className="panel panel--left scrollable">
                     <Description assignment={assignment} isLoading={loading} error={err}
                                  mode={currentMode}
-                                 umlTypes={assignment?.assignmentClassDetailResponseList.find(m => String(m.id) === module)?.typeUmls || []}
-                                 assignmentClassId={assignmentClassIdForPractice}
+                        // Lấy danh sách UML Types từ Module đang được chọn
+                                 umlTypes={assignment?.assignmentClassDetailResponseList?.find(m => String(m.id) === module)?.typeUmls || []}
+                                 assignmentClassId={assignmentClassDetailId}
                                  onUmlTypeChange={handleUmlTypeChange}
                                  module={module}
                                  onModuleChange={handleModuleChange}
