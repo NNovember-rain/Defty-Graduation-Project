@@ -4,7 +4,8 @@ import {Spinner} from "react-bootstrap";
 import {
     getAssignmentsByClassId,
     type GetAssignmentsOptions,
-    type IAssignment
+    type IAssignment,
+    unassignAssignment,
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
 import {
@@ -12,29 +13,32 @@ import {
     Card,
     Col,
     Dropdown,
+    Empty,
     List,
     type MenuProps,
+    message,
     Pagination,
+    Popconfirm,
     Row,
     Select,
     Space,
     Tabs,
     type TabsProps,
-    Tooltip,
-    Typography,
     Tag,
-    Empty // 🔥 Đã thêm Empty
+    Tooltip,
+    Typography
 } from "antd";
-import {IoCalendarOutline, IoFileTrayFull, IoTimeOutline, IoCheckmarkCircleOutline} from "react-icons/io5";
-import {MdOutlineAssignment, MdAssignmentTurnedIn} from "react-icons/md";
-import {AppstoreOutlined, DownOutlined, UnorderedListOutlined} from "@ant-design/icons";
+import {IoCalendarOutline, IoCloseCircleOutline, IoFileTrayFull, IoTimeOutline} from "react-icons/io5";
+import {MdAssignmentTurnedIn, MdOutlineAssignment} from "react-icons/md";
+import {DownOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
 import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
 import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { TabPane } = Tabs;
+
+
 
 interface AssignmentTabProps {
     classId: number;
@@ -49,6 +53,7 @@ interface AssignedModule {
     typeUmls: string[];
     startDate: string | null;
     endDate: string | null;
+    assignmentClassDetailId: number;
 }
 
 interface IAssignmentExtended extends IAssignment {
@@ -60,6 +65,7 @@ interface IAssignmentExtended extends IAssignment {
 
     assignedModules: AssignedModule[];
     assignedUmlType: { name: string; } | null;
+    createdDate: string;
 }
 
 interface ProcessedAssignmentItem {
@@ -70,10 +76,11 @@ interface ProcessedAssignmentItem {
     startDate: string | null;
     endDate: string | null;
     type: AssignmentType;
-
+    assignmentClassDetailId: number; // 🔥 SỬA: Đảm bảo có ID chi tiết
     moduleName: string;
     typeUmls: string[];
     isModuleTest: boolean;
+    createdDate: string;
 }
 
 const DEFAULT_PAGE_SIZE = 9;
@@ -88,13 +95,21 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [page, setPage] = useState<number>(1);
     const [size, setSize] = useState<number>(DEFAULT_PAGE_SIZE);
     const [total, setTotal] = useState<number>(0);
-    const [view, setView] = useState<"grid" | "list">("list");
     const [sortBy, setSortBy] = useState<string | undefined>("createdDate");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
     const [isAssignmentModalVisibleTest, setIsAssignmentModalVisibleTest] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<string>('test');
+    const [activeTab, setActiveTab] = useState<string>('test'); // Đổi mặc định sang Luyện tập
+
+    const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+    const [selectedModule, setSelectedModule] = useState<string | null>(null);
+    const [selectedUmlType, setSelectedUmlType] = useState<string | null>(null);
+
+    const [uniqueModules, setUniqueModules] = useState<string[]>([]);
+    const [uniqueUmlTypes, setUniqueUmlTypes] = useState<string[]>([]);
+    const [uniqueAssignments, setUniqueAssignments] = useState<{ id: string; title: string }[]>([]);
+
 
     const goToAssignmentDetails = (assignmentId: string) => {
         const originalId = assignmentId.split('-')[0];
@@ -128,8 +143,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         try {
             const options: GetAssignmentsOptions = {
                 limit: 1000,
-                sortBy,
-                sortOrder
             };
 
             const response = await getAssignmentsByClassId(classId, options);
@@ -138,8 +151,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             const data = response.assignments || [];
 
             const mappedAssignments: IAssignmentExtended[] = data.map((a: any, index: number) => {
-                const hasTestModules = (a.modules || []).some((m: any) => m.checkedTest === true);
-                const assignmentType: AssignmentType = hasTestModules ? "TEST" : "ASSIGNMENT";
+                const assignmentType: AssignmentType = (a.assignmentClassDetailResponseList || []).some((m: any) => m.checkedTest === true) ? "TEST" : "ASSIGNMENT";
 
                 return {
                     id: String(a.assignmentId ?? index),
@@ -151,14 +163,18 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     startDate: a.startDate ? dayjs(a.startDate).toISOString() : null,
                     endDate: a.endDate ? dayjs(a.endDate).toISOString() : null,
                     checkedTest: a.checkedTest,
-                    assignedModules: a.assignmentClassDetailResponseList || [],
+                    // 🔥 Mapped assignedModules phải đảm bảo có assignmentClassDetailId
+                    assignedModules: (a.assignmentClassDetailResponseList || []).map((m: any) => ({
+                        ...m,
+                        assignmentClassDetailId: m.assignmentClassDetailId,
+                    })) as AssignedModule[],
                     assignedUmlType: null,
-                    createdDate: "",
+                    createdDate: a.createdDate || dayjs().toISOString(),
                 } as unknown as IAssignmentExtended;
             });
 
             setAssignments(mappedAssignments);
-            setTotal(mappedAssignments.length);
+            collectUniqueFilters(mappedAssignments);
 
         } catch (err) {
             console.error("Failed to fetch assignments:", err);
@@ -166,16 +182,41 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         } finally {
             setLoading(false);
         }
-    }, [classId, sortBy, sortOrder, t]);
+    }, [classId, t]);
+
+    const collectUniqueFilters = (data: IAssignmentExtended[]) => {
+        const moduleSet = new Set<string>();
+        const umlTypeSet = new Set<string>();
+        const assignmentMap = new Map<string, string>();
+
+        data.forEach(a => {
+            assignmentMap.set(a.id, a.title);
+            a.assignedModules.forEach(m => {
+                moduleSet.add(m.moduleName);
+                m.typeUmls.forEach(uml => umlTypeSet.add(uml));
+            });
+        });
+
+        setUniqueModules(Array.from(moduleSet).sort());
+        setUniqueUmlTypes(Array.from(umlTypeSet).sort());
+        setUniqueAssignments(Array.from(assignmentMap.entries())
+            .map(([id, title]) => ({ id, title }))
+            .sort((a, b) => a.title.localeCompare(b.title))
+        );
+    };
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
+
     const processedAssignments = useMemo(() => {
         const isFilteringTest = activeTab === 'test';
+        let flattened: ProcessedAssignmentItem[] = assignments.flatMap(a => {
+            if (selectedAssignmentId && a.id !== selectedAssignmentId) {
+                return [];
+            }
 
-        const flattened = assignments.flatMap(a => {
             const relevantModules = a.assignedModules
                 .filter(m => m.checkedTest === isFilteringTest);
 
@@ -185,37 +226,55 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     assignmentId: a.id,
                     assignmentTitle: a.title,
                     assignmentCode: a.assignmentCode,
-                    // Lấy startDate/endDate từ Module (m)
                     startDate: m.startDate,
                     endDate: m.endDate,
                     type: a.type,
+                    assignmentClassDetailId: m.assignmentClassDetailId, // 🔥 CẬP NHẬT: Lấy ID chi tiết
                     moduleName: m.moduleName,
                     typeUmls: m.typeUmls,
                     isModuleTest: m.checkedTest,
+                    createdDate: a.createdDate
                 } as ProcessedAssignmentItem;
             });
         });
 
-        let filtered = flattened;
 
+        // 2. LỌC THEO TIÊU CHÍ (Filter Module & UML Type)
+        let filtered = flattened.filter(item => {
+            const matchesModule = selectedModule === null || selectedModule === '' ||
+                item.moduleName === selectedModule;
+
+            const matchesUmlType = selectedUmlType === null || selectedUmlType === '' ||
+                item.typeUmls.includes(selectedUmlType);
+
+            return matchesModule && matchesUmlType;
+        });
+
+
+        // 3. SẮP XẾP (Sort)
         if (sortBy) {
             filtered.sort((a, b) => {
                 let aVal: any;
                 let bVal: any;
+                let compareResult = 0;
 
-                // Giữ nguyên logic sắp xếp hiện tại (chỉ sắp xếp theo title/createdDate)
-                aVal = a.assignmentTitle ?? "";
-                bVal = b.assignmentTitle ?? "";
-
-                if (sortBy === 'createdDate') {
-                    aVal = a.assignmentTitle ?? "";
-                    bVal = b.assignmentTitle ?? "";
+                switch (sortBy) {
+                    case 'title':
+                        aVal = a.assignmentTitle ?? "";
+                        bVal = b.assignmentTitle ?? "";
+                        break;
+                    case 'createdDate':
+                        aVal = dayjs(a.createdDate).valueOf();
+                        bVal = dayjs(b.createdDate).valueOf();
+                        break;
+                    default:
+                        aVal = 0; bVal = 0;
                 }
 
+                if (aVal < bVal) compareResult = -1;
+                if (aVal > bVal) compareResult = 1;
 
-                if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-                if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
-                return 0;
+                return sortOrder === 'asc' ? compareResult : -compareResult;
             });
         }
 
@@ -224,9 +283,14 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         const startIndex = (page - 1) * size;
         const endIndex = startIndex + size;
 
+        if (startIndex >= filtered.length && filtered.length > 0) {
+            setPage(1);
+            return filtered.slice(0, size);
+        }
+
         return filtered.slice(startIndex, endIndex);
 
-    }, [assignments, activeTab, page, size, sortBy, sortOrder]);
+    }, [assignments, activeTab, page, size, sortBy, sortOrder, selectedAssignmentId, selectedModule, selectedUmlType]);
 
 
     const menuItems: MenuProps["items"] = [
@@ -250,15 +314,74 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
     };
 
-    const onToggleView = (v: "grid" | "list") => {
-        setView(v);
-    };
+    // Đã loại bỏ onToggleView vì nó không được sử dụng trong giao diện mới
 
     const onSortChange = (value: string) => {
         const [field, order] = value.split("_");
         setSortBy(field);
         setSortOrder(order as "asc" | "desc");
         setPage(1);
+    };
+
+    const handleAssignmentFilterChange = (value: string | null) => {
+        setSelectedAssignmentId(value);
+        setSelectedModule(null);
+        setSelectedUmlType(null);
+        setPage(1);
+    };
+
+    const handleModuleFilterChange = (value: string | null) => {
+        setSelectedModule(value);
+        setPage(1);
+    };
+
+    const handleUmlTypeFilterChange = (value: string | null) => {
+        setSelectedUmlType(value);
+        setPage(1);
+    };
+
+    const availableModules = useMemo(() => {
+        if (!selectedAssignmentId) {
+            return uniqueModules;
+        }
+
+        const selectedAsg = assignments.find(a => a.id === selectedAssignmentId);
+        if (!selectedAsg) return [];
+
+        const moduleSet = new Set<string>();
+        selectedAsg.assignedModules.forEach(m => moduleSet.add(m.moduleName));
+
+        return Array.from(moduleSet).sort();
+    }, [selectedAssignmentId, assignments, uniqueModules]);
+
+
+    const availableUmlTypes = useMemo(() => {
+        if (!selectedAssignmentId) {
+            return uniqueUmlTypes;
+        }
+
+        const selectedAsg = assignments.find(a => a.id === selectedAssignmentId);
+        if (!selectedAsg) return [];
+
+        const umlSet = new Set<string>();
+        selectedAsg.assignedModules.forEach(m => {
+            m.typeUmls.forEach(uml => umlSet.add(uml));
+        });
+
+        return Array.from(umlSet).sort();
+    }, [selectedAssignmentId, assignments, uniqueUmlTypes]);
+
+    const handleUnassign = async (assignmentClassDetailId: number) => {
+        try {
+            message.loading({ content: t('common.unassigning') || 'Đang hủy giao...', key: 'unassign' });
+            await unassignAssignment(assignmentClassDetailId);
+            message.success({ content: t('common.unassignSuccess') || 'Hủy giao bài tập thành công!', key: 'unassign', duration: 2 });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            fetchData();
+        } catch (error) {
+            console.error("Unassign failed:", error);
+            message.error({ content: t('common.unassignFailed') || "Xoá thất bại!", key: 'unassign', duration: 3 });
+        }
     };
 
 
@@ -348,7 +471,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 alignItems: "center",
                                 gap: 12,
                                 borderTop: '1px solid #f0f0f0',
-                                // paddingTop: '10px'
+                                paddingTop: '8px'
                             }}
                         >
 
@@ -379,6 +502,24 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                     />
                                 </Tooltip>
                             )}
+                            <Popconfirm
+                                title={t('common.confirm') || "Bạn có chắc chắn muốn hủy giao bài tập này?"}
+                                onConfirm={() => handleUnassign(item.assignmentClassDetailId)}
+                                okText={t('common.yes') || "Có"}
+                                cancelText={t('common.no') || "Không"}
+                                placement="topRight"
+                            >
+                                <Tooltip title={t("classDetail.unassign") || "Hủy giao bài tập"}>
+                                    <Button
+                                        icon={<IoCloseCircleOutline />}
+                                        type="text"
+                                        shape="circle"
+                                        danger
+                                        style={{ fontSize: '18px' }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </Tooltip>
+                            </Popconfirm>
                         </Col>
                     </Row>
                 </Card>
@@ -387,12 +528,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     };
 
     const countAssignments = (isTest: boolean) => {
-        return assignments.flatMap(a =>
+        const assignmentsToCount = selectedAssignmentId
+            ? assignments.filter(a => a.id === selectedAssignmentId)
+            : assignments;
+
+        return assignmentsToCount.flatMap(a =>
             a.assignedModules.filter(m => m.checkedTest === isTest)
         ).length;
     };
 
-    // 🔥 Hàm tạo component Empty tùy chỉnh
     const renderEmptyContent = (isTest: boolean) => {
         const descriptionText = isTest
             ? t("common.noData") || "Chưa có bài tập kiểm tra nào được giao."
@@ -410,7 +554,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     };
 
-    // 🔥 Cập nhật tabItems để sử dụng Empty component trong locale
     const tabItems: TabsProps['items'] = [
         {
             key: 'test',
@@ -420,7 +563,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     itemLayout="vertical"
                     dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
-                    locale={{emptyText: renderEmptyContent(true)}} // Sửa đổi tại đây
+                    locale={{ emptyText: renderEmptyContent(true) }}
                 />
             ),
         },
@@ -432,7 +575,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     itemLayout="vertical"
                     dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
-                    locale={{emptyText: renderEmptyContent(false)}} // Sửa đổi tại đây
+                    locale={{ emptyText: renderEmptyContent(false) }}
                 />
             ),
         },
@@ -466,49 +609,66 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     return (
         <div style={{ padding: "2rem" }}>
             <main style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                    <div>
+
+                <Row justify="space-between" align="middle" gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                    <Col xs={24} sm={24} md={4} lg={3}>
                         <Title level={3} style={{ margin: 0 }}>
                             {t("classDetail.tabs.classwork") || "Classwork"}
                         </Title>
-                    </div>
+                    </Col>
 
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        <Space>
+                    {/* Cột Điều khiển: Chứa các Select và Nút Gán */}
+                    <Col xs={24} sm={24} md={20} lg={21}>
+                        <Space size={12} wrap style={{ width: '100%', justifyContent: 'flex-end' }}>
+
                             <Select
-                                value={`${sortBy}_${sortOrder}`}
-                                onChange={onSortChange}
-                                style={{ minWidth: 180 }}
+                                placeholder={t("classDetail.filter.assignmentTitle") || "Lọc theo Tên Bài tập"}
+                                allowClear
+                                showSearch
+                                style={{ width: 280 }} // Thu nhỏ
+                                value={selectedAssignmentId}
+                                onChange={handleAssignmentFilterChange}
+                                filterOption={(input, option) =>
+                                    (option?.children as string)?.toLowerCase().includes(input.toLowerCase())
+                                }
                             >
-                                <Option value="createdDate_desc">
-                                    {t("classDetail.sort.newest") || "Newest"}
-                                </Option>
-                                <Option value="createdDate_asc">
-                                    {t("classDetail.sort.oldest") || "Oldest"}
-                                </Option>
-                                <Option value="title_asc">
-                                    {t("classDetail.sort.titleAsc") || "Title A→Z"}
-                                </Option>
-                                <Option value="title_desc">
-                                    {t("classDetail.sort.titleDesc") || "Title Z→A"}
-                                </Option>
+                                {uniqueAssignments.map(assignment => (
+                                    <Option key={assignment.id} value={assignment.id}>
+                                        {assignment.title}
+                                    </Option>
+                                ))}
                             </Select>
 
-                            <Tooltip title={t("classDetail.view.list") || "List"}>
-                                <Button
-                                    type={view === "list" ? "primary" : "default"}
-                                    icon={<UnorderedListOutlined />}
-                                    onClick={() => onToggleView("list")}
-                                />
-                            </Tooltip>
+                            <Select
+                                placeholder={t("classDetail.filter.module") || "Module"}
+                                allowClear
+                                style={{ width: 280 }} // Thu nhỏ
+                                value={selectedModule}
+                                onChange={handleModuleFilterChange}
+                                disabled={!availableModules.length && !!selectedAssignmentId}
+                            >
+                                {availableModules.map(moduleName => (
+                                    <Option key={moduleName} value={moduleName}>
+                                        {moduleName}
+                                    </Option>
+                                ))}
+                            </Select>
 
-                            <Tooltip title={t("classDetail.view.grid") || "Grid"}>
-                                <Button
-                                    type={view === "grid" ? "primary" : "default"}
-                                    icon={<AppstoreOutlined />}
-                                    onClick={() => onToggleView("grid")}
-                                />
-                            </Tooltip>
+                            <Select
+                                placeholder={t("classDetail.filter.umlType") || "Loại UML"}
+                                allowClear
+                                style={{ width: 150 }} // Thu nhỏ
+                                value={selectedUmlType}
+                                onChange={handleUmlTypeFilterChange}
+                                disabled={!availableUmlTypes.length && !!selectedAssignmentId}
+                            >
+                                {availableUmlTypes.map(typeName => (
+                                    <Option key={typeName} value={typeName}>
+                                        {typeName}
+                                    </Option>
+                                ))}
+                            </Select>
+
 
                             <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={["click"]}>
                                 <Button type="primary">
@@ -516,19 +676,20 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 </Button>
                             </Dropdown>
                         </Space>
-                    </div>
-                </div>
+                    </Col>
+                </Row>
 
-                <Tabs
-                    defaultActiveKey="assignment"
-                    activeKey={activeTab}
-                    items={tabItems}
-                    onChange={(key) => {
-                        setActiveTab(key);
-                        setPage(1);
-                    }}
-                    style={{ marginBottom: 16 }}
-                />
+                <div style={{justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <Tabs
+                        defaultActiveKey="assignment"
+                        activeKey={activeTab}
+                        items={tabItems}
+                        onChange={(key) => {
+                            setActiveTab(key);
+                            setPage(1);
+                        }}
+                    />
+                </div>
 
                 <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
                     {total > 0 && (
@@ -541,7 +702,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             onChange={onChangePage}
                             onShowSizeChange={onChangePage}
                             showTotal={(total) =>
-                                `${t("common.all") || "Tổng"} ${total} ${total > 1 ? t("common.items") || "mục" : t("common.item") || "mục"}`
+                                `${t("common.all") || "Tổng"} ${total} ${t("common.items") || "mục"}`
                             }
                         />
                     )}

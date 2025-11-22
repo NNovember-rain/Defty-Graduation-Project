@@ -127,6 +127,8 @@
       "home": "Home",
       "adminDashboard": "Admin Dashboard"
     },
+    "yes": "Yes",
+    "no": "No",
     "clear": "Clear",
     "search": "Search",
     "cancel": "Cancel",
@@ -455,6 +457,12 @@
       "assignment": "Luyện tập",
       "test": "Bài kiểm tra"
     },
+    "filter": {
+      "assignmentTitle": "Assignment",
+      "module": "Module",
+      "umlType": "Type Uml"
+    },
+    "unassign": "Unassigned",
     "peopleTab": {
       "teachersTitle": "Teachers",
       "studentsTitle": "Students",
@@ -524,7 +532,9 @@
     },
     "view": {
       "grid": "Grid",
-      "list": "List"
+      "list": "List",
+      "submissionDetails": "Submission Details",
+      "assignmentInfo": "Assignment Info"
     }
   },
   "rolePage": {

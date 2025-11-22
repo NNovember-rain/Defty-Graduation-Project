@@ -132,7 +132,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         async function fetchTypeUMLs() {
             try {
                 const response = await getTypeUmls();
-                console.log('Fetched Type UMLs:', response);
+                // console.log('Fetched Type UMLs:', response);
                 const typeUmlsArray: TypeUmlOption[] = Array.isArray(response.typeUmls)
                     ? response.typeUmls.map((t: ITypeUml) => ({
                         value: t.name,

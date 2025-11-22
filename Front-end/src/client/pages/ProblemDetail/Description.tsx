@@ -152,7 +152,7 @@ const Description: React.FC<Props> = ({
 
                 if (isTestCondition) {
                     data = await getAssignmentDetail(assignmentClassDetailId!);
-                    console.log("Get AssignmentDetail:", data);
+                    // console.log("Get AssignmentDetail:", data);
 
                     const assignmentClasses = data.assignmentClasses || [];
                     const assignmentClass = assignmentClasses[0];

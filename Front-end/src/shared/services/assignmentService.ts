@@ -151,6 +151,12 @@ export const getAssignmentById = async (id: string | number): Promise<IAssignmen
     return data.result as IAssignment;
 };
 
+export const unassignAssignment = async (id: number): Promise<IAssignment> => {
+    const response = await handleRequest(del(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/unassign/${id}`));
+    const deletedData = await response.json();
+    return deletedData.data as IAssignment;
+};
+
 export const getAssignmentByClassId = async (classId: string | number, assignmentId: string | number): Promise<IAssignment> => {
     const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/${classId}/${assignmentId}`));
     const data = await response.json();
@@ -163,11 +169,14 @@ export const getAssignmentDetail = async (assignmentClassDetailId: string | numb
     return data.result as IAssignment;
 };
 
+
 export const getAssignmentAllModule = async (assignmentClassId: string | number): Promise<IAssignment> => {
     const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/detail/all-module/${assignmentClassId}`));
     const data = await response.json();
     return data.result as IAssignment;
 };
+
+
 
 export const updateAssignment = async (id: string | number, data: Partial<Omit<IAssignment, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IAssignment> => {
     const response = await handleRequest(patchJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/update/${id}`, data));
