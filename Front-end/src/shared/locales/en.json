@@ -149,7 +149,8 @@
     "noData": "No data available",
     "add": "Add",
     "loading": "Loading...",
-    "items": "items"
+    "items": "items",
+    "total": "Total"
   },
 
   "managementTemplate": {
@@ -228,6 +229,7 @@
   "assignmentPage": {
     "title": "Assignment Management",
     "breadcrumb": "Assignments",
+    "noAssignments": "No assignments found",
     "columns": {
       "name": "Assignment Name",
       "description": "Description",
@@ -276,16 +278,24 @@
     "typeUmlLabel": "UML Type",
     "moduleLabel": "Module Name",
     "descriptionLabel": "Module Description",
-    "validation": {
-      "titleRequired": "Title is required",
-      "descriptionRequired": "Description is required",
-      "typeUmlRequired": "UML Type is required",
-      "moduleRequired": "Module is required",
-      "moduleDescriptionRequired": "Module description is required"
-    },
+    "addNewModule": "Add New Module",
+    "addModuleTitle": "Add Module",
+    "moduleNamePlaceholder": "Enter module name",
+    "descriptionPlaceholder": "Enter module description",
+    "umlSolutionsLabel": "UML Solution",
+    "solution": "Solution",
+    "addUmlSolution": "Add UML Solution",
+    "titleRequired": "Title is required",
+    "descriptionRequired": "Description is required",
+    "typeUmlRequired": "UML Type is required",
+    "moduleRequired": "Module is required",
+    "moduleDescriptionRequired": "Module description is required",
     "startDate": "Start Date",
     "endDate": "End Date",
-    "assignmentLoading": "Loading assignment data..."
+    "assignmentLoading": "Loading assignment data...",
+    "solutionCodeRequired": "Solution code is required",
+    "moduleNameRequired": "Module name is required",
+    "listAssignment": "Assignment List"
   },
 
   "userPage": {
@@ -497,6 +507,7 @@
       "create": "Create",
       "createNew": "Create new assignment",
       "assigned": "Assign",
+      "assignAssignment": "Assign Assignment",
       "modulesAssigned": "Modules Assigned",
       "assignTest": "Assign Test",
       "noDeadline": "No deadline"

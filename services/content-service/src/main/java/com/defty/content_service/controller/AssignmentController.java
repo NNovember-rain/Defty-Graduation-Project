@@ -3,7 +3,6 @@ package com.defty.content_service.controller;
 import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
 import com.defty.content_service.dto.response.*;
-import com.defty.content_service.enums.TypeUml;
 import com.defty.content_service.service.AssignmentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.parameters.P;
+import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -132,8 +130,10 @@ public class AssignmentController {
     }
 
     @GetMapping("/assignmentClassDetail/{assignmentClassDetailId}")
-    ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(@PathVariable Long assignmentClassDetailId) {
-        AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetail(assignmentClassDetailId);
+    ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(@PathVariable Long assignmentClassDetailId,
+                                                                        @Param("typeUml") String typeUml,
+                                                                        @Param("moduleId") Long moduleId) {
+        AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetail(assignmentClassDetailId, typeUml, moduleId);
         return ApiResponse.<AssignmentClassDetailResponse>builder()
                 .result(response)
                 .build();

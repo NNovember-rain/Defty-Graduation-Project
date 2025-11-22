@@ -152,7 +152,7 @@ const Description: React.FC<Props> = ({
 
                 if (isTestCondition) {
                     data = await getAssignmentDetail(assignmentClassDetailId!);
-                    console.log("Data nhận được từ getAssignmentDetail:", data);
+                    console.log("Get AssignmentDetail:", data);
 
                     const assignmentClasses = data.assignmentClasses || [];
                     const assignmentClass = assignmentClasses[0];
@@ -176,7 +176,7 @@ const Description: React.FC<Props> = ({
                 }
                 else if (isPracticeCondition) {
                     data = await getAssignmentAllModule(assignmentClassId!);
-                    console.log("Data nhận được từ getAssignmentAllModule:", data);
+                    console.log("Get AssignmentDetail:", data);
 
                     if (data?.result?.modules && Array.isArray(data.result.modules)) {
                         modulesToUse = data.result.modules.map((mod: any) => ({
@@ -302,14 +302,6 @@ const Description: React.FC<Props> = ({
             key: String(mod.id)
         }));
     }, [modules, mode]);
-
-    const handleUmlTypeChange = (value: string) => {
-        console.log("User chọn UML Type:", value);
-        setLocalUmlType(value);
-        onUmlTypeChange(value);
-        onTypeUmlNameChange(value);
-    };
-
 
     const moduleOptionsFromState = moduleOptionsForSelect.length > 0
         ? moduleOptionsForSelect

@@ -411,15 +411,20 @@ class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId) {
+    public AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId, String typeUml, Long moduleId) {
         AssignmentClassDetail assignmentClassDetail = assignmentClassDetailRepository.findById(assignmentClassDetailId)
                 .orElseThrow(() -> new NotFoundException("AssignmentClassDetail not found with id: " + assignmentClassDetailId));
+
+        ModuleEntity module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new NotFoundException("Module not found with id: " + moduleId));
+        ModuleSolution moduleSolution = moduleSolutionRepository.findByModuleAndTypeUml(module, TypeUml.valueOf(typeUml));
         return AssignmentClassDetailResponse.builder()
+                .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
+                .titleAssignment(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
                 .moduleName(assignmentClassDetail.getModule().getModuleName())
                 .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
-                .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
                 .typeUml(String.valueOf(assignmentClassDetail.getTypeUml()))
-                .titleAssignment(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
+                .solutionCode(moduleSolution.getSolutionCode())
                 .checkedTest(assignmentClassDetail.isChecked())
                 .startDate(assignmentClassDetail.getStartDate())
                 .endDate(assignmentClassDetail.getEndDate())
