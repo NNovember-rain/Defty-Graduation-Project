@@ -25,5 +25,5 @@ public interface AssignmentService {
     ModuleResponse getAssignmentModule(Long moduleId);
     AssignmentClassResponse getAssignmentClassDetailId(Long assignmentClassDetailId);
     AssignmentResponseByClass getAssignmentAllModule(Long assignmentClassId);
-    AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId);
+    AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId, String typeUml, Long moduleId);
 }
