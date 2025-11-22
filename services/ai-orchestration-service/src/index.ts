@@ -37,7 +37,7 @@ import logger from './config/logger';
                 event_type: 'server_started',
                 port: PORT,
             });
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
+            console.log(`Server running on http://localhost:${PORT}`);
         });
     } catch (error: any) {
         logger.error({

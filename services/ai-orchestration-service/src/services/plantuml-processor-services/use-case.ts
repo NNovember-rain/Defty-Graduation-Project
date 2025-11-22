@@ -2,8 +2,12 @@ import logger from '../../config/logger';
 import { getErrorMessage } from '../../utils/errorHandler';
 import * as promptService from '../prompt.service';
 import { UmlInput, UmlProcessedResult } from '../../types/uml.types';
-import {callAIApi} from "../../providers/ai-llm.provider";
-import {AIValidationError, parseJsonResponse, UmlProcessingError} from "./index";
+import { callAIApi } from "../../providers/ai-llm.provider";
+import { AIValidationError, parseJsonResponse, UmlProcessingError } from "./index";
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
 
 interface DomainContext {
     keywords: string[];
@@ -76,6 +80,98 @@ interface ComparisonResult {
     };
 }
 
+interface MissingActorAnalysis {
+    actor: Actor;
+    isAbstractParent: boolean;
+    hasDirectUseCases: boolean;
+    childrenIds: string[];
+    childrenInStudent: string[];
+    severity: 'CRITICAL' | 'MINOR';
+}
+
+interface EnhancedComparisonResult extends ComparisonResult {
+    missingActorsAnalysis: MissingActorAnalysis[];
+}
+
+// Graph Analysis Types
+interface GraphNode {
+    id: string;
+    type: 'actor' | 'usecase';
+    name: string;
+    canonical?: string;
+}
+
+interface GraphEdge {
+    from: string;
+    to: string;
+    type: 'actorToUC' | 'generalization' | 'include' | 'extend';
+}
+
+interface PathInfo {
+    from: string;
+    to: string;
+    length: number;
+    path: string[];
+}
+
+interface GraphMetrics {
+    nodeCount: number;
+    edgeCount: number;
+    avgDegree: number;
+    maxDepth: number;
+    pathCount: number;
+    degreeCentrality: Map<string, number>;
+}
+
+interface GraphPattern {
+    type: 'ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS'
+        | 'MISSING_ABSTRACTION_WITH_PRESERVED_LOGIC'
+        | 'UC_CONSOLIDATION'
+        | 'UC_DECOMPOSITION'
+        | 'UC_OVER_DECOMPOSITION_WITH_DUPLICATE'
+        | 'STRUCTURAL_ISOMORPHISM'
+        | 'EXTRA_UNRELATED_ELEMENTS';
+    severity: 'POSITIVE' | 'NEUTRAL' | 'MINOR' | 'MAJOR' | 'CRITICAL';
+    confidence: number;
+    elements: {
+        parent?: string;
+        children?: string[];
+        preservedPaths?: string[];
+        isolated?: string[];
+        duplicates?: string[];
+        [key: string]: any;
+    };
+    structuralEquivalence: boolean;
+    designQuality?: {
+        rating: 'EXCELLENT' | 'GOOD' | 'ACCEPTABLE' | 'POOR';
+        reasoning: string;
+    };
+}
+
+interface GraphEquivalence {
+    type: 'path_preserved' | 'isomorphic' | 'consolidated' | 'decomposed';
+    confidence: number;
+    explanation: string;
+}
+
+interface GraphRecommendation {
+    code: 'IGNORE_MISSING_ACTOR' | 'IGNORE_EXTRA_ACTOR' | 'IGNORE_MISSING_UC'
+        | 'IGNORE_EXTRA_UC' | 'REDUCE_PENALTY' | 'ADD_BONUS' | 'REQUIRE_HUMAN_REVIEW';
+    reason: string;
+    affectedElements: string[];
+    penaltyAdjustment?: number;
+}
+
+interface GraphAnalysisResult {
+    patterns: GraphPattern[];
+    structuralMetrics: {
+        solution: GraphMetrics;
+        student: GraphMetrics;
+    };
+    detectedEquivalences: GraphEquivalence[];
+    recommendations: GraphRecommendation[];
+}
+
 interface DetectedError {
     code: string;
     severity: 'CRITICAL' | 'MAJOR' | 'MINOR';
@@ -92,11 +188,19 @@ interface ScoreBreakdown {
     presentation: { score: number; max: number; details: string };
 }
 
+interface GraphAdjustment {
+    pattern: string;
+    originalPenalty: number;
+    adjustedPenalty: number;
+    reasoning: string;
+}
+
 interface ReferenceScore {
     total: number;
     breakdown: ScoreBreakdown;
     confidence: 'HIGH' | 'MEDIUM' | 'LOW';
     suggestedRange: string;
+    graphAdjustments?: GraphAdjustment[];
 }
 
 // ============================================================================
@@ -105,7 +209,7 @@ interface ReferenceScore {
 
 const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainContext> => {
     logger.info({
-        message: 'STEP 1: Starting validation and preprocessing',
+        message: 'BƯỚC 1: Bắt đầu validation và preprocessing',
         event_type: 'step1_start',
         id: input.id
     });
@@ -113,17 +217,17 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
     // Validate input structure
     if (!input.typeUmlName || !input.contentAssignment ||
         !input.solutionPlantUmlCode || !input.studentPlantUmlCode) {
-        throw new UmlProcessingError('Missing required input fields');
+        throw new UmlProcessingError('Thiếu trường bắt buộc trong input');
     }
 
     if (input.typeUmlName.toLowerCase() !== 'use-case') {
-        throw new UmlProcessingError('Only use-case diagrams supported currently');
+        throw new UmlProcessingError('Chỉ hỗ trợ use-case diagram');
     }
 
     // Validate PlantUML syntax
     const validatePlantUml = (code: string, label: string) => {
         if (!code.includes('@startuml') || !code.includes('@enduml')) {
-            throw new UmlProcessingError(`${label}: Missing PlantUML tags`);
+            throw new UmlProcessingError(`${label}: Thiếu PlantUML tags`);
         }
     };
 
@@ -138,7 +242,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('No active domain extractor prompt found');
+        throw new Error('Không tìm thấy prompt domain extractor');
     }
 
     const promptContent = prompt.prompts[0].templateString
@@ -148,7 +252,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
     const domainContext = parseJsonResponse<DomainContext>(aiResponse, input.id, 'step1');
 
     logger.info({
-        message: 'STEP 1: Completed',
+        message: 'BƯỚC 1: Hoàn thành',
         event_type: 'step1_complete',
         id: input.id,
         keywordsCount: domainContext.keywords.length,
@@ -159,7 +263,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
 };
 
 // ============================================================================
-// STEP 2: EXTRACT TO JSON (OPTIMIZED - Single API Call)
+// STEP 2: EXTRACT TO JSON
 // ============================================================================
 
 const step2_extractToJson = async (
@@ -167,7 +271,7 @@ const step2_extractToJson = async (
     domainContext: DomainContext
 ): Promise<{ solution: DiagramJSON; student: DiagramJSON }> => {
     logger.info({
-        message: 'STEP 2: Starting PlantUML to JSON extraction (single call)',
+        message: 'BƯỚC 2: Bắt đầu trích xuất PlantUML sang JSON',
         event_type: 'step2_start',
         id: input.id
     });
@@ -179,10 +283,9 @@ const step2_extractToJson = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('No active PlantUML extractor prompt found');
+        throw new Error('Không tìm thấy prompt PlantUML extractor');
     }
 
-    // Single API call for both diagrams
     const promptContent = prompt.prompts[0].templateString
         .replace(/\{\{solutionPlantUmlCode\}\}/g, input.solutionPlantUmlCode)
         .replace(/\{\{studentPlantUmlCode\}\}/g, input.studentPlantUmlCode)
@@ -195,7 +298,7 @@ const step2_extractToJson = async (
     }>(aiResponse, input.id, 'step2');
 
     logger.info({
-        message: 'STEP 2: Completed',
+        message: 'BƯỚC 2: Hoàn thành',
         event_type: 'step2_complete',
         id: input.id,
         solution: {
@@ -212,7 +315,7 @@ const step2_extractToJson = async (
 };
 
 // ============================================================================
-// STEP 3: SEMANTIC NORMALIZATION (OPTIMIZED - Single API Call)
+// STEP 3: SEMANTIC NORMALIZATION
 // ============================================================================
 
 const step3_semanticNormalization = async (
@@ -220,7 +323,7 @@ const step3_semanticNormalization = async (
     diagrams: { solution: DiagramJSON; student: DiagramJSON }
 ): Promise<{ solution: NormalizedDiagram; student: NormalizedDiagram }> => {
     logger.info({
-        message: 'STEP 3: Starting semantic normalization (single call)',
+        message: 'BƯỚC 3: Bắt đầu chuẩn hóa semantic',
         event_type: 'step3_start',
         id: input.id
     });
@@ -232,7 +335,7 @@ const step3_semanticNormalization = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('No active semantic normalizer prompt found');
+        throw new Error('Không tìm thấy prompt semantic normalizer');
     }
 
     const elementsToNormalize = {
@@ -246,7 +349,6 @@ const step3_semanticNormalization = async (
         }
     };
 
-    // Single API call for both diagrams
     const promptContent = prompt.prompts[0].templateString
         .replace(/\{\{elements\}\}/g, JSON.stringify(elementsToNormalize));
 
@@ -328,7 +430,7 @@ const step3_semanticNormalization = async (
     };
 
     logger.info({
-        message: 'STEP 3: Completed',
+        message: 'BƯỚC 3: Hoàn thành',
         event_type: 'step3_complete',
         id: input.id
     });
@@ -337,27 +439,14 @@ const step3_semanticNormalization = async (
 };
 
 // ============================================================================
-// STEP 4: STRUCTURE COMPARISON WITH RULE-BASED ANALYSIS
+// STEP 4: STRUCTURE COMPARISON
 // ============================================================================
-
-interface MissingActorAnalysis {
-    actor: Actor;
-    isAbstractParent: boolean;
-    hasDirectUseCases: boolean;
-    childrenIds: string[];
-    childrenInStudent: string[];
-    severity: 'CRITICAL' | 'MINOR';
-}
-
-interface EnhancedComparisonResult extends ComparisonResult {
-    missingActorsAnalysis: MissingActorAnalysis[];
-}
 
 const step4_structureComparison = (
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram }
 ): EnhancedComparisonResult => {
     logger.info({
-        message: 'STEP 4: Starting structure comparison with rule-based analysis',
+        message: 'BƯỚC 4: Bắt đầu so sánh cấu trúc',
         event_type: 'step4_start'
     });
 
@@ -388,20 +477,17 @@ const step4_structureComparison = (
 
     extraActors.push(...Array.from(studentActorMap.values()));
 
-    // RULE-BASED: Analyze missing actors for abstract parent pattern
+    // Analyze missing actors for abstract parent pattern
     const missingActorsAnalysis: MissingActorAnalysis[] = missingActors.map(actor => {
-        // Check if this actor is a parent in generalization
         const generalizationRelations = solution.relationships.generalization
             .filter(gen => gen.type === 'actor' && gen.parentId === actor.id);
 
         const isAbstractParent = generalizationRelations.length > 0;
         const childrenIds = generalizationRelations.map(gen => gen.childId);
 
-        // Check if actor has direct use case relationships
         const hasDirectUseCases = solution.relationships.actorToUC
             .some(rel => rel.actorId === actor.id);
 
-        // Check which children exist in student diagram
         const childrenInStudent: string[] = [];
         if (isAbstractParent) {
             for (const childId of childrenIds) {
@@ -418,13 +504,10 @@ const step4_structureComparison = (
             }
         }
 
-        // RULE-BASED: Determine severity
         let severity: 'CRITICAL' | 'MINOR' = 'CRITICAL';
 
         if (isAbstractParent && !hasDirectUseCases) {
-            // Pure abstract parent without direct use cases
             if (childrenInStudent.length === childrenIds.length) {
-                // All children exist in student - just missing abstraction
                 severity = 'MINOR';
             }
         }
@@ -516,33 +599,447 @@ const step4_structureComparison = (
     };
 
     logger.info({
-        message: 'STEP 4: Completed',
+        message: 'BƯỚC 4: Hoàn thành',
         event_type: 'step4_complete',
         actors: {
             matched: matchedActors.length,
             missing: missingActors.length,
-            extra: extraActors.length,
-            abstractParents: missingActorsAnalysis.filter(a => a.isAbstractParent).length
+            extra: extraActors.length
         },
-        usecases: { matched: matchedUsecases.length, missing: missingUsecases.length, extra: extraUsecases.length }
+        usecases: {
+            matched: matchedUsecases.length,
+            missing: missingUsecases.length,
+            extra: extraUsecases.length
+        }
     });
 
     return result;
 };
 
 // ============================================================================
-// STEP 5: ERROR CLASSIFICATION & SCORING (HYBRID)
+// STEP 5: GRAPH ANALYSIS
 // ============================================================================
 
-const step5_classifyErrorsAndScore = async (
+class UseCaseGraphAnalyzer {
+    private nodes: Map<string, GraphNode> = new Map();
+    private edges: GraphEdge[] = [];
+    private adjacencyList: Map<string, Set<string>> = new Map();
+
+    constructor(diagram: NormalizedDiagram) {
+        this.buildGraph(diagram);
+    }
+
+    private buildGraph(diagram: NormalizedDiagram) {
+        // Add actor nodes
+        for (const actor of diagram.actors) {
+            this.nodes.set(actor.id, {
+                id: actor.id,
+                type: 'actor',
+                name: actor.name,
+                canonical: actor.normalized.canonical
+            });
+            this.adjacencyList.set(actor.id, new Set());
+        }
+
+        // Add usecase nodes
+        for (const uc of diagram.usecases) {
+            this.nodes.set(uc.id, {
+                id: uc.id,
+                type: 'usecase',
+                name: uc.name,
+                canonical: uc.normalized.canonical
+            });
+            this.adjacencyList.set(uc.id, new Set());
+        }
+
+        // Add actorToUC edges
+        for (const rel of diagram.relationships.actorToUC) {
+            this.addEdge(rel.actorId, rel.ucId, 'actorToUC');
+        }
+
+        // Add generalization edges
+        for (const rel of diagram.relationships.generalization) {
+            this.addEdge(rel.parentId, rel.childId, 'generalization');
+        }
+
+        // Add include edges
+        for (const rel of diagram.relationships.include) {
+            this.addEdge(rel.baseId, rel.includedId, 'include');
+        }
+
+        // Add extend edges
+        for (const rel of diagram.relationships.extend) {
+            this.addEdge(rel.baseId, rel.extendedId, 'extend');
+        }
+    }
+
+    private addEdge(from: string, to: string, type: GraphEdge['type']) {
+        this.edges.push({ from, to, type });
+        this.adjacencyList.get(from)?.add(to);
+    }
+
+    public findPaths(fromId: string, toId: string, maxDepth: number = 10): PathInfo[] {
+        const paths: PathInfo[] = [];
+        const visited = new Set<string>();
+
+        const dfs = (currentId: string, targetId: string, currentPath: string[], depth: number) => {
+            if (depth > maxDepth) return;
+            if (currentId === targetId) {
+                paths.push({
+                    from: fromId,
+                    to: toId,
+                    length: currentPath.length,
+                    path: [...currentPath, currentId]
+                });
+                return;
+            }
+
+            visited.add(currentId);
+            const neighbors = this.adjacencyList.get(currentId) || new Set();
+
+            for (const neighbor of neighbors) {
+                if (!visited.has(neighbor)) {
+                    dfs(neighbor, targetId, [...currentPath, currentId], depth + 1);
+                }
+            }
+
+            visited.delete(currentId);
+        };
+
+        dfs(fromId, toId, [], 0);
+        return paths;
+    }
+
+    public getDegreeCentrality(): Map<string, number> {
+        const centrality = new Map<string, number>();
+
+        for (const [nodeId, neighbors] of this.adjacencyList) {
+            const inDegree = this.edges.filter(e => e.to === nodeId).length;
+            const outDegree = neighbors.size;
+            centrality.set(nodeId, inDegree + outDegree);
+        }
+
+        return centrality;
+    }
+
+    public getMetrics(): GraphMetrics {
+        const degreeCentrality = this.getDegreeCentrality();
+        const degrees = Array.from(degreeCentrality.values());
+
+        // Calculate max depth (longest path from any actor to any usecase)
+        let maxDepth = 0;
+        const actors = Array.from(this.nodes.values()).filter(n => n.type === 'actor');
+        const usecases = Array.from(this.nodes.values()).filter(n => n.type === 'usecase');
+
+        let totalPaths = 0;
+        for (const actor of actors) {
+            for (const uc of usecases) {
+                const paths = this.findPaths(actor.id, uc.id);
+                totalPaths += paths.length;
+                for (const path of paths) {
+                    maxDepth = Math.max(maxDepth, path.length);
+                }
+            }
+        }
+
+        return {
+            nodeCount: this.nodes.size,
+            edgeCount: this.edges.length,
+            avgDegree: degrees.length > 0 ? degrees.reduce((a, b) => a + b, 0) / degrees.length : 0,
+            maxDepth,
+            pathCount: totalPaths,
+            degreeCentrality
+        };
+    }
+
+    public findActorUseCasePaths(actorId: string): Map<string, PathInfo[]> {
+        const paths = new Map<string, PathInfo[]>();
+        const usecases = Array.from(this.nodes.values()).filter(n => n.type === 'usecase');
+
+        for (const uc of usecases) {
+            const foundPaths = this.findPaths(actorId, uc.id);
+            if (foundPaths.length > 0) {
+                paths.set(uc.id, foundPaths);
+            }
+        }
+
+        return paths;
+    }
+
+    public getGeneralizationChildren(parentId: string): string[] {
+        return this.edges
+            .filter(e => e.type === 'generalization' && e.from === parentId)
+            .map(e => e.to);
+    }
+
+    public isIsolated(nodeId: string): boolean {
+        const degree = this.getDegreeCentrality().get(nodeId) || 0;
+        return degree === 0;
+    }
+
+    public getNode(nodeId: string): GraphNode | undefined {
+        return this.nodes.get(nodeId);
+    }
+
+    public getAllActors(): GraphNode[] {
+        return Array.from(this.nodes.values()).filter(n => n.type === 'actor');
+    }
+
+    public getAllUseCases(): GraphNode[] {
+        return Array.from(this.nodes.values()).filter(n => n.type === 'usecase');
+    }
+}
+
+const step5_graphAnalysis = (
+    normalized: { solution: NormalizedDiagram; student: NormalizedDiagram },
+    comparison: EnhancedComparisonResult
+): GraphAnalysisResult => {
+    logger.info({
+        message: 'BƯỚC 5: Bắt đầu phân tích Graph',
+        event_type: 'step5_start'
+    });
+
+    const solutionGraph = new UseCaseGraphAnalyzer(normalized.solution);
+    const studentGraph = new UseCaseGraphAnalyzer(normalized.student);
+
+    const patterns: GraphPattern[] = [];
+    const equivalences: GraphEquivalence[] = [];
+    const recommendations: GraphRecommendation[] = [];
+
+    // PATTERN 1: ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS
+    if (comparison.actors.extra.length > 0) {
+        for (const extraActor of comparison.actors.extra) {
+            const childrenIds = solutionGraph.getGeneralizationChildren(extraActor.id);
+
+            // Kiểm tra nếu actor này là con của actor nào đó trong solution
+            const isChild = normalized.solution.relationships.generalization
+                .some(gen => gen.type === 'actor' && gen.childId === extraActor.id);
+
+            if (isChild) {
+                // Tìm parent trong solution
+                const parentRel = normalized.solution.relationships.generalization
+                    .find(gen => gen.type === 'actor' && gen.childId === extraActor.id);
+
+                if (parentRel) {
+                    const parentNode = solutionGraph.getNode(parentRel.parentId);
+                    if (parentNode) {
+                        // Kiểm tra path preservation
+                        const parentPaths = solutionGraph.findActorUseCasePaths(parentNode.id);
+                        const childPaths = studentGraph.findActorUseCasePaths(extraActor.id);
+
+                        const preservedPaths: string[] = [];
+                        let allPathsPreserved = true;
+
+                        for (const [ucId, paths] of parentPaths) {
+                            const ucNode = solutionGraph.getNode(ucId);
+                            if (ucNode && ucNode.canonical) {
+                                // Tìm UC tương ứng trong student
+                                const studentUc = normalized.student.usecases
+                                    .find(u => u.normalized.canonical.toLowerCase() === ucNode.canonical?.toLowerCase());
+
+                                if (studentUc) {
+                                    const childPathsToUc = childPaths.get(studentUc.id);
+                                    if (childPathsToUc && childPathsToUc.length > 0) {
+                                        preservedPaths.push(`${parentNode.name}⇝${ucNode.name} (qua ${extraActor.name})`);
+                                    } else {
+                                        allPathsPreserved = false;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (allPathsPreserved && preservedPaths.length > 0) {
+                            patterns.push({
+                                type: 'ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS',
+                                severity: 'POSITIVE',
+                                confidence: 0.95,
+                                elements: {
+                                    parent: parentNode.name,
+                                    children: [extraActor.name],
+                                    preservedPaths
+                                },
+                                structuralEquivalence: true,
+                                designQuality: {
+                                    rating: 'EXCELLENT',
+                                    reasoning: 'Áp dụng generalization hierarchy hợp lý, logic đầy đủ'
+                                }
+                            });
+
+                            recommendations.push({
+                                code: 'IGNORE_EXTRA_ACTOR',
+                                reason: 'Actor là specialization hợp lý với path preserved',
+                                affectedElements: [extraActor.name],
+                                penaltyAdjustment: 0
+                            });
+
+                            equivalences.push({
+                                type: 'path_preserved',
+                                confidence: 0.95,
+                                explanation: `${extraActor.name} bảo toàn tất cả paths từ ${parentNode.name}`
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // PATTERN 2: MISSING_ABSTRACTION_WITH_PRESERVED_LOGIC
+    for (const missingAnalysis of comparison.missingActorsAnalysis) {
+        if (missingAnalysis.isAbstractParent &&
+            !missingAnalysis.hasDirectUseCases &&
+            missingAnalysis.childrenInStudent.length === missingAnalysis.childrenIds.length) {
+
+            patterns.push({
+                type: 'MISSING_ABSTRACTION_WITH_PRESERVED_LOGIC',
+                severity: 'MINOR',
+                confidence: 0.9,
+                elements: {
+                    parent: missingAnalysis.actor.name,
+                    children: missingAnalysis.childrenIds
+                        .map(id => normalized.solution.actors.find(a => a.id === id)?.name)
+                        .filter(Boolean)
+                },
+                structuralEquivalence: true,
+                designQuality: {
+                    rating: 'ACCEPTABLE',
+                    reasoning: 'Thiếu abstraction layer nhưng logic đầy đủ'
+                }
+            });
+
+            recommendations.push({
+                code: 'REDUCE_PENALTY',
+                reason: 'Thiếu abstract parent nhưng tất cả children đều có',
+                affectedElements: [missingAnalysis.actor.name],
+                penaltyAdjustment: -4 // Giảm từ -8 xuống -4
+            });
+        }
+    }
+
+    // PATTERN 3: EXTRA_UNRELATED_ELEMENTS (isolated nodes)
+    for (const extraActor of comparison.actors.extra) {
+        if (studentGraph.isIsolated(extraActor.id)) {
+            patterns.push({
+                type: 'EXTRA_UNRELATED_ELEMENTS',
+                severity: 'CRITICAL',
+                confidence: 1.0,
+                elements: {
+                    isolated: [extraActor.name]
+                },
+                structuralEquivalence: false
+            });
+
+            // Không thêm recommendation để giảm penalty - đây là lỗi thật
+        }
+    }
+
+    for (const extraUc of comparison.usecases.extra) {
+        if (studentGraph.isIsolated(extraUc.id)) {
+            patterns.push({
+                type: 'EXTRA_UNRELATED_ELEMENTS',
+                severity: 'CRITICAL',
+                confidence: 1.0,
+                elements: {
+                    isolated: [extraUc.name]
+                },
+                structuralEquivalence: false
+            });
+        }
+    }
+
+    // PATTERN 4: UC_CONSOLIDATION hoặc UC_DECOMPOSITION
+    if (comparison.usecases.missing.length > 0 && comparison.usecases.extra.length > 0) {
+        // Có thể là consolidation (nhiều -> 1) hoặc decomposition (1 -> nhiều)
+        const missingCount = comparison.usecases.missing.length;
+        const extraCount = comparison.usecases.extra.length;
+
+        if (missingCount > extraCount) {
+            // Có thể là consolidation
+            patterns.push({
+                type: 'UC_CONSOLIDATION',
+                severity: 'MINOR',
+                confidence: 0.6,
+                elements: {
+                    missing: comparison.usecases.missing.map(uc => uc.name),
+                    extra: comparison.usecases.extra.map(uc => uc.name)
+                },
+                structuralEquivalence: false,
+                designQuality: {
+                    rating: 'ACCEPTABLE',
+                    reasoning: 'Gộp nhiều UC thành ít UC - cần kiểm tra semantic'
+                }
+            });
+
+            recommendations.push({
+                code: 'REQUIRE_HUMAN_REVIEW',
+                reason: 'Phát hiện UC consolidation - cần xác nhận semantic',
+                affectedElements: comparison.usecases.extra.map(uc => uc.name)
+            });
+
+        } else if (extraCount > missingCount) {
+            // Có thể là decomposition
+            patterns.push({
+                type: 'UC_DECOMPOSITION',
+                severity: 'NEUTRAL',
+                confidence: 0.6,
+                elements: {
+                    missing: comparison.usecases.missing.map(uc => uc.name),
+                    extra: comparison.usecases.extra.map(uc => uc.name)
+                },
+                structuralEquivalence: false,
+                designQuality: {
+                    rating: 'GOOD',
+                    reasoning: 'Tách UC thành chi tiết hơn - có thể là thiết kế tốt'
+                }
+            });
+
+            recommendations.push({
+                code: 'REQUIRE_HUMAN_REVIEW',
+                reason: 'Phát hiện UC decomposition - cần kiểm tra rubric',
+                affectedElements: comparison.usecases.extra.map(uc => uc.name)
+            });
+        }
+    }
+
+    // Calculate structural metrics
+    const solutionMetrics = solutionGraph.getMetrics();
+    const studentMetrics = studentGraph.getMetrics();
+
+    const result: GraphAnalysisResult = {
+        patterns,
+        structuralMetrics: {
+            solution: solutionMetrics,
+            student: studentMetrics
+        },
+        detectedEquivalences: equivalences,
+        recommendations
+    };
+
+    logger.info({
+        message: 'BƯỚC 5: Hoàn thành',
+        event_type: 'step5_complete',
+        patternsDetected: patterns.length,
+        equivalencesFound: equivalences.length,
+        recommendationsCount: recommendations.length
+    });
+
+    return result;
+};
+
+// ============================================================================
+// STEP 6: ERROR CLASSIFICATION & SCORING (WITH GRAPH INPUT)
+// ============================================================================
+
+const step6_classifyErrorsAndScore = async (
     input: UmlInput,
     comparison: EnhancedComparisonResult,
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram },
-    domainContext: DomainContext
+    domainContext: DomainContext,
+    graphAnalysis: GraphAnalysisResult
 ): Promise<{ errors: DetectedError[]; score: ReferenceScore }> => {
     logger.info({
-        message: 'STEP 5: Starting error classification and scoring',
-        event_type: 'step5_start',
+        message: 'BƯỚC 6: Bắt đầu phân loại lỗi và chấm điểm (có Graph input)',
+        event_type: 'step6_start',
         id: input.id
     });
 
@@ -553,7 +1050,7 @@ const step5_classifyErrorsAndScore = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('No active error classifier-scorer prompt found');
+        throw new Error('Không tìm thấy prompt error classifier-scorer');
     }
 
     const classificationInput = {
@@ -580,28 +1077,35 @@ const step5_classifyErrorsAndScore = async (
             actorCount: normalized.solution.actors.length,
             usecaseCount: normalized.solution.usecases.length
         },
+        graphAnalysis: {
+            patterns: graphAnalysis.patterns,
+            recommendations: graphAnalysis.recommendations,
+            equivalences: graphAnalysis.detectedEquivalences,
+            metrics: graphAnalysis.structuralMetrics
+        },
         scoringCriteria: {
-            actors: { max: 20, description: "Actor identification and types" },
-            usecases: { max: 30, description: "Use case identification and quality" },
-            relationships: { max: 40, description: "Relationships correctness" },
-            presentation: { max: 10, description: "Boundary and layout" }
+            actors: { max: 20, description: "Nhận diện và phân loại Actor" },
+            usecases: { max: 30, description: "Nhận diện và chất lượng Use Case" },
+            relationships: { max: 40, description: "Độ chính xác của Relationships" },
+            presentation: { max: 10, description: "Boundary và bố cục" }
         }
     };
 
     const promptContent = prompt.prompts[0].templateString
         .replace(/\{\{classificationInput\}\}/g, JSON.stringify(classificationInput, null, 2));
 
-    const aiResponse = await callAIApi(promptContent, input.id, 'step5-classify-score');
+    const aiResponse = await callAIApi(promptContent, input.id, 'step6-classify-score');
     const result = parseJsonResponse<{
         errors: DetectedError[];
         score: {
             total: number;
             breakdown: ScoreBreakdown;
             reasoning: string;
+            graphAdjustments?: GraphAdjustment[];
         };
-    }>(aiResponse, input.id, 'step5');
+    }>(aiResponse, input.id, 'step6');
 
-    // Determine confidence based on ambiguous matches
+    // Determine confidence
     const lowSimilarityCount = [
         ...comparison.actors.matched.filter(m => m.similarity < 0.85),
         ...comparison.usecases.matched.filter(m => m.similarity < 0.85)
@@ -618,19 +1122,18 @@ const step5_classifyErrorsAndScore = async (
         total: Math.round(result.score.total * 10) / 10,
         breakdown: result.score.breakdown,
         confidence,
-        suggestedRange
+        suggestedRange,
+        graphAdjustments: result.score.graphAdjustments
     };
 
     logger.info({
-        message: 'STEP 5: Completed',
-        event_type: 'step5_complete',
+        message: 'BƯỚC 6: Hoàn thành',
+        event_type: 'step6_complete',
         id: input.id,
         errorsDetected: result.errors.length,
-        criticalCount: result.errors.filter(e => e.severity === 'CRITICAL').length,
-        majorCount: result.errors.filter(e => e.severity === 'MAJOR').length,
-        minorCount: result.errors.filter(e => e.severity === 'MINOR').length,
         score: finalScore.total,
-        confidence
+        confidence,
+        graphAdjustmentsCount: result.score.graphAdjustments?.length || 0
     });
 
     return {
@@ -640,18 +1143,19 @@ const step5_classifyErrorsAndScore = async (
 };
 
 // ============================================================================
-// STEP 6: GENERATE FEEDBACK
+// STEP 7: GENERATE FEEDBACK
 // ============================================================================
 
-const step6_generateFeedback = async (
+const step7_generateFeedback = async (
     input: UmlInput,
     referenceScore: ReferenceScore,
     errors: DetectedError[],
-    comparison: ComparisonResult
+    comparison: ComparisonResult,
+    graphAnalysis: GraphAnalysisResult
 ): Promise<string> => {
     logger.info({
-        message: 'STEP 6: Starting feedback generation',
-        event_type: 'step6_start',
+        message: 'BƯỚC 7: Bắt đầu tạo feedback',
+        event_type: 'step7_start',
         id: input.id
     });
 
@@ -662,7 +1166,7 @@ const step6_generateFeedback = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('No active feedback generator prompt found');
+        throw new Error('Không tìm thấy prompt feedback generator');
     }
 
     const feedbackInput = {
@@ -681,17 +1185,22 @@ const step6_generateFeedback = async (
             },
             relationships: comparison.relationships
         },
+        graphAnalysis: {
+            patterns: graphAnalysis.patterns,
+            positivePatterns: graphAnalysis.patterns.filter(p => p.severity === 'POSITIVE'),
+            detectedEquivalences: graphAnalysis.detectedEquivalences
+        },
         assignmentContext: input.contentAssignment.substring(0, 500)
     };
 
     const promptContent = prompt.prompts[0].templateString
         .replace(/\{\{feedbackInput\}\}/g, JSON.stringify(feedbackInput, null, 2));
 
-    const feedback = await callAIApi(promptContent, input.id, 'step6-feedback');
+    const feedback = await callAIApi(promptContent, input.id, 'step7-feedback');
 
     logger.info({
-        message: 'STEP 6: Completed',
-        event_type: 'step6_complete',
+        message: 'BƯỚC 7: Hoàn thành',
+        event_type: 'step7_complete',
         id: input.id,
         feedbackLength: feedback.length
     });
@@ -703,41 +1212,51 @@ const step6_generateFeedback = async (
 // MAIN ORCHESTRATOR
 // ============================================================================
 
-export const processUseCaseUmlWithAI = async (
+export const processUseCaseUmlWithGraphAnalysis = async (
     input: UmlInput
 ): Promise<UmlProcessedResult> => {
     const startTime = Date.now();
 
     try {
         logger.info({
-            message: '🚀 Starting 6-step Use Case Diagram processing pipeline',
+            message: '🚀 Bắt đầu pipeline 7 bước xử lý Use Case Diagram (có Graph Analysis)',
             event_type: 'pipeline_start',
             id: input.id,
             typeUmlName: input.typeUmlName
         });
 
-        // STEP 1: Validation & Preprocessing
+        // BƯỚC 1: Validation & Preprocessing
         const domainContext = await step1_validateAndPreprocess(input);
 
-        // STEP 2: Extract to JSON
+        // BƯỚC 2: Extract to JSON
         const diagrams = await step2_extractToJson(input, domainContext);
 
-        // STEP 3: Semantic Normalization
+        // BƯỚC 3: Semantic Normalization
         const normalized = await step3_semanticNormalization(input, diagrams);
 
-        // STEP 4: Structure Comparison (Rule-based)
+        // BƯỚC 4: Structure Comparison (Rule-based)
         const comparison = step4_structureComparison(normalized);
 
-        // STEP 5: Error Classification & Scoring (Hybrid AI)
-        const { errors, score: referenceScore } = await step5_classifyErrorsAndScore(
+        // BƯỚC 5: Graph Analysis (Rule-based - MỚI)
+        const graphAnalysis = step5_graphAnalysis(normalized, comparison);
+
+        // BƯỚC 6: Error Classification & Scoring (Hybrid AI - có Graph input)
+        const { errors, score: referenceScore } = await step6_classifyErrorsAndScore(
             input,
             comparison,
             normalized,
-            domainContext
+            domainContext,
+            graphAnalysis
         );
 
-        // STEP 6: Generate Feedback
-        const feedback = await step6_generateFeedback(input, referenceScore, errors, comparison);
+        // BƯỚC 7: Generate Feedback
+        const feedback = await step7_generateFeedback(
+            input,
+            referenceScore,
+            errors,
+            comparison,
+            graphAnalysis
+        );
 
         const duration = Date.now() - startTime;
 
@@ -748,21 +1267,21 @@ export const processUseCaseUmlWithAI = async (
         comparison.actors.matched
             .filter(m => m.similarity < 0.85)
             .forEach(m => humanReviewItems.push(
-                `Actor similarity low: "${m.student.name}" vs "${m.solution.name}" (${(m.similarity * 100).toFixed(0)}%)`
+                `Actor similarity thấp: "${m.student.name}" vs "${m.solution.name}" (${(m.similarity * 100).toFixed(0)}%)`
             ));
 
         comparison.usecases.matched
             .filter(m => m.similarity < 0.85)
             .forEach(m => humanReviewItems.push(
-                `UseCase similarity low: "${m.student.name}" vs "${m.solution.name}" (${(m.similarity * 100).toFixed(0)}%)`
+                `UseCase similarity thấp: "${m.student.name}" vs "${m.solution.name}" (${(m.similarity * 100).toFixed(0)}%)`
             ));
 
-        // Extra elements that might be valid
-        if (comparison.usecases.extra.length > 0) {
-            humanReviewItems.push(
-                `${comparison.usecases.extra.length} extra usecase(s) - may be valid additions: ${comparison.usecases.extra.map(uc => uc.name).join(', ')}`
-            );
-        }
+        // Add graph analysis recommendations for human review
+        graphAnalysis.recommendations
+            .filter(r => r.code === 'REQUIRE_HUMAN_REVIEW')
+            .forEach(r => humanReviewItems.push(
+                `Graph Analysis: ${r.reason} - ${r.affectedElements.join(', ')}`
+            ));
 
         const result: UmlProcessedResult = {
             referenceScore: {
@@ -785,18 +1304,23 @@ export const processUseCaseUmlWithAI = async (
                 },
                 relationships: comparison.relationships
             },
+            graphAnalysis: {
+                patterns: graphAnalysis.patterns,
+                structuralMetrics: graphAnalysis.structuralMetrics,
+                detectedEquivalences: graphAnalysis.detectedEquivalences
+            },
             feedback: feedback,
             humanReviewItems: humanReviewItems,
             metadata: {
                 processingTime: `${(duration / 1000).toFixed(1)}s`,
-                aiCallsCount: 5, // 1 domain + 1 extract + 1 normalize + 1 classify-score + 1 feedback
-                pipelineVersion: '1.0.0-usecase',
+                aiCallsCount: 5,
+                pipelineVersion: '2.0.0-usecase-with-graph',
                 timestamp: new Date().toISOString()
             }
         };
 
         logger.info({
-            message: '✅ Use Case Diagram processing pipeline completed successfully',
+            message: '✅ Pipeline xử lý Use Case Diagram hoàn thành thành công',
             event_type: 'pipeline_complete',
             id: input.id,
             durationMs: duration,
@@ -804,6 +1328,7 @@ export const processUseCaseUmlWithAI = async (
             score: referenceScore.total,
             confidence: referenceScore.confidence,
             errorsCount: errors.length,
+            patternsDetected: graphAnalysis.patterns.length,
             humanReviewItemsCount: humanReviewItems.length
         });
 
@@ -813,7 +1338,7 @@ export const processUseCaseUmlWithAI = async (
         const duration = Date.now() - startTime;
 
         logger.error({
-            message: '❌ Use Case Diagram processing pipeline failed',
+            message: '❌ Pipeline xử lý Use Case Diagram thất bại',
             event_type: 'pipeline_error',
             id: input.id,
             typeUmlName: input.typeUmlName,
@@ -823,7 +1348,6 @@ export const processUseCaseUmlWithAI = async (
             stack: (error as Error).stack
         });
 
-        // Re-throw with context
         if (error instanceof AIValidationError) {
             throw error;
         } else if (error instanceof UmlProcessingError) {
