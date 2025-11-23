@@ -153,7 +153,10 @@
     "add": "Thêm",
     "loading": "Đang tải...",
     "items": "mục",
-    "total": "Tổng"
+    "total": "Tổng",
+    "test": "Bài kiểm tra",
+    "practice": "Bài tập",
+    "detailView": "Chi tiết"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",

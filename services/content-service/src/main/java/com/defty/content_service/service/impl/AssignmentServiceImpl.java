@@ -426,16 +426,34 @@ class AssignmentServiceImpl implements AssignmentService {
         AssignmentClassDetail assignmentClassDetail = assignmentClassDetailRepository.findById(assignmentClassDetailId)
                 .orElseThrow(() -> new NotFoundException("AssignmentClassDetail not found with id: " + assignmentClassDetailId));
 
-        ModuleEntity module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new NotFoundException("Module not found with id: " + moduleId));
-        ModuleSolution moduleSolution = moduleSolutionRepository.findByModuleAndTypeUml(module, TypeUml.valueOf(typeUml));
+        ModuleEntity module;
+        if(moduleId != null){
+            module = moduleRepository.findById(moduleId)
+                    .orElseThrow(() -> new NotFoundException("Module not found with id: " + moduleId));
+        }
+        else{
+            Long moduleIdDB = assignmentClassDetail.getModule().getId();
+            module = moduleRepository.findById(moduleIdDB)
+                    .orElseThrow(() -> new NotFoundException("Module not found with id: " + moduleIdDB));
+        }
+        ModuleSolution moduleSolution;
+        String solutionCode;
+        if(typeUml != null){
+            moduleSolution = moduleSolutionRepository.findByModuleAndTypeUml(module, TypeUml.valueOf(typeUml));
+        }
+        else{
+            moduleSolution = null;
+        }
+        solutionCode = (moduleSolution != null) ? moduleSolution.getSolutionCode() : null;
+
         return AssignmentClassDetailResponse.builder()
                 .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
+                .assignmentDescriptionHtml(assignmentClassDetail.getAssignmentClass().getAssignment().getDescriptionHtml())
                 .titleAssignment(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
                 .moduleName(assignmentClassDetail.getModule().getModuleName())
                 .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
                 .typeUml(String.valueOf(assignmentClassDetail.getTypeUml()))
-                .solutionCode(moduleSolution.getSolutionCode())
+                .solutionCode(solutionCode)
                 .checkedTest(assignmentClassDetail.isChecked())
                 .startDate(assignmentClassDetail.getStartDate())
                 .endDate(assignmentClassDetail.getEndDate())

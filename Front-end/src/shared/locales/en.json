@@ -152,7 +152,10 @@
     "add": "Add",
     "loading": "Loading...",
     "items": "items",
-    "total": "Total"
+    "total": "Total",
+    "test": "Test",
+    "practice": "Practice",
+    "detailView": "Detail View"
   },
 
   "managementTemplate": {
@@ -228,6 +231,8 @@
     }
   },
 
+
+
   "assignmentPage": {
     "title": "Assignment Management",
     "breadcrumb": "Assignments",
@@ -277,7 +282,7 @@
     "moduleDescriptionsLabel": "Module",
     "solutionCodeLabel": "Solution Code",
     "solutionCodePlaceholder": "Enter solution code",
-    "typeUmlLabel": "UML Type",
+    "typeUmlLabel": "Type UML",
     "moduleLabel": "Module Name",
     "descriptionLabel": "Module Description",
     "addNewModule": "Add New Module",
@@ -297,7 +302,8 @@
     "assignmentLoading": "Loading assignment data...",
     "solutionCodeRequired": "Solution code is required",
     "moduleNameRequired": "Module name is required",
-    "listAssignment": "Assignment List"
+    "listAssignment": "Assignment List",
+    "mode": "Mode"
   },
 
   "userPage": {

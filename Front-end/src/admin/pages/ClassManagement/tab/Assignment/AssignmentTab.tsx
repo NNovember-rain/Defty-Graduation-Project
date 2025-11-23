@@ -76,7 +76,7 @@ interface ProcessedAssignmentItem {
     startDate: string | null;
     endDate: string | null;
     type: AssignmentType;
-    assignmentClassDetailId: number; // 🔥 SỬA: Đảm bảo có ID chi tiết
+    assignmentClassDetailId: number;
     moduleName: string;
     typeUmls: string[];
     isModuleTest: boolean;
@@ -118,10 +118,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     const handleViewAssignmentDetails = useCallback(
         (rowData: ProcessedAssignmentItem) => {
-            const originalId = rowData.assignmentId.split('-')[0];
-            navigate(`/admin/content/assignments/update/${originalId}`);
+            const detailId = rowData.assignmentClassDetailId;
+            if (detailId) {
+                navigate(`/admin/content/assignments/assignmentClassDetail/${detailId}`);
+            } else {
+                message.error(t('common.missingDetailId') || "Không tìm thấy ID chi tiết bài tập.");
+            }
+
         },
-        [navigate]
+        [navigate, t]
     );
 
     const showAssignmentModal = useCallback(() => {

@@ -72,6 +72,19 @@ export interface IAssignmentRequest {
     modules: IModuleRequest[];
 }
 
+export interface IAssignmentClassDetailResponse {
+    moduleName: string;
+    moduleDescription: string;
+    titleAssignment: string;
+    solutionCode: string;
+    assignmentDescription: string;
+    assignmentDescriptionHtml: string;
+    typeUml: string;
+    checkedTest: boolean;
+    startDate: string | Date | null;
+    endDate: string | Date | null;
+}
+
 export const createAssignment = async (data: IAssignmentRequest): Promise<IAssignment> => {
     const response = await handleRequest(
         postJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}`, data)
@@ -203,5 +216,14 @@ export const toggleAssignmentActiveStatus = async (id: number, isActive: boolean
     );
     const updatedData = await response.json();
     return updatedData.data as IAssignment;
+};
+
+export const getAssignmentClassDetail = async (
+    assignmentClassDetailId: string | number,
+): Promise<IAssignmentClassDetailResponse> => {
+    const url = `${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/assignmentClassDetail/${assignmentClassDetailId}`;
+    const response = await handleRequest(getWithParams(url));
+    const data = await response.json();
+    return data.result as IAssignmentClassDetailResponse;
 };
 
