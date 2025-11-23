@@ -102,13 +102,18 @@ export const getAssignments = async (options: GetAssignmentsOptions = {}): Promi
     } as GetAssignmentsResult;
 };
 
-export const getUnassignedAssignments = async (classId: number, options: GetAssignmentsOptions): Promise<GetAssignmentsResult> => {
+export const getUnassignedAssignments = async (
+    classId: number,
+    mode: string,
+    options: GetAssignmentsOptions
+): Promise<GetAssignmentsResult> => {
     const params = {
         page: (options.page || 1) - 1,
         size: options.limit,
         name: options.name,
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
+        mode: mode,
     };
 
     const url = `${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/unassigned/${classId}`;

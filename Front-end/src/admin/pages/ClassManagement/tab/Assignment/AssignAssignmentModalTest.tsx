@@ -100,22 +100,32 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [messageApi, contextHolder] = message.useMessage();
 
+    // Lấy ID từ URL Params
     const { id } = useParams<ClassDetailParams>();
 
     const classId = Number(id);
 
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
+        if (isNaN(classId) || classId <= 0) {
+            console.error("Class ID is invalid or missing.");
+            return;
+        }
+
         setLoading(true);
         try {
-            const params = {page, limit, status: 1};
-            const response = await getAssignments(params);
-            const assignmentData = Array.isArray(response)
-                ? response
-                : response.assignments || [];
+            const options = {page, limit,};
+            const response = await getUnassignedAssignments(classId, "test", options);
+
+            const assignmentData = response.assignments || [];
             const total = response.total || assignmentData.length;
+
             const dataWithKeys: Assignment[] = assignmentData.map((item: any) => ({
                 ...item,
                 key: `assignment_${item.id}`,
+                modules: item.modules?.map((mod: Module) => ({
+                    ...mod,
+                    key: mod.id
+                })) || []
             }));
 
             setAssignments(dataWithKeys);
@@ -126,7 +136,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [messageApi, t]);
+    }, [classId, messageApi, t]);
 
     useEffect(() => {
         async function fetchTypeUMLs() {

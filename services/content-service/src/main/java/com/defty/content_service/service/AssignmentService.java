@@ -11,9 +11,9 @@ import java.util.Map;
 
 public interface AssignmentService {
     Page<AssignmentResponse> getAllAssignments(Long classId, Long typeUmlId, String title, Pageable pageable);
-    Page<AssignmentResponse> getUnassignedAssignments(Long classId, Pageable pageable);
+    Page<AssignmentResponse> getUnassignedAssignments(Long classId, String mode, Pageable pageable);
     List<AssignmentResponse> assignAssignment(AssignRequest assignRequest);
-    AssignmentResponse unassignAssignment(AssignmentRequest request);
+    void unassignAssignment(Long assignmentClassDetailId);
     AssignmentResponse getAssignment(Long assignmentId);
     void deleteAssignment(Long assignmentId);
     AssignmentResponse toggleAssignmentStatus(Long assignmentId );

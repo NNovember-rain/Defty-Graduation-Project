@@ -387,7 +387,7 @@ const Description: React.FC<Props> = ({
                         {showModuleSelect && mode === 'practice' && (
                             <Select
                                 value={localModule || undefined}
-                                style={{width: 180}}
+                                style={{width: 250}}
                                 onChange={handleModuleChange}
                                 options={selectModuleOptions}
                                 disabled={isDisabled}
