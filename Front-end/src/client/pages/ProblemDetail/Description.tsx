@@ -28,6 +28,7 @@ interface IModuleResponse {
     id: number;
     moduleName: string;
     moduleDescription: string;
+    moduleDescriptionHtml: string;
     typeUmls: string[];
     solutionResponses?: ISolutionResponse[];
     checkedTest: boolean;
@@ -168,6 +169,7 @@ const Description: React.FC<Props> = ({
                             id: mod.moduleId,
                             moduleName: mod.moduleName,
                             moduleDescription: mod.moduleDescription,
+                            moduleDescriptionHtml: mod.moduleDescriptionHtml,
                             typeUmls: mod.typeUmls || [],
                             checkedTest: mod.checkedTest,
                             typeUmlIds: new Set<number>(),
@@ -183,6 +185,7 @@ const Description: React.FC<Props> = ({
                             id: mod.id,
                             moduleName: mod.moduleName,
                             moduleDescription: mod.moduleDescription,
+                            moduleDescriptionHtml: mod.moduleDescriptionHtml,
                             typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
                             checkedTest: false,
                             typeUmlIds: new Set<number>(),
@@ -192,6 +195,7 @@ const Description: React.FC<Props> = ({
                             id: mod.id,
                             moduleName: mod.moduleName,
                             moduleDescription: mod.moduleDescription,
+                            moduleDescriptionHtml: mod.moduleDescriptionHtml,
                             typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
                             checkedTest: false,
                             typeUmlIds: new Set<number>(),
@@ -276,14 +280,14 @@ const Description: React.FC<Props> = ({
     };
 
     const moduleDescriptionHtml = useMemo(() => {
-        const html = currentModuleData?.moduleDescription;
+        const html = currentModuleData?.moduleDescriptionHtml;
         return html ? DOMPurify.sanitize(html) : null;
-    }, [currentModuleData?.moduleDescription]);
+    }, [currentModuleData?.moduleDescriptionHtml]);
 
     const assignmentDescriptionHtml = useMemo(() => {
-        const html = assignment?.assignmentDescription ?? "";
+        const html = assignment?.assignmentDescriptionHtml ?? "";
         return DOMPurify.sanitize(html);
-    }, [assignment?.assignmentDescription]);
+    }, [assignment?.assignmentDescriptionHtml]);
 
 
     const moduleOptionsForSelect: UmlTypeOption[] = useMemo(() => {

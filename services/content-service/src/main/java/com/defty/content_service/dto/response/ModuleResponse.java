@@ -15,6 +15,7 @@ public class ModuleResponse {
     Long id;
     String moduleName;
     String moduleDescription;
+    String moduleDescriptionHtml;
     List<SolutionResponse> solutionResponses;
     Long assignmentClassDetailId;
 }

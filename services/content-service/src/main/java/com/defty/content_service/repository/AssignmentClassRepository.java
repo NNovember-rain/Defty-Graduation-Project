@@ -36,4 +36,5 @@ public interface AssignmentClassRepository extends JpaRepository<AssignmentClass
             "   SELECT ac.assignment.id FROM AssignmentClass ac WHERE ac.classId = :classId" +
             ")")
     Page<Assignment> findUnassignedAssignments(@Param("classId") Long classId, Pageable pageable);
+    List<AssignmentClass> findByClassId(Long classId);
 }

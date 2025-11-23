@@ -14,5 +14,6 @@ import java.util.List;
 public class AssignmentResponseByClass {
     String assignmentTitle;
     String assignmentDescription;
+    String assignmentDescriptionHtml;
     List<ModuleResponse> modules;
 }

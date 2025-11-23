@@ -24,6 +24,9 @@ public class ModuleEntity extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     String moduleDescription;
 
+    @Column(columnDefinition = "TEXT")
+    String moduleDescriptionHtml;
+
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ModuleSolution> moduleSolutions;
 }

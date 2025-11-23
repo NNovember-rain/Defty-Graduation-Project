@@ -22,6 +22,9 @@ public class Assignment extends  BaseEntity{
     @Column(columnDefinition = "TEXT")
     String description;
 
+    @Column(columnDefinition = "TEXT")
+    String descriptionHtml;
+
     String assignmentCode;
 
     @Column

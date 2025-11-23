@@ -32,6 +32,8 @@ export interface IAssignment {
     id: number;
     title: string,
     commonDescription: string;
+    commonDescriptionHtml: string;
+    assignmentDescriptionHtml: string;
     typeUmlName: number;
     solutionCode: string;
     assignmentCode: string;

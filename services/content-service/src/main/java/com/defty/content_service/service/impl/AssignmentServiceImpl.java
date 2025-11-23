@@ -362,19 +362,17 @@ class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     public AssignmentClassResponse getAssignmentClassDetailId(Long assignmentClassDetailId) {
-
         Optional<AssignmentClassDetail> detailOptional = assignmentClassDetailRepository.findById(assignmentClassDetailId);
-
         if (detailOptional.isEmpty()) {
             return null;
         }
-
         AssignmentClassDetail assignmentClassDetail = detailOptional.get();
 
         return AssignmentClassResponse.builder()
                 .assignmentId(assignmentClassDetail.getAssignmentClass().getAssignment().getId())
                 .assignmentTitle(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
                 .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
+                .assignmentDescriptionHtml(assignmentClassDetail.getAssignmentClass().getAssignment().getDescriptionHtml())
                 .assignmentCode(assignmentClassDetail.getAssignmentClass().getAssignment().getAssignmentCode())
                 .startDate(assignmentClassDetail.getStartDate())
                 .endDate(assignmentClassDetail.getEndDate())
@@ -385,6 +383,7 @@ class AssignmentServiceImpl implements AssignmentService {
                                 .moduleId(assignmentClassDetail.getModule().getId())
                                 .moduleName(assignmentClassDetail.getModule().getModuleName())
                                 .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
+                                .moduleDescriptionHtml(assignmentClassDetail.getModule().getModuleDescriptionHtml())
                                 .typeUmls(List.of(
                                         assignmentClassDetail.getTypeUml() != null
                                                 ? assignmentClassDetail.getTypeUml().name()
@@ -414,6 +413,7 @@ class AssignmentServiceImpl implements AssignmentService {
                             .id(m.getId())
                             .moduleName(m.getModuleName())
                             .moduleDescription(m.getModuleDescription())
+                            .moduleDescriptionHtml(m.getModuleDescriptionHtml())
                             .assignmentClassDetailId(detail.getId())
                             .build();
                 })
@@ -423,6 +423,7 @@ class AssignmentServiceImpl implements AssignmentService {
 
         return AssignmentResponseByClass.builder()
                 .assignmentDescription(assignment.getDescription())
+                .assignmentDescriptionHtml(assignment.getDescriptionHtml())
                 .assignmentTitle(assignment.getTitle())
                 .modules(moduleResponses)
                 .build();
@@ -461,6 +462,7 @@ class AssignmentServiceImpl implements AssignmentService {
                 .userId(userId)
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .descriptionHtml(request.getDescriptionHtml())
                 .assignmentCode(assignmentCode())
                 .build();
 
@@ -472,7 +474,8 @@ class AssignmentServiceImpl implements AssignmentService {
                 ModuleEntity module = ModuleEntity.builder()
                         .moduleCode(assignmentCode())
                         .moduleName(moduleRequest.getModuleName())
-                        .moduleDescription(moduleRequest.getModuleDescription())
+                        .moduleDescription(moduleRequest.getModuleDescriptionHtml())
+                        .moduleDescriptionHtml(moduleRequest.getModuleDescription())
                         .assignment(savedAssignment)
                         .build();
 
@@ -512,6 +515,7 @@ class AssignmentServiceImpl implements AssignmentService {
 
         assignment.setTitle(request.getTitle());
         assignment.setDescription(request.getDescription());
+        assignment.setDescriptionHtml(request.getDescriptionHtml());
         assignmentRepository.save(assignment);
 
         List<ModuleRequest> moduleRequests = request.getModules();
@@ -546,6 +550,7 @@ class AssignmentServiceImpl implements AssignmentService {
 
                 module.setModuleName(moduleRequest.getModuleName());
                 module.setModuleDescription(moduleRequest.getModuleDescription());
+                module.setModuleDescriptionHtml(moduleRequest.getModuleDescriptionHtml());
                 ModuleEntity savedModule = moduleRepository.save(module);
 
                 // --- 3️⃣ Xử lý solution ---
@@ -625,6 +630,7 @@ class AssignmentServiceImpl implements AssignmentService {
                         .id(m.getId())
                         .moduleName(m.getModuleName())
                         .moduleDescription(m.getModuleDescription())
+                        .moduleDescriptionHtml(m.getModuleDescriptionHtml())
                         .build())
                 .toList()
                 : List.of();
@@ -638,6 +644,7 @@ class AssignmentServiceImpl implements AssignmentService {
                 .id(assignment.getId())
                 .title(assignment.getTitle())
                 .commonDescription(assignment.getDescription())
+                .commonDescriptionHtml(assignment.getDescriptionHtml())
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())
                 .classIds(classIds)
@@ -669,6 +676,7 @@ class AssignmentServiceImpl implements AssignmentService {
                             .id(m.getId())
                             .moduleName(m.getModuleName())
                             .moduleDescription(m.getModuleDescription())
+                            .moduleDescriptionHtml(m.getModuleDescriptionHtml())
                             .solutionResponses(solutionResponses)
                             .build();
                 })
@@ -680,6 +688,7 @@ class AssignmentServiceImpl implements AssignmentService {
                 .id(assignment.getId())
                 .title(assignment.getTitle())
                 .commonDescription(assignment.getDescription())
+                .commonDescriptionHtml(assignment.getDescriptionHtml())
                 .userId(assignment.getUserId())
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())

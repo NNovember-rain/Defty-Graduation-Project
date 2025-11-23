@@ -16,6 +16,7 @@ public class AssignmentClassResponse {
     Long assignmentId;
     String assignmentTitle;
     String assignmentDescription;
+    String assignmentDescriptionHtml;
     String assignmentCode;
     Long classId;
     Long assignmentClassId;

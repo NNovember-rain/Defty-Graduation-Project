@@ -17,6 +17,7 @@ public class AssignmentClassDetailResponse {
     String titleAssignment;
     String solutionCode;
     String assignmentDescription;
+    String assignmentDescriptionHtml;
     String typeUml;
     boolean checkedTest;
     Date startDate;

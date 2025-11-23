@@ -16,6 +16,7 @@ public class AssignmentResponse {
     Long id;
     String title;
     String commonDescription;
+    String commonDescriptionHtml;
     Long userId;
     String assignmentCode;
     Integer isActive;
