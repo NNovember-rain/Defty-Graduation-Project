@@ -69,14 +69,6 @@ class AssignmentServiceImpl implements AssignmentService {
                 .map(AssignmentClass::getId)
                 .collect(Collectors.toSet());
 
-        if (assignmentClassIds.isEmpty()) {
-            return new PageImpl<>(
-                    List.of(),
-                    pageable,
-                    0L
-            );
-        }
-
         List<AssignmentClassDetail> allDetails = assignmentClassDetailRepository.findAllByAssignmentClassIdInAndChecked(assignmentClassIds, check);
         Set<Long> assignedModuleIds = allDetails.stream()
                 .map(AssignmentClassDetail::getModule)
