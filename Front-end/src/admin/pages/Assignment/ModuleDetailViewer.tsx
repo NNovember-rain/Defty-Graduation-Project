@@ -1,9 +1,9 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {Button, Card, Divider, Result, Space, Spin, Tag, Typography} from 'antd';
-import {useTranslation} from 'react-i18next';
-import {ArrowLeftOutlined, BookOutlined, FileTextOutlined, TagsOutlined} from '@ant-design/icons'; // Import icon Quay lại
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, Card, Divider, Result, Space, Spin, Tag, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { ArrowLeftOutlined, BookOutlined, FileTextOutlined, TagsOutlined, EditOutlined } from '@ant-design/icons'; // Import EditOutlined
 import DOMPurify from 'dompurify';
-import {useNavigate, useParams} from 'react-router-dom'; // Import useNavigate
+import { useNavigate, useParams } from 'react-router-dom';
 import {
     getAssignmentClassDetail,
     type IAssignmentClassDetailResponse
@@ -30,6 +30,7 @@ const ModuleDetailViewer: React.FC<ModuleDetailProps> = ({
                                                              moduleName,
                                                              moduleDescriptionHtml,
                                                              typeUml,
+                                                             // solutionCode không dùng ở đây, nhưng vẫn nằm trong props
                                                              checkedTest,
                                                              startDate,
                                                              endDate,
@@ -123,16 +124,18 @@ const ModuleDetailViewer: React.FC<ModuleDetailProps> = ({
 
 interface AssignmentPathParams {
     assignmentClassDetailId: string;
+    assignmentId: string
 }
 
 const ModuleDetailFetcher: React.FC = () => {
     const { t } = useTranslation();
-    const navigate = useNavigate(); // Khởi tạo useNavigate
+    const navigate = useNavigate();
     const [moduleData, setModuleData] = useState<IAssignmentClassDetailResponse | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
     const { assignmentClassDetailId } = useParams<AssignmentPathParams>();
+    const { assignmentId } = useParams<AssignmentPathParams>();
 
     const isValidId = (param: string | undefined): param is string => {
         return !!param && param.toLowerCase() !== 'undefined';
@@ -143,6 +146,15 @@ const ModuleDetailFetcher: React.FC = () => {
     const handleGoBack = useCallback(() => {
         navigate(-1);
     }, [navigate]);
+
+    const handleEditAssignment = useCallback(() => {
+        if (assignmentClassDetailId) {
+            navigate(`/admin/content/assignments/update/${assignmentId}`);
+        } else {
+            console.error("Missing ID for edit navigation.");
+        }
+    }, [navigate, assignmentClassDetailId]);
+
 
     const fetchData = useCallback(async () => {
         if (!isIdValid) {
@@ -185,16 +197,31 @@ const ModuleDetailFetcher: React.FC = () => {
         );
     }
 
+
+    const renderHeaderActions = (showEdit: boolean) => (
+        <Space style={{ marginBottom: 20, justifyContent: 'space-between', width: '100%' }}>
+            <Button
+                onClick={handleGoBack}
+                icon={<ArrowLeftOutlined />}
+            >
+                {t('common.back') || 'Quay lại'}
+            </Button>
+            {showEdit && (
+                <Button
+                    onClick={handleEditAssignment}
+                    icon={<EditOutlined />}
+                    type="primary"
+                >
+                    {t('common.update') || 'Sửa'}
+                </Button>
+            )}
+        </Space>
+    );
+
     if (error) {
         return (
             <div style={{ padding: 24, backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
-                <Button
-                    onClick={handleGoBack}
-                    icon={<ArrowLeftOutlined />}
-                    style={{ marginBottom: 20 }}
-                >
-                    {t('common.back') || 'Quay lại'}
-                </Button>
+                {renderHeaderActions(false)}
                 <Result
                     status="error"
                     title={t('common.loadFailed') || "Tải thất bại"}
@@ -214,13 +241,7 @@ const ModuleDetailFetcher: React.FC = () => {
     if (!moduleData) {
         return (
             <div style={{ padding: 24, backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
-                <Button
-                    onClick={handleGoBack}
-                    icon={<ArrowLeftOutlined />}
-                    style={{ marginBottom: 20 }}
-                >
-                    {t('common.back') || 'Quay lại'}
-                </Button>
+                {renderHeaderActions(false)}
                 <Result
                     status="warning"
                     title={t('module.dataNotFound') || "Không tìm thấy dữ liệu Module"}
@@ -234,13 +255,8 @@ const ModuleDetailFetcher: React.FC = () => {
 
     return (
         <div style={{ padding: 18, minHeight: '100vh' }}>
-            <Button
-                onClick={handleGoBack}
-                icon={<ArrowLeftOutlined />}
-                style={{ marginBottom: 20 }}
-            >
-                {t('common.back') || 'Quay lại'}
-            </Button>
+
+            {renderHeaderActions(true)}
 
             <ModuleDetailViewer
                 assignmentTitle={moduleData.titleAssignment}

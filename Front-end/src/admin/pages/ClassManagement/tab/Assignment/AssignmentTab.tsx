@@ -118,9 +118,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     const handleViewAssignmentDetails = useCallback(
         (rowData: ProcessedAssignmentItem) => {
+            const originalId = rowData.assignmentId.split('-')[0];
             const detailId = rowData.assignmentClassDetailId;
             if (detailId) {
-                navigate(`/admin/content/assignments/assignmentClassDetail/${detailId}`);
+                navigate(`/admin/content/assignments/${originalId}/assignmentClassDetail/${detailId}`);
             } else {
                 message.error(t('common.missingDetailId') || "Không tìm thấy ID chi tiết bài tập.");
             }
@@ -151,7 +152,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             };
 
             const response = await getAssignmentsByClassId(classId, options);
-            console.log("Fetched assignments:", response);
+            // console.log("Fetched assignments:", response);
 
             const data = response.assignments || [];
 
@@ -168,7 +169,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     startDate: a.startDate ? dayjs(a.startDate).toISOString() : null,
                     endDate: a.endDate ? dayjs(a.endDate).toISOString() : null,
                     checkedTest: a.checkedTest,
-                    // 🔥 Mapped assignedModules phải đảm bảo có assignmentClassDetailId
                     assignedModules: (a.assignmentClassDetailResponseList || []).map((m: any) => ({
                         ...m,
                         assignmentClassDetailId: m.assignmentClassDetailId,

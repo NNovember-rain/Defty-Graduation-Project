@@ -181,7 +181,7 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
-        path: 'content/assignments/assignmentClassDetail/:assignmentClassDetailId',
+        path: 'content/assignments/:assignmentId/assignmentClassDetail/:assignmentClassDetailId',
         component: ModuleDetailViewer,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },

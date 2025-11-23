@@ -156,7 +156,8 @@
     "total": "Tổng",
     "test": "Bài kiểm tra",
     "practice": "Bài tập",
-    "detailView": "Chi tiết"
+    "detailView": "Chi tiết",
+    "update": "Cập nhật"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
