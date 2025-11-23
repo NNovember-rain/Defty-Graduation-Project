@@ -14,6 +14,7 @@ import java.util.List;
 public class AssignmentRequest {
     String title;
     String description;
+    String descriptionHtml;
     List<Long> classIds;
     List<ModuleRequest> modules;
 }

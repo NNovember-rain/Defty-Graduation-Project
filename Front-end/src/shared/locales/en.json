@@ -127,6 +127,8 @@
       "home": "Home",
       "adminDashboard": "Admin Dashboard"
     },
+    "yes": "Yes",
+    "no": "No",
     "clear": "Clear",
     "search": "Search",
     "cancel": "Cancel",
@@ -150,7 +152,11 @@
     "add": "Add",
     "loading": "Loading...",
     "items": "items",
-    "total": "Total"
+    "total": "Total",
+    "test": "Test",
+    "practice": "Practice",
+    "detailView": "Detail View",
+    "update": "Update"
   },
 
   "managementTemplate": {
@@ -226,6 +232,8 @@
     }
   },
 
+
+
   "assignmentPage": {
     "title": "Assignment Management",
     "breadcrumb": "Assignments",
@@ -275,7 +283,7 @@
     "moduleDescriptionsLabel": "Module",
     "solutionCodeLabel": "Solution Code",
     "solutionCodePlaceholder": "Enter solution code",
-    "typeUmlLabel": "UML Type",
+    "typeUmlLabel": "Type UML",
     "moduleLabel": "Module Name",
     "descriptionLabel": "Module Description",
     "addNewModule": "Add New Module",
@@ -295,7 +303,8 @@
     "assignmentLoading": "Loading assignment data...",
     "solutionCodeRequired": "Solution code is required",
     "moduleNameRequired": "Module name is required",
-    "listAssignment": "Assignment List"
+    "listAssignment": "Assignment List",
+    "mode": "Mode"
   },
 
   "userPage": {
@@ -455,6 +464,12 @@
       "assignment": "Luyện tập",
       "test": "Bài kiểm tra"
     },
+    "filter": {
+      "assignmentTitle": "Assignment",
+      "module": "Module",
+      "umlType": "Type Uml"
+    },
+    "unassign": "Unassigned",
     "peopleTab": {
       "teachersTitle": "Teachers",
       "studentsTitle": "Students",
@@ -524,7 +539,9 @@
     },
     "view": {
       "grid": "Grid",
-      "list": "List"
+      "list": "List",
+      "submissionDetails": "Submission Details",
+      "assignmentInfo": "Assignment Info"
     }
   },
   "rolePage": {

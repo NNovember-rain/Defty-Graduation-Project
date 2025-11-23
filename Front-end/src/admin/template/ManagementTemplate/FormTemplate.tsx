@@ -202,7 +202,7 @@ const FormTemplate = <T extends Record<string, any>>({
         try {
             if (isEditMode && serviceUpdate && id) {
                 const response = await serviceUpdate(id, formData);
-                // message.success(t('apiMessages.updateSuccess'));
+                message.success(t('apiMessages.updateSuccess'));
                 let finalRedirectPath = redirectPath;
                 if (response && response.result && redirectPath.includes(':id')) {
                     finalRedirectPath = redirectPath.replace(':id', response.result.toString());

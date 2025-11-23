@@ -64,11 +64,13 @@ const AssignmentForm: React.FC = () => {
         return {
             title: data.title || '',
             description: stripHtml(data.commonDescription || ''),
+            descriptionHtml: data.commonDescription || '',
             classIds: data.classIds || [],
             modules: Array.isArray(data.modules)
                 ? data.modules.map((m: any) => ({
                     moduleName: m.moduleName || '',
                     moduleDescription: stripHtml(m.description || ''),
+                    moduleDescriptionHtml: m.description || '',
                     solutions: Array.isArray(m.umlSolutions)
                         ? m.umlSolutions.map((u: any) => ({
                             typeUml: u.typeUmlId || '',
@@ -88,12 +90,15 @@ const AssignmentForm: React.FC = () => {
             serviceGetById={async (id) => {
                 const res = await getAssignmentById(id);
                 console.log('Fetched assignment:', res);
+                const commonDescriptionHtml = res.commonDescriptionHtml || res.commonDescription;
+
                 return {
                     ...res,
-                    // commonDescription: res.description,
+                    commonDescription: commonDescriptionHtml,
+
                     modules: res.modules?.map((m: any) => ({
                         moduleName: m.moduleName,
-                        description: m.moduleDescription,
+                        description: m.moduleDescriptionHtml || m.moduleDescription,
                         umlSolutions: Array.isArray(m.solutionResponses)
                             ? m.solutionResponses.map((s: any) => ({
                                 typeUmlId: s.typeUml,

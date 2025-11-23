@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -24,5 +25,8 @@ public interface AssignmentClassDetailRepository extends JpaRepository<Assignmen
     WHERE ac.classId = :classId
     """)
     Set<Long> findAssignedModuleIdsByClassId(@Param("classId") Long classId);
+
+    List<AssignmentClassDetail> findAllByAssignmentClassIdAndChecked(Long assignmentClassId, boolean checked);
+    List<AssignmentClassDetail> findAllByAssignmentClassIdInAndChecked(Collection<Long> assignmentClassIds, boolean checked);
 
 }

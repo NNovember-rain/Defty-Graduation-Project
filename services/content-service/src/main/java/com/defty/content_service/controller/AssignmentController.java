@@ -49,12 +49,12 @@ public class AssignmentController {
                 .build();
     }
 
-    @PostMapping("/unassign")
-    ApiResponse<AssignmentResponse> unassignAssignment(@RequestBody AssignmentRequest request) {
-        AssignmentResponse response = assignmentService.unassignAssignment(request);
-        return ApiResponse.<AssignmentResponse>builder()
-                .result(response)
-                .build();
+    @DeleteMapping("/unassign/{assignmentClassDetailId}")
+    ApiResponse<?> unassignAssignment(@PathVariable Long assignmentClassDetailId){
+       assignmentService.unassignAssignment(assignmentClassDetailId);
+       return ApiResponse.builder()
+               .message("Unassign assignment successfully")
+               .build();
     }
 
     @GetMapping
@@ -74,11 +74,11 @@ public class AssignmentController {
     public ApiResponse<Page<AssignmentResponse>> getUnassignedAssignments(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
-            @PathVariable Long classId
-    ) {
+            @PathVariable Long classId,
+            @RequestParam(value = "mode") String mode) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<AssignmentResponse> responsePage = assignmentService.getUnassignedAssignments(classId, pageable);
+        Page<AssignmentResponse> responsePage = assignmentService.getUnassignedAssignments(classId, mode, pageable);
 
         return ApiResponse.<Page<AssignmentResponse>>builder()
                 .result(responsePage)
@@ -131,8 +131,8 @@ public class AssignmentController {
 
     @GetMapping("/assignmentClassDetail/{assignmentClassDetailId}")
     ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(@PathVariable Long assignmentClassDetailId,
-                                                                        @Param("typeUml") String typeUml,
-                                                                        @Param("moduleId") Long moduleId) {
+                                                                        @RequestParam(value = "typeUml", required = false) String typeUml,
+                                                                        @RequestParam(value = "moduleId", required = false) Long moduleId) {
         AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetail(assignmentClassDetailId, typeUml, moduleId);
         return ApiResponse.<AssignmentClassDetailResponse>builder()
                 .result(response)
@@ -147,6 +147,7 @@ public class AssignmentController {
                 .message("Assignment status updated successfully")
                 .build();
     }
+
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deletePermission(@PathVariable Long id) {

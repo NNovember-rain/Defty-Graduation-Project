@@ -106,7 +106,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             };
 
             const response = await getAssignmentsByClassId(classId, options);
-            console.log("Fetched assignments:", response);
+            // console.log("Fetched assignments:", response);
 
             const finalAssignments: IAssignmentExtended[] = [];
 

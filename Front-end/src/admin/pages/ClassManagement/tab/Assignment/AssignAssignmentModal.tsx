@@ -2,7 +2,7 @@ import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Spin, Table} 
 import type {Key} from "react";
 import React, {useCallback, useEffect, useState} from "react";
 import type {ColumnsType} from "antd/es/table";
-import {assignAssignment, getAssignments} from "../../../../../shared/services/assignmentService.ts";
+import {assignAssignment, getUnassignedAssignments} from "../../../../../shared/services/assignmentService.ts";
 import {useTranslation} from "react-i18next";
 import {useParams} from "react-router-dom";
 
@@ -47,7 +47,6 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(5);
     const [selectedAssignments, setSelectedAssignments] = useState<number[]>([]);
-    // THÊM: State quản lý các hàng (assignment) đang mở rộng
     const [expandedRowKeys, setExpandedRowKeys] = useState<Key[]>([]);
     const [selectedModules, setSelectedModules] = useState<Record<number, number[]>>({});
     const [messageApi, contextHolder] = message.useMessage();
@@ -61,17 +60,25 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     ];
 
     const { id } = useParams<ClassDetailParams>();
+    console.log("id param:", id);
 
+    const classId = id ? parseInt(id, 10) : NaN;
 
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
+        if (isNaN(classId)) {
+            console.error("Class ID is invalid or missing.");
+            return;
+        }
+
         setLoading(true);
         try {
-            const params = {page, limit, status: 1};
-            const response = await getAssignments(params);
-            const assignmentData = Array.isArray(response)
-                ? response
-                : response.assignments || [];
+            const options = {page, limit,};
+
+            const response = await getUnassignedAssignments(classId, "practice", options);
+
+            const assignmentData = response.assignments || [];
             const total = response.total || assignmentData.length;
+
             const dataWithKeys = assignmentData.map((item: any) => ({
                 ...item,
                 key: item.id,
@@ -79,7 +86,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                     ...mod,
                     key: mod.id
                 })) || []
-            }));
+            }))
 
             setAssignments(dataWithKeys);
             setTotalItems(total);
@@ -89,7 +96,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [messageApi, t]);
+    }, [classId, messageApi, t]);
 
     useEffect(() => {
         if (visible) {

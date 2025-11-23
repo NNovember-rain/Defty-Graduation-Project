@@ -60,19 +60,34 @@ class AssignmentServiceImpl implements AssignmentService {
 
 
     @Override
-    public Page<AssignmentResponse> getUnassignedAssignments(Long classId, Pageable pageable) {
+    public Page<AssignmentResponse> getUnassignedAssignments(Long classId, String mode, Pageable pageable) {
         Page<Assignment> allAssignmentsPage = assignmentRepository.findAllActiveAssignments(pageable);
-        Set<Long> assignedModuleIds = assignmentClassDetailRepository.findAssignedModuleIdsByClassId(classId);
+        List<AssignmentClass> assignmentClasses = assignmentClassRepository.findByClassId(classId);
+        boolean check = mode.equalsIgnoreCase("test");
+
+        Set<Long> assignmentClassIds = assignmentClasses.stream()
+                .map(AssignmentClass::getId)
+                .collect(Collectors.toSet());
+
+        List<AssignmentClassDetail> allDetails = assignmentClassDetailRepository.findAllByAssignmentClassIdInAndChecked(assignmentClassIds, check);
+        Set<Long> assignedModuleIds = allDetails.stream()
+                .map(AssignmentClassDetail::getModule)
+                .map(ModuleEntity::getId)
+                .collect(Collectors.toSet());
 
         List<AssignmentResponse> filteredResponses = new ArrayList<>();
 
         for (Assignment assignment : allAssignmentsPage.getContent()) {
-            List<ModuleEntity> filteredModules = assignment.getModules() != null ?
-                    assignment.getModules().stream()
+            List<ModuleEntity> assignmentModules = assignment.getModules();
+
+            List<ModuleEntity> unassignedModules = assignmentModules != null ?
+                    assignmentModules.stream()
                             .filter(module -> !assignedModuleIds.contains(module.getId()))
-                            .toList() : List.of();
-            if (!filteredModules.isEmpty()) {
-                AssignmentResponse response = toAssignmentResponseCheck(assignment, filteredModules);
+                            .toList()
+                    : List.of();
+
+            if (!unassignedModules.isEmpty()) {
+                AssignmentResponse response = toAssignmentResponseCheck(assignment, unassignedModules);
                 filteredResponses.add(response);
             }
         }
@@ -83,7 +98,6 @@ class AssignmentServiceImpl implements AssignmentService {
                 allAssignmentsPage.getTotalElements()
         );
     }
-
 
     @Override
     public List<AssignmentResponse> assignAssignment(AssignRequest assignRequest) {
@@ -170,8 +184,13 @@ class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public AssignmentResponse unassignAssignment(AssignmentRequest request) {
-        return null;
+    public void unassignAssignment(Long assignmentClassDetailId) {
+        Optional<AssignmentClassDetail> detail = assignmentClassDetailRepository.findById(assignmentClassDetailId);
+        if (detail.isPresent()) {
+            assignmentClassDetailRepository.delete(detail.get());
+        } else {
+            throw new NotFoundException("AssignmentClassDetail not found with id: " + assignmentClassDetailId);
+        }
     }
 
     @Override
@@ -335,19 +354,17 @@ class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     public AssignmentClassResponse getAssignmentClassDetailId(Long assignmentClassDetailId) {
-
         Optional<AssignmentClassDetail> detailOptional = assignmentClassDetailRepository.findById(assignmentClassDetailId);
-
         if (detailOptional.isEmpty()) {
             return null;
         }
-
         AssignmentClassDetail assignmentClassDetail = detailOptional.get();
 
         return AssignmentClassResponse.builder()
                 .assignmentId(assignmentClassDetail.getAssignmentClass().getAssignment().getId())
                 .assignmentTitle(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
                 .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
+                .assignmentDescriptionHtml(assignmentClassDetail.getAssignmentClass().getAssignment().getDescriptionHtml())
                 .assignmentCode(assignmentClassDetail.getAssignmentClass().getAssignment().getAssignmentCode())
                 .startDate(assignmentClassDetail.getStartDate())
                 .endDate(assignmentClassDetail.getEndDate())
@@ -358,6 +375,7 @@ class AssignmentServiceImpl implements AssignmentService {
                                 .moduleId(assignmentClassDetail.getModule().getId())
                                 .moduleName(assignmentClassDetail.getModule().getModuleName())
                                 .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
+                                .moduleDescriptionHtml(assignmentClassDetail.getModule().getModuleDescriptionHtml())
                                 .typeUmls(List.of(
                                         assignmentClassDetail.getTypeUml() != null
                                                 ? assignmentClassDetail.getTypeUml().name()
@@ -373,39 +391,32 @@ class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     public AssignmentResponseByClass getAssignmentAllModule(Long assignmentClassId) {
-        AssignmentClass assignmentClass = assignmentClassRepository.findById(assignmentClassId).orElse(null);
+        AssignmentClass assignmentClass = assignmentClassRepository.findById(assignmentClassId)
+                .orElseThrow(() -> new NotFoundException("Assignment class not found"));
+        List<AssignmentClassDetail> details =
+                assignmentClassDetailRepository.findAllByAssignmentClassIdAndChecked(assignmentClassId, false);
 
-        if (assignmentClass == null) {
-            return AssignmentResponseByClass.builder()
-                    .modules(List.of())
-                    .build();
-        }
+        List<ModuleResponse> moduleResponses = details.stream()
+                .map(detail -> {
 
-        List<ModuleResponse> moduleResponses = assignmentClass.getAssignment().getModules() != null
-                ? assignmentClass.getAssignment().getModules().stream()
-                .map(m -> {
-                    List<SolutionResponse> solutionResponses = m.getModuleSolutions() != null
-                            ? m.getModuleSolutions().stream()
-                            .map(s -> SolutionResponse.builder()
-                                    .id(s.getId())
-                                    .solutionCode(s.getSolutionCode())
-                                    .typeUml(s.getTypeUml() != null ? s.getTypeUml().name() : null)
-                                    .build())
-                            .toList()
-                            : List.of();
+                    ModuleEntity m = detail.getModule();
 
                     return ModuleResponse.builder()
                             .id(m.getId())
                             .moduleName(m.getModuleName())
                             .moduleDescription(m.getModuleDescription())
-                            .solutionResponses(solutionResponses)
+                            .moduleDescriptionHtml(m.getModuleDescriptionHtml())
+                            .assignmentClassDetailId(detail.getId())
                             .build();
                 })
-                .toList()
-                : List.of();
+                .toList();
 
-        // 4. Trả về kết quả
+        Assignment assignment = assignmentClass.getAssignment();
+
         return AssignmentResponseByClass.builder()
+                .assignmentDescription(assignment.getDescription())
+                .assignmentDescriptionHtml(assignment.getDescriptionHtml())
+                .assignmentTitle(assignment.getTitle())
                 .modules(moduleResponses)
                 .build();
     }
@@ -415,16 +426,34 @@ class AssignmentServiceImpl implements AssignmentService {
         AssignmentClassDetail assignmentClassDetail = assignmentClassDetailRepository.findById(assignmentClassDetailId)
                 .orElseThrow(() -> new NotFoundException("AssignmentClassDetail not found with id: " + assignmentClassDetailId));
 
-        ModuleEntity module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new NotFoundException("Module not found with id: " + moduleId));
-        ModuleSolution moduleSolution = moduleSolutionRepository.findByModuleAndTypeUml(module, TypeUml.valueOf(typeUml));
+        ModuleEntity module;
+        if(moduleId != null){
+            module = moduleRepository.findById(moduleId)
+                    .orElseThrow(() -> new NotFoundException("Module not found with id: " + moduleId));
+        }
+        else{
+            Long moduleIdDB = assignmentClassDetail.getModule().getId();
+            module = moduleRepository.findById(moduleIdDB)
+                    .orElseThrow(() -> new NotFoundException("Module not found with id: " + moduleIdDB));
+        }
+        ModuleSolution moduleSolution;
+        String solutionCode;
+        if(typeUml != null){
+            moduleSolution = moduleSolutionRepository.findByModuleAndTypeUml(module, TypeUml.valueOf(typeUml));
+        }
+        else{
+            moduleSolution = null;
+        }
+        solutionCode = (moduleSolution != null) ? moduleSolution.getSolutionCode() : null;
+
         return AssignmentClassDetailResponse.builder()
                 .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
+                .assignmentDescriptionHtml(assignmentClassDetail.getAssignmentClass().getAssignment().getDescriptionHtml())
                 .titleAssignment(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
                 .moduleName(assignmentClassDetail.getModule().getModuleName())
                 .moduleDescription(assignmentClassDetail.getModule().getModuleDescription())
                 .typeUml(String.valueOf(assignmentClassDetail.getTypeUml()))
-                .solutionCode(moduleSolution.getSolutionCode())
+                .solutionCode(solutionCode)
                 .checkedTest(assignmentClassDetail.isChecked())
                 .startDate(assignmentClassDetail.getStartDate())
                 .endDate(assignmentClassDetail.getEndDate())
@@ -443,6 +472,7 @@ class AssignmentServiceImpl implements AssignmentService {
                 .userId(userId)
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .descriptionHtml(request.getDescriptionHtml())
                 .assignmentCode(assignmentCode())
                 .build();
 
@@ -454,7 +484,8 @@ class AssignmentServiceImpl implements AssignmentService {
                 ModuleEntity module = ModuleEntity.builder()
                         .moduleCode(assignmentCode())
                         .moduleName(moduleRequest.getModuleName())
-                        .moduleDescription(moduleRequest.getModuleDescription())
+                        .moduleDescription(moduleRequest.getModuleDescriptionHtml())
+                        .moduleDescriptionHtml(moduleRequest.getModuleDescription())
                         .assignment(savedAssignment)
                         .build();
 
@@ -494,6 +525,7 @@ class AssignmentServiceImpl implements AssignmentService {
 
         assignment.setTitle(request.getTitle());
         assignment.setDescription(request.getDescription());
+        assignment.setDescriptionHtml(request.getDescriptionHtml());
         assignmentRepository.save(assignment);
 
         List<ModuleRequest> moduleRequests = request.getModules();
@@ -528,6 +560,7 @@ class AssignmentServiceImpl implements AssignmentService {
 
                 module.setModuleName(moduleRequest.getModuleName());
                 module.setModuleDescription(moduleRequest.getModuleDescription());
+                module.setModuleDescriptionHtml(moduleRequest.getModuleDescriptionHtml());
                 ModuleEntity savedModule = moduleRepository.save(module);
 
                 // --- 3️⃣ Xử lý solution ---
@@ -578,8 +611,6 @@ class AssignmentServiceImpl implements AssignmentService {
         return toAssignmentResponse(assignment);
     }
 
-
-
     @Override
     public Map<Long, AssignmentResponse> getAssignmentsByIds(List<Long> assignmentIds) {
         return Map.of();
@@ -602,29 +633,15 @@ class AssignmentServiceImpl implements AssignmentService {
         return sb + "-" + randomNum;
     }
 
-    // Hàm chuyển đổi OVERLOAD: Sử dụng trong getUnassignedAssignments, dùng danh sách modules đã được lọc.
     private AssignmentResponse toAssignmentResponseCheck(Assignment assignment, List<ModuleEntity> modulesToInclude) {
-
-        List<ModuleResponse> moduleResponses = assignment.getModules() != null
-                ? assignment.getModules().stream()
-                .map(m -> {
-                    List<SolutionResponse> solutionResponses = m.getModuleSolutions() != null
-                            ? m.getModuleSolutions().stream()
-                            .map(s -> SolutionResponse.builder()
-                                    .id(s.getId())
-                                    .solutionCode(s.getSolutionCode())
-                                    .typeUml(s.getTypeUml() != null ? s.getTypeUml().name() : null)
-                                    .build())
-                            .toList()
-                            : List.of();
-
-                    return ModuleResponse.builder()
-                            .id(m.getId())
-                            .moduleName(m.getModuleName())
-                            .moduleDescription(m.getModuleDescription())
-                            .solutionResponses(solutionResponses)
-                            .build();
-                })
+        List<ModuleResponse> moduleResponses = modulesToInclude != null
+                ? modulesToInclude.stream()
+                .map(m -> ModuleResponse.builder()
+                        .id(m.getId())
+                        .moduleName(m.getModuleName())
+                        .moduleDescription(m.getModuleDescription())
+                        .moduleDescriptionHtml(m.getModuleDescriptionHtml())
+                        .build())
                 .toList()
                 : List.of();
 
@@ -637,14 +654,14 @@ class AssignmentServiceImpl implements AssignmentService {
                 .id(assignment.getId())
                 .title(assignment.getTitle())
                 .commonDescription(assignment.getDescription())
-                .userId(assignment.getUserId())
+                .commonDescriptionHtml(assignment.getDescriptionHtml())
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())
-                .createdDate(assignment.getCreatedDate())
                 .classIds(classIds)
                 .modules(moduleResponses)
                 .build();
     }
+
     private AssignmentResponse toAssignmentResponse(Assignment assignment) {
         List<AssignmentClass> assignmentClasses = assignmentClassRepository.findByAssignmentId(assignment.getId());
 
@@ -669,6 +686,7 @@ class AssignmentServiceImpl implements AssignmentService {
                             .id(m.getId())
                             .moduleName(m.getModuleName())
                             .moduleDescription(m.getModuleDescription())
+                            .moduleDescriptionHtml(m.getModuleDescriptionHtml())
                             .solutionResponses(solutionResponses)
                             .build();
                 })
@@ -680,6 +698,7 @@ class AssignmentServiceImpl implements AssignmentService {
                 .id(assignment.getId())
                 .title(assignment.getTitle())
                 .commonDescription(assignment.getDescription())
+                .commonDescriptionHtml(assignment.getDescriptionHtml())
                 .userId(assignment.getUserId())
                 .isActive(assignment.getIsActive())
                 .assignmentCode(assignment.getAssignmentCode())

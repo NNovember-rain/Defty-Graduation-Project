@@ -16,6 +16,7 @@ public class AssignmentClassDetailsResponse {
     Long moduleId;
     String moduleName;
     String moduleDescription;
+    String moduleDescriptionHtml;
     List<String> typeUmls;
     boolean checkedTest;
     Long assignmentClassDetailId;

@@ -143,6 +143,8 @@
     "deleteSuccess": "Xóa thành công",
     "confirm": "Xác nhận",
     "delete": "Xóa",
+    "yes": "Có",
+    "no": "Không",
     "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.",
     "all": "Tất cả",
     "back": "Quay lại",
@@ -151,7 +153,11 @@
     "add": "Thêm",
     "loading": "Đang tải...",
     "items": "mục",
-    "total": "Tổng"
+    "total": "Tổng",
+    "test": "Bài kiểm tra",
+    "practice": "Bài tập",
+    "detailView": "Chi tiết",
+    "update": "Cập nhật"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -439,6 +445,7 @@
       "noId": "Không tìm thấy ID lớp học trong URL.",
       "classNotFound": "Không tìm thấy lớp học."
     },
+    "unassign": "Hủy giao",
     "assignmentAssignment": "Danh sách bài tập",
     "umlType": "Loại UML",
     "module": "Module",
@@ -452,6 +459,11 @@
       "marksContent": "Đây là trang Điểm số.",
       "assignment": "Luyện tập",
       "test": "Bài kiểm tra"
+    },
+    "filter": {
+      "assignmentTitle": "Bộ lọc Bài tập",
+      "module": "Module",
+      "umlType": "Type Uml"
     },
     "peopleTab": {
       "teachersTitle": "Giáo viên",
@@ -522,7 +534,9 @@
     },
     "view": {
       "grid": "Dạng lưới",
-      "list": "Dạng danh sách"
+      "list": "Dạng danh sách",
+      "submissionDetails": "Chi tiết bài nộp",
+      "assignmentInfo": "Thông tin bài tập"
     }
   },
   "rolePage": {

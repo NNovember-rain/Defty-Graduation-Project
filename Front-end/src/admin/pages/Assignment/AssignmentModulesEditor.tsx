@@ -302,7 +302,6 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isVisible, onClose, onSave, t
 const AssignmentModulesEditor: React.FC<AssignmentModulesEditorProps> = ({
                                                                              value,
                                                                              onChange,
-                                                                             typeUmlOptions,
                                                                              disabled
                                                                          }) => {
     const { t } = useTranslation();
@@ -344,19 +343,14 @@ const AssignmentModulesEditor: React.FC<AssignmentModulesEditorProps> = ({
         let savedModuleId: number;
 
         if (originalIndex !== null) {
-            // Trường hợp SỬA
             newModules[originalIndex] = moduleToSave;
             savedModuleId = moduleToSave.id;
         } else {
-            // Trường hợp THÊM MỚI
             newModules = [...modules, moduleToSave];
             savedModuleId = moduleToSave.id;
         }
 
-        // 1. Cập nhật state của Form cha
         onChange(newModules);
-
-        // 2. Tự động mở Panel của Module vừa lưu
         setActiveKey([savedModuleId.toString()]);
 
         setEditingModule(null);
@@ -367,15 +361,13 @@ const AssignmentModulesEditor: React.FC<AssignmentModulesEditorProps> = ({
         setEditingModule(null);
     };
 
-    // Hàm này vẫn cần typeUmlOptions để hiển thị tên trong giao diện chính
-    const getUmlName = (id: string) => typeUmlOptions.find(opt => opt.value === id)?.label || t('common.unknownType');
 
     return (
         <div>
             <Collapse
                 onChange={setActiveKey}
                 activeKey={activeKey}
-                expandIconPosition="end"
+                expandIcon={() => null}
                 style={{ marginBottom: 16 }}
             >
                 {modules.map((module, index) => (
@@ -410,60 +402,6 @@ const AssignmentModulesEditor: React.FC<AssignmentModulesEditorProps> = ({
                             </Space>
                         }
                     >
-
-                        <div dangerouslySetInnerHTML={{ __html: module.description }} style={{ marginBottom: 10 }} />
-                        <h4 style={{ color: '#0056b3', marginTop: 15 }}>{t('assignmentForm.umlSolutionsLabel')}</h4>
-                        <ul style={{ paddingLeft: 20 }}>
-                            {module.umlSolutions.map((sol, solIndex) => {
-                                const CODE_PREVIEW_LENGTH = 70;
-                                const rawCode = sol.solutionCode.replace(/<[^>]*>?/gm, '').trim();
-                                const codePreview = rawCode.substring(0, CODE_PREVIEW_LENGTH) + (rawCode.length > CODE_PREVIEW_LENGTH ? '...' : '');
-
-                                const tooltipContent = (
-                                    <div style={{ maxWidth: 350, fontFamily: 'sans-serif', padding: 5 }}>
-                                        <div style={{ fontWeight: 'bold', marginBottom: 5 }}>
-                                            {t('assignmentForm.solutionCodePreview') || 'Code Preview'}:
-                                        </div>
-                                        {/* Sử dụng <pre> để hiển thị code font và định dạng tốt hơn */}
-                                        <pre style={{ margin: 0, overflow: 'auto', maxHeight: 200, padding: 8, backgroundColor: '#222', color: '#fff', borderRadius: 4, whiteSpace: 'pre-wrap' }}>
-                                            {codePreview}
-                                        </pre>
-                                        <div style={{ marginTop: 5, color: '#999', fontSize: 10, textAlign: 'right' }}>
-                                            {t('assignmentForm.totalLength') || 'Total Length'}: {rawCode.length} {t('common.characters')}
-                                        </div>
-                                    </div>
-                                );
-
-                                return (
-                                    <li key={solIndex} style={{ marginBottom: 5, display: 'flex', alignItems: 'center' }}>
-                                        <span style={{ marginRight: 8, fontWeight: 500 }}>{getUmlName(sol.typeUmlId)}:</span>
-                                        <Tooltip
-                                            title={tooltipContent}
-                                            placement="rightTop"
-                                            color="#333"
-                                        >
-                                            <span
-                                                style={{
-                                                    fontFamily: 'monospace',
-                                                    backgroundColor: '#e6f7ff',
-                                                    padding: '3px 8px',
-                                                    borderRadius: 4,
-                                                    cursor: 'pointer',
-                                                    border: '1px solid #91d5ff',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    fontSize: 12,
-                                                    fontWeight: 600
-                                                }}
-                                            >
-                                                {t('assignmentForm.viewSolutionCode') || 'View Solution Code'}
-                                                <CodeOutlined style={{ marginLeft: 5 }} />
-                                            </span>
-                                        </Tooltip>
-                                    </li>
-                                );
-                            })}
-                        </ul>
                     </Collapse.Panel>
                 ))}
             </Collapse>

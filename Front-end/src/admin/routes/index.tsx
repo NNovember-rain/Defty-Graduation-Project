@@ -30,6 +30,7 @@ import StudentAssignmentManagerAntD from "../pages/ClassManagement/tab/Assignmen
 import CourseForm from "../pages/ClassManagement/courseForm.tsx";
 import CourseLvManagement from "../pages/ClassManagement/courseIndex.tsx";
 import AutoFeedbackJob from "../pages/AutoFeedbackJob";
+import ModuleDetailViewer from "../pages/Assignment/ModuleDetailViewer.tsx";
 
 
 interface AppRoute {
@@ -177,6 +178,11 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     {
         path: 'content/assignments/update/:id',
         component: AssignmentForm,
+        requiredAnyOfRoles: ['admin', 'teacher'],
+    },
+    {
+        path: 'content/assignments/:assignmentId/assignmentClassDetail/:assignmentClassDetailId',
+        component: ModuleDetailViewer,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
