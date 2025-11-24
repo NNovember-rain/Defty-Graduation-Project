@@ -381,6 +381,7 @@ class AssignmentServiceImpl implements AssignmentService {
                                                 ? assignmentClassDetail.getTypeUml().name()
                                                 : "NO_TYPE"
                                 ))
+                                .assignmentClassDetailId(assignmentClassDetail.getId())
                                 .checkedTest(assignmentClassDetail.isChecked())
                                 .startDate(assignmentClassDetail.getStartDate())
                                 .endDate(assignmentClassDetail.getEndDate())
