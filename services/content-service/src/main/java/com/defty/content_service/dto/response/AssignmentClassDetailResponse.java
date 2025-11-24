@@ -12,10 +12,12 @@ import java.util.Date;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AssignmentClassDetailResponse {
+    Long moduleId;
     String moduleName;
     String moduleDescription;
     String titleAssignment;
     String solutionCode;
+    Long assignmentId;
     String assignmentDescription;
     String assignmentDescriptionHtml;
     String typeUml;

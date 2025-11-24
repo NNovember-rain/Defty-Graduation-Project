@@ -178,7 +178,7 @@ const Description: React.FC<Props> = ({
                 }
                 else if (isPracticeCondition) {
                     data = await getAssignmentAllModule(assignmentClassId!);
-                    console.log("Get AssignmentDetail:", data);
+                    // console.log("Get AssignmentDetail:", data);
 
                     if (data?.result?.modules && Array.isArray(data.result.modules)) {
                         modulesToUse = data.result.modules.map((mod: any) => ({
