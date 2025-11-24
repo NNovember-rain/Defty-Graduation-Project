@@ -425,7 +425,8 @@ class AssignmentServiceImpl implements AssignmentService {
     public AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId, String typeUml, Long moduleId) {
         AssignmentClassDetail assignmentClassDetail = assignmentClassDetailRepository.findById(assignmentClassDetailId)
                 .orElseThrow(() -> new NotFoundException("AssignmentClassDetail not found with id: " + assignmentClassDetailId));
-
+        AssignmentClass assignmentClass = assignmentClassDetail.getAssignmentClass();
+        Assignment assignment = assignmentClass.getAssignment();
         ModuleEntity module;
         if(moduleId != null){
             module = moduleRepository.findById(moduleId)
@@ -447,6 +448,8 @@ class AssignmentServiceImpl implements AssignmentService {
         solutionCode = (moduleSolution != null) ? moduleSolution.getSolutionCode() : null;
 
         return AssignmentClassDetailResponse.builder()
+                .moduleId(module.getId())
+                .assignmentId(assignment.getId())
                 .assignmentDescription(assignmentClassDetail.getAssignmentClass().getAssignment().getDescription())
                 .assignmentDescriptionHtml(assignmentClassDetail.getAssignmentClass().getAssignment().getDescriptionHtml())
                 .titleAssignment(assignmentClassDetail.getAssignmentClass().getAssignment().getTitle())
@@ -459,6 +462,7 @@ class AssignmentServiceImpl implements AssignmentService {
                 .endDate(assignmentClassDetail.getEndDate())
                 .build();
     }
+
 
     @Override
     public AssignmentResponse createAssignment(AssignmentRequest request) {
