@@ -111,9 +111,9 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [uniqueAssignments, setUniqueAssignments] = useState<{ id: string; title: string }[]>([]);
 
 
-    const goToAssignmentDetails = (assignmentId: string) => {
+    const goToAssignmentDetails = (assignmentId: string, assignmentClassDetailId: number) => {
         const originalId = assignmentId.split('-')[0];
-        navigate(`/admin/class/${classId}/assignment/${originalId}/detail`);
+        navigate(`/admin/class/${classId}/assignment/${originalId}/detail?assignmentClassDetailId=${assignmentClassDetailId}`);
     };
 
     const handleViewAssignmentDetails = useCallback(
@@ -502,7 +502,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                         style={{ color: primaryColor, fontSize: '18px' }}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            goToAssignmentDetails(item.assignmentId);
+                                            goToAssignmentDetails(item.assignmentId, item.assignmentClassDetailId);
                                         }}
                                     />
                                 </Tooltip>

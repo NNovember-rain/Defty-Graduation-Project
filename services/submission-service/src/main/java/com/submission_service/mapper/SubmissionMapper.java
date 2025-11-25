@@ -32,12 +32,9 @@ public interface SubmissionMapper {
     );
 
     @Mapping(target = "studentId", source = "userId")
-    @Mapping(target = "assignmentClassDetailId", source = "assignmentClassDetailId")
-    @Mapping(target = "studentPlantUMLCode", source = "submissionRequest.studentPlantUmlCode")
     Submission submissionRequestToSubmission(
             SubmissionRequest submissionRequest,
-            Long userId,
-            Long assignmentClassDetailId
+            Long userId
     );
 
 

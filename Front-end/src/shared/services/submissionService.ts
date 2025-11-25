@@ -49,14 +49,15 @@ export interface ISubmission {
     createdDate: string
 }
 
+export type TypeUml = "CLASS_DIAGRAM" | "USE_CASE_DIAGRAM";
+
 export interface SubmissionRequest {
     classId: number
-    assignmentId: number
+    assignmentClassDetailId: number
+    moduleId: number
+    typeUml: TypeUml
     studentPlantUmlCode: string
     examMode: boolean
-    moduleId: number
-    typeUmlId: number
-    typeUmlName: string
 }
 
 
@@ -105,7 +106,7 @@ export interface LastSubmissionResponse {
 
 export const getSubmissionsByClassAndAssignment = async (
     classId: number,
-    assignmentId: number,
+    assignmentClassDetailId: number,
     options: GetSubmissionsOptions = {}
 ): Promise<GetSubmissionsResult> => {
     const params = {
@@ -116,7 +117,7 @@ export const getSubmissionsByClassAndAssignment = async (
     }
 
     const response = await handleRequest(
-        getWithParams(`${PREFIX_SUBMISSIONS}/class/${classId}/assignment/${assignmentId}`, params)
+        getWithParams(`${PREFIX_SUBMISSIONS}/class/${classId}/assignmentClassDetail/${assignmentClassDetailId}`, params)
     )
 
     const data = await response.json()

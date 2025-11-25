@@ -12,7 +12,7 @@ import {
     TeamOutlined,
     UserOutlined
 } from '@ant-design/icons'
-import {useNavigate, useParams} from 'react-router-dom'
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom'
 import {getSubmissionsByClassAndAssignment} from "../../../../../shared/services/submissionService.ts";
 import {getStudentsInClass, GetStudentsInClassOptions} from "../../../../../shared/services/classManagementService.ts";
 
@@ -45,24 +45,40 @@ const StudentAssignmentManagerAntD = () => {
         maxScore: 100
     })
     const { classId, assignmentId } = useParams<{ classId: string, assignmentId: string }>();
+    const [searchParams] = useSearchParams();
 
     useEffect(() => {
         const fetchData = async () => {
+            console.log('StudentAssignmentManager - useEffect triggered');
+            console.log('classId:', classId, 'assignmentId:', assignmentId);
+            console.log('searchParams:', Object.fromEntries(searchParams.entries()));
+            
             setLoading(true)
 
             if (!classId || !assignmentId) {
+                console.error('Missing classId or assignmentId');
+                setLoading(false);
+                return;
+            }
+
+            const assignmentClassDetailIdParam = searchParams.get('assignmentClassDetailId');
+            console.log('assignmentClassDetailId from URL:', assignmentClassDetailIdParam);
+            
+            if (!assignmentClassDetailIdParam) {
+                console.error('assignmentClassDetailId not found in URL params');
                 setLoading(false);
                 return;
             }
 
             try {
+                console.log('Calling API with assignmentClassDetailId:', assignmentClassDetailIdParam);
                 const classIdNum = Number(classId);
-                const assignmentIdNum = Number(assignmentId);
+                const assignmentClassDetailId = Number(assignmentClassDetailIdParam);
 
-                const studentsInClassResult = await getStudentsInClass(classIdNum, { limit: 999 } as GetStudentsInClassOptions);
+                const studentsInClassResult = await getStudentsInClass(classIdNum, { limit: 100 } as GetStudentsInClassOptions);
                 const studentsInClass = studentsInClassResult.content;
 
-                const submissionsResult = await getSubmissionsByClassAndAssignment(classIdNum, assignmentIdNum)
+                const submissionsResult = await getSubmissionsByClassAndAssignment(classIdNum, assignmentClassDetailId)
                 const submissions = submissionsResult.submissions;
 
                 const submittedMap = new Map();
@@ -116,7 +132,7 @@ const StudentAssignmentManagerAntD = () => {
         }
 
         fetchData()
-    }, [classId, assignmentId])
+    }, [classId, assignmentId, searchParams])
 
     const filteredStudents = students.filter((s) => !filterSubmitted || s.submitted)
 

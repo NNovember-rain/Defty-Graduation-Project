@@ -97,7 +97,7 @@ public class SubmissionSpecification {
                     .where(
                             cb.equal(subRoot.get("studentId"), root.get("studentId")),
                             cb.equal(subRoot.get("classId"), root.get("classId")),
-                            cb.equal(subRoot.get("assignmentId"), root.get("assignmentId")),
+                            cb.equal(subRoot.get("assignmentClassDetailId"), root.get("assignmentClassDetailId")),
                             cb.equal(subRoot.get("examMode"), true)
                     );
 

@@ -2,6 +2,7 @@ package com.submission_service.model.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.submission_service.enums.SubmissionStatus;
+import com.submission_service.enums.TypeUml;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class  SubmissionResponse {
     String studentCode;
     String assignmentTitle;
     String studentPlantUMLCode;
+    TypeUml typeUml;
     Double score;
     LocalDateTime createdDate;
 }
