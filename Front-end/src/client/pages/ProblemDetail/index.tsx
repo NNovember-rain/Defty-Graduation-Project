@@ -10,7 +10,11 @@ import "./ProblemDetail.scss";
 import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
-import { getAssignmentDetail, type IAssignment } from "../../../shared/services/assignmentService";
+import {
+    getAssignmentAllModule,
+    getAssignmentDetail,
+    type IAssignment
+} from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
 import { createSubmission, type SubmissionRequest, getLastSubmissionExamMode, type LastSubmissionResponse } from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
@@ -293,11 +297,16 @@ const ProblemDetail: React.FC = () => {
         }
     };
 
-    // Gọi API chỉ bằng ID chi tiết
-    const fetchAssignmentInfo = async (_detailId: number) => {
-            const asg = (await getAssignmentDetail(assignmentClassDetailId));
-            setAssignment(asg);
-            return true;
+    const fetchAssignmentInfo = async (detailId: number, isTestMode: boolean) => {
+        let asg: IAssignment;
+        if (isTestMode) {
+            asg = await getAssignmentDetail(detailId);
+        } else {
+            asg = await getAssignmentAllModule(detailId);
+        }
+
+        setAssignment(asg);
+        return true;
     };
 
     const fetchAll = useCallback(
