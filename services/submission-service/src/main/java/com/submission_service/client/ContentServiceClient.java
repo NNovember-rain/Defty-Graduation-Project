@@ -29,6 +29,9 @@ public interface ContentServiceClient {
 //    @GetMapping("/content/assignments/{classId}/{assignmentId}")
 //    ApiResponse<AssignmentResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId);
 
-    @GetMapping("/assignmentClassDetail/{assignmentClassDetailId}")
-    ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(@PathVariable Long assignmentClassDetailId);
+    @GetMapping("/content/assignments/assignmentClassDetail/{assignmentClassDetailId}")
+    ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(
+            @PathVariable Long assignmentClassDetailId,
+            @RequestParam(value = "typeUml", required = false) String typeUml,
+            @RequestParam(value = "moduleId", required = false) Long moduleId);
 }

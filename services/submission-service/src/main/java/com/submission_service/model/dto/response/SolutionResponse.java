@@ -3,19 +3,14 @@ package com.submission_service.model.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ModuleResponse {
+public class SolutionResponse {
     Long id;
-    String moduleName;
-    String moduleDescription;
-    String moduleDescriptionHtml;
-    List<SolutionResponse> solutionResponses;
-    Long assignmentClassDetailId;
+    String typeUml;
+    String solutionCode;
 }
