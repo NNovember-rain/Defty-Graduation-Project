@@ -6,6 +6,7 @@ import com.defty.identity.dto.response.ApiResponse;
 import com.defty.identity.dto.response.UserExistenceCheckResult;
 import com.defty.identity.dto.response.UserResponse;
 import com.defty.identity.service.UserService;
+import com.example.common_library.utils.UserUtils;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -101,6 +102,16 @@ public class UserController {
                 .build();
     }
 
+    @GetMapping("/detail")
+    ApiResponse<UserResponse> getUserDetail(){
+        UserUtils.UserInfo user = UserUtils.getCurrentUser();
+        assert user != null;
+        Long userId = user.userId();
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.getUser(userId))
+                .build();
+    }
+
     @GetMapping("/myInfo")
     ApiResponse<UserResponse> getMyInfo(){
         return ApiResponse.<UserResponse>builder()
@@ -111,6 +122,16 @@ public class UserController {
     @PreAuthorize("hasRole('admin')")
     @PatchMapping("/{id}")
     ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request){
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.updateUser(id, request))
+                .build();
+    }
+
+    @PatchMapping("/detail")
+    ApiResponse<UserResponse> updateUserDetail(@RequestBody UserUpdateRequest request){
+        UserUtils.UserInfo user = UserUtils.getCurrentUser();
+        assert user != null;
+        Long id = user.userId();
         return ApiResponse.<UserResponse>builder()
                 .result(userService.updateUser(id, request))
                 .build();

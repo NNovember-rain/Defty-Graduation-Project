@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -21,6 +22,9 @@ public class User extends BaseEntity {
 
     String avatarUrl;
     String phoneNumber;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", fetch = FetchType.LAZY)
+    List<ApiKey> apiKey;
 
     String password;
     String fullName;

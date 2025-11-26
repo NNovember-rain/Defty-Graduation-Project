@@ -519,6 +519,7 @@
       "assign": "Giao",
       "assignAssignment": "Giao bài luyện tập",
       "modulesAssigned": "Module đã được giao",
+      "assignQuiz": "Giao bài trắc nghiệm",
       "assignTest": "Giao bài kiểm tra",
       "noDeadline": "Không có hạn chót"
     },

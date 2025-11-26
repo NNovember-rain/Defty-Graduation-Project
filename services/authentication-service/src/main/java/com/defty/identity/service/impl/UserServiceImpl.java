@@ -4,18 +4,20 @@ import com.defty.identity.dto.request.UserCreationRequest;
 import com.defty.identity.dto.request.UserUpdateRequest;
 import com.defty.identity.dto.response.UserExistenceCheckResult;
 import com.defty.identity.dto.response.UserResponse;
+import com.defty.identity.entity.ApiKey;
 import com.defty.identity.entity.BaseEntity;
 import com.defty.identity.entity.Role;
 import com.defty.identity.entity.User;
 import com.defty.identity.exception.AppException;
 import com.defty.identity.exception.ErrorCode;
 import com.defty.identity.mapper.UserMapper;
+import com.defty.identity.repository.ApiKeyRepository;
 import com.defty.identity.repository.RoleRepository;
 import com.defty.identity.repository.UserRepository;
 import com.defty.identity.service.UserService;
 import com.defty.identity.specification.UserSpecification;
-import com.example.common_library.exceptions.AlreadyExitException;
 import com.example.common_library.exceptions.NotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -40,6 +42,7 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     RoleRepository roleRepository;
+    ApiKeyRepository apiKeyRepository;
 
     @Override
     public UserResponse createUser(UserCreationRequest request) {
@@ -62,7 +65,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
-
+    @Transactional
     @Override
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId)
@@ -80,14 +83,22 @@ public class UserServiceImpl implements UserService {
             throw new AppException(ErrorCode.USER_CODE_EXISTED);
         }
 
+        String apiKey = request.getApiKey();
+        if (apiKey != null && !apiKey.isEmpty()) {
+            apiKeyRepository.deactivateAllByUser(user);
+            ApiKey userApiKey = new ApiKey();
+            userApiKey.setApiKey(apiKey);
+            userApiKey.setUser(user);
+            userApiKey.setIsActive(1);
+            apiKeyRepository.save(userApiKey);
+        }
+
         if (request.getRoles() != null) {
             List<Long> roleIds = request.getRoles().stream()
                     .map(BaseEntity::getId)
                     .toList();
 
             var roles = roleRepository.findAllById(roleIds);
-
-            // JPA way - bảo đảm update bảng user_role
             user.getRoles().clear();
             user.getRoles().addAll(roles);
         }
@@ -202,8 +213,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUser(Long id){
-        return userMapper.toUserResponse(userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found")));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found with ID: " + id));
+        ApiKey apiKey = apiKeyRepository.findByUserIdAndIsActive(id, 1);
+        if (apiKey == null) {
+            apiKey = new ApiKey();
+            apiKey.setApiKey("");
+        }
+        return UserResponse.builder()
+                .id(user.getId())
+                .userCode(user.getUserCode())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .dob(user.getDob())
+                .avatarUrl(user.getAvatarUrl())
+                .isActive(user.getIsActive())
+                .apiKey(apiKey.getApiKey())
+                .createdDate(user.getCreatedDate())
+                .build();
     }
 }
 
