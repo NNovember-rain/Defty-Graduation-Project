@@ -461,8 +461,8 @@
       "classworkContent": "This is the Classwork page.",
       "peopleContent": "This is the People page.",
       "marksContent": "This is the Marks page.",
-      "assignment": "Luyện tập",
-      "test": "Bài kiểm tra"
+      "assignment": "Assignment",
+      "test": "Test"
     },
     "filter": {
       "assignmentTitle": "Assignment",
@@ -523,6 +523,7 @@
       "createNew": "Create new assignment",
       "assigned": "Assign",
       "assignAssignment": "Assign Assignment",
+      "assignQuiz": "Assign Quiz",
       "modulesAssigned": "Modules Assigned",
       "assignTest": "Assign Test",
       "noDeadline": "No deadline"

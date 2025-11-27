@@ -134,9 +134,14 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setIsAssignmentModalVisible(true);
     }, []);
 
-    const showQuizAssignmentModal = useCallback(() => {
+    const showTestAssignmentModal = useCallback(() => {
         setIsAssignmentModalVisibleTest(true);
     }, []);
+
+    const showQuizAssignmentModal = useCallback(() => {
+        // Chức năng gán Quiz chưa được triển khai
+    }, []);
+
 
     const hideAssignmentModal = () => {
         setIsAssignmentModalVisible(false);
@@ -301,12 +306,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const menuItems: MenuProps["items"] = [
         {
             key: "assign",
-            label: t("classDetail.assignment.assignAssignment") || "Assign Assignment (Luyện tập)",
+            label: t("classDetail.assignment.assignAssignment"),
             onClick: () => showAssignmentModal()
         },
         {
             key: "assignTest",
-            label: t("classDetail.assignment.assignTest") || "Assign Test (Kiểm tra)",
+            label: t("classDetail.assignment.assignTest"),
+            onClick: () => showTestAssignmentModal()
+        },
+        {
+            key: "assignQuiz",
+            label: t("classDetail.assignment.assignQuiz"),
             onClick: () => showQuizAssignmentModal()
         }
     ];

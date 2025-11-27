@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import Split from "react-split";
 import Description from "./Description";
@@ -10,9 +10,18 @@ import "./ProblemDetail.scss";
 import { useUserStore } from "../../../shared/authentication/useUserStore";
 import { useTranslation } from "react-i18next";
 import { getClassById, type IClass } from "../../../shared/services/classManagementService";
-import { getAssignmentDetail, type IAssignment } from "../../../shared/services/assignmentService";
+import {
+    getAssignmentDetail,
+    getAssignmentAllModule,
+    type IAssignment
+} from "../../../shared/services/assignmentService";
 import { deflate } from "pako";
-import { createSubmission, type SubmissionRequest, getLastSubmissionExamMode, type LastSubmissionResponse } from "../../../shared/services/submissionService.ts";
+import {
+    createSubmission,
+    type SubmissionRequest,
+    getLastSubmissionExamMode,
+    type LastSubmissionResponse
+} from "../../../shared/services/submissionService.ts";
 import { useNotification } from "../../../shared/notification/useNotification.ts";
 
 /** ========= PlantUML helpers (Giữ nguyên) ========= */
@@ -56,20 +65,18 @@ const ProblemDetail: React.FC = () => {
 
     // Lấy classId và assignmentClassDetailId (từ problemId trong URL)
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
-    const currentClassId = useMemo(() => Number(classId), [classId]);
-    const assignmentClassDetailId = useMemo(() => Number(problemId), [problemId]); // ID chi tiết lớp/gán bài tập
+    const currentClassId = Number(classId);
+    const assignmentClassDetailId = Number(problemId); // ID chi tiết lớp/gán bài tập
 
     const navigate = useNavigate();
     const { t } = useTranslation();
 
     const [searchParams] = useSearchParams();
-    const isTestMode = searchParams.get("mode") === "test";     const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
+    const isTestMode = searchParams.get("mode") === "test";
+    const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
 
     const [code, setCode] = useState<string>("");
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    // Assignment gốc (chứa commonDescription, title)
-    const problemIdNumber = Number(problemId);
-    const assignmentClassIdForPractice = !isTestMode ? problemIdNumber : 0;
     const [assignment, setAssignment] = useState<IAssignment | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
@@ -80,7 +87,6 @@ const ProblemDetail: React.FC = () => {
     const [isRendering, setIsRendering] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // State cho Module/UML Type (giữ nguyên để kiểm soát Select/CodeEditor)
     const [umlType, setUmlType] = useState<string>("");
     const [module, setModule] = useState<string>("");
     const [typeUmlName, setTypeUmlName] = useState<string>("");
@@ -110,8 +116,7 @@ const ProblemDetail: React.FC = () => {
         // UML Type ID is tracked in Description component
     }, []);
 
-    const handleModuleNameChange = useCallback((_name: string) => {
-        // Module name is tracked in Description component
+    const handleModuleNameChange = useCallback((name: string) => {
     }, []);
 
     const [isNarrow, setIsNarrow] = useState<boolean>(() => window.innerWidth < 1024);
@@ -133,11 +138,15 @@ const ProblemDetail: React.FC = () => {
         () => JSON.parse(localStorage.getItem("pd-sizes-inner-v") || "[55,45]")
     );
 
+    const sizesOuterForPractice = [40, 60];
+    const effectiveSizesOuter = isTestMode ? [35, 50, 15] : sizesOuterForPractice;
+
     const effectiveSizesInner = isTestMode ? [65, 35] : sizesInner;
 
     const getHttpStatus = (e: any): number | undefined =>
         e?.response?.status ?? e?.status ?? e?.data?.status ?? e?.code;
 
+    // ĐÃ SỬA: Cố định endpoint Kroki là 'plantuml' để tránh lỗi 404
     const renderWithKroki = async (uml: string, type: string) => {
         setIsRendering(true);
         setRenderErr(null);
@@ -145,19 +154,20 @@ const ProblemDetail: React.FC = () => {
         setImageUrl(null);
 
         try {
-            const res = await fetch("https://kroki.io/plantuml/svg", {
+            // Cố định endpoint là plantuml, vì type có thể là ID hoặc tên không hợp lệ
+            const krokiEndpoint = "plantuml";
+
+            const res = await fetch(`https://kroki.io/${krokiEndpoint}/svg`, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
                 body: uml,
             });
 
             if (!res.ok) {
-                setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }));
-                if (type === 'plantuml') {
+                const errorText = await res.text();
+                setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }) + `: ${errorText.substring(0, 100)}...`);
+                if (krokiEndpoint === 'plantuml') {
                     setImageUrl(plantUmlSvgUrl(uml));
-                } else {
-                    const errorText = await res.text();
-                    setRenderErr(t("problemDetail.result.renderErrorWithStatus", { status: res.status }) + `: ${errorText.substring(0, 100)}`);
                 }
                 return;
             }
@@ -168,7 +178,7 @@ const ProblemDetail: React.FC = () => {
         } catch (e: any) {
             setRenderErr(t("problemDetail.result.renderFailed"));
             setSvgMarkup(null);
-            if (type === 'plantuml') {
+            if (uml.startsWith('@startuml')) {
                 setImageUrl(plantUmlSvgUrl(uml));
             }
         } finally {
@@ -292,23 +302,26 @@ const ProblemDetail: React.FC = () => {
             throw e;
         }
     };
+    const fetchAssignmentInfo = async (detailId: number, isTestMode: boolean) => {
+        let asg: IAssignment;
+        if (isTestMode) {
+            asg = await getAssignmentDetail(detailId);
+        } else {
+            asg = await getAssignmentAllModule(detailId);
+        }
 
-    // Gọi API chỉ bằng ID chi tiết
-    const fetchAssignmentInfo = async (_detailId: number) => {
-            const asg = (await getAssignmentDetail(assignmentClassDetailId));
-            setAssignment(asg);
-            return true;
+        setAssignment(asg);
+        return true;
     };
-
     const fetchAll = useCallback(
-        async (cid: number, detailId: number) => {
+        async (cid: number, detailId: number, isCurrentTestMode: boolean) => {
             setLoading(true);
             setErr(null);
             try {
                 const okClass = await fetchClassInfo(cid);
                 if (!okClass) return;
-                // Truyền ID chi tiết vào fetchAssignmentInfo
-                const okAsg = await fetchAssignmentInfo(detailId);
+                // Truyền ID chi tiết VÀ chế độ vào fetchAssignmentInfo
+                const okAsg = await fetchAssignmentInfo(detailId, isCurrentTestMode);
                 if (!okAsg) return;
             } catch (e: any) {
                 setErr(e?.message ?? "Failed to load data");
@@ -326,10 +339,10 @@ const ProblemDetail: React.FC = () => {
             navigate("/not-found");
             return;
         }
-        // Truyền ID chi tiết vào fetchAll
-        fetchAll(cid, detailId);
+        // Truyền ID chi tiết VÀ isTestMode vào fetchAll
+        fetchAll(cid, detailId, isTestMode);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [classId, problemId, fetchAll]);
+    }, [classId, problemId, fetchAll, isTestMode]);
 
     // Load submitted code in Test Mode
     useEffect(() => {
@@ -354,6 +367,8 @@ const ProblemDetail: React.FC = () => {
                         }
                     } else {
                         setCode(initialPlantUml);
+                        setModule("");
+                        setUmlType("");
                     }
 
                     if (submission?.score !== undefined && submission?.score !== null) {
@@ -390,7 +405,7 @@ const ProblemDetail: React.FC = () => {
             <Split
                 className={`split-outer ${isNarrow ? "split-vertical" : "split-horizontal"}`}
                 direction={isNarrow ? "vertical" : "horizontal"}
-                sizes={isTestMode ? [35, 50, 15] : sizesOuter}
+                sizes={effectiveSizesOuter}
                 minSize={isNarrow ? 160 : 200}
                 gutterSize={8}
                 onDragEnd={(sizes) => {
@@ -403,7 +418,8 @@ const ProblemDetail: React.FC = () => {
                 <div className="panel panel--left scrollable">
                     <Description assignment={assignment} isLoading={loading} error={err}
                                  mode={currentMode}
-                                 assignmentClassId={assignmentClassIdForPractice}
+                                 umlTypes={assignment?.assignmentClassDetailResponseList?.find(m => String(m.id) === module)?.typeUmls || []}
+                                 assignmentClassId={assignmentClassDetailId}
                                  onUmlTypeChange={handleUmlTypeChange}
                                  module={module}
                                  onModuleChange={handleModuleChange}
