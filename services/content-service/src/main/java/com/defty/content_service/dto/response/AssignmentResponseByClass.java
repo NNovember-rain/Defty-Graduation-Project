@@ -12,5 +12,8 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AssignmentResponseByClass {
+    String assignmentTitle;
+    String assignmentDescription;
+    String assignmentDescriptionHtml;
     List<ModuleResponse> modules;
 }

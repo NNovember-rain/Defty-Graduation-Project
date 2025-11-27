@@ -3,6 +3,7 @@ package com.defty.content_service.repository;
 import com.defty.content_service.entity.Assignment;
 import com.defty.content_service.entity.AssignmentClass;
 import com.defty.content_service.enums.TypeUml;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,4 +29,12 @@ public interface AssignmentClassRepository extends JpaRepository<AssignmentClass
 
     @Query("SELECT COUNT(ac) FROM AssignmentClass ac WHERE ac.classId = :classId")
     long countByClassId(@Param("classId") Long classId);
+
+    @Query("SELECT a FROM Assignment a " +
+            "WHERE a.isActive = 1 " +
+            "AND a.id NOT IN (" +
+            "   SELECT ac.assignment.id FROM AssignmentClass ac WHERE ac.classId = :classId" +
+            ")")
+    Page<Assignment> findUnassignedAssignments(@Param("classId") Long classId, Pageable pageable);
+    List<AssignmentClass> findByClassId(Long classId);
 }

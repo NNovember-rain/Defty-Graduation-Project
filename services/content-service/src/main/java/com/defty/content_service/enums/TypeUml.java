@@ -1,6 +1,6 @@
 package com.defty.content_service.enums;
 
 public enum TypeUml {
-    CLASS,
-    USE_CASE,;
+    CLASS_DIAGRAM,
+    USE_CASE_DIAGRAM;
 }

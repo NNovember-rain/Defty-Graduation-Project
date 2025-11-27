@@ -32,6 +32,8 @@ export interface IAssignment {
     id: number;
     title: string,
     commonDescription: string;
+    commonDescriptionHtml: string;
+    assignmentDescriptionHtml: string;
     typeUmlName: number;
     solutionCode: string;
     assignmentCode: string;
@@ -42,7 +44,7 @@ export interface IAssignment {
     isActive: number;
     startDate: string | null;
     endDate: string | null;
-    modules: IModule[];
+    assignmentClassDetailResponseList: IModule[];
 }
 
 export interface IAssignAssignment {
@@ -68,6 +70,19 @@ export interface IAssignmentRequest {
     description: string;
     classIds: number[];
     modules: IModuleRequest[];
+}
+
+export interface IAssignmentClassDetailResponse {
+    moduleName: string;
+    moduleDescription: string;
+    titleAssignment: string;
+    solutionCode: string;
+    assignmentDescription: string;
+    assignmentDescriptionHtml: string;
+    typeUml: string;
+    checkedTest: boolean;
+    startDate: string | Date | null;
+    endDate: string | Date | null;
 }
 
 export const createAssignment = async (data: IAssignmentRequest): Promise<IAssignment> => {
@@ -102,6 +117,33 @@ export const getAssignments = async (options: GetAssignmentsOptions = {}): Promi
     } as GetAssignmentsResult;
 };
 
+export const getUnassignedAssignments = async (
+    classId: number,
+    mode: string,
+    options: GetAssignmentsOptions
+): Promise<GetAssignmentsResult> => {
+    const params = {
+        page: (options.page || 1) - 1,
+        size: options.limit,
+        name: options.name,
+        sortBy: options.sortBy,
+        sortOrder: options.sortOrder,
+        mode: mode,
+    };
+
+    const url = `${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/unassigned/${classId}`;
+    const response = await handleRequest(getWithParams(url, params));
+    const data = await response.json();
+
+    return {
+        assignments: data.result.content,
+        total: data.result.totalElements,
+        page: data.result.number,
+        limit: data.result.size
+    } as GetAssignmentsResult;
+};
+
+
 export const getAssignmentsByClassId = async (classId: number, options: GetAssignmentsOptions = {}): Promise<GetAssignmentsResult> => {
     const params = {
         page: (options.page || 1) - 1,
@@ -129,6 +171,12 @@ export const getAssignmentById = async (id: string | number): Promise<IAssignmen
     return data.result as IAssignment;
 };
 
+export const unassignAssignment = async (id: number): Promise<IAssignment> => {
+    const response = await handleRequest(del(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/unassign/${id}`));
+    const deletedData = await response.json();
+    return deletedData.data as IAssignment;
+};
+
 export const getAssignmentByClassId = async (classId: string | number, assignmentId: string | number): Promise<IAssignment> => {
     const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/${classId}/${assignmentId}`));
     const data = await response.json();
@@ -141,11 +189,14 @@ export const getAssignmentDetail = async (assignmentClassDetailId: string | numb
     return data.result as IAssignment;
 };
 
+
 export const getAssignmentAllModule = async (assignmentClassId: string | number): Promise<IAssignment> => {
     const response = await handleRequest(get(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/detail/all-module/${assignmentClassId}`));
     const data = await response.json();
     return data.result as IAssignment;
 };
+
+
 
 export const updateAssignment = async (id: string | number, data: Partial<Omit<IAssignment, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IAssignment> => {
     const response = await handleRequest(patchJsonData(`${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/update/${id}`, data));
@@ -165,5 +216,14 @@ export const toggleAssignmentActiveStatus = async (id: number, isActive: boolean
     );
     const updatedData = await response.json();
     return updatedData.data as IAssignment;
+};
+
+export const getAssignmentClassDetail = async (
+    assignmentClassDetailId: string | number,
+): Promise<IAssignmentClassDetailResponse> => {
+    const url = `${PREFIX_CONTENT}/${PREFIX_ASSIGNMENT}/assignmentClassDetail/${assignmentClassDetailId}`;
+    const response = await handleRequest(getWithParams(url));
+    const data = await response.json();
+    return data.result as IAssignmentClassDetailResponse;
 };
 

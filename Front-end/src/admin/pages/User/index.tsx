@@ -155,6 +155,11 @@ const User: React.FC = () => {
             sortable: true
         },
         {
+            key: 'userCode',
+            label: t('userPage.columns.userCode'),
+            sortable: true
+        },
+        {
             key: 'roles',
             label: t('userPage.columns.roles'),
             sortable: false,
@@ -248,7 +253,6 @@ const User: React.FC = () => {
     }, [t]);
 
     const handleEditUser = useCallback((rowData: IUser) => {
-        console.log("Editing user:", rowData);
         navigate(`/admin/users/update/${rowData.id}`);
     }, [t]);
 

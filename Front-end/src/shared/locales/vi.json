@@ -143,6 +143,8 @@
     "deleteSuccess": "Xóa thành công",
     "confirm": "Xác nhận",
     "delete": "Xóa",
+    "yes": "Có",
+    "no": "Không",
     "confirmDeleteContent": "Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.",
     "all": "Tất cả",
     "back": "Quay lại",
@@ -150,7 +152,12 @@
     "submit": "Nộp",
     "add": "Thêm",
     "loading": "Đang tải...",
-    "items": "mục"
+    "items": "mục",
+    "total": "Tổng",
+    "test": "Bài kiểm tra",
+    "practice": "Bài tập",
+    "detailView": "Chi tiết",
+    "update": "Cập nhật"
   },
   "managementTemplate": {
     "hideFilters": "Ẩn bộ lọc",
@@ -228,6 +235,7 @@
   "assignmentPage": {
     "title": "Quản lý Bài tập",
     "breadcrumb": "Bài tập",
+    "noAssignments": "Chưa có bài tập nào được giao",
     "columns": {
       "name": "Tên bài tập",
       "description": "Mô tả",
@@ -276,14 +284,22 @@
     "moduleDescriptionsLabel": "Mô tả Module",
     "moduleName": "Tên Module",
     "descriptionLabel": "Mô tả Module",
-    "validation": {
-      "titleRequired": "Tiêu đề là bắt buộc",
-      "descriptionRequired": "Mô tả là bắt buộc",
-      "typeUmlRequired": "Loại UML là bắt buộc",
-      "moduleRequired": "Module là bắt buộc",
-      "moduleDescriptionRequired": "Mô tả module là bắt buộc"
-    },
-    "assignmentLoading": "Đang tải bài tập..."
+    "addNewModule": "Thêm Module mới",
+    "addModuleTitle": "Thêm Module",
+    "moduleNamePlaceholder": "Nhập tên module",
+    "descriptionPlaceholder": "Nhập mô tả cho module",
+    "umlSolutionsLabel": "Mã giải pháp UML",
+    "Solution": "Giải pháp",
+    "addUmlSolution": "Thêm giải pháp UML",
+    "titleRequired": "Tiêu đề là bắt buộc",
+    "descriptionRequired": "Mô tả là bắt buộc",
+    "typeUmlRequired": "Loại UML là bắt buộc",
+    "moduleRequired": "Module là bắt buộc",
+    "moduleDescriptionRequired": "Mô tả module là bắt buộc",
+    "assignmentLoading": "Đang tải bài tập...",
+    "solutionCodeRequired": "Mã giải pháp là bắt buộc",
+    "moduleNameRequired": "Tên module là bắt buộc",
+    "listAssignment": "Danh sách bài tập"
   },
 
   "userPage": {
@@ -295,8 +311,11 @@
       "dob": "Ngày sinh",
       "email": "Email",
       "roles": "Vai trò",
-      "creationDate": "Ngày tạo"
+      "creationDate": "Ngày tạo",
+      "userCode": "Mã học sinh"
     },
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hóa người dùng '{{name}}' không?",
     "search": {
       "username": "Tên đăng nhập",
       "namePlaceholder": "Nhập tên đăng nhập...",
@@ -334,6 +353,7 @@
     "roleLabel": "Vai trò",
     "rolePlaceholder": "Chọn vai trò",
     "userCode": "Mã học sinh",
+    "roleLabelRequired": "Vai trò là bắt buộc",
     "validation": {
       "dobLabelRequired": "Ngày sinh là bắt buộc",
       "userCodeRequired": "Mã học sinh là bắt buộc",
@@ -425,6 +445,7 @@
       "noId": "Không tìm thấy ID lớp học trong URL.",
       "classNotFound": "Không tìm thấy lớp học."
     },
+    "unassign": "Hủy giao",
     "assignmentAssignment": "Danh sách bài tập",
     "umlType": "Loại UML",
     "module": "Module",
@@ -438,6 +459,11 @@
       "marksContent": "Đây là trang Điểm số.",
       "assignment": "Luyện tập",
       "test": "Bài kiểm tra"
+    },
+    "filter": {
+      "assignmentTitle": "Bộ lọc Bài tập",
+      "module": "Module",
+      "umlType": "Type Uml"
     },
     "peopleTab": {
       "teachersTitle": "Giáo viên",
@@ -490,7 +516,8 @@
       "submit": "Nộp bài",
       "create": "Tạo",
       "createNew": "Tạo bài tập mới",
-      "assign": "Giao bài tập",
+      "assign": "Giao",
+      "assignAssignment": "Giao bài luyện tập",
       "modulesAssigned": "Module đã được giao",
       "assignTest": "Giao bài kiểm tra",
       "noDeadline": "Không có hạn chót"
@@ -507,7 +534,9 @@
     },
     "view": {
       "grid": "Dạng lưới",
-      "list": "Dạng danh sách"
+      "list": "Dạng danh sách",
+      "submissionDetails": "Chi tiết bài nộp",
+      "assignmentInfo": "Thông tin bài tập"
     }
   },
   "rolePage": {
@@ -518,6 +547,8 @@
       "description": "Mô tả",
       "creationDate": "Ngày tạo"
     },
+    "confirmToggleTitle": "Xác nhận thay đổi trạng thái",
+    "confirmDeactivate": "Bạn có chắc muốn vô hiệu hóa vai trò '{{name}}' không?",
     "search": {
       "name": "Tên vai trò",
       "namePlaceholder": "Nhập tên vai trò...",

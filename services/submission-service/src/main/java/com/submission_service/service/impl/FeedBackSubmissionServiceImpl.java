@@ -3,16 +3,14 @@ package com.submission_service.service.impl;
 import com.example.common_library.utils.UserUtils;
 import com.submission_service.client.AuthServiceClient;
 import com.submission_service.client.ClassManagementServiceClient;
-import com.submission_service.model.dto.request.FeedbackTeacherRequest;
-import com.submission_service.model.dto.response.ClassResponse;
-import com.submission_service.model.dto.response.FeedbackTeacherResponse;
+import com.submission_service.model.dto.request.FeedbackSubmissionRequest;
+import com.submission_service.model.dto.response.SubmissionFeedbackResponse;
 import com.submission_service.model.dto.response.UserResponse;
-import com.submission_service.model.entity.FeedbackTeacher;
+import com.submission_service.model.entity.SubmissionFeedback;
 import com.submission_service.model.entity.Submission;
-import com.submission_service.repository.IFeedbackTeacherRepository;
+import com.submission_service.repository.IFeedbackSubmissionRepository;
 import com.submission_service.repository.ISubmissionRepository;
-import com.submission_service.service.IFeedBackTeacherService;
-import feign.FeignException;
+import com.submission_service.service.IFeedBackSubmissionService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,19 +29,19 @@ import java.util.List;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Service
 @Slf4j
-public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
+public class FeedBackSubmissionServiceImpl implements IFeedBackSubmissionService {
 
-    IFeedbackTeacherRepository feedbackTeacherRepository;
+    IFeedbackSubmissionRepository feedbackSubmissionRepository;
     ISubmissionRepository submissionRepository;
     ClassManagementServiceClient classManagementServiceClient;
     AuthServiceClient authServiceClient;
 
     @Override
     @Transactional
-    public Long addFeedbackTeacher(FeedbackTeacherRequest feedbackTeacherRequest) {
+    public Long addFeedbackSubmission(FeedbackSubmissionRequest feedbackSubmissionRequest) {
 
         UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
-        Submission submission = submissionRepository.findById(feedbackTeacherRequest.getSubmissionId())
+        Submission submission = submissionRepository.findById(feedbackSubmissionRequest.getSubmissionId())
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
 //        try{
@@ -55,36 +53,36 @@ public class FeedBackTeacherServiceImpl implements IFeedBackTeacherService {
 //            throw new RuntimeException(e.getMessage());
 //        }
 
-        FeedbackTeacher feedbackTeacher = new FeedbackTeacher();
-        BeanUtils.copyProperties(feedbackTeacherRequest, feedbackTeacher);
-        feedbackTeacher.setTeacherId(currentUser.userId());
-        feedbackTeacher.setSubmission(submission);
-        feedbackTeacher=feedbackTeacherRepository.save(feedbackTeacher);
-        feedbackTeacher.setSubmission(submission);
-        return feedbackTeacher.getId();
+        SubmissionFeedback submissionFeedback = new SubmissionFeedback();
+        BeanUtils.copyProperties(feedbackSubmissionRequest, submissionFeedback);
+        submissionFeedback.setUserId(currentUser.userId());
+        submissionFeedback.setSubmission(submission);
+        submissionFeedback =feedbackSubmissionRepository.save(submissionFeedback);
+        submissionFeedback.setSubmission(submission);
+        return submissionFeedback.getId();
     }
 
     @Override
-    public String updateFeedbackTeacher(Long id, FeedbackTeacherRequest feedbackTeacherRequest) {
-        FeedbackTeacher feedbackTeacher = feedbackTeacherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("FeedbackTeacher not found"));
-        BeanUtils.copyProperties(feedbackTeacherRequest, feedbackTeacher, "id", "createdDate");
-        feedbackTeacherRepository.save(feedbackTeacher);
-        return "FeedbackTeacher updated successfully";
+    public String updateFeedbackSubmission(Long id, FeedbackSubmissionRequest feedbackSubmissionRequest) {
+        SubmissionFeedback submissionFeedback = feedbackSubmissionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("FeedbackSubmission not found"));
+        BeanUtils.copyProperties(feedbackSubmissionRequest, submissionFeedback, "id", "createdDate");
+        feedbackSubmissionRepository.save(submissionFeedback);
+        return "FeedbackSubmission updated successfully";
     }
 
     @Override
-    public List<FeedbackTeacherResponse> getFeedbackTeacher(Long submissionId) {
+    public List<SubmissionFeedbackResponse> getFeedbackSubmission(Long submissionId) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
         UserResponse userResponse= authServiceClient.getUser(UserUtils.getCurrentUser().userId()).getResult();
 
-        List<FeedbackTeacher> feedbackTeacher=submission.getFeedbackTeachers();
-        return feedbackTeacher.stream().map(ft -> {
-            FeedbackTeacherResponse response = new FeedbackTeacherResponse();
+        List<SubmissionFeedback> submissionFeedback =submission.getSubmissionFeedbacks();
+        return submissionFeedback.stream().map(ft -> {
+            SubmissionFeedbackResponse response = new SubmissionFeedbackResponse();
             response.setId(ft.getId());
-            response.setTeacherId(ft.getTeacherId());
+            response.setTeacherId(ft.getUserId());
             response.setContent(ft.getContent());
             response.setCreatedDate(ft.getCreatedDate());
             response.setFullName(userResponse.getFullName());

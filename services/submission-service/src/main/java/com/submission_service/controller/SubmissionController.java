@@ -3,7 +3,9 @@ package com.submission_service.controller;
 import com.example.common_library.response.ApiResponse;
 import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.dto.request.SubmissionRequest;
+import com.submission_service.model.dto.response.AssignmentClassDetailResponse;
 import com.submission_service.model.dto.response.LastSubmissionResonse;
+import com.submission_service.model.dto.response.SubmissionDetailResponse;
 import com.submission_service.model.dto.response.SubmissionResponse;
 import com.submission_service.service.SubmissionService;
 import jakarta.validation.constraints.Max;
@@ -37,7 +39,7 @@ public class SubmissionController {
     }
 
     @PutMapping("/score/{id}")
-    ApiResponse<String> addScore(@PathVariable Long id, @RequestParam(required = true) Double point) {
+    ApiResponse<String> addScore(@PathVariable Long id, @RequestParam(required = true) Double point) { //ok
         String response=submissionService.addScoreSubmission(id,point);
         return ApiResponse.<String>builder()
                 .result(response)
@@ -45,15 +47,15 @@ public class SubmissionController {
     }
 
     @GetMapping({"/{id}"})
-    ApiResponse<SubmissionResponse> getSubmission(@PathVariable Long id) {
-        SubmissionResponse submissionResponses =submissionService.getSubmission(id);
-        return ApiResponse.<SubmissionResponse>builder()
+    ApiResponse<SubmissionDetailResponse> getSubmission(@PathVariable Long id) { //ok
+        SubmissionDetailResponse submissionResponses =submissionService.getSubmission(id);
+        return ApiResponse.<SubmissionDetailResponse>builder()
                 .result(submissionResponses)
                 .build();
     }
 
     @GetMapping
-    public ApiResponse<Page<SubmissionResponse>> getSubmissions(
+    public ApiResponse<Page<SubmissionResponse>> getSubmissions( //ok
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false) Long assignmentId,
             @RequestParam(required = false) Long classId,
@@ -74,28 +76,26 @@ public class SubmissionController {
                 .build();
     }
 
-    @GetMapping("/class/{classId}/assignment/{assignmentId}/last")
+    @GetMapping("/class/{classId}/assignment/{assignmentClassDetailId}/last") //ok
     public ApiResponse<LastSubmissionResonse> getLastSubmissionExamMode(
             @PathVariable Long classId,
-            @PathVariable Long assignmentId
-//            @RequestParam(value = "typeUmlId") Long typeUmlId,
-//            @RequestParam(value = "moduleId") Long moduleId
+            @PathVariable Long assignmentClassDetailId
     ){
-        LastSubmissionResonse submissionResponse =submissionService.getLastSubmissionsExamMode(classId,assignmentId);
+        LastSubmissionResonse submissionResponse =submissionService.getLastSubmissionsExamMode(classId,assignmentClassDetailId);
         return ApiResponse.<LastSubmissionResonse>builder()
                 .result(submissionResponse)
                 .build();
     }
 
-    @GetMapping("/class/{classId}/assignment/{assignmentId}")
+    @GetMapping("/class/{classId}/assignmentClassDetail/{assignmentClassDetailId}")
     public ApiResponse<Page<SubmissionResponse>> getLastSubmissionsExamMode(
             @PathVariable Long classId,
-            @PathVariable Long assignmentId,
+            @PathVariable Long assignmentClassDetailId,
             @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
             @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(value = "sortBy", defaultValue = "createdDate") String sortBy,
             @RequestParam(value = "sortOrder", defaultValue = "desc") String sortOrder) {
-        Page<SubmissionResponse>submissionResponses =submissionService.getLastSubmissionsExamModes(page, size, sortBy, sortOrder, classId, assignmentId);
+        Page<SubmissionResponse>submissionResponses =submissionService.getLastSubmissionsExamModes(page, size, sortBy, sortOrder, classId, assignmentClassDetailId);
         return ApiResponse.<Page<SubmissionResponse>>builder()
                 .result(submissionResponses)
                 .build();
@@ -105,13 +105,14 @@ public class SubmissionController {
     public ApiResponse<Page<SubmissionResponse>> getSubmissionsExerciseMode(@PathVariable Long classId,
                                                                           @PathVariable Long assignmentId,
                                                                           @PathVariable Long studentId,
+                                                                          @RequestParam(required = false) Long moduleId,
                                                                           @RequestParam(value = "examMode") Boolean examMode,
                                                                           @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
                                                                           @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
                                                                           @RequestParam(value = "sortBy", defaultValue = "createdDate") String sortBy,
                                                                           @RequestParam(value = "sortOrder", defaultValue = "desc") String sortOrder){
 
-        Page<SubmissionResponse>submissionResponses =submissionService.getSubmissionsHistoryExerciseMode(page, size, sortBy, sortOrder, classId,assignmentId, studentId, examMode);
+        Page<SubmissionResponse>submissionResponses =submissionService.getSubmissionsHistoryExerciseMode(page, size, sortBy, sortOrder, classId,assignmentId, studentId, moduleId, examMode);
         return ApiResponse.<Page<SubmissionResponse>>builder()
                 .result(submissionResponses)
                 .build();

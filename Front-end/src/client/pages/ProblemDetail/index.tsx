@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import Split from "react-split";
 import Description from "./Description";
@@ -56,16 +56,14 @@ const ProblemDetail: React.FC = () => {
 
     // Lấy classId và assignmentClassDetailId (từ problemId trong URL)
     const { classId, problemId } = useParams<{ classId: string; problemId: string }>();
-    const currentClassId = Number(classId);
-    const assignmentClassDetailId = Number(problemId); // ID chi tiết lớp/gán bài tập
+    const currentClassId = useMemo(() => Number(classId), [classId]);
+    const assignmentClassDetailId = useMemo(() => Number(problemId), [problemId]); // ID chi tiết lớp/gán bài tập
 
     const navigate = useNavigate();
     const { t } = useTranslation();
 
     const [searchParams] = useSearchParams();
-    const isTestMode = searchParams.get("mode") === "test";
-    const assignmentClassId = searchParams.get("problemId");
-    const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
+    const isTestMode = searchParams.get("mode") === "test";     const currentMode: 'practice' | 'test' = isTestMode ? 'test' : 'practice';
 
     const [code, setCode] = useState<string>("");
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -86,6 +84,7 @@ const ProblemDetail: React.FC = () => {
     const [umlType, setUmlType] = useState<string>("");
     const [module, setModule] = useState<string>("");
     const [typeUmlName, setTypeUmlName] = useState<string>("");
+    const [selectedModuleDetailId, setSelectedModuleDetailId] = useState<number | null>(null);
 
     const [isGraded, setIsGraded] = useState<boolean>(false);
     const [lastSubmission, setLastSubmission] = useState<LastSubmissionResponse | null>(null);
@@ -93,6 +92,10 @@ const ProblemDetail: React.FC = () => {
 
     const handleModuleChange = useCallback((value: string) => {
         setModule(value);
+    }, []);
+
+    const handleModuleDetailIdChange = useCallback((detailId: number | null) => {
+        setSelectedModuleDetailId(detailId);
     }, []);
 
     const handleUmlTypeChange = useCallback((value: string) => {
@@ -103,7 +106,12 @@ const ProblemDetail: React.FC = () => {
         setTypeUmlName(name);
     }, []);
 
-    const handleModuleNameChange = useCallback((name: string) => {
+    const handleUmlTypeIdChange = useCallback((_id: number) => {
+        // UML Type ID is tracked in Description component
+    }, []);
+
+    const handleModuleNameChange = useCallback((_name: string) => {
+        // Module name is tracked in Description component
     }, []);
 
     const [isNarrow, setIsNarrow] = useState<boolean>(() => window.innerWidth < 1024);
@@ -186,30 +194,60 @@ const ProblemDetail: React.FC = () => {
 
         setIsSubmitting(true);
         try {
-            const submissionData: SubmissionRequest = {
-                classId: currentClassId,
-                // Dùng assignmentClassDetailId làm ID bài tập nộp
-                assignmentId: assignmentClassDetailId,
-                studentPlantUmlCode: code,
-                examMode: isTestMode,
-                moduleId: Number(module),
-                typeUmlId: Number(umlType),
-                typeUmlName: typeUmlName
-            };
+            // Kiểm tra Module và UML Type đã chọn chưa
+            if (!module || !typeUmlName) {
+                message.error("Vui lòng chọn Module và UML Type trước khi nộp bài!");
+                return;
+            }
 
-            if (!submissionData.studentPlantUmlCode) {
+            if (!code || code.trim() === "") {
                 message.error("Mã PlantUML không được để trống!");
                 return;
             }
 
-            if (isNaN(submissionData.classId) || isNaN(submissionData.assignmentId)) {
-                message.error("ID lớp học hoặc ID bài tập không hợp lệ!");
+            // Convert typeUmlName to TypeUml enum format
+            let typeUmlEnum: "CLASS_DIAGRAM" | "USE_CASE_DIAGRAM";
+            if (typeUmlName.includes("Class") || typeUmlName.includes("CLASS")) {
+                typeUmlEnum = "CLASS_DIAGRAM";
+            } else if (typeUmlName.includes("Use") || typeUmlName.includes("USE")) {
+                typeUmlEnum = "USE_CASE_DIAGRAM";
+            } else {
+                message.error("Loại UML không hợp lệ!");
                 return;
             }
 
-            // Kiểm tra Module và UML Type đã chọn chưa
-            if (!module || !umlType) {
-                message.error("Vui lòng chọn Module và UML Type trước khi nộp bài!");
+            // In practice mode, use the selected module's assignmentClassDetailId
+            // In test mode, use the assignmentClassDetailId from URL (problemId)
+            const detailIdToSubmit = isTestMode ? assignmentClassDetailId : (selectedModuleDetailId || assignmentClassDetailId);
+
+            console.log('=== SUBMISSION DEBUG ===');
+            console.log('Mode:', isTestMode ? 'TEST' : 'PRACTICE');
+            console.log('Module ID:', module);
+            console.log('Type UML Name:', typeUmlName);
+            console.log('Type UML Enum:', typeUmlEnum);
+            console.log('Selected Module Detail ID (practice):', selectedModuleDetailId);
+            console.log('Assignment Class Detail ID (from URL):', assignmentClassDetailId);
+            console.log('Detail ID to Submit:', detailIdToSubmit);
+
+            if (!detailIdToSubmit) {
+                message.error("Không tìm thấy thông tin module. Vui lòng chọn lại module!");
+                return;
+            }
+
+            const submissionData: SubmissionRequest = {
+                classId: currentClassId,
+                assignmentClassDetailId: detailIdToSubmit,
+                moduleId: Number(module),
+                typeUml: typeUmlEnum,
+                studentPlantUmlCode: code,
+                examMode: isTestMode
+            };
+
+            console.log('Submission Data:', submissionData);
+            console.log('======================');
+
+            if (isNaN(submissionData.classId) || isNaN(submissionData.assignmentClassDetailId)) {
+                message.error("ID lớp học hoặc ID bài tập không hợp lệ!");
                 return;
             }
 
@@ -256,19 +294,10 @@ const ProblemDetail: React.FC = () => {
     };
 
     // Gọi API chỉ bằng ID chi tiết
-    const fetchAssignmentInfo = async (detailId: number) => {
-        try {
-            const asg = (await getAssignmentDetail(detailId));
+    const fetchAssignmentInfo = async (_detailId: number) => {
+            const asg = (await getAssignmentDetail(assignmentClassDetailId));
             setAssignment(asg);
             return true;
-        } catch (e: any) {
-            const s = getHttpStatus(e);
-            if (s === 400 || s === 404) {
-                navigate("/not-found");
-                return false;
-            }
-            throw e;
-        }
     };
 
     const fetchAll = useCallback(
@@ -374,7 +403,6 @@ const ProblemDetail: React.FC = () => {
                 <div className="panel panel--left scrollable">
                     <Description assignment={assignment} isLoading={loading} error={err}
                                  mode={currentMode}
-                                 umlTypes={assignment?.modules.find(m => String(m.id) === module)?.typeUmls || []}
                                  assignmentClassId={assignmentClassIdForPractice}
                                  onUmlTypeChange={handleUmlTypeChange}
                                  module={module}
@@ -384,6 +412,8 @@ const ProblemDetail: React.FC = () => {
                                  isRenderingOrSubmitting={isRendering || isSubmitting}
                                  onTypeUmlNameChange={handleTypeUmlNameChange}
                                  onModuleNameChange={handleModuleNameChange}
+                                 onUmlTypeIdChange={handleUmlTypeIdChange}
+                                 onModuleDetailIdChange={handleModuleDetailIdChange}
                     />
                 </div>
 

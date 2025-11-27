@@ -79,6 +79,15 @@ public class SubmissionSpecification {
         };
     }
 
+    public static Specification<Submission> hasAssignmentClassDetailId(Long assignmentClassDetailId) {
+        return (root, query, cb) -> {
+            if (assignmentClassDetailId == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("assignmentClassDetailId"), assignmentClassDetailId);
+        };
+    }
+
     public static Specification<Submission> isLatestSubmissionPerWithExamMode() {
         return (root, query, cb) -> {
             Subquery<LocalDateTime> subquery = query.subquery(LocalDateTime.class);
@@ -88,7 +97,7 @@ public class SubmissionSpecification {
                     .where(
                             cb.equal(subRoot.get("studentId"), root.get("studentId")),
                             cb.equal(subRoot.get("classId"), root.get("classId")),
-                            cb.equal(subRoot.get("assignmentId"), root.get("assignmentId")),
+                            cb.equal(subRoot.get("assignmentClassDetailId"), root.get("assignmentClassDetailId")),
                             cb.equal(subRoot.get("examMode"), true)
                     );
 

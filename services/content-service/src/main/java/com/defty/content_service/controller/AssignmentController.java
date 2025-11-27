@@ -11,8 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.parameters.P;
+import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,12 +49,12 @@ public class AssignmentController {
                 .build();
     }
 
-    @PostMapping("/unassign")
-    ApiResponse<AssignmentResponse> unassignAssignment(@RequestBody AssignmentRequest request) {
-        AssignmentResponse response = assignmentService.unassignAssignment(request);
-        return ApiResponse.<AssignmentResponse>builder()
-                .result(response)
-                .build();
+    @DeleteMapping("/unassign/{assignmentClassDetailId}")
+    ApiResponse<?> unassignAssignment(@PathVariable Long assignmentClassDetailId){
+       assignmentService.unassignAssignment(assignmentClassDetailId);
+       return ApiResponse.builder()
+               .message("Unassign assignment successfully")
+               .build();
     }
 
     @GetMapping
@@ -71,13 +70,29 @@ public class AssignmentController {
                 .build();
     }
 
+    @GetMapping("/unassigned/{classId}")
+    public ApiResponse<Page<AssignmentResponse>> getUnassignedAssignments(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @PathVariable Long classId,
+            @RequestParam(value = "mode") String mode) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Page<AssignmentResponse> responsePage = assignmentService.getUnassignedAssignments(classId, mode, pageable);
+
+        return ApiResponse.<Page<AssignmentResponse>>builder()
+                .result(responsePage)
+                .build();
+    }
+
+
     @GetMapping("/class/{classId}")
-    public ApiResponse<Page<AssignmentClassDetailResponse>> getAllAssignmentsByClassId(@RequestParam(value = "page", defaultValue = "0") int page,
+    public ApiResponse<Page<AssignmentClassResponse>> getAllAssignmentsByClassId(@RequestParam(value = "page", defaultValue = "0") int page,
                                                                             @RequestParam(value = "size", defaultValue = "10") int size,
                                                                             @PathVariable Long classId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<AssignmentClassDetailResponse> responsePage = assignmentService.getAssignmentsByClassId(classId, pageable);
-        return ApiResponse.<Page<AssignmentClassDetailResponse>>builder()
+        Page<AssignmentClassResponse> responsePage = assignmentService.getAssignmentsByClassId(classId, pageable);
+        return ApiResponse.<Page<AssignmentClassResponse>>builder()
                 .result(responsePage)
                 .build();
     }
@@ -99,16 +114,26 @@ public class AssignmentController {
     }
 
     @GetMapping("/{classId}/{assignmentId}")
-    ApiResponse<AssignmentClassDetailResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
-        AssignmentClassDetailResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
-        return ApiResponse.<AssignmentClassDetailResponse>builder()
+    ApiResponse<AssignmentClassResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId) {
+        AssignmentClassResponse response = assignmentService.getAssignmentByClassId(classId, assignmentId);
+        return ApiResponse.<AssignmentClassResponse>builder()
                 .result(response)
                 .build();
     }
 
     @GetMapping("/detail/{assignmentClassDetailId}")
-    ApiResponse<AssignmentClassDetailResponse> getAssignmentByClassId( @PathVariable Long assignmentClassDetailId) {
-        AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetailId(assignmentClassDetailId);
+    ApiResponse<AssignmentClassResponse> getAssignmentByClassId( @PathVariable Long assignmentClassDetailId) {
+        AssignmentClassResponse response = assignmentService.getAssignmentClassDetailId(assignmentClassDetailId);
+        return ApiResponse.<AssignmentClassResponse>builder()
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/assignmentClassDetail/{assignmentClassDetailId}")
+    ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(@PathVariable Long assignmentClassDetailId,
+                                                                        @RequestParam(value = "typeUml", required = false) String typeUml,
+                                                                        @RequestParam(value = "moduleId", required = false) Long moduleId) {
+        AssignmentClassDetailResponse response = assignmentService.getAssignmentClassDetail(assignmentClassDetailId, typeUml, moduleId);
         return ApiResponse.<AssignmentClassDetailResponse>builder()
                 .result(response)
                 .build();
@@ -122,6 +147,7 @@ public class AssignmentController {
                 .message("Assignment status updated successfully")
                 .build();
     }
+
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deletePermission(@PathVariable Long id) {

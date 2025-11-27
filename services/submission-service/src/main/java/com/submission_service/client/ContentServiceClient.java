@@ -2,6 +2,8 @@ package com.submission_service.client;
 
 import com.example.common_library.configuration.AuthenticationRequestInterceptor;
 import com.example.common_library.response.ApiResponse;
+import com.submission_service.model.dto.response.AssignmentClassDetailResponse;
+import com.submission_service.model.dto.response.AssignmentClassResponse;
 import com.submission_service.model.dto.response.AssignmentResponse;
 import com.submission_service.model.dto.response.ModuleResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -24,6 +26,12 @@ public interface ContentServiceClient {
     @GetMapping("/content/assignments/module/{id}")
     ApiResponse<ModuleResponse> getModule(@PathVariable Long id);
 
-    @GetMapping("/content/assignments/{classId}/{assignmentId}")
-    ApiResponse<AssignmentResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId);
+//    @GetMapping("/content/assignments/{classId}/{assignmentId}")
+//    ApiResponse<AssignmentResponse> getAssignmentByClassId(@PathVariable Long classId, @PathVariable Long assignmentId);
+
+    @GetMapping("/content/assignments/assignmentClassDetail/{assignmentClassDetailId}")
+    ApiResponse<AssignmentClassDetailResponse> getAssignmentClassDetail(
+            @PathVariable Long assignmentClassDetailId,
+            @RequestParam(value = "typeUml", required = false) String typeUml,
+            @RequestParam(value = "moduleId", required = false) Long moduleId);
 }

@@ -6,7 +6,7 @@ import { getWithParams } from "./getWithParams";
 const PREFIX_SUBMISSIONS = import.meta.env.VITE_PREFIX_SUBMISSIONS as string;
 const EXCEL_JOB_PATH = "excel-job";
 
-export type TypeUml = "CLASS" | "USE_CASE";
+export type TypeUml = "CLASS_DIAGRAM" | "USE_CASE_DIAGRAM";
 
 export interface IAutoFeedbackJob {
     id: number;

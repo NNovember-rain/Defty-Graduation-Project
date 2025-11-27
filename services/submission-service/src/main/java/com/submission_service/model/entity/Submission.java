@@ -1,6 +1,7 @@
 package com.submission_service.model.entity;
 
 import com.submission_service.enums.SubmissionStatus;
+import com.submission_service.enums.TypeUml;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -20,36 +21,38 @@ public class Submission extends BaseEntity {
     Long studentId;
 
     @Column(nullable = false)
-    Long assignmentId;
+    Long assignmentClassDetailId;
 
     @Column(nullable = false)
     Long classId;
 
     @Column(nullable = false)
-    Long moduleId;
+    Long assignmentId;
 
     @Column(nullable = false)
-    Long typeUmlId;
+    TypeUml typeUml;
 
     @Column
     Double score;
 
     @Column
     @Builder.Default
-    Boolean examMode=false;
+    boolean examMode=false;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     String studentPlantUMLCode;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    SubmissionStatus submissionStatus=SubmissionStatus.SUBMITTED;
+//    @Builder.Default
+//    @Enumerated(EnumType.STRING)
+//    SubmissionStatus submissionStatus=SubmissionStatus.SUBMITTED;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "feedback_ai_id", referencedColumnName = "id")
-    private FeedbackAi feedbackAi;
+    @OneToOne(mappedBy = "submission")
+    private FeedbackLLM feedbackLLM;
+
+    @OneToOne(mappedBy = "submission")
+    private StudentReviewLLMFeedback studentReviewLLMFeedback;
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<FeedbackTeacher> feedbackTeachers;
+    private List<SubmissionFeedback> submissionFeedbacks;
 
 }

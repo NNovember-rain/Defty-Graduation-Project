@@ -23,35 +23,41 @@ export interface GetSubmissionsResult {
     limit: number
 }
 
-export interface ISubmission {
+export interface ISubmissionDetail {
     id: number
-    studentId?: number
     assignmentId?: number
-    classId?: number
-    moduleId?: number
     moduleName?: string
     descriptionModule?: string
     studentName: string
-    studentCode?: string
+    studentCode: string
     assignmentTitle: string
     descriptionAssignment?: string
     typeUml?: string
-    classCode?: string
-    createdDate: string
     studentPlantUMLCode: string
     solutionCode?: string 
     score?: number
-    isfeedbackTeacher?: boolean
+    createdDate: string
 }
+
+export interface ISubmission {
+    id: number
+    assignmentId?: number
+    studentName: string
+    assignmentTitle: string
+    studentPlantUMLCode: string
+    score?: number
+    createdDate: string
+}
+
+export type TypeUml = "CLASS_DIAGRAM" | "USE_CASE_DIAGRAM";
 
 export interface SubmissionRequest {
     classId: number
-    assignmentId: number
+    assignmentClassDetailId: number
+    moduleId: number
+    typeUml: TypeUml
     studentPlantUmlCode: string
     examMode: boolean
-    moduleId: number
-    typeUmlId: number
-    typeUmlName: string
 }
 
 
@@ -100,7 +106,7 @@ export interface LastSubmissionResponse {
 
 export const getSubmissionsByClassAndAssignment = async (
     classId: number,
-    assignmentId: number,
+    assignmentClassDetailId: number,
     options: GetSubmissionsOptions = {}
 ): Promise<GetSubmissionsResult> => {
     const params = {
@@ -111,7 +117,7 @@ export const getSubmissionsByClassAndAssignment = async (
     }
 
     const response = await handleRequest(
-        getWithParams(`${PREFIX_SUBMISSIONS}/class/${classId}/assignment/${assignmentId}`, params)
+        getWithParams(`${PREFIX_SUBMISSIONS}/class/${classId}/assignmentClassDetail/${assignmentClassDetailId}`, params)
     )
 
     const data = await response.json()
@@ -154,10 +160,10 @@ export const getSubmissions = async (options: GetSubmissionsOptions = {}): Promi
     } as GetSubmissionsResult
 }
 
-export const getSubmissionDetail = async (id: string | number): Promise<ISubmission> => {
+export const getSubmissionDetail = async (id: string | number): Promise<ISubmissionDetail> => {
     const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/${id}`))
     const data = await response.json()
-    return data.result as ISubmission
+    return data.result as ISubmissionDetail
 }
 
 // Fixed feedback API functions to match your backend endpoints

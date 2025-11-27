@@ -7,10 +7,10 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class FeedbackTeacher extends BaseEntity {
+public class SubmissionFeedback extends BaseEntity {
 
     @Column(nullable = false)
-    private Long teacherId;
+    private Long userId;
 
     @Column(nullable = false)
     private String content;

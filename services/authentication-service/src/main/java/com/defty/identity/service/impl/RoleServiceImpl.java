@@ -56,6 +56,18 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    public Page<RoleResponse> findAllRolesActive(String name, Pageable pageable) {
+        Specification<Role> spec = Specification.where(RoleSpecification.isActive());
+
+        if (name != null && !name.trim().isEmpty()) {
+            spec = spec.and(RoleSpecification.nameContains(name.trim()));
+        }
+
+        Page<Role> rolesPage = roleRepository.findAll(spec, pageable);
+        return rolesPage.map(roleMapper::toRoleResponse);
+    }
+
+    @Override
     public RoleResponse updateRole(Long id, RoleRequest request) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Role not found"));

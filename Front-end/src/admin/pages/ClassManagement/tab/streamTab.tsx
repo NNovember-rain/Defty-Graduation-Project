@@ -1,4 +1,5 @@
 import React from 'react';
+import {useNavigate} from "react-router-dom";
 
 // Mock data cho giáo viên
 const mockTeacherData = {
@@ -89,6 +90,14 @@ const TeacherStreamTab = ({ classData }) => {
         return `Còn ${diffDays} ngày - ${timeString}`;
     };
 
+    const navigate = useNavigate();
+
+    // 💡 Hàm xử lý click
+    const handleCreateAssignment = () => {
+        const url = `/admin/content/assignments/create?classId=${classData}`;
+        navigate(url);
+    };
+
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1.5rem' }}>
             {/* Main Content */}
@@ -168,6 +177,7 @@ const TeacherStreamTab = ({ classData }) => {
                         }}
                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+                                onClick={handleCreateAssignment}
                         >
                             + Tạo bài tập mới
                         </button>

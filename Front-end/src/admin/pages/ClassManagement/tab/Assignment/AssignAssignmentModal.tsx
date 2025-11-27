@@ -2,14 +2,16 @@ import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Spin, Table} 
 import type {Key} from "react";
 import React, {useCallback, useEffect, useState} from "react";
 import type {ColumnsType} from "antd/es/table";
-import {assignAssignment, getAssignments} from "../../../../../shared/services/assignmentService.ts";
+import {assignAssignment, getUnassignedAssignments} from "../../../../../shared/services/assignmentService.ts";
 import {useTranslation} from "react-i18next";
+import {useParams} from "react-router-dom";
 
 const {RangePicker} = DatePicker;
 
 interface Module {
     id: number;
     moduleName: string;
+    key?: number; // Thêm key cho Module để sử dụng trong Table con
 }
 
 interface Assignment {
@@ -24,6 +26,10 @@ interface AssignAssignmentModalProps {
     onClose: () => void;
     classIds: number[];
     onAssigned?: () => void;
+}
+
+interface ClassDetailParams {
+    id: string;
 }
 
 const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
@@ -41,31 +47,46 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(5);
     const [selectedAssignments, setSelectedAssignments] = useState<number[]>([]);
+    const [expandedRowKeys, setExpandedRowKeys] = useState<Key[]>([]);
     const [selectedModules, setSelectedModules] = useState<Record<number, number[]>>({});
     const [messageApi, contextHolder] = message.useMessage();
 
     const columns: ColumnsType<Assignment> = [
-        {title: t("Title"), dataIndex: "title", key: "title"},
+        {title: t("assignmentForm.listAssignment"), dataIndex: "title", key: "title"},
     ];
 
     const moduleColumns: ColumnsType<Module> = [
-        {title: t("Module Name"), dataIndex: "moduleName", key: "moduleName"},
+        {title: t("Module"), dataIndex: "moduleName", key: "moduleName"},
     ];
 
-    // Fetch danh sách bài tập
+    const { id } = useParams<ClassDetailParams>();
+    console.log("id param:", id);
+
+    const classId = id ? parseInt(id, 10) : NaN;
+
     const fetchAssignmentsForModal = useCallback(async (page: number, limit: number) => {
+        if (isNaN(classId)) {
+            console.error("Class ID is invalid or missing.");
+            return;
+        }
+
         setLoading(true);
         try {
-            const params = {page, limit, status: 1};
-            const response = await getAssignments(params);
-            const assignmentData = Array.isArray(response)
-                ? response
-                : response.assignments || [];
+            const options = {page, limit,};
+
+            const response = await getUnassignedAssignments(classId, "practice", options);
+
+            const assignmentData = response.assignments || [];
             const total = response.total || assignmentData.length;
+
             const dataWithKeys = assignmentData.map((item: any) => ({
                 ...item,
-                key: `assignment_${item.id}`,
-            }));
+                key: item.id,
+                modules: item.modules?.map((mod: Module) => ({
+                    ...mod,
+                    key: mod.id
+                })) || []
+            }))
 
             setAssignments(dataWithKeys);
             setTotalItems(total);
@@ -75,13 +96,14 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [messageApi, t]);
+    }, [classId, messageApi, t]);
 
     useEffect(() => {
         if (visible) {
             fetchAssignmentsForModal(currentPage, pageSize);
             setSelectedAssignments([]);
             setSelectedModules({});
+            setExpandedRowKeys([]); // Reset expanded rows
             form.resetFields();
         }
     }, [visible, currentPage, pageSize, fetchAssignmentsForModal, form]);
@@ -102,6 +124,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                 return;
             }
 
+            // Logic BẮT BUỘC chọn Module cho các Assignment đã chọn
             for (const assignmentId of selectedAssignments) {
                 const moduleIds = selectedModules[assignmentId];
                 if (!moduleIds || moduleIds.length === 0) {
@@ -151,10 +174,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
     };
 
     const expandedRowRender = (record: Assignment) => {
-        const modulesWithKeys: Module[] = record.modules?.map((mod) => ({
-            ...mod,
-            key: mod.id,
-        })) || [];
+        const modulesWithKeys: Module[] = record.modules || []; // Đã gán key trong fetchAssignmentsForModal
 
         const selectedModuleIds = selectedModules[record.id] || [];
 
@@ -181,8 +201,32 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
 
     const rowSelection = {
         selectedRowKeys: selectedAssignments,
-        onChange: (selectedKeys: Key[]) => {
+        onChange: (selectedKeys: Key[], selectedRows: Assignment[]) => {
             setSelectedAssignments(selectedKeys as number[]);
+
+            // THAY ĐỔI: Mở rộng/thu gọn hàng ngay khi chọn/bỏ chọn
+            setExpandedRowKeys(selectedKeys);
+
+            // Khởi tạo selectedModules cho Assignment mới được chọn nếu chưa có
+            selectedKeys.forEach((key) => {
+                const assignmentId = key as number;
+                if (!selectedModules[assignmentId]) {
+                    setSelectedModules(prev => ({
+                        ...prev,
+                        [assignmentId]: []
+                    }));
+                }
+            });
+
+            // Xóa state modules của các assignment vừa bị bỏ chọn
+            const deselectedKeys = selectedAssignments.filter(id => !selectedKeys.includes(id));
+            if (deselectedKeys.length > 0) {
+                setSelectedModules(prev => {
+                    const newState = {...prev};
+                    deselectedKeys.forEach(id => delete newState[id]);
+                    return newState;
+                });
+            }
         },
     };
 
@@ -234,9 +278,14 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                                             validator(_, value) {
                                                 if (!value || value.length < 2) return Promise.resolve();
                                                 const [start, end] = value;
-                                                if (start && end && end.isAfter(start)) return Promise.resolve();
+                                                // Chỉ kiểm tra khi cả hai ngày đều có giá trị
+                                                if (start && end && end.isAfter(start, 'day')) return Promise.resolve();
+
+                                                // Nếu người dùng chọn cùng 1 ngày, vẫn cho phép
+                                                if (start && end && end.isSame(start, 'day')) return Promise.resolve();
+
                                                 return Promise.reject(
-                                                    new Error(t("End date must be after start date!"))
+                                                    new Error(t("End date must be after or same as start date!"))
                                                 );
                                             },
                                         }),
@@ -267,6 +316,22 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
                             rowSelection={rowSelection}
                             onChange={handleTableChange}
                             expandedRowRender={expandedRowRender}
+                            // THÊM: Sử dụng state expandedRowKeys để mở rộng hàng
+                            expandedRowKeys={expandedRowKeys}
+                            onExpand={(expanded, record) => {
+                                // Ngăn không cho thu gọn nếu Assignment đang được chọn
+                                if (selectedAssignments.includes(record.id)) {
+                                    // Nếu đang chọn và cố gắng thu gọn, giữ nguyên
+                                    if (!expanded) return;
+                                }
+
+                                // Cập nhật expandedRowKeys
+                                setExpandedRowKeys(prev =>
+                                    expanded
+                                        ? [...prev, record.id]
+                                        : prev.filter(key => key !== record.id)
+                                );
+                            }}
                         />
                     </Spin>
                 </Spin>

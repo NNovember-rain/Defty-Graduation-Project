@@ -1,5 +1,6 @@
 package com.submission_service.model.dto.request;
 
+import com.submission_service.enums.TypeUml;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,9 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class SubmissionRequest {
     Long classId;
     Long moduleId;
-    Long typeUmlId;
-    String typeUmlName;
-    Long assignmentId;
+    TypeUml typeUml;
+    Long assignmentClassDetailId;
     String studentPlantUmlCode;
     Boolean examMode;
 }

@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
-import java.util.List;
 
 @Getter
 @Setter
@@ -13,16 +12,16 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AssignmentClassDetailResponse {
+    Long moduleId;
+    String moduleName;
+    String moduleDescription;
+    String titleAssignment;
+    String solutionCode;
     Long assignmentId;
-    String assignmentTitle;
     String assignmentDescription;
-    String assignmentCode;
-    Long classId;
-    Long assignmentClassId;
-
+    String assignmentDescriptionHtml;
+    String typeUml;
+    boolean checkedTest;
     Date startDate;
     Date endDate;
-    boolean checkedTest;
-
-    List<ModuleClassResponse> modules;
 }

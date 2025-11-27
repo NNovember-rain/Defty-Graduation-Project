@@ -101,7 +101,7 @@ const FormTemplate = <T extends Record<string, any>>({
                 setFetchError(null);
                 try {
                     const data = await serviceGetById(id);
-                    console.log(data)
+                    // console.log(data)
                     setFormData(data);
                 } catch (err: any) {
                     console.error("Failed to fetch data:", err);

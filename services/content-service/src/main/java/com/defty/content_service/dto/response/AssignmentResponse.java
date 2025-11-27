@@ -16,10 +16,8 @@ public class AssignmentResponse {
     Long id;
     String title;
     String commonDescription;
+    String commonDescriptionHtml;
     Long userId;
-//    String typeUmlName;
-//    Long typeUmlId;
-//    String solutionCode;
     String assignmentCode;
     Integer isActive;
     List<Long> classIds;

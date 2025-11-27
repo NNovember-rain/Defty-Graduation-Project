@@ -28,6 +28,7 @@ interface IModuleResponse {
     id: number;
     moduleName: string;
     moduleDescription: string;
+    moduleDescriptionHtml: string;
     typeUmls: string[];
     solutionResponses?: ISolutionResponse[];
     checkedTest: boolean;
@@ -47,11 +48,6 @@ const MODULE_OPTIONS: UmlTypeOption[] = [
     { value: 'server-side', label: 'Module: Server Side', key: 'server-side' },
 ];
 
-interface Option {
-    value: string;
-    label: string;
-}
-
 
 type Props = {
     assignment: IAssignment | null;
@@ -66,6 +62,8 @@ type Props = {
     classId: number | null;
     onTypeUmlNameChange: (name: string) => void;
     onModuleNameChange: (name: string) => void;
+    onUmlTypeIdChange: (id: number) => void;
+    onModuleDetailIdChange: (detailId: number | null) => void;
     assignmentClassDetailId: number | null;
     assignmentClassId?: number | null;
 };
@@ -81,6 +79,8 @@ const Description: React.FC<Props> = ({
                                           mode,
                                           onTypeUmlNameChange,
                                           onModuleNameChange,
+                                          onUmlTypeIdChange,
+                                          onModuleDetailIdChange,
                                           module: propModule,
                                           assignmentClassDetailId
                                       }) => {
@@ -129,7 +129,8 @@ const Description: React.FC<Props> = ({
         };
 
         fetchTypeUMLs();
-    }, [t, message]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const typeUmlOptions: UmlTypeOption[] = useMemo(() => {
         return allTypeUMLs.map((uml, index) => ({
@@ -147,8 +148,8 @@ const Description: React.FC<Props> = ({
             let defaultUmlType: ITypeUmlResponse | null = null;
 
             try {
-                const isTestCondition = mode === 'test' && assignmentClassDetailId !== null && !isNaN(assignmentClassDetailId);
-                const isPracticeCondition = mode === 'practice' && assignmentClassId;
+                const isTestCondition = mode === 'test';
+                const isPracticeCondition = mode === 'practice';
 
                 if (!isTestCondition && !isPracticeCondition) {
                     return;
@@ -156,6 +157,7 @@ const Description: React.FC<Props> = ({
 
                 if (isTestCondition) {
                     data = await getAssignmentDetail(assignmentClassDetailId!);
+                    // console.log("Get AssignmentDetail:", data);
 
                     const assignmentClasses = data.assignmentClasses || [];
                     const assignmentClass = assignmentClasses[0];
@@ -166,11 +168,12 @@ const Description: React.FC<Props> = ({
                             ...mod,
                             typeUmlIds: new Set<number>(),
                         } as IConsolidatedModuleResponse));
-                    } else if (data.modules && Array.isArray(data.modules)) {
-                        modulesToUse = data.modules.map((mod: any) => ({
+                    } else if (data.assignmentClassDetailResponseList && Array.isArray(data.assignmentClassDetailResponseList)) {
+                        modulesToUse = data.assignmentClassDetailResponseList.map((mod: any) => ({
                             id: mod.moduleId,
                             moduleName: mod.moduleName,
                             moduleDescription: mod.moduleDescription,
+                            moduleDescriptionHtml: mod.moduleDescriptionHtml,
                             typeUmls: mod.typeUmls || [],
                             checkedTest: mod.checkedTest,
                             typeUmlIds: new Set<number>(),
@@ -179,26 +182,43 @@ const Description: React.FC<Props> = ({
                 }
                 else if (isPracticeCondition) {
                     data = await getAssignmentAllModule(assignmentClassId!);
+                    console.log("📦 Practice Mode - Raw API Data:", JSON.stringify(data, null, 2));
+                    console.log("📦 Practice Mode - data.result:", data?.result);
+                    console.log("📦 Practice Mode - data.modules:", data?.modules);
 
                     if (data?.result?.modules && Array.isArray(data.result.modules)) {
-                        modulesToUse = data.result.modules.map((mod: any) => ({
-                            id: mod.id,
-                            moduleName: mod.moduleName,
-                            moduleDescription: mod.moduleDescription,
-                            typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
-                            checkedTest: false,
-                            typeUmlIds: new Set<number>(),
-                        } as IConsolidatedModuleResponse));
+                        console.log("📦 Using data.result.modules path");
+                        modulesToUse = data.result.modules.map((mod: any) => {
+                            console.log("Module raw:", mod);
+                            return {
+                                id: mod.id,
+                                moduleName: mod.moduleName,
+                                moduleDescription: mod.moduleDescription,
+                                moduleDescriptionHtml: mod.moduleDescriptionHtml,
+                                typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
+                                checkedTest: false,
+                                assignmentClassDetailId: mod.assignmentClassDetailId, // Thêm field này
+                                typeUmlIds: new Set<number>(),
+                            } as any;
+                        });
                     } else if (data?.modules && Array.isArray(data.modules)) {
-                        modulesToUse = data.modules.map((mod: any) => ({
-                            id: mod.id,
-                            moduleName: mod.moduleName,
-                            moduleDescription: mod.moduleDescription,
-                            typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
-                            checkedTest: false,
-                            typeUmlIds: new Set<number>(),
-                        } as IConsolidatedModuleResponse));
+                        console.log("📦 Using data.modules path");
+                        modulesToUse = data.modules.map((mod: any) => {
+                            console.log("Module raw:", mod);
+                            return {
+                                id: mod.id,
+                                moduleName: mod.moduleName,
+                                moduleDescription: mod.moduleDescription,
+                                moduleDescriptionHtml: mod.moduleDescriptionHtml,
+                                typeUmls: mod.solutionResponses?.map((sol: ISolutionResponse) => sol.typeUml) || [],
+                                checkedTest: false,
+                                assignmentClassDetailId: mod.assignmentClassDetailId, // Thêm field này
+                                typeUmlIds: new Set<number>(),
+                            } as any;
+                        });
                     }
+                    
+                    console.log("📦 Practice Mode - Mapped Modules:", modulesToUse);
                 }
 
                 setModules(modulesToUse);
@@ -215,6 +235,8 @@ const Description: React.FC<Props> = ({
 
 
     useEffect(() => {
+        if (modules.length === 0) return;
+
         const moduleOptionsList = modules.filter(m => mode !== 'practice' || m.checkedTest === false);
 
         const uniqueModuleMap = new Map<string, IConsolidatedModuleResponse>();
@@ -224,7 +246,6 @@ const Description: React.FC<Props> = ({
             }
         });
         const uniqueModules = Array.from(uniqueModuleMap.values());
-
 
         if (uniqueModules.length > 0) {
             const firstModuleId = String(uniqueModules[0].id);
@@ -251,30 +272,45 @@ const Description: React.FC<Props> = ({
             onModuleNameChange('');
         }
 
-        if (mode === 'test' && assignedUmlType) {
-            if (localUmlType !== String(assignedUmlType.id)) {
-                setLocalUmlType(String(assignedUmlType.id));
-                onUmlTypeChange(String(assignedUmlType.id));
-                onTypeUmlNameChange(assignedUmlType.name);
-            }
+        if (mode === 'test' && assignedUmlType && localUmlType !== String(assignedUmlType.id)) {
+            setLocalUmlType(String(assignedUmlType.id));
+            onUmlTypeChange(String(assignedUmlType.id));
+            onTypeUmlNameChange(assignedUmlType.name);
         }
-    }, [modules, propModule, localModule, onModuleChange, onModuleNameChange, mode, assignedUmlType, localUmlType, onUmlTypeChange, onTypeUmlNameChange]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modules, propModule, mode, assignedUmlType]);
 
-    useEffect(() => {
-        if (allTypeUMLs.length === 0) {
-            setTypeUMLs([]);
-            return;
-        }
-    }, [allTypeUMLs, currentModuleData, mode, localUmlType, onUmlTypeChange, onTypeUmlNameChange]);
+
 
 
     const handleModuleChange = (value: string) => {
+        console.log('🔄 handleModuleChange called with value:', value);
+        console.log('🔄 Current mode:', mode);
+        console.log('🔄 All modules:', modules);
+        
         setLocalModule(value);
         onModuleChange(value);
         const selectedModule = modules.find(m => String(m.id) === value);
+        
+        console.log('=== MODULE CHANGE DEBUG ===');
+        console.log('Selected Module ID:', value);
+        console.log('Selected Module Data:', selectedModule);
+        
         if (selectedModule) {
             onModuleNameChange(selectedModule.moduleName);
+            // In practice mode, pass the module's assignmentClassDetailId
+            if (mode === 'practice') {
+                const moduleData = modules.find(m => String(m.id) === value);
+                // Cast to access assignmentClassDetailId property
+                const detailId = (moduleData as any)?.assignmentClassDetailId || null;
+                console.log('✅ Module assignmentClassDetailId:', detailId);
+                console.log('✅ Full module data:', moduleData);
+                console.log('✅ Calling onModuleDetailIdChange with:', detailId);
+                onModuleDetailIdChange(detailId);
+            }
         }
+        console.log('==========================');
+        
         if (mode === 'practice') {
             setLocalUmlType('');
             onUmlTypeChange('');
@@ -283,14 +319,14 @@ const Description: React.FC<Props> = ({
     };
 
     const moduleDescriptionHtml = useMemo(() => {
-        const html = currentModuleData?.moduleDescription;
+        const html = currentModuleData?.moduleDescriptionHtml;
         return html ? DOMPurify.sanitize(html) : null;
-    }, [currentModuleData?.moduleDescription]);
+    }, [currentModuleData?.moduleDescriptionHtml]);
 
     const assignmentDescriptionHtml = useMemo(() => {
-        const html = assignment?.assignmentDescription ?? "";
+        const html = assignment?.assignmentDescriptionHtml ?? "";
         return DOMPurify.sanitize(html);
-    }, [assignment?.assignmentDescription]);
+    }, [assignment?.assignmentDescriptionHtml]);
 
 
     const moduleOptionsForSelect: UmlTypeOption[] = useMemo(() => {
@@ -309,14 +345,6 @@ const Description: React.FC<Props> = ({
             key: String(mod.id)
         }));
     }, [modules, mode]);
-
-    const handleUmlTypeChange = (value: string) => {
-        console.log("User chọn UML Type:", value);
-        setLocalUmlType(value);
-        onUmlTypeChange(value);
-        onTypeUmlNameChange(value);
-    };
-
 
     const moduleOptionsFromState = moduleOptionsForSelect.length > 0
         ? moduleOptionsForSelect
@@ -392,7 +420,14 @@ const Description: React.FC<Props> = ({
                                     setLocalUmlType(val);
                                     onUmlTypeChange(val);
                                     const selected = typeUmlOptions.find(opt => opt.value === val);
-                                    if (selected) onTypeUmlNameChange(selected.label);
+                                    if (selected) {
+                                        onTypeUmlNameChange(selected.label);
+                                        // Find the ID from allTypeUMLs
+                                        const typeUml = allTypeUMLs.find(t => t.name === val);
+                                        if (typeUml) {
+                                            onUmlTypeIdChange(typeUml.id);
+                                        }
+                                    }
                                 }}
                                 placeholder="Chọn UML Type"
                             />
@@ -402,7 +437,7 @@ const Description: React.FC<Props> = ({
                         {showModuleSelect && mode === 'practice' && (
                             <Select
                                 value={localModule || undefined}
-                                style={{width: 180}}
+                                style={{width: 250}}
                                 onChange={handleModuleChange}
                                 options={selectModuleOptions}
                                 disabled={isDisabled}

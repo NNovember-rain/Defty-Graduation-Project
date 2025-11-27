@@ -1,21 +1,26 @@
 package com.submission_service.model.dto.response;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class ClassResponse {
-    Long id;
-    String name;
-    String description;
-    String subject;
-    String room;
-    String inviteCode;
-    Integer status;
+public class ClassResponse extends BaseResponse{
+    private Long id;
+    private Long teacherId;
+    private String inviteCode;
+    private String className;
+    private String classType;
+    private String description;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String scheduleJson;
+    private Integer currentStudents;
+    private Long courseId;
+    private String courseColor;
 }

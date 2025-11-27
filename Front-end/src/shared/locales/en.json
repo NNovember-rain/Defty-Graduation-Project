@@ -127,6 +127,8 @@
       "home": "Home",
       "adminDashboard": "Admin Dashboard"
     },
+    "yes": "Yes",
+    "no": "No",
     "clear": "Clear",
     "search": "Search",
     "cancel": "Cancel",
@@ -149,7 +151,12 @@
     "noData": "No data available",
     "add": "Add",
     "loading": "Loading...",
-    "items": "items"
+    "items": "items",
+    "total": "Total",
+    "test": "Test",
+    "practice": "Practice",
+    "detailView": "Detail View",
+    "update": "Update"
   },
 
   "managementTemplate": {
@@ -225,9 +232,12 @@
     }
   },
 
+
+
   "assignmentPage": {
     "title": "Assignment Management",
     "breadcrumb": "Assignments",
+    "noAssignments": "No assignments found",
     "columns": {
       "name": "Assignment Name",
       "description": "Description",
@@ -273,19 +283,28 @@
     "moduleDescriptionsLabel": "Module",
     "solutionCodeLabel": "Solution Code",
     "solutionCodePlaceholder": "Enter solution code",
-    "typeUmlLabel": "UML Type",
+    "typeUmlLabel": "Type UML",
     "moduleLabel": "Module Name",
     "descriptionLabel": "Module Description",
-    "validation": {
-      "titleRequired": "Title is required",
-      "descriptionRequired": "Description is required",
-      "typeUmlRequired": "UML Type is required",
-      "moduleRequired": "Module is required",
-      "moduleDescriptionRequired": "Module description is required"
-    },
+    "addNewModule": "Add New Module",
+    "addModuleTitle": "Add Module",
+    "moduleNamePlaceholder": "Enter module name",
+    "descriptionPlaceholder": "Enter module description",
+    "umlSolutionsLabel": "UML Solution",
+    "solution": "Solution",
+    "addUmlSolution": "Add UML Solution",
+    "titleRequired": "Title is required",
+    "descriptionRequired": "Description is required",
+    "typeUmlRequired": "UML Type is required",
+    "moduleRequired": "Module is required",
+    "moduleDescriptionRequired": "Module description is required",
     "startDate": "Start Date",
     "endDate": "End Date",
-    "assignmentLoading": "Loading assignment data..."
+    "assignmentLoading": "Loading assignment data...",
+    "solutionCodeRequired": "Solution code is required",
+    "moduleNameRequired": "Module name is required",
+    "listAssignment": "Assignment List",
+    "mode": "Mode"
   },
 
   "userPage": {
@@ -297,8 +316,11 @@
       "dob": "Date of Birth",
       "email": "Email",
       "roles": "Roles",
-      "creationDate": "Created At"
+      "creationDate": "Created At",
+      "userCode": "User Code"
     },
+    "confirmToggleTitle": "Confirm Status Change",
+    "confirmDeactivate": "Are you sure you want to deactivate user '{{name}}'?",
     "search": {
       "username": "Username",
       "namePlaceholder": "Enter username...",
@@ -336,6 +358,7 @@
     "roleLabel": "Role",
     "rolePlaceholder": "Select role",
     "userCode": "User Code",
+    "roleLabelRequired": "Role is required",
     "validation": {
       "dobLabelRequired": "Date of birth is required",
       "userCodeRequired": "User code is required",
@@ -441,6 +464,12 @@
       "assignment": "Luyện tập",
       "test": "Bài kiểm tra"
     },
+    "filter": {
+      "assignmentTitle": "Assignment",
+      "module": "Module",
+      "umlType": "Type Uml"
+    },
+    "unassign": "Unassigned",
     "peopleTab": {
       "teachersTitle": "Teachers",
       "studentsTitle": "Students",
@@ -493,6 +522,7 @@
       "create": "Create",
       "createNew": "Create new assignment",
       "assigned": "Assign",
+      "assignAssignment": "Assign Assignment",
       "modulesAssigned": "Modules Assigned",
       "assignTest": "Assign Test",
       "noDeadline": "No deadline"
@@ -509,7 +539,9 @@
     },
     "view": {
       "grid": "Grid",
-      "list": "List"
+      "list": "List",
+      "submissionDetails": "Submission Details",
+      "assignmentInfo": "Assignment Info"
     }
   },
   "rolePage": {
@@ -520,6 +552,8 @@
       "description": "Description",
       "creationDate": "Creation Date"
     },
+    "confirmToggleTitle": "Confirm Status Change",
+    "confirmDeactivate": "Are you sure you want to deactivate role '{{name}}'?",
     "search": {
       "name": "Role Name",
       "namePlaceholder": "Enter role name...",

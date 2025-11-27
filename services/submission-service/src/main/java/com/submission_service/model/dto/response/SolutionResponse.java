@@ -1,4 +1,4 @@
-package com.defty.content_service.dto.request;
+package com.submission_service.model.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -9,7 +9,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TypeUMLRequest {
-    String name;
-    String description;
+public class SolutionResponse {
+    Long id;
+    String typeUml;
+    String solutionCode;
 }

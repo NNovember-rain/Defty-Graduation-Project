@@ -14,5 +14,6 @@ import java.util.List;
 public class ModuleRequest {
     String moduleName;
     String moduleDescription;
+    String moduleDescriptionHtml;
     List<SolutionRequest> solutions;
 }
