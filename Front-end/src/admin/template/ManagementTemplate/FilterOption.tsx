@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from 'react'; // Import useEffect and useState
+import React, { useEffect, useState } from 'react';
 import AntdDatePicker from '../../components/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
+import { Select } from "antd";
 
-// --- Định nghĩa kiểu cho trường tìm kiếm ---
+// --- Search field type ---
 export interface SearchField {
     key: string;
     label: string;
-    type: 'text' | 'number' | 'select' | 'datetime'; // Thêm 'number' vào kiểu union
+    type: 'text' | 'number' | 'select' | 'multiselect' | 'datetime' | 'searchableSelect';
     placeholder?: string;
     options?: { value: string; label: string }[];
     gridSpan?: number;
     format?: string;
+    customRender?: (value: string, onChange: (value: string) => void) => React.ReactNode;
 }
 
-// --- Định nghĩa kiểu cho trường sắp xếp ---
+// --- Sort field type ---
 export interface SortField {
     key: string;
     label: string;
@@ -27,7 +29,7 @@ interface FilterOptionProps {
     sortFields: SortField[];
     onSearch: (filters: Record<string, string>) => void;
     onClear: () => void;
-    // NEW: Thêm các props để nhận giá trị ban đầu
+
     initialFilters: Record<string, string>;
     initialSortBy: string | null;
     initialSortOrder: 'asc' | 'desc' | null;
@@ -38,32 +40,29 @@ const FilterOption: React.FC<FilterOptionProps> = ({
                                                        sortFields,
                                                        onSearch,
                                                        onClear,
-                                                       initialFilters, // NEW: Destructure
-                                                       initialSortBy, // NEW: Destructure
-                                                       initialSortOrder, // NEW: Destructure
+                                                       initialFilters,
+                                                       initialSortBy,
+                                                       initialSortOrder,
                                                    }) => {
-    const { t } = useTranslation(); // Initialize useTranslation
 
-    // State để lưu trữ giá trị của các trường lọc
+    const { t } = useTranslation();
+
     const [filters, setFilters] = useState<Record<string, string>>({});
 
-    // Effect để cập nhật state `filters` khi các props `initial` thay đổi
+    // Khởi tạo filter từ URL params
     useEffect(() => {
         const newFilters: Record<string, string> = {};
 
-        // Khởi tạo từ searchFields và initialFilters
         searchFields.forEach(field => {
             newFilters[field.key] = initialFilters[field.key] || '';
         });
 
-        // Khởi tạo từ sortFields và initialSortBy/initialSortOrder
         sortFields.forEach(field => {
             if (field.key === 'sortBy' && initialSortBy) {
                 newFilters[field.key] = initialSortBy;
             } else if (field.key === 'sortOrder' && initialSortOrder) {
                 newFilters[field.key] = initialSortOrder;
             } else {
-                // Đặt giá trị mặc định nếu không có trong URL
                 newFilters[field.key] = initialFilters[field.key] || field.options[0]?.value || '';
             }
         });
@@ -71,159 +70,181 @@ const FilterOption: React.FC<FilterOptionProps> = ({
         setFilters(newFilters);
     }, [initialFilters, initialSortBy, initialSortOrder, searchFields, sortFields]);
 
-
     const handleChange = (key: string, value: string) => {
-        setFilters(prevFilters => ({
-            ...prevFilters,
-            [key]: value
-        }));
+        setFilters(prev => ({ ...prev, [key]: value }));
     };
 
-    // Handler cho Ant Design DatePicker với type safety
     const handleDateChange = (key: string, _date: Dayjs | null, dateString: string | string[]) => {
-        const finalDateString = Array.isArray(dateString) ? dateString[0] : dateString;
-        handleChange(key, finalDateString || '');
+        const finalDate = Array.isArray(dateString) ? dateString[0] : dateString;
+        handleChange(key, finalDate || '');
     };
 
     const handleSearchClick = () => {
-        // Khi tìm kiếm, chúng ta cần gửi cả sortBy và sortOrder trong object filters
-        const filtersToSend = { ...filters };
-        if (filters.sortBy) {
-            filtersToSend.sortBy = filters.sortBy;
-        }
-        if (filters.sortOrder) {
-            filtersToSend.sortOrder = filters.sortOrder;
-        }
-        onSearch(filtersToSend);
+        const finalFilters = { ...filters };
+        if (filters.sortBy) finalFilters.sortBy = filters.sortBy;
+        if (filters.sortOrder) finalFilters.sortOrder = filters.sortOrder;
+
+        onSearch(finalFilters);
     };
 
     const handleClearClick = () => {
-        // Tạo lại trạng thái ban đầu rỗng cho tất cả các trường
-        const clearedFilters: Record<string, string> = {};
-        searchFields.forEach(field => {
-            clearedFilters[field.key] = '';
-        });
-        sortFields.forEach(field => {
-            // Đặt lại giá trị mặc định cho các trường sắp xếp nếu có
-            clearedFilters[field.key] = field.options[0]?.value || '';
-        });
-        setFilters(clearedFilters);
-        onClear(); // Gọi hàm onClear từ parent để reset URL
+        const cleared: Record<string, string> = {};
+
+        searchFields.forEach(f => cleared[f.key] = '');
+        sortFields.forEach(f => cleared[f.key] = f.options[0]?.value || '');
+
+        setFilters(cleared);
+        onClear();
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
-        if (e.key === 'Enter') {
-            handleSearchClick();
-        }
+        if (e.key === 'Enter') handleSearchClick();
     };
 
     return (
         <div className="filter-options">
             <div className="filter-options__grid">
-                {/* Render Search Fields */}
-                {searchFields.map((field) => (
+
+                {/* Search Fields */}
+                {searchFields.map(field => (
                     <div
                         key={field.key}
-                        className={`filter-options__form-group ${
-                            field.gridSpan ? `filter-options__col-span-${field.gridSpan}` : ''
-                        }`}
+                        className={`filter-options__form-group ${field.gridSpan ? `filter-options__col-span-${field.gridSpan}` : ''}`}
                     >
                         <label htmlFor={field.key} className="filter-options__form-group__label">
                             {field.label}:
                         </label>
 
+                        {/* TEXT */}
                         {field.type === 'text' && (
                             <input
                                 type="text"
                                 id={field.key}
                                 className="filter-options__form-group__input"
                                 placeholder={field.placeholder}
-                                value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
+                                value={filters[field.key] || ''}
                                 onChange={(e) => handleChange(field.key, e.target.value)}
                                 onKeyPress={handleKeyPress}
                             />
                         )}
 
-                        {field.type === 'select' && (
-                            <select
-                                id={field.key}
-                                className="filter-options__form-group__select"
-                                value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
-                                onChange={(e) => handleChange(field.key, e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                style={{padding: '10px 12px'}}
-                            >
-                                {field.options?.map(option => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-
-                        {field.type === 'datetime' && (
-                            <AntdDatePicker
-                                id={field.key}
-                                showTime={{
-                                    defaultValue: dayjs('00:00:00', 'HH:mm:ss')
-                                }}
-                                format={field.format || 'YYYY-MM-DD HH:mm:ss'}
-                                value={
-                                    filters[field.key]
-                                        ? dayjs(filters[field.key], field.format || 'YYYY-MM-DD HH:mm:ss')
-                                        : null
-                                }
-                                onChange={(date, dateString) => handleDateChange(field.key, date, dateString)}
-                                className="filter-options__form-group__date-picker"
-                                style={{ width: '100%', padding: '8px 12px',  borderRadius: 3}}
-                                placeholder={field.placeholder}
-                            />
-                        )}
-
+                        {/* NUMBER */}
                         {field.type === 'number' && (
                             <input
                                 type="number"
                                 id={field.key}
                                 className="filter-options__form-group__input"
                                 placeholder={field.placeholder}
-                                value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
+                                value={filters[field.key] || ''}
                                 onChange={(e) => handleChange(field.key, e.target.value)}
                                 onKeyPress={handleKeyPress}
                             />
                         )}
 
+                        {/* SELECT */}
+                        {field.type === 'select' && (
+                            <select
+                                id={field.key}
+                                className="filter-options__form-group__select"
+                                value={filters[field.key] || ''}
+                                onChange={(e) => handleChange(field.key, e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                style={{ padding: "10px 12px" }}
+                            >
+                                {field.options?.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        {/* MULTISELECT */}
+                        {field.type === "multiselect" && (
+                            <Select
+                                mode="multiple"
+                                allowClear
+                                showSearch
+                                id={field.key}
+                                placeholder={field.placeholder}
+                                value={filters[field.key] ? filters[field.key].split(",") : []}
+                                onChange={(values) => handleChange(field.key, values.join(","))}
+                                filterOption={(input, option) =>
+                                    (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                                }
+                                options={field.options?.map(opt => ({
+                                    label: opt.label,
+                                    value: opt.value,
+                                }))}
+                                className="
+                                    w-full
+                                    h-[40px]
+                                    [&_.ant-select-selector]:!rounded-[4px]
+                                    [&_.ant-select-selector]:!py-1.5
+                                    [&_.ant-select-selector]:!px-2
+                                    [&_.ant-select-selector]:!flex-nowrap
+                                    [&_.ant-select-selector]:!overflow-x-auto
+                                    [&_.ant-select-selector]:!overflow-y-hidden
+                                    [&_.ant-select-selector]:!whitespace-nowrap
+                                    [&_.ant-select-selection-overflow]:!flex-nowrap
+                                    [&_.ant-select-selection-overflow]:!overflow-x-auto
+                                    [&_.ant-select-selection-overflow]:scrollbar-thin
+                                "
+                            />
+                        )}
+
+                        {/* DATETIME */}
+                        {field.type === 'datetime' && (
+                            <AntdDatePicker
+                                id={field.key}
+                                showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm:ss') }}
+                                format={field.format || 'YYYY-MM-DD HH:mm:ss'}
+                                value={
+                                    filters[field.key]
+                                        ? dayjs(filters[field.key], field.format || 'YYYY-MM-DD HH:mm:ss')
+                                        : null
+                                }
+                                onChange={(date, dateStr) => handleDateChange(field.key, date, dateStr)}
+                                className="filter-options__form-group__date-picker"
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: 3 }}
+                                placeholder={field.placeholder}
+                            />
+                        )}
+
+                        {/* SEARCHABLE SELECT (CUSTOM) */}
+                        {field.type === "searchableSelect" && field.customRender && (
+                            field.customRender(
+                                filters[field.key] || '',
+                                (value) => handleChange(field.key, value)
+                            )
+                        )}
                     </div>
                 ))}
 
-                {/* Render Sort Fields */}
-                {sortFields.map((field) => (
+                {/* Sort Fields */}
+                {sortFields.map(field => (
                     <div
                         key={field.key}
-                        className={`filter-options__form-group ${
-                            field.gridSpan ? `filter-options__col-span-${field.gridSpan}` : ''
-                        }`}
+                        className={`filter-options__form-group ${field.gridSpan ? `filter-options__col-span-${field.gridSpan}` : ''}`}
                     >
                         <label htmlFor={field.key} className="filter-options__form-group__label">
                             {field.label}:
                         </label>
+
                         <select
                             id={field.key}
                             className="filter-options__form-group__select"
-                            value={filters[field.key] || ''} // Đảm bảo hiển thị giá trị từ state
+                            value={filters[field.key] || ''}
                             onChange={(e) => handleChange(field.key, e.target.value)}
                             onKeyPress={handleKeyPress}
-                            style={{padding: '10px 12px'}}
+                            style={{ padding: "10px 12px" }}
                         >
-                            {field.options.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
+                            {field.options.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                         </select>
                     </div>
                 ))}
 
-                {/* Action Buttons */}
+                {/* Buttons */}
                 <div className="filter-options__actions">
                     <button
                         className="filter-options__button filter-options__button--secondary"
@@ -232,6 +253,7 @@ const FilterOption: React.FC<FilterOptionProps> = ({
                     >
                         {t('common.clear')}
                     </button>
+
                     <button
                         className="filter-options__button filter-options__button--primary"
                         onClick={handleSearchClick}
@@ -243,6 +265,7 @@ const FilterOption: React.FC<FilterOptionProps> = ({
                         {t('common.search')}
                     </button>
                 </div>
+
             </div>
         </div>
     );

@@ -212,3 +212,25 @@ export const patchStatus = async (path: string): Promise<Response> => {
         method: 'PATCH',
     });
 };
+
+export const postMultipartData = async (
+    path: string,
+    formData: FormData
+): Promise<Response> => {
+    const token = getAccessToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Dùng cùng cơ chế với các hàm khác
+    const fullPath = `${DOMAIN}/${PREFIX_API}/${path}`;
+
+    return fetch(fullPath, {
+        method: 'POST',
+        headers,
+        body: formData,
+        credentials: 'include',
+    });
+};

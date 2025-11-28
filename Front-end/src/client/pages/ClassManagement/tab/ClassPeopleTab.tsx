@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Spinner } from 'react-bootstrap';
 import {
     getStudentsInClass,
     GetStudentsInClassOptions,
     getClassById,
-    importStudentsToClass, type StudentImportRequest
+    importStudentsToClass,
+    type StudentImportRequest
 } from '../../../../shared/services/classManagementService';
 import { getUserById, IUser } from '../../../../shared/services/userService';
 import * as XLSX from 'xlsx';
-import {Button, Upload } from 'antd';
-import {useNotification} from "../../../../shared/notification/useNotification.ts";
+import { useNotification } from "../../../../shared/notification/useNotification.ts";
 
 interface ITeacher extends IUser {
     avatarUrl?: string;
@@ -34,22 +33,79 @@ interface ClassPeopleTabProps {
     classId: number;
 }
 
+// Skeleton Component for Dark Theme
+const Skeleton: React.FC<{
+    width?: string;
+    height?: string;
+    borderRadius?: string;
+    style?: React.CSSProperties
+}> = ({ width = '100%', height = '20px', borderRadius = '4px', style = {} }) => (
+    <div style={{
+        width,
+        height,
+        borderRadius,
+        backgroundColor: '#3f3f3f',
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        ...style
+    }} />
+);
+
+// Teacher Skeleton
+const TeacherSkeleton: React.FC = () => (
+    <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '1rem',
+        backgroundColor: '#252525',
+        borderRadius: '8px'
+    }}>
+        <Skeleton
+            width="56px"
+            height="56px"
+            borderRadius="50%"
+            style={{ marginRight: '1rem', flexShrink: 0 }}
+        />
+        <div style={{ flex: 1 }}>
+            <Skeleton height="24px" width="60%" style={{ marginBottom: '0.5rem' }} />
+            <Skeleton height="18px" width="40%" />
+        </div>
+    </div>
+);
+
+// Student Skeleton
+const StudentSkeleton: React.FC = () => (
+    <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '1rem',
+        backgroundColor: '#2a2a2a',
+        border: '1px solid #3a3a3a',
+        borderRadius: '8px'
+    }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+            <Skeleton
+                width="48px"
+                height="48px"
+                borderRadius="50%"
+                style={{ flexShrink: 0 }}
+            />
+            <div style={{ flex: 1 }}>
+                <Skeleton height="20px" width="50%" style={{ marginBottom: '0.5rem' }} />
+                <Skeleton height="16px" width="70%" />
+            </div>
+        </div>
+    </div>
+);
+
 const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const { t } = useTranslation();
     const { message } = useNotification();
     const [teachers, setTeachers] = useState<ITeacher[]>([]);
     const [students, setStudents] = useState<IStudent[]>([]);
-    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [teacherLoading, setTeacherLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Modal states
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [studentsToRemove, setStudentsToRemove] = useState<string[]>([]);
-
-    // Dropdown states
-    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -58,44 +114,32 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const [pageSize] = useState(10);
 
     // Sorting states
-    const [sortBy, setSortBy] = useState<string>('fullName');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [sortBy] = useState<string>('fullName');
+    const [sortOrder] = useState<'asc' | 'desc'>('asc');
+
+    // Add keyframe animation
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        return () => {
+            document.head.removeChild(style);
+        };
+    }, []);
 
     useEffect(() => {
         fetchPeople();
         fetchTeacher();
     }, [classId, currentPage, sortBy, sortOrder]);
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = () => setOpenDropdown(null);
-        document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
-    }, []);
-
-    const handleFileUpload = (file: File) => {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const data = evt.target?.result;
-            if (!data) return;
-
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-
-            const studentsToImport = jsonData.map(item => ({
-                username: item['Username'] || '',
-                fullName: item['Full Name'] || '',
-                email: item['Email'] || '',
-                dob: item['Date of Birth'] || '',
-                userCode: item['Student Code'] || '',
-            }));
-
-            handleImport(studentsToImport);
-        };
-        reader.readAsBinaryString(file);
-    };
 
     const handleImport = async (students: StudentImportRequest[]) => {
         setLoading(true);
@@ -119,7 +163,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                 const teacherInfo = await getUserById(classInfo.teacherId);
                 const teacher: ITeacher = {
                     ...teacherInfo,
-                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(teacherInfo.fullName || teacherInfo.username)}&size=48&background=2563eb&color=fff`
+                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(teacherInfo.fullName || teacherInfo.username)}&size=56&background=2563eb&color=fff`
                 };
                 setTeachers([teacher]);
             }
@@ -198,7 +242,9 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                     </h2>
                 </div>
 
-                {teachers.length === 0 ? (
+                {teacherLoading ? (
+                    <TeacherSkeleton />
+                ) : teachers.length === 0 ? (
                     <div style={{
                         padding: '2rem',
                         textAlign: 'center',
@@ -228,7 +274,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                 marginRight: '1rem',
                                 fontSize: '1.5rem',
                                 fontWeight: '600',
-                                color: 'white'
+                                color: 'white',
+                                flexShrink: 0
                             }}>
                                 {(teacher.fullName || teacher.username)?.charAt(0)?.toUpperCase() || 'T'}
                             </div>
@@ -272,19 +319,27 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                         }}>
                             {t('classDetail.peopleTab.studentsTitle')}
                         </h2>
-                        <p style={{
-                            margin: 0,
-                            fontSize: '0.875rem',
-                            color: '#9ca3af'
-                        }}>
-                            {totalElements} {t('classDetail.peopleTab.studentCount')}
-                        </p>
+                        {!loading && (
+                            <p style={{
+                                margin: 0,
+                                fontSize: '0.875rem',
+                                color: '#9ca3af'
+                            }}>
+                                {totalElements} {t('classDetail.peopleTab.studentCount')}
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 {/* Danh sách học sinh */}
                 <div>
-                    {students.length === 0 ? (
+                    {loading ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {Array.from({ length: pageSize }).map((_, idx) => (
+                                <StudentSkeleton key={idx} />
+                            ))}
+                        </div>
+                    ) : students.length === 0 ? (
                         <div style={{
                             padding: '3rem',
                             textAlign: 'center',
@@ -324,7 +379,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                             justifyContent: 'center',
                                             fontSize: '1.125rem',
                                             fontWeight: '600',
-                                            color: 'white'
+                                            color: 'white',
+                                            flexShrink: 0
                                         }}>
                                             {student.fullName?.charAt(0)?.toUpperCase() || 'U'}
                                         </div>
@@ -337,7 +393,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                             }}>
                                                 {student.fullName || student.username}
                                             </div>
-                                            <div style={{ fontSize: '0.875rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                                            <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
                                                 {student.email}
                                             </div>
                                         </div>
@@ -347,6 +403,78 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                         </div>
                     )}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && !loading && (
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginTop: '2rem',
+                        padding: '1rem 0'
+                    }}>
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                border: '1px solid #3a3a3a',
+                                borderRadius: '6px',
+                                backgroundColor: currentPage === 1 ? '#252525' : '#2a2a2a',
+                                color: currentPage === 1 ? '#6b7280' : '#e5e7eb',
+                                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                fontSize: '0.875rem',
+                                fontWeight: 500
+                            }}
+                        >
+                            {t('common.previous')}
+                        </button>
+
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            const startPage = Math.max(1, currentPage - 2);
+                            const pageNum = startPage + i;
+                            if (pageNum > totalPages) return null;
+
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => setCurrentPage(pageNum)}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        border: '1px solid #3a3a3a',
+                                        borderRadius: '6px',
+                                        backgroundColor: pageNum === currentPage ? '#2563eb' : '#2a2a2a',
+                                        color: pageNum === currentPage ? 'white' : '#e5e7eb',
+                                        cursor: 'pointer',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        minWidth: '40px'
+                                    }}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
+
+                        <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                border: '1px solid #3a3a3a',
+                                borderRadius: '6px',
+                                backgroundColor: currentPage === totalPages ? '#252525' : '#2a2a2a',
+                                color: currentPage === totalPages ? '#6b7280' : '#e5e7eb',
+                                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                fontSize: '0.875rem',
+                                fontWeight: 500
+                            }}
+                        >
+                            {t('common.next')}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
