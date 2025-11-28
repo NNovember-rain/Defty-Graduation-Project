@@ -8,6 +8,7 @@ import { useUserStore } from '../../../shared/authentication/useUserStore.ts';
 
 // Import SCSS styles
 import './style.scss';
+import AppSpinner from "../../common/appSpiner.tsx";
 const ClassCardSkeleton = () => (
     <div className="my-classes__card-skeleton">
         <div className="skeleton-header"></div>
@@ -361,11 +362,11 @@ const MyClasses = () => {
 
                         {/* Right side - Teacher Stats or Join Class Button */}
                         {(hasRole('admin') || hasRole('teacher') || hasRole('ta')) ? (
-                            <div
-                                className="flex items-center bg-white border border-gray-200 rounded-md px-4 py-2 shadow-sm text-gray-800">
-                                <span className="font-medium">Tổng số lớp:</span>
-                                <span className="ml-2 text-xl font-bold text-primary-700">{totalClasses}</span>
+                            <div className="flex items-center gap-2 bg-gray-800/40 border border-gray-700 rounded-lg px-4 py-2 text-gray-100">
+                                <span className="text-sm">Tổng số lớp: </span>
+                                <span className="text-xl font-semibold text-green-400">{totalClasses}</span>
                             </div>
+
                         ) : (hasRole('student')) && (
                             <button
                                 onClick={() => setIsJoinPopupOpen(true)}
@@ -441,12 +442,12 @@ const MyClasses = () => {
                                 >
                                     {joinSuccess.show ? 'Đóng' : 'Hủy'}
                                 </button>
+
                                 <button
                                     onClick={handleJoinOrClose}
                                     disabled={isJoining}
                                     className="my-classes__button--primary"
                                 >
-                                    {isJoining && <FaSpinner className="spinner"/>}
                                     {isJoining ? 'Đang tham gia...' : joinSuccess.show ? 'Xong' : 'Tham gia'}
                                 </button>
                             </div>
@@ -502,27 +503,27 @@ const MyClasses = () => {
                                                 background: `linear-gradient(135deg, ${classItem.courseColor}, ${darkerColor})`
                                             }}
                                         >
-                                            {/* Class Level Badge */}
-                                            <div className="my-classes__card-level-badge">
-                                                <span>{classItem.levelLabel}</span>
-                                            </div>
+                                            {/*/!* Class Level Badge *!/*/}
+                                            {/*<div className="my-classes__card-level-badge">*/}
+                                            {/*    <span>{classItem.levelLabel}</span>*/}
+                                            {/*</div>*/}
 
-                                            {/* Status Badge */}
-                                            <div className={`my-classes__card-status-badge ${classItem.statusClass}`}>
-                                                <span>{classItem.statusLabel}</span>
-                                            </div>
+                                            {/*/!* Status Badge *!/*/}
+                                            {/*<div className={`my-classes__card-status-badge ${classItem.statusClass}`}>*/}
+                                            {/*    <span>{classItem.statusLabel}</span>*/}
+                                            {/*</div>*/}
 
                                             {/* Teacher Avatar với màu động */}
-                                            <div
-                                                className="my-classes__card-avatar"
-                                                style={{
-                                                    backgroundColor: classItem.courseColor,
-                                                    color: textColor,
-                                                    filter: 'brightness(0.9)'
-                                                }}
-                                            >
-                                                {classItem.teacher.initials}
-                                            </div>
+                                            {/*<div*/}
+                                            {/*    className="my-classes__card-avatar"*/}
+                                            {/*    style={{*/}
+                                            {/*        backgroundColor: classItem.courseColor,*/}
+                                            {/*        color: textColor,*/}
+                                            {/*        filter: 'brightness(0.9)'*/}
+                                            {/*    }}*/}
+                                            {/*>*/}
+                                            {/*    {classItem.teacher.initials}*/}
+                                            {/*</div>*/}
                                         </div>
 
                                         {/* Card Content */}
@@ -537,17 +538,6 @@ const MyClasses = () => {
                                                 <div className="stat">
                                                     <FaUsers/>
                                                     <span>{classItem.students} học viên</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="my-classes__card-dates">
-                                                <div className="date-row">
-                                                    <FaCalendar/>
-                                                    <span>Bắt đầu: {classItem.startDate}</span>
-                                                </div>
-                                                <div className="date-row">
-                                                    <FaCalendar/>
-                                                    <span>Kết thúc: {classItem.endDate}</span>
                                                 </div>
                                             </div>
 

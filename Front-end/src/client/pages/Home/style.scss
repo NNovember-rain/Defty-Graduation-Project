@@ -1,21 +1,20 @@
-// MyClasses.scss - Dark Mode Optimized
+// MyClasses.scss - Elegant Dark Theme (Refined Green)
 @import '../../../styles/variables';
 
 .my-classes {
-  background-color: #1a1a1a; // Dark background
+  background-color: $dark-bg-primary; // Deep black background
   min-height: 100vh;
 
   // Header
   &__header {
-    background-color: #2a2a2a; // Dark card background
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: $dark-bg-secondary;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(5, 150, 105, 0.15);
     position: sticky;
     top: 0;
     z-index: 10;
 
     &-content {
-      //max-width: 1280px;
       margin: 0 auto;
       padding: $spacing-sm $spacing-md;
 
@@ -91,7 +90,7 @@
       top: 50%;
       left: 12px;
       transform: translateY(-50%);
-      color: #9ca3af; // Light gray for dark mode
+      color: rgba(5, 150, 105, 0.5);
       pointer-events: none;
       font-size: 14px;
 
@@ -105,8 +104,8 @@
       padding: $spacing-sm $spacing-sm $spacing-sm 36px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: $border-radius-md;
-      background-color: #1a1a1a;
-      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.05);
+      color: $dark-text-primary;
       @include body-regular;
       font-size: 14px;
       transition: all $animation-duration-fast $animation-easing-ease;
@@ -119,7 +118,7 @@
       }
 
       &::placeholder {
-        color: #6b7280;
+        color: $dark-text-disabled;
         font-size: 14px;
 
         @media (min-width: $breakpoint-sm) {
@@ -129,14 +128,14 @@
 
       &:focus {
         outline: none;
-        border-color: $primary-500;
-        box-shadow: 0 0 0 1px $primary-500;
-        background-color: #2a2a2a;
+        border-color: rgba(5, 150, 105, 0.5);
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        background-color: rgba(255, 255, 255, 0.08);
       }
     }
 
     &-button {
-      @include button-primary;
+      @include button-dark-primary;
       width: 100%;
       margin-left: 0;
       margin-top: $spacing-xs;
@@ -168,8 +167,8 @@
     margin-left: $spacing-md !important;
     margin-right: $spacing-md !important;
     min-height: 44px;
-    background-color: #1a1a1a;
-    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $dark-text-primary;
     border: 1px solid rgba(255, 255, 255, 0.1);
 
     @media (min-width: $breakpoint-md) {
@@ -182,14 +181,19 @@
     }
 
     option {
-      background-color: #2a2a2a;
-      color: #ffffff;
+      background-color: $dark-bg-secondary;
+      color: $dark-text-primary;
+    }
+
+    &:focus {
+      border-color: rgba(5, 150, 105, 0.5);
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
     }
   }
 
   // Join Class Button
   &__join-button {
-    @include button-success;
+    @include button-dark-primary;
     width: 100%;
     padding: $spacing-sm $spacing-md;
     font-size: 14px;
@@ -212,12 +216,12 @@
 
   // Total Classes Stats (for teachers/admin)
   .flex.items-center.bg-white {
-    background-color: #2a2a2a !important;
+    background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: #ffffff !important;
+    color: $dark-text-primary !important;
 
     .text-primary-700 {
-      color: $primary-500 !important;
+      color: $secondary-green !important;
     }
   }
 
@@ -226,7 +230,8 @@
     &-overlay {
       position: fixed;
       inset: 0;
-      background-color: rgba(0, 0, 0, 0.75);
+      background-color: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -240,9 +245,9 @@
     }
 
     &-container {
-      background-color: #2a2a2a;
+      background: $dark-bg-secondary;
       border-radius: $border-radius-xl;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       max-width: 448px;
       width: 100%;
       max-height: 90vh;
@@ -269,7 +274,7 @@
 
     &-title {
       @include heading-4;
-      color: #ffffff;
+      color: $dark-text-primary;
       font-size: 18px;
 
       @media (min-width: $breakpoint-sm) {
@@ -299,7 +304,7 @@
       }
 
       .icon {
-        color: #9ca3af;
+        color: $dark-text-muted;
         font-size: 18px;
 
         @media (min-width: $breakpoint-sm) {
@@ -327,7 +332,7 @@
       display: block;
       @include body-small;
       font-weight: $font-weight-medium;
-      color: #e5e7eb;
+      color: $dark-text-secondary;
       margin-bottom: $spacing-sm;
       font-size: 14px;
 
@@ -338,7 +343,7 @@
 
     &-description {
       @include body-small;
-      color: #9ca3af;
+      color: $dark-text-muted;
       margin-bottom: $spacing-md;
       font-size: 13px;
       line-height: 1.5;
@@ -349,48 +354,35 @@
     }
 
     &-input {
-      @include form-field;
+      @include form-field-dark;
       font-size: 15px;
       padding: $spacing-sm $spacing-md;
       min-height: 44px;
-      background-color: #1a1a1a;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #ffffff;
 
       @media (min-width: $breakpoint-sm) {
         font-size: 16px;
       }
 
-      &::placeholder {
-        color: #6b7280;
-      }
-
-      &:focus {
-        background-color: #2a2a2a;
-        border-color: $primary-500;
-        box-shadow: 0 0 0 2px rgba($primary-500, 0.2);
-      }
-
       &--error {
-        border-color: $primary-500;
+        border-color: $error;
 
         &:focus {
-          border-color: $primary-500;
-          box-shadow: 0 0 0 2px rgba($primary-500, 0.2);
+          border-color: $error;
+          box-shadow: 0 0 0 3px rgba($error, 0.15);
         }
       }
 
       &--success {
-        border-color: $secondary-green;
+        border-color: rgba(5, 150, 105, 0.5);
 
         &:focus {
-          border-color: $secondary-green;
-          box-shadow: 0 0 0 2px rgba($secondary-green, 0.2);
+          border-color: rgba(5, 150, 105, 0.5);
+          box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
         }
       }
 
       &:disabled {
-        background-color: #1a1a1a;
+        background-color: rgba(255, 255, 255, 0.03);
         cursor: not-allowed;
         opacity: 0.6;
       }
@@ -413,12 +405,10 @@
   // Alerts
   &__alert {
     &--success {
-      @include alert-success;
+      @include alert-dark-success;
       margin-bottom: $spacing-md;
       padding: $spacing-sm;
       font-size: 13px;
-      background-color: rgba($secondary-green, 0.15);
-      border: 1px solid rgba($secondary-green, 0.3);
 
       @media (min-width: $breakpoint-sm) {
         padding: $spacing-md;
@@ -432,7 +422,7 @@
       align-items: flex-start;
 
       .icon {
-        color: #ef4444;
+        color: $error;
         margin-right: $spacing-sm;
         flex-shrink: 0;
         margin-top: 2px;
@@ -456,7 +446,7 @@
   // Buttons
   &__button {
     &--primary {
-      @include button-primary;
+      @include button-dark-primary;
       width: 100%;
       min-height: 44px;
       font-size: 14px;
@@ -480,22 +470,14 @@
     }
 
     &--secondary {
-      @include button-outline;
+      @include button-dark-secondary;
       width: 100%;
       min-height: 44px;
       font-size: 14px;
-      background-color: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #ffffff;
 
       @media (min-width: $breakpoint-sm) {
         width: auto;
         font-size: 16px;
-      }
-
-      &:hover:not(:disabled) {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.3);
       }
 
       &:disabled {
@@ -507,7 +489,6 @@
 
   // Main Content
   &__main {
-    //max-width: 1280px;
     margin: 0 auto;
     padding: $spacing-md;
 
@@ -549,7 +530,7 @@
 
     &-text {
       @include body-regular;
-      color: #9ca3af;
+      color: $dark-text-muted;
       font-size: 14px;
       text-align: center;
 
@@ -560,7 +541,7 @@
 
     .spinner {
       animation: spin 1s linear infinite;
-      color: $primary-500;
+      color: $secondary-green;
       font-size: 20px;
 
       @media (min-width: $breakpoint-sm) {
@@ -586,12 +567,13 @@
     &-icon {
       width: 64px;
       height: 64px;
-      background-color: rgba(#ef4444, 0.15);
+      background: rgba(239, 68, 68, 0.1);
       border-radius: $border-radius-full;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto $spacing-md;
+      border: 1px solid rgba(239, 68, 68, 0.2);
 
       @media (min-width: $breakpoint-sm) {
         width: 96px;
@@ -600,7 +582,7 @@
       }
 
       .icon {
-        color: #ef4444;
+        color: $error;
         font-size: 24px;
 
         @media (min-width: $breakpoint-sm) {
@@ -611,7 +593,7 @@
 
     &-title {
       @include heading-4;
-      color: #ffffff;
+      color: $dark-text-primary;
       margin-bottom: $spacing-sm;
       font-size: 18px;
 
@@ -626,7 +608,7 @@
 
     &-description {
       @include body-regular;
-      color: #9ca3af;
+      color: $dark-text-muted;
       margin-bottom: $spacing-lg;
       font-size: 14px;
       line-height: 1.5;
@@ -654,12 +636,13 @@
     &-icon {
       width: 64px;
       height: 64px;
-      background-color: rgba(255, 255, 255, 0.1);
+      background: rgba(5, 150, 105, 0.1);
       border-radius: $border-radius-full;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto $spacing-md;
+      border: 1px solid rgba(5, 150, 105, 0.2);
 
       @media (min-width: $breakpoint-sm) {
         width: 96px;
@@ -668,7 +651,7 @@
       }
 
       .icon {
-        color: #6b7280;
+        color: rgba(5, 150, 105, 0.7);
         font-size: 24px;
 
         @media (min-width: $breakpoint-sm) {
@@ -679,7 +662,7 @@
 
     &-title {
       @include heading-4;
-      color: #ffffff;
+      color: $dark-text-primary;
       margin-bottom: $spacing-sm;
       font-size: 18px;
 
@@ -694,7 +677,7 @@
 
     &-description {
       @include body-regular;
-      color: #9ca3af;
+      color: $dark-text-muted;
       margin-bottom: $spacing-lg;
       font-size: 14px;
       line-height: 1.5;
@@ -743,18 +726,17 @@
 
   // Class Card
   &__card {
-    @include card;
+    @include card-dark;
     padding: 0;
     overflow: hidden;
     transition: all $animation-duration-normal $animation-easing-ease;
-    background-color: #2a2a2a;
     border: 1px solid rgba(255, 255, 255, 0.1);
 
     @media (hover: hover) {
       &:hover {
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         transform: translateY(-4px);
-        border-color: rgba(255, 255, 255, 0.2);
+        border-color: rgba(5, 150, 105, 0.3);
       }
     }
 
@@ -795,7 +777,8 @@
       @include caption;
       font-size: 11px;
       color: $white;
-      background-color: rgba($black, 0.3);
+      background-color: rgba($black, 0.4);
+      backdrop-filter: blur(4px);
 
       @media (min-width: $breakpoint-sm) {
         top: $spacing-md;
@@ -824,6 +807,8 @@
 
       &--active {
         color: $secondary-green;
+        background-color: rgba(5, 150, 105, 0.15);
+        border: 1px solid rgba(5, 150, 105, 0.3);
       }
 
       &--upcoming {
@@ -853,8 +838,8 @@
       font-weight: $font-weight-semibold;
       @include body-small;
       font-size: 13px;
-      border: 3px solid #2a2a2a;
-      box-shadow: $shadow-sm;
+      border: 3px solid $dark-bg-secondary;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       background-color: $secondary-orange;
 
       @media (min-width: $breakpoint-sm) {
@@ -885,7 +870,7 @@
 
     &-title {
       @include heading-4;
-      color: #ffffff;
+      color: $dark-text-primary;
       margin-bottom: $spacing-sm;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -907,7 +892,7 @@
 
     @media (hover: hover) {
       &:hover &-title {
-        color: $primary-400;
+        color: $secondary-green;
       }
     }
 
@@ -918,7 +903,7 @@
       margin-bottom: $spacing-md;
       @include body-small;
       font-size: 13px;
-      color: #9ca3af;
+      color: $dark-text-muted;
 
       @media (min-width: $breakpoint-sm) {
         font-size: 14px;
@@ -931,6 +916,7 @@
 
         svg {
           font-size: 13px;
+          color: rgba(5, 150, 105, 0.6);
 
           @media (min-width: $breakpoint-sm) {
             font-size: 14px;
@@ -948,7 +934,7 @@
         gap: $spacing-xs;
         @include caption;
         font-size: 12px;
-        color: #9ca3af;
+        color: $dark-text-muted;
         margin-bottom: $spacing-xs;
 
         @media (min-width: $breakpoint-sm) {
@@ -963,6 +949,7 @@
         svg {
           font-size: 12px;
           flex-shrink: 0;
+          color: rgba(5, 150, 105, 0.5);
 
           @media (min-width: $breakpoint-sm) {
             font-size: 13px;
@@ -974,12 +961,13 @@
     &-action {
       width: 100%;
       @include button-base;
-      background-color: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(5, 150, 105, 0.1);
+      color: $dark-text-secondary;
+      border: 1px solid rgba(5, 150, 105, 0.2);
       font-size: 14px;
       min-height: 40px;
       padding: $spacing-sm $spacing-md;
+      transition: all $animation-duration-normal $animation-easing-ease;
 
       @media (min-width: $breakpoint-sm) {
         font-size: 15px;
@@ -988,14 +976,15 @@
 
       @media (hover: hover) {
         &:hover:not(:disabled) {
-          background-color: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(5, 150, 105, 0.15);
+          border-color: rgba(5, 150, 105, 0.3);
+          transform: translateY(-2px);
         }
       }
 
       @media (hover: none) {
         &:active:not(:disabled) {
-          background-color: rgba(255, 255, 255, 0.15);
+          background: rgba(5, 150, 105, 0.15);
         }
       }
     }
@@ -1011,15 +1000,18 @@
   }
 
   &__card-skeleton {
-    @include card;
+    @include card-dark;
     padding: 0;
     overflow: hidden;
-    background-color: #2a2a2a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
 
     .skeleton-header {
       height: 80px;
-      background: linear-gradient(90deg, #333333 25%, #3a3a3a 50%, #333333 75%);
+      background: linear-gradient(
+                      90deg,
+                      rgba(255, 255, 255, 0.05) 25%,
+                      rgba(255, 255, 255, 0.1) 50%,
+                      rgba(255, 255, 255, 0.05) 75%
+      );
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
 
@@ -1040,7 +1032,12 @@
     .skeleton-stats,
     .skeleton-dates,
     .skeleton-button {
-      background: linear-gradient(90deg, #333333 25%, #3a3a3a 50%, #333333 75%);
+      background: linear-gradient(
+                      90deg,
+                      rgba(255, 255, 255, 0.05) 25%,
+                      rgba(255, 255, 255, 0.1) 50%,
+                      rgba(255, 255, 255, 0.05) 75%
+      );
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
       border-radius: $border-radius-sm;

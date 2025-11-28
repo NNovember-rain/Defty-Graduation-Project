@@ -6,26 +6,6 @@ import { Spinner } from 'react-bootstrap';
 import { getClassById, IClass } from '../../../shared/services/classManagementService.ts';
 import AssignmentTab from "./tab/Assignment/AssignmentTab.tsx";
 
-const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
-    return (
-        <nav aria-label="breadcrumb">
-            <ol className="breadcrumb">
-                {items.map((item, index) => (
-                    <li key={index} className="breadcrumb__item">
-                        {item.path ? (
-                            <Link to={item.path} className="breadcrumb__item--link">
-                                {item.label}
-                            </Link>
-                        ) : (
-                            <span style={{ color: '#94a3b8' }}>{item.label}</span>
-                        )}
-                    </li>
-                ))}
-            </ol>
-        </nav>
-    );
-};
-
 // Mock data cho deadline assignments
 interface IDeadlineAssignment {
     id: number;
@@ -45,7 +25,7 @@ const mockDeadlines: IDeadlineAssignment[] = [
 const StudentClassDetailPage: React.FC = () => {
     const { t } = useTranslation();
     const { classId } = useParams<{ classId: string }>();
-
+    const [copied, setCopied] = useState(false);
     const [classData, setClassData] = useState<IClass | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -285,11 +265,43 @@ const StudentClassDetailPage: React.FC = () => {
                                 backgroundColor: '#1e1e1e',
                                 borderRadius: '8px',
                                 border: '2px dashed #475569',
-                                textAlign: 'center'
+                                textAlign: 'center',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '0.5rem'
                             }}>
-                                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#60a5fa', margin: 0, letterSpacing: '0.1em' }}>
+                                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#60a5fa', margin: 0, letterSpacing: '0.1em', flex: 1 }}>
                                     {classData?.inviteCode || 'N/A'}
                                 </p>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(classData?.inviteCode || '');
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 2000);
+                                    }}
+                                    style={{
+                                        padding: '0.5rem',
+                                        backgroundColor: copied ? '#166534' : '#334155',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    title={copied ? "Đã sao chép!" : "Sao chép mã lớp"}
+                                >
+                                    {copied ? (
+                                        <svg style={{ width: '18px', height: '18px', color: '#86efac' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    )}
+                                </button>
                             </div>
                         </div>
 

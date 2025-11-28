@@ -11,6 +11,7 @@ interface ActionButton {
     className?: string | ((rowData: DataRow) => string);
     tooltip?: string | ((rowData: DataRow) => string);
     color?: string | ((rowData: DataRow) => string);
+    hidden?: boolean | ((rowData: DataRow) => boolean); // Optional property to hide button
 }
 
 interface Column {
@@ -19,6 +20,8 @@ interface Column {
     sortable?: boolean;
     align?: 'left' | 'center' | 'right';
     render?: (value: any, row: DataRow) => ReactNode;
+    width?: string | number;
+    maxWidth?: string | number;
 }
 
 interface DataRow {
@@ -33,7 +36,7 @@ interface DataTableProps {
     entriesPerPage: number;
     currentPage: number;
     onPageChange: (page: number) => void;
-    onSort: (columnKey: string, sortOrder: 'asc' | 'desc') => void;
+    onSort?: (columnKey: string, sortOrder: 'asc' | 'desc') => void;
     currentSortColumn: string | null;
     currentSortOrder: 'asc' | 'desc' | null;
     onEntriesPerPageChange: (entries: number) => void;
@@ -42,6 +45,9 @@ interface DataTableProps {
     selectedRows?: string[];
     onSelectRow?: (id: string, isSelected: boolean) => void;
     onSelectAll?: (isSelected: boolean) => void;
+    showPagination?: boolean;
+    enableRowSelection?: boolean;
+    disableSequence?: boolean;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -60,7 +66,10 @@ const DataTable: React.FC<DataTableProps> = ({
                                                  onBulkDelete,
                                                  selectedRows = [],
                                                  onSelectRow,
-                                                 onSelectAll
+                                                 onSelectAll,
+                                                 showPagination = true,
+                                                 enableRowSelection = false,
+                                                 disableSequence = false
                                              }) => {
     const { t } = useTranslation();
     const totalPages = Math.ceil(totalEntries / entriesPerPage);
@@ -118,9 +127,8 @@ const DataTable: React.FC<DataTableProps> = ({
         return pages;
     };
 
-
     const handleSortClick = (columnKey: string, sortable?: boolean) => {
-        if (!sortable) return;
+        if (!sortable || !onSort) return;
 
         let newSortOrder: 'asc' | 'desc';
         if (currentSortColumn === columnKey) {
@@ -155,7 +163,7 @@ const DataTable: React.FC<DataTableProps> = ({
             <table className="data-table">
                 <thead className="data-table__header">
                 <tr>
-                    {onBulkDelete && (
+                    {(enableRowSelection || onBulkDelete) && (
                         <th className="data-table__header-cell data-table__header-cell--checkbox">
                             <input
                                 type="checkbox"
@@ -164,12 +172,23 @@ const DataTable: React.FC<DataTableProps> = ({
                             />
                         </th>
                     )}
-                    <th className="data-table__header-cell data-table__header-cell--serial-number">{t('dataTable.order')}</th>
+                    {!disableSequence && (
+                        <th className="data-table__header-cell data-table__header-cell--serial-number">
+                            {t('dataTable.order')}
+                        </th>
+                    )}
                     {columns.map((col) => (
                         <th
                             key={col.key}
-                            className={`data-table__header-cell ${col.sortable ? 'data-table__header-cell--sortable' : ''}`}
+                            className={`data-table__header-cell ${
+                                col.sortable ? 'data-table__header-cell--sortable' : ''
+                            }`}
                             onClick={() => handleSortClick(col.key, col.sortable)}
+                            style={{
+                                width: col.width,
+                                maxWidth: col.maxWidth,
+                                textAlign: col.align || 'left',
+                            }}
                         >
                             {col.label}
                             {col.sortable && currentSortColumn === col.key && (
@@ -187,113 +206,133 @@ const DataTable: React.FC<DataTableProps> = ({
                     )}
                 </tr>
                 </thead>
-                <tbody>
-                {data.map((row, rowIndex) => (
-                    <tr key={row.id || row._id || rowIndex} className="data-table__row">
-                        {onBulkDelete && (
-                            <td className="data-table__cell data-table__cell--checkbox">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedRows.includes(row.id ? row.id : row._id)}
-                                    onChange={e => onSelectRow?.(row.id ? row.id : row._id, e.target.checked)}
-                                />
-                            </td>
-                        )}
-                        <td className="data-table__cell data-table__cell--serial-number">
-                            {startEntry + rowIndex + 1}
-                        </td>
-                        {columns.map((col) => (
-                            <td key={col.key} className="data-table__cell">
-                                <div className="data-table__cell-content">
-                                    {col.render ? col.render(row[col.key], row) : row[col.key]}
-                                </div>
-                            </td>
-                        ))}
-                        {actions && actions.length > 0 && (
-                            <td className="data-table__cell data-table__cell--actions">
-                                <div className="data-table__actions-container">
-                                    {actions.map((action, actionIndex) => {
-                                        // Kiểm tra nếu prop là hàm, gọi hàm với dữ liệu hàng
-                                        const icon = typeof action.icon === 'function' ? action.icon(row) : action.icon;
-                                        const tooltip = typeof action.tooltip === 'function' ? action.tooltip(row) : action.tooltip;
-                                        const className = typeof action.className === 'function' ? action.className(row) : action.className;
-                                        const color = typeof action.color === 'function' ? action.color(row) : action.color;
+                <tbody className="data-table__body">
+                {data.map((row, rowIndex) => {
+                    const rowId = row.id || row._id || `${rowIndex}`;
+                    return (
+                        <tr key={rowId} className="data-table__row">
+                            {(enableRowSelection || onBulkDelete) && (
+                                <td className="data-table__cell data-table__cell--checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedRows.includes(rowId)}
+                                        onChange={(e) => onSelectRow?.(rowId, e.target.checked)}
+                                    />
+                                </td>
+                            )}
 
-                                        return (
-                                            <button
-                                                key={actionIndex}
-                                                className={`data-table__action-button ${className || ''}`}
-                                                onClick={() => action.onClick(row)}
-                                                title={tooltip || ''}
-                                                style={{ color: color, cursor: "pointer" }}
-                                            >
-                                                {icon}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </td>
-                        )}
-                    </tr>
-                ))}
+                            {!disableSequence && (
+                                <td className="data-table__cell data-table__cell--serial-number">
+                                    {startEntry + rowIndex + 1}
+                                </td>
+                            )}
+
+                            {columns.map((col) => (
+                                <td
+                                    key={col.key}
+                                    className="data-table__cell"
+                                    style={{
+                                        width: col.width,
+                                        maxWidth: col.maxWidth,
+                                    }}
+                                >
+                                    <div className="data-table__cell-content">
+                                        {col.render ? col.render(row[col.key], row) : row[col.key]}
+                                    </div>
+                                </td>
+                            ))}
+
+                            {actions && actions.length > 0 && (
+                                <td className="data-table__cell data-table__cell--actions">
+                                    <div className="data-table__actions-container">
+                                        {actions.map((action, actionIndex) => {
+                                            // Check if action should be hidden
+                                            const isHidden = typeof action.hidden === "function" ? action.hidden(row) : action.hidden;
+                                            if (isHidden) return null; // Don't render if hidden
+
+                                            const icon = typeof action.icon === "function" ? action.icon(row) : action.icon;
+                                            const tooltip = typeof action.tooltip === "function" ? action.tooltip(row) : action.tooltip;
+                                            const className = typeof action.className === "function" ? action.className(row) : action.className;
+                                            const color = typeof action.color === "function" ? action.color(row) : action.color;
+
+                                            return (
+                                                <button
+                                                    key={actionIndex}
+                                                    className={`data-table__action-button ${className || ""}`}
+                                                    onClick={() => action.onClick(row)}
+                                                    title={tooltip || ""}
+                                                    style={{ color: color, cursor: "pointer" }}
+                                                >
+                                                    {icon}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </td>
+                            )}
+                        </tr>
+                    );
+                })}
                 </tbody>
                 <tfoot className="data-table__footer-copy">
                 </tfoot>
             </table>
 
-            <div className="data-table-section__footer">
-                <div className="data-table-section__entries-per-page">
-                    <label htmlFor="entries-per-page-select">{t('dataTable.show')}: </label>
-                    <select
-                        id="entries-per-page-select"
-                        value={entriesPerPage}
-                        onChange={handleEntriesPerPageSelectChange}
-                        className="data-table-section__entries-select"
-                    >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                    </select>
-                    <span> {t('dataTable.entries')}</span>
-                </div>
-                <ul className="pagination">
-                    <li className={`pagination__item ${currentPage === 1 ? 'pagination__item--disabled' : ''}`}>
-                        <a
-                            href="#"
-                            className="pagination__link"
-                            onClick={(e) => { e.preventDefault(); if (currentPage > 1) onPageChange(currentPage - 1); }}
+            {showPagination && (
+                <div className="data-table-section__footer">
+                    <div className="data-table-section__entries-per-page">
+                        <label htmlFor="entries-per-page-select">{t('dataTable.show')}: </label>
+                        <select
+                            id="entries-per-page-select"
+                            value={entriesPerPage}
+                            onChange={handleEntriesPerPageSelectChange}
+                            className="data-table-section__entries-select"
                         >
-                            {t('dataTable.previous')}
-                        </a>
-                    </li>
-                    {getPaginationPages().map((page, index) => (
-                        <li key={index} className="pagination__item">
-                            {page === '...' ? (
-                                <span className="pagination__dots">...</span>
-                            ) : (
-                                <a
-                                    href="#"
-                                    className={`pagination__link ${currentPage === page ? 'pagination__link--active' : ''}`}
-                                    onClick={(e) => { e.preventDefault(); onPageChange(page as number); }}
-                                >
-                                    {page}
-                                </a>
-                            )}
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                        <span> {t('dataTable.entries')}</span>
+                    </div>
+                    <ul className="pagination">
+                        <li className={`pagination__item ${currentPage === 1 ? 'pagination__item--disabled' : ''}`}>
+                            <a
+                                href="#"
+                                className="pagination__link"
+                                onClick={(e) => { e.preventDefault(); if (currentPage > 1) onPageChange(currentPage - 1); }}
+                            >
+                                {t('dataTable.previous')}
+                            </a>
                         </li>
-                    ))}
-                    <li className={`pagination__item ${currentPage === totalPages ? 'pagination__item--disabled' : ''}`}>
-                        <a
-                            href="#"
-                            className="pagination__link"
-                            onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) onPageChange(currentPage + 1); }}
-                        >
-                            {t('dataTable.next')}
-                        </a>
-                    </li>
-                </ul>
-            </div>
+                        {getPaginationPages().map((page, index) => (
+                            <li key={index} className="pagination__item">
+                                {page === '...' ? (
+                                    <span className="pagination__dots">...</span>
+                                ) : (
+                                    <a
+                                        href="#"
+                                        className={`pagination__link ${currentPage === page ? 'pagination__link--active' : ''}`}
+                                        onClick={(e) => { e.preventDefault(); onPageChange(page as number); }}
+                                    >
+                                        {page}
+                                    </a>
+                                )}
+                            </li>
+                        ))}
+                        <li className={`pagination__item ${currentPage === totalPages ? 'pagination__item--disabled' : ''}`}>
+                            <a
+                                href="#"
+                                className="pagination__link"
+                                onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) onPageChange(currentPage + 1); }}
+                            >
+                                {t('dataTable.next')}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            )}
         </div>
     );
 };
