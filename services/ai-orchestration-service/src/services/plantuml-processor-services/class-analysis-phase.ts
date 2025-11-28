@@ -304,10 +304,6 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
         throw new UmlProcessingError('Thiếu trường bắt buộc trong input');
     }
 
-    if (input.typeUmlName.toLowerCase() !== 'class') {
-        throw new UmlProcessingError('Chỉ hỗ trợ class diagram trong pipeline này');
-    }
-
     const validatePlantUml = (code: string, label: string) => {
         if (!code.includes('@startuml') || !code.includes('@enduml')) {
             throw new UmlProcessingError(`${label}: Thiếu PlantUML tags`);
@@ -1372,14 +1368,14 @@ const step7_generateFeedback = async (
 // MAIN ORCHESTRATOR
 // ============================================================================
 
-export const processClassDiagramWithGraphAnalysis = async (
+export const processClassDiagramAnalysisPhaseWithAI = async (
     input: UmlInput
 ): Promise<UmlProcessedResult> => {
     const startTime = Date.now();
 
     try {
         logger.info({
-            message: '🚀 Bắt đầu pipeline 7 bước Class Diagram (có Graph Analysis)',
+            message: 'Bắt đầu pipeline 7 bước Class Diagram (có Graph Analysis)',
             event_type: 'pipeline_start',
             id: input.id
         });

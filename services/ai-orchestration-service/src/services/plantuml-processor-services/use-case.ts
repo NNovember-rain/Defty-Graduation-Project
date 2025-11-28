@@ -54,23 +54,31 @@ interface NormalizedElement {
     similarityScore: number;
 }
 
+interface NormalizedActor extends Actor {
+    normalized: NormalizedElement;
+}
+
+interface NormalizedUseCase extends UseCase {
+    normalized: NormalizedElement;
+}
+
 interface NormalizedDiagram {
-    actors: Array<Actor & { normalized: NormalizedElement }>;
-    usecases: Array<UseCase & { normalized: NormalizedElement }>;
+    actors: NormalizedActor[];
+    usecases: NormalizedUseCase[];
     relationships: Relationship;
     boundary: Boundary;
 }
 
 interface ComparisonResult {
     actors: {
-        matched: Array<{ solution: Actor; student: Actor; similarity: number }>;
-        missing: Actor[];
-        extra: Actor[];
+        matched: Array<{ solution: NormalizedActor; student: NormalizedActor; similarity: number }>;
+        missing: NormalizedActor[];
+        extra: NormalizedActor[];
     };
     usecases: {
-        matched: Array<{ solution: UseCase; student: UseCase; similarity: number }>;
-        missing: UseCase[];
-        extra: UseCase[];
+        matched: Array<{ solution: NormalizedUseCase; student: NormalizedUseCase; similarity: number }>;
+        missing: NormalizedUseCase[];
+        extra: NormalizedUseCase[];
     };
     relationships: {
         actorToUC: { matched: number; missing: number; extra: number };
@@ -81,7 +89,7 @@ interface ComparisonResult {
 }
 
 interface MissingActorAnalysis {
-    actor: Actor;
+    actor: NormalizedActor;
     isAbstractParent: boolean;
     hasDirectUseCases: boolean;
     childrenIds: string[];
@@ -139,7 +147,9 @@ interface GraphPattern {
         preservedPaths?: string[];
         isolated?: string[];
         duplicates?: string[];
-        [key: string]: any;
+        missing?: string[];
+        extra?: string[];
+        [key: string]: unknown;
     };
     structuralEquivalence: boolean;
     designQuality?: {
@@ -160,6 +170,8 @@ interface GraphRecommendation {
     reason: string;
     affectedElements: string[];
     penaltyAdjustment?: number;
+    requiresHumanReview?: boolean;
+    reviewContext?: string;
 }
 
 interface GraphAnalysisResult {
@@ -204,6 +216,322 @@ interface ReferenceScore {
 }
 
 // ============================================================================
+// HELPER FUNCTIONS FOR CANONICAL-BASED COMPARISON
+// ============================================================================
+
+/**
+ * Build a map from canonical name to array of elements (handles duplicates)
+ */
+const buildCanonicalMap = <T extends { normalized: NormalizedElement }>(
+    elements: T[]
+): Map<string, T[]> => {
+    const map = new Map<string, T[]>();
+    for (const element of elements) {
+        const canonical = element.normalized.canonical.toLowerCase();
+        if (!map.has(canonical)) {
+            map.set(canonical, []);
+        }
+        map.get(canonical)!.push(element);
+    }
+    return map;
+};
+
+/**
+ * Find element by ID in an array
+ */
+const findById = <T extends { id: string }>(
+    elements: T[],
+    id: string
+): T | undefined => {
+    return elements.find(e => e.id === id);
+};
+
+/**
+ * Compare Actor-to-UC relationships using canonical names instead of IDs
+ * FIX FOR BUG 2: Relationships so sánh bằng exact IDs
+ */
+const compareActorToUCRelationships = (
+    solutionRels: Array<{ actorId: string; ucId: string }>,
+    studentRels: Array<{ actorId: string; ucId: string }>,
+    solutionActors: NormalizedActor[],
+    studentActors: NormalizedActor[],
+    solutionUCs: NormalizedUseCase[],
+    studentUCs: NormalizedUseCase[]
+): { matched: number; missing: number; extra: number } => {
+    // Build canonical keys for solution relationships
+    const solutionKeys = new Map<string, { actorId: string; ucId: string }>();
+    for (const rel of solutionRels) {
+        const actor = findById(solutionActors, rel.actorId);
+        const uc = findById(solutionUCs, rel.ucId);
+
+        if (actor && uc) {
+            const actorCanonical = actor.normalized.canonical.toLowerCase();
+            const ucCanonical = uc.normalized.canonical.toLowerCase();
+            const key = `${actorCanonical}::${ucCanonical}`;
+            solutionKeys.set(key, rel);
+        }
+    }
+
+    // Build canonical keys for student relationships (use array to handle duplicates)
+    const studentKeysMap = new Map<string, Array<{ actorId: string; ucId: string }>>();
+    for (const rel of studentRels) {
+        const actor = findById(studentActors, rel.actorId);
+        const uc = findById(studentUCs, rel.ucId);
+
+        if (actor && uc) {
+            const actorCanonical = actor.normalized.canonical.toLowerCase();
+            const ucCanonical = uc.normalized.canonical.toLowerCase();
+            const key = `${actorCanonical}::${ucCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push(rel);
+        }
+    }
+
+    // Match relationships by canonical keys
+    let matched = 0;
+    for (const [key] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            stuRels.shift(); // Remove matched relationship
+            matched++;
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Count extra relationships
+    let extra = 0;
+    for (const stuRels of studentKeysMap.values()) {
+        extra += stuRels.length;
+    }
+
+    return {
+        matched,
+        missing: solutionKeys.size - matched,
+        extra
+    };
+};
+
+/**
+ * Compare Include relationships using canonical names
+ */
+const compareIncludeRelationships = (
+    solutionRels: Array<{ baseId: string; includedId: string }>,
+    studentRels: Array<{ baseId: string; includedId: string }>,
+    solutionUCs: NormalizedUseCase[],
+    studentUCs: NormalizedUseCase[]
+): { matched: number; missing: number; extra: number } => {
+    // Build canonical keys for solution
+    const solutionKeys = new Map<string, { baseId: string; includedId: string }>();
+    for (const rel of solutionRels) {
+        const baseUC = findById(solutionUCs, rel.baseId);
+        const includedUC = findById(solutionUCs, rel.includedId);
+
+        if (baseUC && includedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const includedCanonical = includedUC.normalized.canonical.toLowerCase();
+            const key = `${baseCanonical}::include::${includedCanonical}`;
+            solutionKeys.set(key, rel);
+        }
+    }
+
+    // Build canonical keys for student (handle duplicates)
+    const studentKeysMap = new Map<string, Array<{ baseId: string; includedId: string }>>();
+    for (const rel of studentRels) {
+        const baseUC = findById(studentUCs, rel.baseId);
+        const includedUC = findById(studentUCs, rel.includedId);
+
+        if (baseUC && includedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const includedCanonical = includedUC.normalized.canonical.toLowerCase();
+            const key = `${baseCanonical}::include::${includedCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push(rel);
+        }
+    }
+
+    // Match
+    let matched = 0;
+    for (const [key] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            stuRels.shift();
+            matched++;
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Count extra
+    let extra = 0;
+    for (const stuRels of studentKeysMap.values()) {
+        extra += stuRels.length;
+    }
+
+    return {
+        matched,
+        missing: solutionKeys.size - matched,
+        extra
+    };
+};
+
+/**
+ * Compare Extend relationships using canonical names
+ */
+const compareExtendRelationships = (
+    solutionRels: Array<{ baseId: string; extendedId: string; condition?: string; extensionPoint?: string }>,
+    studentRels: Array<{ baseId: string; extendedId: string; condition?: string; extensionPoint?: string }>,
+    solutionUCs: NormalizedUseCase[],
+    studentUCs: NormalizedUseCase[]
+): { matched: number; missing: number; extra: number } => {
+    // Build canonical keys for solution
+    const solutionKeys = new Map<string, typeof solutionRels[0]>();
+    for (const rel of solutionRels) {
+        const baseUC = findById(solutionUCs, rel.baseId);
+        const extendedUC = findById(solutionUCs, rel.extendedId);
+
+        if (baseUC && extendedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const extendedCanonical = extendedUC.normalized.canonical.toLowerCase();
+            const key = `${baseCanonical}::extend::${extendedCanonical}`;
+            solutionKeys.set(key, rel);
+        }
+    }
+
+    // Build canonical keys for student (handle duplicates)
+    const studentKeysMap = new Map<string, Array<typeof studentRels[0]>>();
+    for (const rel of studentRels) {
+        const baseUC = findById(studentUCs, rel.baseId);
+        const extendedUC = findById(studentUCs, rel.extendedId);
+
+        if (baseUC && extendedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const extendedCanonical = extendedUC.normalized.canonical.toLowerCase();
+            const key = `${baseCanonical}::extend::${extendedCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push(rel);
+        }
+    }
+
+    // Match
+    let matched = 0;
+    for (const [key] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            stuRels.shift();
+            matched++;
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Count extra
+    let extra = 0;
+    for (const stuRels of studentKeysMap.values()) {
+        extra += stuRels.length;
+    }
+
+    return {
+        matched,
+        missing: solutionKeys.size - matched,
+        extra
+    };
+};
+
+/**
+ * Compare Generalization relationships using canonical names
+ */
+const compareGeneralizationRelationships = (
+    solutionRels: Array<{ parentId: string; childId: string; type: 'actor' | 'usecase' }>,
+    studentRels: Array<{ parentId: string; childId: string; type: 'actor' | 'usecase' }>,
+    solutionActors: NormalizedActor[],
+    studentActors: NormalizedActor[],
+    solutionUCs: NormalizedUseCase[],
+    studentUCs: NormalizedUseCase[]
+): { matched: number; missing: number; extra: number } => {
+    // Helper to get canonical by ID and type
+    const getCanonical = (
+        id: string,
+        type: 'actor' | 'usecase',
+        actors: NormalizedActor[],
+        ucs: NormalizedUseCase[]
+    ): string | null => {
+        if (type === 'actor') {
+            const actor = findById(actors, id);
+            return actor ? actor.normalized.canonical.toLowerCase() : null;
+        } else {
+            const uc = findById(ucs, id);
+            return uc ? uc.normalized.canonical.toLowerCase() : null;
+        }
+    };
+
+    // Build canonical keys for solution
+    const solutionKeys = new Map<string, typeof solutionRels[0]>();
+    for (const rel of solutionRels) {
+        const parentCanonical = getCanonical(rel.parentId, rel.type, solutionActors, solutionUCs);
+        const childCanonical = getCanonical(rel.childId, rel.type, solutionActors, solutionUCs);
+
+        if (parentCanonical && childCanonical) {
+            const key = `${rel.type}::${parentCanonical}::gen::${childCanonical}`;
+            solutionKeys.set(key, rel);
+        }
+    }
+
+    // Build canonical keys for student (handle duplicates)
+    const studentKeysMap = new Map<string, Array<typeof studentRels[0]>>();
+    for (const rel of studentRels) {
+        const parentCanonical = getCanonical(rel.parentId, rel.type, studentActors, studentUCs);
+        const childCanonical = getCanonical(rel.childId, rel.type, studentActors, studentUCs);
+
+        if (parentCanonical && childCanonical) {
+            const key = `${rel.type}::${parentCanonical}::gen::${childCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push(rel);
+        }
+    }
+
+    // Match
+    let matched = 0;
+    for (const [key] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            stuRels.shift();
+            matched++;
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Count extra
+    let extra = 0;
+    for (const stuRels of studentKeysMap.values()) {
+        extra += stuRels.length;
+    }
+
+    return {
+        matched,
+        missing: solutionKeys.size - matched,
+        extra
+    };
+};
+
+// ============================================================================
 // STEP 1: VALIDATION & PREPROCESSING
 // ============================================================================
 
@@ -218,10 +546,6 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
     if (!input.typeUmlName || !input.contentAssignment ||
         !input.solutionPlantUmlCode || !input.studentPlantUmlCode) {
         throw new UmlProcessingError('Thiếu trường bắt buộc trong input');
-    }
-
-    if (input.typeUmlName.toLowerCase() !== 'use-case') {
-        throw new UmlProcessingError('Chỉ hỗ trợ use-case diagram');
     }
 
     // Validate PlantUML syntax
@@ -320,7 +644,8 @@ const step2_extractToJson = async (
 
 const step3_semanticNormalization = async (
     input: UmlInput,
-    diagrams: { solution: DiagramJSON; student: DiagramJSON }
+    diagrams: { solution: DiagramJSON; student: DiagramJSON },
+    domainContext: DomainContext
 ): Promise<{ solution: NormalizedDiagram; student: NormalizedDiagram }> => {
     logger.info({
         message: 'BƯỚC 3: Bắt đầu chuẩn hóa semantic',
@@ -350,7 +675,8 @@ const step3_semanticNormalization = async (
     };
 
     const promptContent = prompt.prompts[0].templateString
-        .replace(/\{\{elements\}\}/g, JSON.stringify(elementsToNormalize));
+        .replace(/\{\{elements\}\}/g, JSON.stringify(elementsToNormalize))
+        .replace(/\{\{domainContext\}\}/g, JSON.stringify(domainContext));
 
     const aiResponse = await callAIApi(promptContent, input.id, 'step3-normalize');
     const normalized = parseJsonResponse<{
@@ -365,7 +691,7 @@ const step3_semanticNormalization = async (
     }>(aiResponse, input.id, 'step3');
 
     // Merge normalized data with original - Solution
-    const normalizedSolutionActors = diagrams.solution.actors.map(actor => {
+    const normalizedSolutionActors: NormalizedActor[] = diagrams.solution.actors.map(actor => {
         const norm = normalized.solution.actors.find(n => n.id === actor.id);
         return {
             ...actor,
@@ -377,7 +703,7 @@ const step3_semanticNormalization = async (
         };
     });
 
-    const normalizedSolutionUsecases = diagrams.solution.usecases.map(uc => {
+    const normalizedSolutionUsecases: NormalizedUseCase[] = diagrams.solution.usecases.map(uc => {
         const norm = normalized.solution.usecases.find(n => n.id === uc.id);
         return {
             ...uc,
@@ -390,7 +716,7 @@ const step3_semanticNormalization = async (
     });
 
     // Merge normalized data with original - Student
-    const normalizedStudentActors = diagrams.student.actors.map(actor => {
+    const normalizedStudentActors: NormalizedActor[] = diagrams.student.actors.map(actor => {
         const norm = normalized.student.actors.find(n => n.id === actor.id);
         return {
             ...actor,
@@ -402,7 +728,7 @@ const step3_semanticNormalization = async (
         };
     });
 
-    const normalizedStudentUsecases = diagrams.student.usecases.map(uc => {
+    const normalizedStudentUsecases: NormalizedUseCase[] = diagrams.student.usecases.map(uc => {
         const norm = normalized.student.usecases.find(n => n.id === uc.id);
         return {
             ...uc,
@@ -439,43 +765,56 @@ const step3_semanticNormalization = async (
 };
 
 // ============================================================================
-// STEP 4: STRUCTURE COMPARISON
+// STEP 4: STRUCTURE COMPARISON (FIXED - BUG 1 & BUG 2)
 // ============================================================================
 
 const step4_structureComparison = (
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram }
 ): EnhancedComparisonResult => {
     logger.info({
-        message: 'BƯỚC 4: Bắt đầu so sánh cấu trúc',
+        message: 'BƯỚC 4: Bắt đầu so sánh cấu trúc (FIXED)',
         event_type: 'step4_start'
     });
 
     const { solution, student } = normalized;
 
-    // Compare actors by canonical names
+    // =========================================================================
+    // FIX BUG 1: Compare actors by canonical names with duplicate handling
+    // =========================================================================
     const matchedActors: ComparisonResult['actors']['matched'] = [];
-    const missingActors: Actor[] = [];
-    const extraActors: Actor[] = [];
+    const missingActors: NormalizedActor[] = [];
+    const extraActors: NormalizedActor[] = [];
 
-    const studentActorMap = new Map(student.actors.map(a => [a.normalized.canonical.toLowerCase(), a]));
+    // Build map: canonical -> array of actors (handles duplicates)
+    const studentActorsByCanonical = buildCanonicalMap(student.actors);
 
+    // Match solution actors with student actors
     for (const solActor of solution.actors) {
         const canonical = solActor.normalized.canonical.toLowerCase();
-        const stuActor = studentActorMap.get(canonical);
+        const stuActors = studentActorsByCanonical.get(canonical) || [];
 
-        if (stuActor) {
+        if (stuActors.length > 0) {
+            // Match with first unmatched student actor
+            const stuActor = stuActors.shift()!;
             matchedActors.push({
                 solution: solActor,
                 student: stuActor,
                 similarity: Math.max(solActor.normalized.similarityScore, stuActor.normalized.similarityScore)
             });
-            studentActorMap.delete(canonical);
+
+            // Clean up empty arrays
+            if (stuActors.length === 0) {
+                studentActorsByCanonical.delete(canonical);
+            }
         } else {
             missingActors.push(solActor);
         }
     }
 
-    extraActors.push(...Array.from(studentActorMap.values()));
+    // Remaining student actors are extra
+    for (const stuActors of studentActorsByCanonical.values()) {
+        extraActors.push(...stuActors);
+    }
 
     // Analyze missing actors for abstract parent pattern
     const missingActorsAnalysis: MissingActorAnalysis[] = missingActors.map(actor => {
@@ -522,72 +861,78 @@ const step4_structureComparison = (
         };
     });
 
-    // Compare usecases
+    // =========================================================================
+    // FIX BUG 1 (continued): Compare usecases with duplicate handling
+    // =========================================================================
     const matchedUsecases: ComparisonResult['usecases']['matched'] = [];
-    const missingUsecases: UseCase[] = [];
-    const extraUsecases: UseCase[] = [];
+    const missingUsecases: NormalizedUseCase[] = [];
+    const extraUsecases: NormalizedUseCase[] = [];
 
-    const studentUsecaseMap = new Map(student.usecases.map(uc => [uc.normalized.canonical.toLowerCase(), uc]));
+    // Build map: canonical -> array of usecases (handles duplicates)
+    const studentUsecasesByCanonical = buildCanonicalMap(student.usecases);
 
     for (const solUc of solution.usecases) {
         const canonical = solUc.normalized.canonical.toLowerCase();
-        const stuUc = studentUsecaseMap.get(canonical);
+        const stuUcs = studentUsecasesByCanonical.get(canonical) || [];
 
-        if (stuUc) {
+        if (stuUcs.length > 0) {
+            const stuUc = stuUcs.shift()!;
             matchedUsecases.push({
                 solution: solUc,
                 student: stuUc,
                 similarity: Math.max(solUc.normalized.similarityScore, stuUc.normalized.similarityScore)
             });
-            studentUsecaseMap.delete(canonical);
+
+            if (stuUcs.length === 0) {
+                studentUsecasesByCanonical.delete(canonical);
+            }
         } else {
             missingUsecases.push(solUc);
         }
     }
 
-    extraUsecases.push(...Array.from(studentUsecaseMap.values()));
+    for (const stuUcs of studentUsecasesByCanonical.values()) {
+        extraUsecases.push(...stuUcs);
+    }
 
-    // Compare relationships
-    const compareRelationships = (
-        solRels: any[],
-        stuRels: any[],
-        getKey: (rel: any) => string
-    ) => {
-        const solSet = new Set(solRels.map(getKey));
-        const stuSet = new Set(stuRels.map(getKey));
-
-        let matched = 0;
-        for (const key of solSet) {
-            if (stuSet.has(key)) matched++;
-        }
-
-        return {
-            matched,
-            missing: solSet.size - matched,
-            extra: stuSet.size - matched
-        };
-    };
-
+    // =========================================================================
+    // FIX BUG 2: Compare relationships using canonical names instead of IDs
+    // =========================================================================
     const relationships = {
-        actorToUC: compareRelationships(
+        // Actor-to-UC relationships using canonical comparison
+        actorToUC: compareActorToUCRelationships(
             solution.relationships.actorToUC,
             student.relationships.actorToUC,
-            r => `${r.actorId}-${r.ucId}`
+            solution.actors,
+            student.actors,
+            solution.usecases,
+            student.usecases
         ),
-        include: compareRelationships(
+
+        // Include relationships using canonical comparison
+        include: compareIncludeRelationships(
             solution.relationships.include,
             student.relationships.include,
-            r => `${r.baseId}-${r.includedId}`
+            solution.usecases,
+            student.usecases
         ),
-        extend: compareRelationships(
+
+        // Extend relationships using canonical comparison
+        extend: compareExtendRelationships(
             solution.relationships.extend,
             student.relationships.extend,
-            r => `${r.baseId}-${r.extendedId}`
+            solution.usecases,
+            student.usecases
         ),
-        generalization: compareRelationships(
+
+        // Generalization relationships using canonical comparison
+        generalization: compareGeneralizationRelationships(
             solution.relationships.generalization,
             student.relationships.generalization,
-            r => `${r.parentId}-${r.childId}`
+            solution.actors,
+            student.actors,
+            solution.usecases,
+            student.usecases
         )
     };
 
@@ -599,7 +944,7 @@ const step4_structureComparison = (
     };
 
     logger.info({
-        message: 'BƯỚC 4: Hoàn thành',
+        message: 'BƯỚC 4: Hoàn thành (FIXED)',
         event_type: 'step4_complete',
         actors: {
             matched: matchedActors.length,
@@ -610,6 +955,12 @@ const step4_structureComparison = (
             matched: matchedUsecases.length,
             missing: missingUsecases.length,
             extra: extraUsecases.length
+        },
+        relationships: {
+            actorToUC: relationships.actorToUC,
+            include: relationships.include,
+            extend: relationships.extend,
+            generalization: relationships.generalization
         }
     });
 
@@ -617,7 +968,7 @@ const step4_structureComparison = (
 };
 
 // ============================================================================
-// STEP 5: GRAPH ANALYSIS
+// STEP 5: GRAPH ANALYSIS (ENHANCED WITH ACTOR SPECIALIZATION DETECTION)
 // ============================================================================
 
 class UseCaseGraphAnalyzer {
@@ -788,14 +1139,317 @@ class UseCaseGraphAnalyzer {
     public getAllUseCases(): GraphNode[] {
         return Array.from(this.nodes.values()).filter(n => n.type === 'usecase');
     }
+
+    public getEdges(): GraphEdge[] {
+        return this.edges;
+    }
 }
+
+/**
+ * FIX BUG 3: Detect Actor Specialization patterns in student diagram
+ * This detects when student applies actor hierarchy with preserved paths
+ */
+const detectActorSpecialization = (
+    studentDiagram: NormalizedDiagram,
+    solutionDiagram: NormalizedDiagram, // NEW PARAMETER
+    studentGraph: UseCaseGraphAnalyzer
+): { patterns: GraphPattern[]; recommendations: GraphRecommendation[]; equivalences: GraphEquivalence[] } => {
+    const patterns: GraphPattern[] = [];
+    const recommendations: GraphRecommendation[] = [];
+    const equivalences: GraphEquivalence[] = [];
+
+    // Build solution actor canonicals set for quick lookup
+    const solutionActorCanonicals = new Set(
+        solutionDiagram.actors.map(a => a.normalized.canonical.toLowerCase())
+    );
+
+    // Build solution's hierarchy map (parent -> children canonicals)
+    const solutionHierarchyMap = new Map<string, Set<string>>();
+    for (const gen of solutionDiagram.relationships.generalization.filter(g => g.type === 'actor')) {
+        const parent = solutionDiagram.actors.find(a => a.id === gen.parentId);
+        const child = solutionDiagram.actors.find(a => a.id === gen.childId);
+        if (parent && child) {
+            const parentCanonical = parent.normalized.canonical.toLowerCase();
+            const childCanonical = child.normalized.canonical.toLowerCase();
+            if (!solutionHierarchyMap.has(parentCanonical)) {
+                solutionHierarchyMap.set(parentCanonical, new Set());
+            }
+            solutionHierarchyMap.get(parentCanonical)!.add(childCanonical);
+        }
+    }
+
+    // Get actor generalizations in student diagram
+    const studentGeneralizations = studentDiagram.relationships.generalization
+        .filter(gen => gen.type === 'actor');
+
+    if (studentGeneralizations.length === 0) {
+        return { patterns, recommendations, equivalences };
+    }
+
+    logger.info({
+        message: 'BƯỚC 5: Phát hiện actor generalization trong student diagram',
+        count: studentGeneralizations.length,
+        solutionHierarchies: solutionHierarchyMap.size
+    });
+
+    // Group student generalizations by parent
+    const studentHierarchyMap = new Map<string, string[]>();
+    for (const gen of studentGeneralizations) {
+        if (!studentHierarchyMap.has(gen.parentId)) {
+            studentHierarchyMap.set(gen.parentId, []);
+        }
+        studentHierarchyMap.get(gen.parentId)!.push(gen.childId);
+    }
+
+    // Analyze each hierarchy in student diagram
+    for (const [parentId, childrenIds] of studentHierarchyMap) {
+        const parentNode = studentGraph.getNode(parentId);
+        if (!parentNode) continue;
+
+        const parentCanonical = parentNode.canonical?.toLowerCase() || '';
+
+        const childNodes = childrenIds
+            .map(id => studentGraph.getNode(id))
+            .filter((node): node is GraphNode => node !== undefined);
+
+        if (childNodes.length === 0) continue;
+
+        // =====================================================================
+        // CRITICAL: Validate against solution
+        // =====================================================================
+
+        // Check 1: Does parent exist in solution?
+        const parentInSolution = solutionActorCanonicals.has(parentCanonical);
+
+        // Check 2: Which children exist in solution?
+        const childrenAnalysis = childNodes.map(child => {
+            const childCanonical = child.canonical?.toLowerCase() || '';
+            const inSolution = solutionActorCanonicals.has(childCanonical);
+
+            // Also check if this child is in solution's hierarchy for this parent
+            const inSolutionHierarchy = solutionHierarchyMap.get(parentCanonical)?.has(childCanonical) || false;
+
+            return {
+                node: child,
+                canonical: childCanonical,
+                inSolution,
+                inSolutionHierarchy
+            };
+        });
+
+        const matchingChildren = childrenAnalysis.filter(c => c.inSolution);
+        const extraChildren = childrenAnalysis.filter(c => !c.inSolution);
+        const matchRatio = matchingChildren.length / childNodes.length;
+
+        // Check 3: Does solution have same hierarchy structure?
+        const solutionHasThisHierarchy = solutionHierarchyMap.has(parentCanonical);
+        const solutionChildrenCount = solutionHierarchyMap.get(parentCanonical)?.size || 0;
+
+        logger.info({
+            message: 'BƯỚC 5: Phân tích actor hierarchy',
+            parent: parentNode.name,
+            parentCanonical,
+            parentInSolution,
+            totalChildren: childNodes.length,
+            matchingChildren: matchingChildren.length,
+            extraChildren: extraChildren.length,
+            matchRatio,
+            solutionHasThisHierarchy,
+            solutionChildrenCount
+        });
+
+        // =====================================================================
+        // Decision logic for patterns and recommendations
+        // =====================================================================
+
+        if (!parentInSolution) {
+            // Parent doesn't exist in solution - this is likely wrong
+            // Don't give bonus, let Step 6 handle as extra actors
+            logger.info({
+                message: 'BƯỚC 5: Parent không có trong solution, bỏ qua bonus',
+                parent: parentNode.name
+            });
+            continue;
+        }
+
+        if (extraChildren.length > 0) {
+            // Has extra children not in solution
+            // Create pattern but with PENALTY recommendation, not bonus
+
+            const preservedPaths: string[] = [];
+            for (const child of matchingChildren) {
+                const childPaths = studentGraph.findActorUseCasePaths(child.node.id);
+                for (const [ucId] of childPaths) {
+                    const ucNode = studentGraph.getNode(ucId);
+                    if (ucNode) {
+                        preservedPaths.push(`${parentNode.name} → ${ucNode.name} (via ${child.node.name})`);
+                    }
+                }
+            }
+
+            if (matchingChildren.length > 0 && matchRatio >= 0.3) {
+                // Some children match - partial credit
+                patterns.push({
+                    type: 'ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS',
+                    severity: 'MINOR', // Not POSITIVE because of extra children
+                    confidence: matchRatio,
+                    elements: {
+                        parent: parentNode.name,
+                        children: childNodes.map(c => c.name),
+                        preservedPaths,
+                        extra: extraChildren.map(c => c.node.name) // Track extra children
+                    },
+                    structuralEquivalence: false, // Not equivalent due to extras
+                    designQuality: {
+                        rating: 'ACCEPTABLE',
+                        reasoning: `Student applied actor hierarchy but added ${extraChildren.length} extra children not in solution: ${extraChildren.map(c => c.node.name).join(', ')}`
+                    }
+                });
+
+                // Recommendation: Partial bonus for matching, but flag extras
+                if (matchRatio >= 0.5) {
+                    // More than half match - small bonus for hierarchy concept
+                    recommendations.push({
+                        code: 'REDUCE_PENALTY',
+                        reason: `Actor hierarchy partially matches solution (${matchingChildren.length}/${childNodes.length} children). Extra children should still be penalized.`,
+                        affectedElements: matchingChildren.map(c => c.node.name),
+                        penaltyAdjustment: Math.floor(matchRatio * 2), // Max +1 or +2
+                        requiresHumanReview: false
+                    });
+                }
+
+                // Flag extra children for penalty (DO NOT give bonus)
+                for (const extra of extraChildren) {
+                    recommendations.push({
+                        code: 'REQUIRE_HUMAN_REVIEW',
+                        reason: `Extra actor '${extra.node.name}' is child of hierarchy but NOT in solution. Should be penalized unless justified by requirements.`,
+                        affectedElements: [extra.node.name],
+                        penaltyAdjustment: 0, // No adjustment - let Step 6 apply penalty
+                        requiresHumanReview: true,
+                        reviewContext: `Actor '${extra.node.name}' is in student's hierarchy under '${parentNode.name}' but does not exist in solution.`
+                    });
+                }
+
+            } else {
+                // Very few or no children match - this is a wrong hierarchy
+                patterns.push({
+                    type: 'EXTRA_UNRELATED_ELEMENTS',
+                    severity: 'MAJOR',
+                    confidence: 0.9,
+                    elements: {
+                        isolated: extraChildren.map(c => c.node.name),
+                        parent: parentNode.name
+                    },
+                    structuralEquivalence: false,
+                    designQuality: {
+                        rating: 'POOR',
+                        reasoning: `Student created actor hierarchy with mostly extra actors not in solution`
+                    }
+                });
+
+                // No bonus, just flag for review
+                recommendations.push({
+                    code: 'REQUIRE_HUMAN_REVIEW',
+                    reason: `Actor hierarchy under '${parentNode.name}' contains ${extraChildren.length} actors not in solution`,
+                    affectedElements: extraChildren.map(c => c.node.name),
+                    penaltyAdjustment: 0,
+                    requiresHumanReview: true
+                });
+            }
+
+        } else if (matchingChildren.length === childNodes.length && solutionHasThisHierarchy) {
+            // ALL children match solution AND solution has this hierarchy
+            // This deserves bonus!
+
+            const preservedPaths: string[] = [];
+            for (const child of matchingChildren) {
+                const childPaths = studentGraph.findActorUseCasePaths(child.node.id);
+                for (const [ucId] of childPaths) {
+                    const ucNode = studentGraph.getNode(ucId);
+                    if (ucNode) {
+                        preservedPaths.push(`${parentNode.name} → ${ucNode.name} (via ${child.node.name})`);
+                    }
+                }
+            }
+
+            patterns.push({
+                type: 'ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS',
+                severity: 'POSITIVE',
+                confidence: 0.95,
+                elements: {
+                    parent: parentNode.name,
+                    children: childNodes.map(c => c.name),
+                    preservedPaths
+                },
+                structuralEquivalence: true,
+                designQuality: {
+                    rating: 'EXCELLENT',
+                    reasoning: `Student correctly applied actor hierarchy matching solution structure`
+                }
+            });
+
+            // Give bonus
+            recommendations.push({
+                code: 'ADD_BONUS',
+                reason: `Excellent actor hierarchy design matching solution: ${parentNode.name} → [${childNodes.map(c => c.name).join(', ')}]`,
+                affectedElements: [parentNode.name, ...childNodes.map(c => c.name)],
+                penaltyAdjustment: 2, // +2 bonus
+                requiresHumanReview: false
+            });
+
+            equivalences.push({
+                type: 'path_preserved',
+                confidence: 0.95,
+                explanation: `Actor hierarchy matches solution exactly`
+            });
+
+            logger.info({
+                message: 'BƯỚC 5: Actor hierarchy MATCHES solution - giving bonus',
+                parent: parentNode.name,
+                children: childNodes.map(c => c.name),
+                bonus: 2
+            });
+
+        } else if (matchingChildren.length === childNodes.length && !solutionHasThisHierarchy) {
+            // All children exist in solution but solution doesn't have THIS hierarchy
+            // This is acceptable but not bonus-worthy
+
+            patterns.push({
+                type: 'ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS',
+                severity: 'NEUTRAL',
+                confidence: 0.8,
+                elements: {
+                    parent: parentNode.name,
+                    children: childNodes.map(c => c.name),
+                    preservedPaths: []
+                },
+                structuralEquivalence: true,
+                designQuality: {
+                    rating: 'GOOD',
+                    reasoning: `Student created valid actor hierarchy (all actors exist in solution) but solution uses different structure`
+                }
+            });
+
+            // Neutral - no bonus, no penalty for hierarchy itself
+            recommendations.push({
+                code: 'REDUCE_PENALTY',
+                reason: `Valid alternative actor organization - all actors exist in solution`,
+                affectedElements: [parentNode.name, ...childNodes.map(c => c.name)],
+                penaltyAdjustment: 0, // Neutral
+                requiresHumanReview: false
+            });
+        }
+    }
+
+    return { patterns, recommendations, equivalences };
+};
 
 const step5_graphAnalysis = (
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram },
     comparison: EnhancedComparisonResult
 ): GraphAnalysisResult => {
     logger.info({
-        message: 'BƯỚC 5: Bắt đầu phân tích Graph',
+        message: 'BƯỚC 5: Bắt đầu phân tích Graph (ENHANCED)',
         event_type: 'step5_start'
     });
 
@@ -806,34 +1460,31 @@ const step5_graphAnalysis = (
     const equivalences: GraphEquivalence[] = [];
     const recommendations: GraphRecommendation[] = [];
 
-    // PATTERN 1: ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS
+    // PATTERN 1: ACTOR_SPECIALIZATION_WITH_PRESERVED_PATHS (from solution perspective)
     if (comparison.actors.extra.length > 0) {
         for (const extraActor of comparison.actors.extra) {
             const childrenIds = solutionGraph.getGeneralizationChildren(extraActor.id);
 
-            // Kiểm tra nếu actor này là con của actor nào đó trong solution
+            // Check if this actor is a child of another actor in solution
             const isChild = normalized.solution.relationships.generalization
                 .some(gen => gen.type === 'actor' && gen.childId === extraActor.id);
 
             if (isChild) {
-                // Tìm parent trong solution
                 const parentRel = normalized.solution.relationships.generalization
                     .find(gen => gen.type === 'actor' && gen.childId === extraActor.id);
 
                 if (parentRel) {
                     const parentNode = solutionGraph.getNode(parentRel.parentId);
                     if (parentNode) {
-                        // Kiểm tra path preservation
                         const parentPaths = solutionGraph.findActorUseCasePaths(parentNode.id);
                         const childPaths = studentGraph.findActorUseCasePaths(extraActor.id);
 
                         const preservedPaths: string[] = [];
                         let allPathsPreserved = true;
 
-                        for (const [ucId, paths] of parentPaths) {
+                        for (const [ucId] of parentPaths) {
                             const ucNode = solutionGraph.getNode(ucId);
                             if (ucNode && ucNode.canonical) {
-                                // Tìm UC tương ứng trong student
                                 const studentUc = normalized.student.usecases
                                     .find(u => u.normalized.canonical.toLowerCase() === ucNode.canonical?.toLowerCase());
 
@@ -898,7 +1549,7 @@ const step5_graphAnalysis = (
                     parent: missingAnalysis.actor.name,
                     children: missingAnalysis.childrenIds
                         .map(id => normalized.solution.actors.find(a => a.id === id)?.name)
-                        .filter(Boolean)
+                        .filter((name): name is string => name !== undefined)
                 },
                 structuralEquivalence: true,
                 designQuality: {
@@ -911,7 +1562,7 @@ const step5_graphAnalysis = (
                 code: 'REDUCE_PENALTY',
                 reason: 'Thiếu abstract parent nhưng tất cả children đều có',
                 affectedElements: [missingAnalysis.actor.name],
-                penaltyAdjustment: -4 // Giảm từ -8 xuống -4
+                penaltyAdjustment: -4 // Reduce penalty from -8 to -4
             });
         }
     }
@@ -928,8 +1579,6 @@ const step5_graphAnalysis = (
                 },
                 structuralEquivalence: false
             });
-
-            // Không thêm recommendation để giảm penalty - đây là lỗi thật
         }
     }
 
@@ -947,14 +1596,12 @@ const step5_graphAnalysis = (
         }
     }
 
-    // PATTERN 4: UC_CONSOLIDATION hoặc UC_DECOMPOSITION
+    // PATTERN 4: UC_CONSOLIDATION or UC_DECOMPOSITION
     if (comparison.usecases.missing.length > 0 && comparison.usecases.extra.length > 0) {
-        // Có thể là consolidation (nhiều -> 1) hoặc decomposition (1 -> nhiều)
         const missingCount = comparison.usecases.missing.length;
         const extraCount = comparison.usecases.extra.length;
 
         if (missingCount > extraCount) {
-            // Có thể là consolidation
             patterns.push({
                 type: 'UC_CONSOLIDATION',
                 severity: 'MINOR',
@@ -977,7 +1624,6 @@ const step5_graphAnalysis = (
             });
 
         } else if (extraCount > missingCount) {
-            // Có thể là decomposition
             patterns.push({
                 type: 'UC_DECOMPOSITION',
                 severity: 'NEUTRAL',
@@ -1001,6 +1647,19 @@ const step5_graphAnalysis = (
         }
     }
 
+    // =========================================================================
+    // FIX BUG 3: STUDENT-ONLY ACTOR HIERARCHY DETECTION
+    // Detect actor generalization hierarchy that exists ONLY in student diagram
+    // =========================================================================
+    const actorSpecResult = detectActorSpecialization(
+        normalized.student,
+        normalized.solution,
+        studentGraph
+    );
+    patterns.push(...actorSpecResult.patterns);
+    recommendations.push(...actorSpecResult.recommendations);
+    equivalences.push(...actorSpecResult.equivalences);
+
     // Calculate structural metrics
     const solutionMetrics = solutionGraph.getMetrics();
     const studentMetrics = studentGraph.getMetrics();
@@ -1016,11 +1675,12 @@ const step5_graphAnalysis = (
     };
 
     logger.info({
-        message: 'BƯỚC 5: Hoàn thành',
+        message: 'BƯỚC 5: Hoàn thành (ENHANCED)',
         event_type: 'step5_complete',
         patternsDetected: patterns.length,
         equivalencesFound: equivalences.length,
-        recommendationsCount: recommendations.length
+        recommendationsCount: recommendations.length,
+        actorHierarchyPatterns: actorSpecResult.patterns.length
     });
 
     return result;
@@ -1209,17 +1869,32 @@ const step7_generateFeedback = async (
 };
 
 // ============================================================================
+// HELPER: Convert internal metrics to serializable format
+// ============================================================================
+
+const serializeGraphMetrics = (metrics: GraphMetrics): Record<string, unknown> => {
+    return {
+        nodeCount: metrics.nodeCount,
+        edgeCount: metrics.edgeCount,
+        avgDegree: metrics.avgDegree,
+        maxDepth: metrics.maxDepth,
+        pathCount: metrics.pathCount,
+        degreeCentrality: Object.fromEntries(metrics.degreeCentrality)
+    };
+};
+
+// ============================================================================
 // MAIN ORCHESTRATOR
 // ============================================================================
 
-export const processUseCaseUmlWithGraphAnalysis = async (
+export const processUseCaseUmlWithAI = async (
     input: UmlInput
 ): Promise<UmlProcessedResult> => {
     const startTime = Date.now();
 
     try {
         logger.info({
-            message: '🚀 Bắt đầu pipeline 7 bước xử lý Use Case Diagram (có Graph Analysis)',
+            message: 'Bắt đầu pipeline 7 bước xử lý Use Case Diagram (FIXED VERSION)',
             event_type: 'pipeline_start',
             id: input.id,
             typeUmlName: input.typeUmlName
@@ -1232,12 +1907,12 @@ export const processUseCaseUmlWithGraphAnalysis = async (
         const diagrams = await step2_extractToJson(input, domainContext);
 
         // BƯỚC 3: Semantic Normalization
-        const normalized = await step3_semanticNormalization(input, diagrams);
+        const normalized = await step3_semanticNormalization(input, diagrams, domainContext);
 
-        // BƯỚC 4: Structure Comparison (Rule-based)
+        // BƯỚC 4: Structure Comparison (Rule-based - FIXED)
         const comparison = step4_structureComparison(normalized);
 
-        // BƯỚC 5: Graph Analysis (Rule-based - MỚI)
+        // BƯỚC 5: Graph Analysis (Rule-based - ENHANCED)
         const graphAnalysis = step5_graphAnalysis(normalized, comparison);
 
         // BƯỚC 6: Error Classification & Scoring (Hybrid AI - có Graph input)
@@ -1283,10 +1958,16 @@ export const processUseCaseUmlWithGraphAnalysis = async (
                 `Graph Analysis: ${r.reason} - ${r.affectedElements.join(', ')}`
             ));
 
+        // Build result matching UmlProcessedResult interface
         const result: UmlProcessedResult = {
             referenceScore: {
                 total: referenceScore.total,
-                breakdown: referenceScore.breakdown,
+                breakdown: {
+                    actors: referenceScore.breakdown.actors,
+                    usecases: referenceScore.breakdown.usecases,
+                    relationships: referenceScore.breakdown.relationships,
+                    presentation: referenceScore.breakdown.presentation
+                },
                 confidence: referenceScore.confidence,
                 suggestedRange: referenceScore.suggestedRange
             },
@@ -1302,25 +1983,25 @@ export const processUseCaseUmlWithGraphAnalysis = async (
                     missing: comparison.usecases.missing.length,
                     extra: comparison.usecases.extra.length
                 },
-                relationships: comparison.relationships
-            },
-            graphAnalysis: {
-                patterns: graphAnalysis.patterns,
-                structuralMetrics: graphAnalysis.structuralMetrics,
-                detectedEquivalences: graphAnalysis.detectedEquivalences
+                relationships: {
+                    actorToUC: comparison.relationships.actorToUC,
+                    include: comparison.relationships.include,
+                    extend: comparison.relationships.extend,
+                    generalization: comparison.relationships.generalization
+                }
             },
             feedback: feedback,
             humanReviewItems: humanReviewItems,
             metadata: {
                 processingTime: `${(duration / 1000).toFixed(1)}s`,
                 aiCallsCount: 5,
-                pipelineVersion: '2.0.0-usecase-with-graph',
+                pipelineVersion: '2.1.0-usecase-fixed',
                 timestamp: new Date().toISOString()
             }
         };
 
         logger.info({
-            message: '✅ Pipeline xử lý Use Case Diagram hoàn thành thành công',
+            message: '✅ Pipeline xử lý Use Case Diagram hoàn thành thành công (FIXED VERSION)',
             event_type: 'pipeline_complete',
             id: input.id,
             durationMs: duration,
