@@ -70,3 +70,11 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
+
+defty:
+  file:
+    enabled: true
+    cloudinary:
+      cloud-name: dc9nyxru6
+      api-key: 431649663815195
+      api-secret: l0OPyaBmY9BtQ9j_lrVWrWwHAQ4
