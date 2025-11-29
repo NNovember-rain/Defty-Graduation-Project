@@ -365,10 +365,12 @@ public class SubmissionServiceImpl implements SubmissionService {
         Set<Long> studentIds = new HashSet<>();
         Set<Long> assignmentIds = new HashSet<>();
         Set<Long> classIds = new HashSet<>();
-        result.forEach(comment -> {
-            studentIds.add(comment.getStudentId());
-            assignmentIds.add(comment.getAssignmentId());
-            classIds.add(comment.getClassId());
+        Set<Long> moduleIds = new HashSet<>();
+        result.forEach(submission -> {
+            studentIds.add(submission.getStudentId());
+            assignmentIds.add(submission.getAssignmentId());
+            classIds.add(submission.getClassId());
+//            moduleIds.add(submission.get)
         });
         Map<Long, UserResponse> userMap;
         Map<Long, AssignmentResponse> assignmentMap;

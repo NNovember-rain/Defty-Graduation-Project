@@ -34,4 +34,7 @@ public interface ContentServiceClient {
             @PathVariable Long assignmentClassDetailId,
             @RequestParam(value = "typeUml", required = false) String typeUml,
             @RequestParam(value = "moduleId", required = false) Long moduleId);
+
+    @GetMapping("/content/assignments/list-module")
+    ApiResponse<List<ModuleResponse>> getModuleMap(@RequestParam List<Long> moduleIds);
 }
