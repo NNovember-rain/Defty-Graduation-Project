@@ -8,6 +8,7 @@ import {
     unassignAssignment,
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
+import { getAllTestSetsByClassId, removeTestSetFromClass } from "../../../../../shared/services/classTestSetService.ts";
 import {
     Button,
     Card,
@@ -166,15 +167,48 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setLoading(true);
         setError(null);
         try {
+            // Existing assignment fetch logic...
             const options: GetAssignmentsOptions = {
                 limit: 1000,
             };
 
             const response = await getAssignmentsByClassId(classId, options);
-
             const data = response.assignments || [];
 
+            // Fetch quiz assignments
+            const quizResponse = await getAllTestSetsByClassId(classId);
+            const quizData = quizResponse.data || [];
+
+            // Map quiz data vào format phù hợp
+            const quizAssignments = quizData.map((quiz) => ({
+                id: `quiz-${quiz.id}`,
+                type: 'QUIZ' as AssignmentType,
+                classInfoId: classId,
+                assignmentCode: undefined,
+                title: quiz.testSetName,
+                description: '',
+                startDate: quiz.startDate,
+                endDate: quiz.endDate,
+                checkedTest: false,
+                assignedModules: [],
+                assignedQuizzes: [{
+                    quizId: quiz.id,
+                    quizTitle: quiz.testSetName,
+                    testSetId: quiz.testSetId,
+                    testSetName: quiz.testSetName,
+                    collectionName: quiz.collectionName,
+                    totalQuestions: quiz.totalQuestions,
+                    startDate: quiz.startDate,
+                    endDate: quiz.endDate,
+                    assignmentClassDetailId: quiz.id, // Sử dụng assignment id
+                }],
+                assignedUmlType: null,
+                createdDate: quiz.createdDate || dayjs().toISOString(),
+            } as IAssignmentExtended));
+
+            // Merge assignments và quiz assignments
             const mappedAssignments: IAssignmentExtended[] = data.map((a: any, index: number) => {
+                // Existing mapping logic...
                 const assignmentType: AssignmentType = (a.assignmentClassDetailResponseList || []).some((m: any) => m.checkedTest === true) ? "TEST" : "ASSIGNMENT";
 
                 return {
@@ -196,8 +230,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 } as unknown as IAssignmentExtended;
             });
 
-            setAssignments(mappedAssignments);
-            collectUniqueFilters(mappedAssignments);
+            // Combine both arrays
+            const allAssignments = [...mappedAssignments, ...quizAssignments];
+
+            setAssignments(allAssignments);
+            collectUniqueFilters(allAssignments);
 
         } catch (err) {
             console.error("Failed to fetch assignments:", err);
@@ -419,16 +456,36 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         return Array.from(umlSet).sort();
     }, [selectedAssignmentId, assignments, uniqueUmlTypes]);
 
-    const handleUnassign = async (assignmentClassDetailId: number) => {
+    const handleUnassign = async (assignmentClassDetailId: number, isQuiz: boolean = false) => {
         try {
             message.loading({ content: t('common.unassigning') || 'Đang hủy giao...', key: 'unassign' });
-            await unassignAssignment(assignmentClassDetailId);
+
+            if (isQuiz) {
+                // Tìm quiz assignment để lấy testSetId
+                const quizAssignment = assignments.find(a =>
+                    a.assignedQuizzes?.some(q => q.assignmentClassDetailId === assignmentClassDetailId)
+                );
+
+                if (quizAssignment && quizAssignment.assignedQuizzes) {
+                    const quiz = quizAssignment.assignedQuizzes.find(q =>
+                        q.assignmentClassDetailId === assignmentClassDetailId
+                    );
+
+                    if (quiz) {
+                        await removeTestSetFromClass(classId, quiz.testSetId);
+                    }
+                }
+            } else {
+                await unassignAssignment(assignmentClassDetailId);
+            }
+
             message.success({ content: t('common.unassignSuccess') || 'Hủy giao bài tập thành công!', key: 'unassign', duration: 2 });
             await new Promise(resolve => setTimeout(resolve, 1000));
             fetchData();
         } catch (error) {
             console.error("Unassign failed:", error);
-            message.error({ content: t('common.unassignFailed') || "Xoá thất bại!", key: 'unassign', duration: 3 });
+            const errorMessage = error instanceof Error ? error.message : 'Xoá thất bại!';
+            message.error({ content: errorMessage, key: 'unassign', duration: 3 });
         }
     };
 
@@ -442,7 +499,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             primaryColor = '#9254de'; // Tím cho Quiz
             secondaryColor = '#f9f0ff';
             icon = <MdOutlineAssignment />;
-            typeText = t("classDetail.type.quiz") || "TRẮC NGHIỆM";
+            typeText = "TRẮC NGHIỆM";
         } else if (isTest) {
             primaryColor = '#fa541c'; // Cam cho Test
             secondaryColor = '#fff1f0';
@@ -496,35 +553,37 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 <Space size={[8, 4]} wrap style={{ marginBottom: 8 }}>
                                     {isQuiz ? (
                                         <>
-                                            {item.testSetName && (
-                                                <Tag key={`${keyPrefix}-testset`} color="purple" style={{ fontWeight: 500 }}>
-                                                    {t("classDetail.testSet") || "Đề thi"}: {item.testSetName}
-                                                </Tag>
-                                            )}
                                             {item.collectionName && (
                                                 <Tag key={`${keyPrefix}-collection`} color="geekblue" style={{ fontWeight: 500 }}>
                                                     {item.collectionName}
                                                 </Tag>
                                             )}
+
                                             {item.totalQuestions && (
                                                 <Tag key={`${keyPrefix}-questions`} color="cyan" style={{ fontWeight: 500 }}>
-                                                    {item.totalQuestions} {t("classDetail.questions") || "câu hỏi"}
+                                                    {item.totalQuestions} câu hỏi
                                                 </Tag>
                                             )}
                                         </>
                                     ) : (
                                         <>
                                             <Tag key={`${keyPrefix}-module-main`} color="blue" style={{ fontWeight: 500 }}>
-                                                {t("classDetail.module") || "Module"}: {item.moduleName}
+                                                Module: {item.moduleName}
                                             </Tag>
+
                                             {item.typeUmls?.map((name, index) => (
-                                                <Tag key={`${keyPrefix}-uml-${name}-${index}`} color="geekblue" style={{ fontWeight: 500 }}>
+                                                <Tag
+                                                    key={`${keyPrefix}-uml-${name}-${index}`}
+                                                    color="geekblue"
+                                                    style={{ fontWeight: 500 }}
+                                                >
                                                     {name}
                                                 </Tag>
                                             ))}
                                         </>
                                     )}
                                 </Space>
+
 
                                 <Space size={16}>
                                     <Text style={{ fontWeight: 600, color: primaryColor, fontSize: '12px' }}>
@@ -584,7 +643,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             )}
                             <Popconfirm
                                 title={t('common.confirm') || "Bạn có chắc chắn muốn hủy giao bài tập này?"}
-                                onConfirm={() => handleUnassign(item.assignmentClassDetailId)}
+                                onConfirm={() => handleUnassign(item.assignmentClassDetailId, isQuiz)}
                                 okText={t('common.yes') || "Có"}
                                 cancelText={t('common.no') || "Không"}
                                 placement="topRight"

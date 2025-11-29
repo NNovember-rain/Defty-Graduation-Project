@@ -7,6 +7,7 @@ import {useParams} from "react-router-dom";
 import moment from "moment";
 import {getTestSets, type ITestSet} from "../../../../../shared/services/questionBankService/testSetService.ts";
 import {getAllActiveTestCollections} from "../../../../../shared/services/questionBankService/testCollectionService.ts";
+import { assignTestSetsToClasses } from "../../../../../shared/services/classTestSetService.ts";
 
 const {RangePicker} = DatePicker;
 
@@ -156,21 +157,22 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
 
             setAssignLoading(true);
 
-            const testSetsPayload: QuizAssignRequest[] = selectedTestSetIds.map(testSetId => ({
+            const testSetsPayload = selectedTestSetIds.map(testSetId => ({
                 testSetId,
                 startDate,
                 endDate,
             }));
 
-            const payload: AssignQuizRequest = {
+            const payload = {
                 classIds,
                 testSets: testSetsPayload,
             };
 
             console.log("Sending quiz assign payload:", payload);
 
-            // TODO: Thay đổi API endpoint phù hợp cho việc giao quiz
-            // await assignQuiz(payload);
+            // Gọi API thực tế
+            const teacherId = 1; // TODO: Lấy từ auth context hoặc props
+            await assignTestSetsToClasses(payload, teacherId);
 
             messageApi.success(t('apiMessages.assignQuizSuccess') || 'Giao đề thi thành công!');
             onAssigned?.();
@@ -178,7 +180,8 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
         } catch (error) {
             console.error(error);
             if (!(error && (error as any).errorFields)) {
-                messageApi.error(t("Failed to assign quiz") || 'Lỗi khi giao đề thi.');
+                const errorMessage = error instanceof Error ? error.message : 'Lỗi khi giao đề thi.';
+                messageApi.error(errorMessage);
             }
         } finally {
             setAssignLoading(false);
@@ -263,23 +266,17 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
                             <Col span={8}>
                                 <Form.Item
                                     name="dateRange"
-                                    required={true}
                                     style={{ marginBottom: 0 }}
                                     rules={[
-                                        {
-                                            required: true,
-                                            message: t('Please select start and end dates') || 'Vui lòng chọn ngày bắt đầu và ngày kết thúc'
-                                        },
                                         () => ({
                                             validator(_, value) {
+                                                // Nếu không chọn → hợp lệ
                                                 if (!value || value.length < 2) return Promise.resolve();
-                                                const [start, end] = value as moment.Moment[];
-                                                if (start && end && end.isAfter(start, 'day')) return Promise.resolve();
-                                                if (start && end && end.isSame(start, 'day')) return Promise.resolve();
 
-                                                return Promise.reject(
-                                                    new Error(t('End date must be after or same as start date!') || 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu!')
-                                                );
+                                                const [start, end] = value as moment.Moment[];
+                                                if (end.isSameOrAfter(start, 'day')) return Promise.resolve();
+
+                                                return Promise.reject(new Error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu!'));
                                             }
                                         })
                                     ]}
