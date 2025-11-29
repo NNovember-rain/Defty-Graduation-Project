@@ -27,6 +27,9 @@ public class Submission extends BaseEntity {
     Long classId;
 
     @Column(nullable = false)
+    Long moduleId;
+
+    @Column(nullable = false)
     Long assignmentId;
 
     @Column(nullable = false)
