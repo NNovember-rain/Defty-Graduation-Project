@@ -765,36 +765,513 @@ const step3_semanticNormalization = async (
 };
 
 // ============================================================================
-// STEP 4: STRUCTURE COMPARISON (FIXED - BUG 1 & BUG 2)
+// STEP 4: STRUCTURE COMPARISON
+// ============================================================================
+
+/**
+ * Chi tiết về một relationship bị ngược chiều
+ */
+interface ReversedRelationship {
+    type: 'generalization' | 'include' | 'extend';
+    solutionDirection: {
+        fromId: string;
+        fromName: string;
+        fromCanonical: string;
+        toId: string;
+        toName: string;
+        toCanonical: string;
+    };
+    studentDirection: {
+        fromId: string;
+        fromName: string;
+        fromCanonical: string;
+        toId: string;
+        toName: string;
+        toCanonical: string;
+    };
+    elementType?: 'actor' | 'usecase'; // Chỉ dùng cho generalization
+}
+
+/**
+ * Kết quả so sánh relationship có hỗ trợ reversed detection
+ */
+interface RelationshipComparisonResultWithReversed {
+    matched: number;
+    missing: number;
+    extra: number;
+    reversed: ReversedRelationship[];
+}
+
+/**
+ * ComparisonResult mở rộng với reversed relationships
+ */
+interface EnhancedComparisonResultV2 extends EnhancedComparisonResult {
+    relationships: {
+        actorToUC: { matched: number; missing: number; extra: number };
+        include: RelationshipComparisonResultWithReversed;
+        extend: RelationshipComparisonResultWithReversed;
+        generalization: RelationshipComparisonResultWithReversed;
+    };
+}
+
+// ============================================================================
+// UPDATED COMPARISON FUNCTIONS - Với Reversed Detection
+// ============================================================================
+
+/**
+ * Compare Include relationships với detection reversed direction
+ *
+ * Include: Base .> Included : <<include>>
+ * - Base UC bắt buộc phải gọi Included UC
+ * - Nếu sinh viên vẽ ngược (Included .> Base), đây là lỗi reversed
+ */
+const compareIncludeRelationshipsWithReversed = (
+    solutionRels: Array<{ baseId: string; includedId: string }>,
+    studentRels: Array<{ baseId: string; includedId: string }>,
+    solutionUCs: NormalizedUseCase[],
+    studentUCs: NormalizedUseCase[]
+): RelationshipComparisonResultWithReversed => {
+
+    // Build canonical keys cho solution: "base::include::included"
+    const solutionKeys = new Map<string, {
+        rel: typeof solutionRels[0];
+        baseUC: NormalizedUseCase;
+        includedUC: NormalizedUseCase;
+    }>();
+
+    for (const rel of solutionRels) {
+        const baseUC = findById(solutionUCs, rel.baseId);
+        const includedUC = findById(solutionUCs, rel.includedId);
+
+        if (baseUC && includedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const includedCanonical = includedUC.normalized.canonical.toLowerCase();
+            const key = `${baseCanonical}::include::${includedCanonical}`;
+            solutionKeys.set(key, { rel, baseUC, includedUC });
+        }
+    }
+
+    // Build canonical keys cho student (handle duplicates)
+    const studentKeysMap = new Map<string, Array<{
+        rel: typeof studentRels[0];
+        baseUC: NormalizedUseCase;
+        includedUC: NormalizedUseCase;
+    }>>();
+
+    for (const rel of studentRels) {
+        const baseUC = findById(studentUCs, rel.baseId);
+        const includedUC = findById(studentUCs, rel.includedId);
+
+        if (baseUC && includedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const includedCanonical = includedUC.normalized.canonical.toLowerCase();
+            const key = `${baseCanonical}::include::${includedCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push({ rel, baseUC, includedUC });
+        }
+    }
+
+    // Track which solution keys have been matched
+    const matchedSolutionKeys = new Set<string>();
+    const reversed: ReversedRelationship[] = [];
+
+    // Match relationships
+    let matched = 0;
+    for (const [key, solData] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            stuRels.shift();
+            matched++;
+            matchedSolutionKeys.add(key);
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Check for reversed relationships trong những key chưa match
+    for (const [solKey, solData] of solutionKeys) {
+        if (matchedSolutionKeys.has(solKey)) continue;
+
+        // Tạo reversed key: đảo base và included
+        const baseCanonical = solData.baseUC.normalized.canonical.toLowerCase();
+        const includedCanonical = solData.includedUC.normalized.canonical.toLowerCase();
+        const reversedKey = `${includedCanonical}::include::${baseCanonical}`;
+
+        // Kiểm tra xem student có vẽ ngược không
+        const stuReversed = studentKeysMap.get(reversedKey);
+        if (stuReversed && stuReversed.length > 0) {
+            const stuData = stuReversed[0];
+
+            reversed.push({
+                type: 'include',
+                solutionDirection: {
+                    fromId: solData.rel.baseId,
+                    fromName: solData.baseUC.name,
+                    fromCanonical: baseCanonical,
+                    toId: solData.rel.includedId,
+                    toName: solData.includedUC.name,
+                    toCanonical: includedCanonical
+                },
+                studentDirection: {
+                    fromId: stuData.rel.baseId,
+                    fromName: stuData.baseUC.name,
+                    fromCanonical: stuData.baseUC.normalized.canonical.toLowerCase(),
+                    toId: stuData.rel.includedId,
+                    toName: stuData.includedUC.name,
+                    toCanonical: stuData.includedUC.normalized.canonical.toLowerCase()
+                }
+            });
+
+            // Remove from extra count
+            stuReversed.shift();
+            if (stuReversed.length === 0) {
+                studentKeysMap.delete(reversedKey);
+            }
+
+            // Mark solution key as "handled" (không còn missing)
+            matchedSolutionKeys.add(solKey);
+        }
+    }
+
+    // Count remaining extra (không phải reversed)
+    let extra = 0;
+    for (const stuRels of studentKeysMap.values()) {
+        extra += stuRels.length;
+    }
+
+    // Missing = solution keys chưa được match hoặc handle bởi reversed
+    const missing = solutionKeys.size - matchedSolutionKeys.size;
+
+    return {
+        matched,
+        missing,
+        extra,
+        reversed
+    };
+};
+
+/**
+ * Compare Extend relationships với detection reversed direction
+ *
+ * Extend: Extension .> Base : <<extend>>
+ * - Extension UC mở rộng Base UC (tùy chọn)
+ * - Nếu sinh viên vẽ ngược (Base .> Extension), đây là lỗi reversed
+ */
+const compareExtendRelationshipsWithReversed = (
+    solutionRels: Array<{ baseId: string; extendedId: string; condition?: string; extensionPoint?: string }>,
+    studentRels: Array<{ baseId: string; extendedId: string; condition?: string; extensionPoint?: string }>,
+    solutionUCs: NormalizedUseCase[],
+    studentUCs: NormalizedUseCase[]
+): RelationshipComparisonResultWithReversed => {
+
+    // Build canonical keys cho solution: "extension::extend::base"
+    // Note: Trong extend, extendedId là Extension UC, baseId là Base UC
+    const solutionKeys = new Map<string, {
+        rel: typeof solutionRels[0];
+        baseUC: NormalizedUseCase;
+        extendedUC: NormalizedUseCase;
+    }>();
+
+    for (const rel of solutionRels) {
+        const baseUC = findById(solutionUCs, rel.baseId);
+        const extendedUC = findById(solutionUCs, rel.extendedId);
+
+        if (baseUC && extendedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const extendedCanonical = extendedUC.normalized.canonical.toLowerCase();
+            // Key format: extension::extend::base (extendedUC extends baseUC)
+            const key = `${extendedCanonical}::extend::${baseCanonical}`;
+            solutionKeys.set(key, { rel, baseUC, extendedUC });
+        }
+    }
+
+    // Build canonical keys cho student
+    const studentKeysMap = new Map<string, Array<{
+        rel: typeof studentRels[0];
+        baseUC: NormalizedUseCase;
+        extendedUC: NormalizedUseCase;
+    }>>();
+
+    for (const rel of studentRels) {
+        const baseUC = findById(studentUCs, rel.baseId);
+        const extendedUC = findById(studentUCs, rel.extendedId);
+
+        if (baseUC && extendedUC) {
+            const baseCanonical = baseUC.normalized.canonical.toLowerCase();
+            const extendedCanonical = extendedUC.normalized.canonical.toLowerCase();
+            const key = `${extendedCanonical}::extend::${baseCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push({ rel, baseUC, extendedUC });
+        }
+    }
+
+    const matchedSolutionKeys = new Set<string>();
+    const reversed: ReversedRelationship[] = [];
+
+    // Match relationships
+    let matched = 0;
+    for (const [key, solData] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            stuRels.shift();
+            matched++;
+            matchedSolutionKeys.add(key);
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Check for reversed relationships
+    for (const [solKey, solData] of solutionKeys) {
+        if (matchedSolutionKeys.has(solKey)) continue;
+
+        const baseCanonical = solData.baseUC.normalized.canonical.toLowerCase();
+        const extendedCanonical = solData.extendedUC.normalized.canonical.toLowerCase();
+
+        // Reversed: base::extend::extended (ngược với solution)
+        const reversedKey = `${baseCanonical}::extend::${extendedCanonical}`;
+
+        const stuReversed = studentKeysMap.get(reversedKey);
+        if (stuReversed && stuReversed.length > 0) {
+            const stuData = stuReversed[0];
+
+            reversed.push({
+                type: 'extend',
+                solutionDirection: {
+                    fromId: solData.rel.extendedId,
+                    fromName: solData.extendedUC.name,
+                    fromCanonical: extendedCanonical,
+                    toId: solData.rel.baseId,
+                    toName: solData.baseUC.name,
+                    toCanonical: baseCanonical
+                },
+                studentDirection: {
+                    fromId: stuData.rel.extendedId,
+                    fromName: stuData.extendedUC.name,
+                    fromCanonical: stuData.extendedUC.normalized.canonical.toLowerCase(),
+                    toId: stuData.rel.baseId,
+                    toName: stuData.baseUC.name,
+                    toCanonical: stuData.baseUC.normalized.canonical.toLowerCase()
+                }
+            });
+
+            stuReversed.shift();
+            if (stuReversed.length === 0) {
+                studentKeysMap.delete(reversedKey);
+            }
+            matchedSolutionKeys.add(solKey);
+        }
+    }
+
+    let extra = 0;
+    for (const stuRels of studentKeysMap.values()) {
+        extra += stuRels.length;
+    }
+
+    const missing = solutionKeys.size - matchedSolutionKeys.size;
+
+    return {
+        matched,
+        missing,
+        extra,
+        reversed
+    };
+};
+
+/**
+ * Compare Generalization relationships với detection reversed direction
+ *
+ * Generalization: Parent <|-- Child
+ * - Child kế thừa Parent
+ * - Nếu sinh viên vẽ ngược (Child <|-- Parent), đây là lỗi reversed nghiêm trọng
+ */
+const compareGeneralizationRelationshipsWithReversed = (
+    solutionRels: Array<{ parentId: string; childId: string; type: 'actor' | 'usecase' }>,
+    studentRels: Array<{ parentId: string; childId: string; type: 'actor' | 'usecase' }>,
+    solutionActors: NormalizedActor[],
+    studentActors: NormalizedActor[],
+    solutionUCs: NormalizedUseCase[],
+    studentUCs: NormalizedUseCase[]
+): RelationshipComparisonResultWithReversed => {
+
+    // Helper để lấy canonical và element info
+    const getElementInfo = (
+        id: string,
+        type: 'actor' | 'usecase',
+        actors: NormalizedActor[],
+        ucs: NormalizedUseCase[]
+    ): { canonical: string; name: string; element: NormalizedActor | NormalizedUseCase } | null => {
+        if (type === 'actor') {
+            const actor = findById(actors, id);
+            if (actor) {
+                return {
+                    canonical: actor.normalized.canonical.toLowerCase(),
+                    name: actor.name,
+                    element: actor
+                };
+            }
+        } else {
+            const uc = findById(ucs, id);
+            if (uc) {
+                return {
+                    canonical: uc.normalized.canonical.toLowerCase(),
+                    name: uc.name,
+                    element: uc
+                };
+            }
+        }
+        return null;
+    };
+
+    // Build canonical keys cho solution: "type::parent::gen::child"
+    const solutionKeys = new Map<string, {
+        rel: typeof solutionRels[0];
+        parentInfo: ReturnType<typeof getElementInfo>;
+        childInfo: ReturnType<typeof getElementInfo>;
+    }>();
+
+    for (const rel of solutionRels) {
+        const parentInfo = getElementInfo(rel.parentId, rel.type, solutionActors, solutionUCs);
+        const childInfo = getElementInfo(rel.childId, rel.type, solutionActors, solutionUCs);
+
+        if (parentInfo && childInfo) {
+            const key = `${rel.type}::${parentInfo.canonical}::gen::${childInfo.canonical}`;
+            solutionKeys.set(key, { rel, parentInfo, childInfo });
+        }
+    }
+
+    // Build canonical keys cho student
+    const studentKeysMap = new Map<string, Array<{
+        rel: typeof studentRels[0];
+        parentInfo: ReturnType<typeof getElementInfo>;
+        childInfo: ReturnType<typeof getElementInfo>;
+    }>>();
+
+    for (const rel of studentRels) {
+        const parentInfo = getElementInfo(rel.parentId, rel.type, studentActors, studentUCs);
+        const childInfo = getElementInfo(rel.childId, rel.type, studentActors, studentUCs);
+
+        if (parentInfo && childInfo) {
+            const key = `${rel.type}::${parentInfo.canonical}::gen::${childInfo.canonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push({ rel, parentInfo, childInfo });
+        }
+    }
+
+    const matchedSolutionKeys = new Set<string>();
+    const reversed: ReversedRelationship[] = [];
+
+    // Match relationships
+    let matched = 0;
+    for (const [key, solData] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            stuRels.shift();
+            matched++;
+            matchedSolutionKeys.add(key);
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Check for reversed relationships
+    for (const [solKey, solData] of solutionKeys) {
+        if (matchedSolutionKeys.has(solKey)) continue;
+        if (!solData.parentInfo || !solData.childInfo) continue;
+
+        // Reversed key: type::child::gen::parent (Child là parent, Parent là child)
+        const reversedKey = `${solData.rel.type}::${solData.childInfo.canonical}::gen::${solData.parentInfo.canonical}`;
+
+        const stuReversed = studentKeysMap.get(reversedKey);
+        if (stuReversed && stuReversed.length > 0) {
+            const stuData = stuReversed[0];
+
+            if (stuData.parentInfo && stuData.childInfo) {
+                reversed.push({
+                    type: 'generalization',
+                    elementType: solData.rel.type,
+                    solutionDirection: {
+                        fromId: solData.rel.childId,
+                        fromName: solData.childInfo.name,
+                        fromCanonical: solData.childInfo.canonical,
+                        toId: solData.rel.parentId,
+                        toName: solData.parentInfo.name,
+                        toCanonical: solData.parentInfo.canonical
+                    },
+                    studentDirection: {
+                        fromId: stuData.rel.childId,
+                        fromName: stuData.childInfo.name,
+                        fromCanonical: stuData.childInfo.canonical,
+                        toId: stuData.rel.parentId,
+                        toName: stuData.parentInfo.name,
+                        toCanonical: stuData.parentInfo.canonical
+                    }
+                });
+
+                stuReversed.shift();
+                if (stuReversed.length === 0) {
+                    studentKeysMap.delete(reversedKey);
+                }
+                matchedSolutionKeys.add(solKey);
+            }
+        }
+    }
+
+    let extra = 0;
+    for (const stuRels of studentKeysMap.values()) {
+        extra += stuRels.length;
+    }
+
+    const missing = solutionKeys.size - matchedSolutionKeys.size;
+
+    return {
+        matched,
+        missing,
+        extra,
+        reversed
+    };
+};
+
+// ============================================================================
+// UPDATED STEP 4: STRUCTURE COMPARISON WITH REVERSED DETECTION
 // ============================================================================
 
 const step4_structureComparison = (
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram }
-): EnhancedComparisonResult => {
+): EnhancedComparisonResultV2 => {
     logger.info({
-        message: 'BƯỚC 4: Bắt đầu so sánh cấu trúc (FIXED)',
+        message: 'BƯỚC 4: Bắt đầu so sánh cấu trúc (V2 - WITH REVERSED DETECTION)',
         event_type: 'step4_start'
     });
 
     const { solution, student } = normalized;
 
     // =========================================================================
-    // FIX BUG 1: Compare actors by canonical names with duplicate handling
+    // Compare actors (giữ nguyên logic cũ)
     // =========================================================================
     const matchedActors: ComparisonResult['actors']['matched'] = [];
     const missingActors: NormalizedActor[] = [];
     const extraActors: NormalizedActor[] = [];
 
-    // Build map: canonical -> array of actors (handles duplicates)
     const studentActorsByCanonical = buildCanonicalMap(student.actors);
 
-    // Match solution actors with student actors
     for (const solActor of solution.actors) {
         const canonical = solActor.normalized.canonical.toLowerCase();
         const stuActors = studentActorsByCanonical.get(canonical) || [];
 
         if (stuActors.length > 0) {
-            // Match with first unmatched student actor
             const stuActor = stuActors.shift()!;
             matchedActors.push({
                 solution: solActor,
@@ -802,7 +1279,6 @@ const step4_structureComparison = (
                 similarity: Math.max(solActor.normalized.similarityScore, stuActor.normalized.similarityScore)
             });
 
-            // Clean up empty arrays
             if (stuActors.length === 0) {
                 studentActorsByCanonical.delete(canonical);
             }
@@ -811,12 +1287,11 @@ const step4_structureComparison = (
         }
     }
 
-    // Remaining student actors are extra
     for (const stuActors of studentActorsByCanonical.values()) {
         extraActors.push(...stuActors);
     }
 
-    // Analyze missing actors for abstract parent pattern
+    // Analyze missing actors (giữ nguyên)
     const missingActorsAnalysis: MissingActorAnalysis[] = missingActors.map(actor => {
         const generalizationRelations = solution.relationships.generalization
             .filter(gen => gen.type === 'actor' && gen.parentId === actor.id);
@@ -844,7 +1319,6 @@ const step4_structureComparison = (
         }
 
         let severity: 'CRITICAL' | 'MINOR' = 'CRITICAL';
-
         if (isAbstractParent && !hasDirectUseCases) {
             if (childrenInStudent.length === childrenIds.length) {
                 severity = 'MINOR';
@@ -862,13 +1336,12 @@ const step4_structureComparison = (
     });
 
     // =========================================================================
-    // FIX BUG 1 (continued): Compare usecases with duplicate handling
+    // Compare usecases (giữ nguyên logic cũ)
     // =========================================================================
     const matchedUsecases: ComparisonResult['usecases']['matched'] = [];
     const missingUsecases: NormalizedUseCase[] = [];
     const extraUsecases: NormalizedUseCase[] = [];
 
-    // Build map: canonical -> array of usecases (handles duplicates)
     const studentUsecasesByCanonical = buildCanonicalMap(student.usecases);
 
     for (const solUc of solution.usecases) {
@@ -896,10 +1369,10 @@ const step4_structureComparison = (
     }
 
     // =========================================================================
-    // FIX BUG 2: Compare relationships using canonical names instead of IDs
+    // Compare relationships WITH REVERSED DETECTION
     // =========================================================================
     const relationships = {
-        // Actor-to-UC relationships using canonical comparison
+        // Actor-to-UC (không có reversed - chiều không quan trọng)
         actorToUC: compareActorToUCRelationships(
             solution.relationships.actorToUC,
             student.relationships.actorToUC,
@@ -909,24 +1382,24 @@ const step4_structureComparison = (
             student.usecases
         ),
 
-        // Include relationships using canonical comparison
-        include: compareIncludeRelationships(
+        // Include với reversed detection
+        include: compareIncludeRelationshipsWithReversed(
             solution.relationships.include,
             student.relationships.include,
             solution.usecases,
             student.usecases
         ),
 
-        // Extend relationships using canonical comparison
-        extend: compareExtendRelationships(
+        // Extend với reversed detection
+        extend: compareExtendRelationshipsWithReversed(
             solution.relationships.extend,
             student.relationships.extend,
             solution.usecases,
             student.usecases
         ),
 
-        // Generalization relationships using canonical comparison
-        generalization: compareGeneralizationRelationships(
+        // Generalization với reversed detection
+        generalization: compareGeneralizationRelationshipsWithReversed(
             solution.relationships.generalization,
             student.relationships.generalization,
             solution.actors,
@@ -936,15 +1409,21 @@ const step4_structureComparison = (
         )
     };
 
-    const result: EnhancedComparisonResult = {
+    const result: EnhancedComparisonResultV2 = {
         actors: { matched: matchedActors, missing: missingActors, extra: extraActors },
         usecases: { matched: matchedUsecases, missing: missingUsecases, extra: extraUsecases },
         relationships,
         missingActorsAnalysis
     };
 
+    // Log với thông tin reversed
+    const totalReversed =
+        relationships.include.reversed.length +
+        relationships.extend.reversed.length +
+        relationships.generalization.reversed.length;
+
     logger.info({
-        message: 'BƯỚC 4: Hoàn thành (FIXED)',
+        message: 'BƯỚC 4: Hoàn thành (V2 - WITH REVERSED DETECTION)',
         event_type: 'step4_complete',
         actors: {
             matched: matchedActors.length,
@@ -958,10 +1437,20 @@ const step4_structureComparison = (
         },
         relationships: {
             actorToUC: relationships.actorToUC,
-            include: relationships.include,
-            extend: relationships.extend,
-            generalization: relationships.generalization
-        }
+            include: {
+                ...relationships.include,
+                reversedCount: relationships.include.reversed.length
+            },
+            extend: {
+                ...relationships.extend,
+                reversedCount: relationships.extend.reversed.length
+            },
+            generalization: {
+                ...relationships.generalization,
+                reversedCount: relationships.generalization.reversed.length
+            }
+        },
+        totalReversedRelationships: totalReversed
     });
 
     return result;
