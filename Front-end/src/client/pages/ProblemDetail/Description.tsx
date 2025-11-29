@@ -264,6 +264,13 @@ const Description: React.FC<Props> = ({
                 const selectedModule = uniqueModules.find(m => String(m.id) === selectedModuleId);
                 if (selectedModule) {
                     onModuleNameChange(selectedModule.moduleName);
+                    
+                    // In practice mode, set the assignmentClassDetailId from the first/selected module
+                    if (mode === 'practice') {
+                        const detailId = (selectedModule as any)?.assignmentClassDetailId || null;
+                        console.log('🎯 Setting default module assignmentClassDetailId:', detailId);
+                        onModuleDetailIdChange(detailId);
+                    }
                 }
             }
         } else if (localModule) {
@@ -310,12 +317,6 @@ const Description: React.FC<Props> = ({
             }
         }
         console.log('==========================');
-        
-        if (mode === 'practice') {
-            setLocalUmlType('');
-            onUmlTypeChange('');
-            onTypeUmlNameChange('');
-        }
     };
 
     const moduleDescriptionHtml = useMemo(() => {

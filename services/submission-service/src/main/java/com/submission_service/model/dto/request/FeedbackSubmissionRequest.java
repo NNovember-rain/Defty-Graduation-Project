@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeedbackSubmissionRequest {
-    private Long teacherId;
+    private Long userId;
     private Long submissionId;
     private Double grade;
     private String content;
