@@ -370,7 +370,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             studentIds.add(submission.getStudentId());
             assignmentIds.add(submission.getAssignmentId());
             classIds.add(submission.getClassId());
-            moduleIds.add(submission.get)
+//            moduleIds.add(submission.get)
         });
         Map<Long, UserResponse> userMap;
         Map<Long, AssignmentResponse> assignmentMap;
