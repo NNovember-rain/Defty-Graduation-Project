@@ -25,9 +25,9 @@ const CourseForm: React.FC = () => {
         },
         {
             key: 'color',
-            labelKey: 'Màu sắc (Mã Hex)',
+            labelKey: 'Màu sắc chủ đạo',
             type: 'text',
-            placeholderKey: 'Ví dụ: #FF5733',
+            placeholderKey: 'Nhập mã hex, ví dụ: #fff',
             required: false,
             gridSpan: 4,
             realTimeValidation: true,

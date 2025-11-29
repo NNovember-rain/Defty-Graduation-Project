@@ -23,10 +23,11 @@ import {
     FaQuestionCircle,
     FaEnvelope, FaBoxes, FaCog,
     FaSync,
-    FaBook
+    FaBook, FaLayerGroup, FaClipboard, FaUpload, FaTag, FaLightbulb
 } from 'react-icons/fa';
 import { MdDashboard, MdOutlineSettings } from 'react-icons/md';
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
+import {BsQuestionSquareFill} from "react-icons/bs";
 
 interface SidebarItem {
     id: string;
@@ -74,13 +75,6 @@ const sidebarContentConfig: SidebarItem[] = [
                 requiredAnyOfRoles: ['admin', 'teacher']
             },
             {
-                id: 'quizzesAndTests',
-                labelKey: 'sidebar.quizzesAndTests',
-                icon: <FaQuestionCircle />,
-                path: '/admin/content/quizzes',
-                requiredAnyOfRoles: ['admin', 'teacher']
-            },
-            {
                 id: 'lecturesAndMaterials',
                 labelKey: 'sidebar.lecturesAndMaterials',
                 icon: <FaBookOpen />,
@@ -97,12 +91,55 @@ const sidebarContentConfig: SidebarItem[] = [
         ],
     },
     {
+        id: 'quizzesAndTests',
+        labelKey: 'Câu hỏi trắc nghiệm',
+        icon: <FaQuestionCircle />,
+        path: '/admin/content/question-bank',
+        requiredAnyOfRoles: ['admin', 'teacher'],
+        children: [
+            {
+                id: 'testCollections',
+                labelKey: 'Bộ sưu tập đề',
+                icon: <FaLayerGroup />,
+                path: '/admin/content/question-bank/collections',
+                requiredAnyOfRoles: ['system-admin', 'admin']
+            },
+            {
+                id: 'testSets',
+                labelKey: 'Bộ đề',
+                icon: <FaClipboard />,
+                path: '/admin/content/question-bank/test-sets',
+                requiredAnyOfRoles: ['system-admin', 'admin']
+            },
+            {
+                id: "uploadTestSet",
+                labelKey: "Tải lên đề thi",
+                icon: <FaUpload />,
+                path: "/admin/content/question-bank/testset-processes",
+                requiredAnyOfRoles: ["system-admin", "admin"]
+            },
+            {
+                id: 'questions',
+                labelKey: 'Danh sách câu hỏi',
+                icon: <BsQuestionSquareFill />,
+                path: '/admin/content/question-bank/question-groups',
+                requiredAnyOfRoles: ['system-admin', 'admin']
+            },
+            {
+                id: 'questionTags',
+                labelKey: 'Thẻ câu hỏi',
+                icon: <FaTag />,
+                path: '/admin/content/question-bank/tags',
+                requiredAnyOfRoles: ['system-admin', 'admin']
+            },
+        ]
+    },
+    {
         id: 'classManagement',
         labelKey: 'sidebar.classManagement',
         icon: <FaGraduationCap />,
         path: '/admin/class',
-        requiredAnyOfRoles: ['admin', 'teacher']
-        ,
+        requiredAnyOfRoles: ['admin', 'teacher'],
         children: [
             {
                 id: 'courseManagement',
@@ -120,6 +157,7 @@ const sidebarContentConfig: SidebarItem[] = [
             },
         ]
     },
+
     { 
         id: 'submissionList', 
         labelKey: 'sidebar.submissionList', 

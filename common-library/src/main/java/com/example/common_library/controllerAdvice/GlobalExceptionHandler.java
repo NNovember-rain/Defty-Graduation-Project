@@ -13,9 +13,11 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
 import javax.naming.ServiceUnavailableException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -168,4 +170,33 @@ public class GlobalExceptionHandler {
         errorResponse.setDetailMessage(detailMessage);
         return errorResponse;
     }
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenException(
+            ForbiddenException exception,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse();
+
+        errorResponse.setTimestamp(new Date());
+        errorResponse.setStatus(ErrorCode.FORBIDDEN.getCode());
+        errorResponse.setPath(extractPath(request));
+        errorResponse.setError(ErrorCode.FORBIDDEN.getMessage());
+
+        // detailMessage là danh sách → thêm message từ exception
+        String detail = exception.getMessage() != null
+                ? exception.getMessage()
+                : ErrorCode.FORBIDDEN.getMessage();
+        errorResponse.getDetailMessage().add(detail);
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(errorResponse);
+    }
+    private String extractPath(WebRequest request) {
+        if (request instanceof ServletWebRequest) {
+            return ((ServletWebRequest) request).getRequest().getRequestURI();
+        }
+        return "";
+    }
+
 }

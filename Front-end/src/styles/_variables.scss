@@ -50,6 +50,46 @@ $warning: #f59e0b;
 $error: #ef4444;
 $info: #3b82f6;
 
+// ===== DARK THEME COLORS =====
+
+// Dark Background Colors
+$dark-bg-primary: #0a0a0a;        // Deep black background
+$dark-bg-secondary: #1a1a1a;      // Secondary black
+$dark-bg-tertiary: #2a2a2a;       // Lighter black for cards
+$dark-bg-green-tint: #0f1f14;     // Dark green tint
+
+// Dark Text Colors
+$dark-text-primary: #e8f5e9;      // Light green tint for primary text
+$dark-text-secondary: #c8e6c9;    // Medium green tint for secondary text
+$dark-text-tertiary: #a7f3d0;     // Accent green for highlights
+$dark-text-muted: rgba(232, 245, 233, 0.6);    // Muted text
+$dark-text-disabled: rgba(232, 245, 233, 0.4);  // Disabled text
+
+// Dark Border Colors
+$dark-border-primary: rgba(5, 150, 105, 0.3);   // Green border
+$dark-border-secondary: rgba(5, 150, 105, 0.2); // Lighter green border
+$dark-border-tertiary: rgba(5, 150, 105, 0.1);  // Very light green border
+$dark-border-muted: rgba(255, 255, 255, 0.1);   // Neutral border
+
+// Dark Green Shades (for accents and highlights)
+$dark-green-50: rgba(5, 150, 105, 0.05);
+$dark-green-100: rgba(5, 150, 105, 0.1);
+$dark-green-200: rgba(5, 150, 105, 0.2);
+$dark-green-300: rgba(5, 150, 105, 0.3);
+$dark-green-400: rgba(5, 150, 105, 0.4);
+$dark-green-500: rgba(5, 150, 105, 0.5);
+$dark-green-600: rgba(5, 150, 105, 0.6);
+$dark-green-700: rgba(5, 150, 105, 0.7);
+$dark-green-800: rgba(5, 150, 105, 0.8);
+
+// Dark Shadow Colors
+$dark-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+$dark-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+$dark-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+$dark-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7);
+$dark-shadow-green: 0 8px 24px rgba(5, 150, 105, 0.3);
+$dark-shadow-green-lg: 0 8px 24px rgba(5, 150, 105, 0.3), 0 0 40px rgba(5, 150, 105, 0.1);
+
 // ===== TYPOGRAPHY =====
 
 // Font Families
@@ -313,7 +353,66 @@ $animation-easing-ease-in-out: ease-in-out;
   }
 }
 
-// Card Mixin
+// ===== DARK THEME BUTTON MIXINS =====
+
+@mixin button-dark-primary {
+  @include button-base;
+  background: linear-gradient(135deg, $secondary-green, darken($secondary-green, 10%));
+  color: $white;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, darken($secondary-green, 5%), darken($secondary-green, 15%));
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+@mixin button-dark-secondary {
+  @include button-base;
+  background-color: transparent;
+  border: 1px solid $dark-border-primary;
+  color: $dark-text-tertiary;
+
+  &:hover:not(:disabled) {
+    background-color: $dark-green-100;
+    border-color: $dark-border-secondary;
+  }
+}
+
+@mixin button-dark-outline {
+  @include button-base;
+  background-color: transparent;
+  color: $dark-text-tertiary;
+  border: 1px solid $dark-border-primary;
+
+  &:hover:not(:disabled) {
+    background-color: $dark-green-200;
+    border-color: $dark-green-500;
+  }
+}
+
+// ===== DARK THEME CARD MIXIN =====
+@mixin card-dark {
+  background: linear-gradient(135deg, $dark-bg-secondary 0%, $dark-bg-green-tint 100%);
+  border-radius: $border-radius-xl;
+  box-shadow: $dark-shadow-md;
+  padding: $card-padding;
+  border: 1px solid $dark-border-secondary;
+  transition: all $animation-duration-normal $animation-easing-ease;
+
+  &:hover {
+    box-shadow: $dark-shadow-green-lg;
+    transform: translateY(-2px);
+    border-color: $dark-border-primary;
+  }
+}
+
+// Card Mixin (Light Theme - Original)
 @mixin card {
   background-color: $white;
   border-radius: $border-radius-xl;
@@ -328,7 +427,40 @@ $animation-easing-ease-in-out: ease-in-out;
   }
 }
 
-// Form Field Mixin
+// ===== DARK THEME FORM FIELD MIXIN =====
+@mixin form-field-dark {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid $dark-border-primary;
+  border-radius: $border-radius-lg;
+  background-color: rgba($dark-bg-green-tint, 0.5);
+  color: $dark-text-primary;
+  font-family: $font-inter;
+  font-size: $font-size-body-regular;
+  line-height: $line-height-body-regular;
+  transition: all $animation-duration-fast $animation-easing-ease;
+
+  &::placeholder {
+    color: $dark-text-disabled;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $secondary-green;
+    box-shadow: 0 0 0 2px $dark-green-300;
+    background-color: rgba($dark-bg-green-tint, 0.8);
+  }
+
+  &.error {
+    border-color: $error;
+  }
+
+  &.success {
+    border-color: $secondary-green;
+  }
+}
+
+// Form Field Mixin (Light Theme - Original)
 @mixin form-field {
   width: 100%;
   padding: 12px 16px;
@@ -395,4 +527,49 @@ $animation-easing-ease-in-out: ease-in-out;
   background-color: lighten($info, 35%);
   color: darken($info, 10%);
   border: 1px solid $info;
+}
+
+// ===== DARK THEME ALERT MIXINS =====
+@mixin alert-dark-success {
+  @include alert-base;
+  background: linear-gradient(135deg, $dark-green-200, $dark-green-100);
+  color: $dark-text-tertiary;
+  border: 1px solid $dark-border-primary;
+
+  .icon {
+    color: $secondary-green;
+  }
+}
+
+@mixin alert-dark-error {
+  @include alert-base;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+
+  .icon {
+    color: $error;
+  }
+}
+
+@mixin alert-dark-warning {
+  @include alert-base;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+
+  .icon {
+    color: $warning;
+  }
+}
+
+@mixin alert-dark-info {
+  @include alert-base;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+
+  .icon {
+    color: $info;
+  }
 }

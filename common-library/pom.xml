@@ -96,6 +96,11 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.38.0</version>
+        </dependency>
 		<!-- Dependency này bị lặp lại, đã xóa một bản -->
 		<!--
         <dependency>

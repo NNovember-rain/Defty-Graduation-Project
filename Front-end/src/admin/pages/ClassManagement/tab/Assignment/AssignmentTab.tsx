@@ -8,6 +8,7 @@ import {
     unassignAssignment,
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
+import { getAllTestSetsByClassId, removeTestSetFromClass } from "../../../../../shared/services/classTestSetService.ts";
 import {
     Button,
     Card,
@@ -34,17 +35,16 @@ import {DownOutlined} from "@ant-design/icons";
 import {useNavigate} from "react-router-dom";
 import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
 import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
+import AssignQuizModal from "./AssignQuizModal.tsx";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-
-
 
 interface AssignmentTabProps {
     classId: number;
 }
 
-type AssignmentType = "ASSIGNMENT" | "TEST";
+type AssignmentType = "ASSIGNMENT" | "TEST" | "QUIZ";
 
 interface AssignedModule {
     moduleId: number;
@@ -56,14 +56,26 @@ interface AssignedModule {
     assignmentClassDetailId: number;
 }
 
+interface AssignedQuiz {
+    quizId: number;
+    quizTitle: string;
+    testSetId: number;
+    testSetName: string;
+    collectionName?: string;
+    totalQuestions: number;
+    startDate: string | null;
+    endDate: string | null;
+    assignmentClassDetailId: number;
+}
+
 interface IAssignmentExtended extends IAssignment {
     id: string;
     type: AssignmentType;
     startDate: string | null;
     endDate: string | null;
     classInfoId: number;
-
     assignedModules: AssignedModule[];
+    assignedQuizzes?: AssignedQuiz[];
     assignedUmlType: { name: string; } | null;
     createdDate: string;
 }
@@ -72,14 +84,18 @@ interface ProcessedAssignmentItem {
     key: string;
     assignmentId: string;
     assignmentTitle: string;
-    assignmentCode: string;
+    assignmentCode?: string;
     startDate: string | null;
     endDate: string | null;
     type: AssignmentType;
     assignmentClassDetailId: number;
-    moduleName: string;
-    typeUmls: string[];
-    isModuleTest: boolean;
+    moduleName?: string;
+    typeUmls?: string[];
+    isModuleTest?: boolean;
+    // Quiz specific fields
+    testSetName?: string;
+    collectionName?: string;
+    totalQuestions?: number;
     createdDate: string;
 }
 
@@ -99,8 +115,9 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [isAssignmentModalVisible, setIsAssignmentModalVisible] = useState(false);
     const [isAssignmentModalVisibleTest, setIsAssignmentModalVisibleTest] = useState(false);
+    const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<string>('test'); // Đổi mặc định sang Luyện tập
+    const [activeTab, setActiveTab] = useState<string>('test');
 
     const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
     const [selectedModule, setSelectedModule] = useState<string | null>(null);
@@ -109,7 +126,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [uniqueModules, setUniqueModules] = useState<string[]>([]);
     const [uniqueUmlTypes, setUniqueUmlTypes] = useState<string[]>([]);
     const [uniqueAssignments, setUniqueAssignments] = useState<{ id: string; title: string }[]>([]);
-
 
     const goToAssignmentDetails = (assignmentId: string, assignmentClassDetailId: number) => {
         const originalId = assignmentId.split('-')[0];
@@ -125,7 +141,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             } else {
                 message.error(t('common.missingDetailId') || "Không tìm thấy ID chi tiết bài tập.");
             }
-
         },
         [navigate, t]
     );
@@ -139,29 +154,61 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     }, []);
 
     const showQuizAssignmentModal = useCallback(() => {
-        // Chức năng gán Quiz chưa được triển khai
+        setIsQuizModalVisible(true);
     }, []);
-
 
     const hideAssignmentModal = () => {
         setIsAssignmentModalVisible(false);
         setIsAssignmentModalVisibleTest(false);
+        setIsQuizModalVisible(false);
     };
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
+            // Existing assignment fetch logic...
             const options: GetAssignmentsOptions = {
                 limit: 1000,
             };
 
             const response = await getAssignmentsByClassId(classId, options);
-            // console.log("Fetched assignments:", response);
-
             const data = response.assignments || [];
 
+            // Fetch quiz assignments
+            const quizResponse = await getAllTestSetsByClassId(classId);
+            const quizData = quizResponse.data || [];
+
+            // Map quiz data vào format phù hợp
+            const quizAssignments = quizData.map((quiz) => ({
+                id: `quiz-${quiz.id}`,
+                type: 'QUIZ' as AssignmentType,
+                classInfoId: classId,
+                assignmentCode: undefined,
+                title: quiz.testSetName,
+                description: '',
+                startDate: quiz.startDate,
+                endDate: quiz.endDate,
+                checkedTest: false,
+                assignedModules: [],
+                assignedQuizzes: [{
+                    quizId: quiz.id,
+                    quizTitle: quiz.testSetName,
+                    testSetId: quiz.testSetId,
+                    testSetName: quiz.testSetName,
+                    collectionName: quiz.collectionName,
+                    totalQuestions: quiz.totalQuestions,
+                    startDate: quiz.startDate,
+                    endDate: quiz.endDate,
+                    assignmentClassDetailId: quiz.id, // Sử dụng assignment id
+                }],
+                assignedUmlType: null,
+                createdDate: quiz.createdDate || dayjs().toISOString(),
+            } as IAssignmentExtended));
+
+            // Merge assignments và quiz assignments
             const mappedAssignments: IAssignmentExtended[] = data.map((a: any, index: number) => {
+                // Existing mapping logic...
                 const assignmentType: AssignmentType = (a.assignmentClassDetailResponseList || []).some((m: any) => m.checkedTest === true) ? "TEST" : "ASSIGNMENT";
 
                 return {
@@ -183,8 +230,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 } as unknown as IAssignmentExtended;
             });
 
-            setAssignments(mappedAssignments);
-            collectUniqueFilters(mappedAssignments);
+            // Combine both arrays
+            const allAssignments = [...mappedAssignments, ...quizAssignments];
+
+            setAssignments(allAssignments);
+            collectUniqueFilters(allAssignments);
 
         } catch (err) {
             console.error("Failed to fetch assignments:", err);
@@ -219,19 +269,43 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         fetchData();
     }, [fetchData]);
 
-
     const processedAssignments = useMemo(() => {
-        const isFilteringTest = activeTab === 'test';
-        let flattened: ProcessedAssignmentItem[] = assignments.flatMap(a => {
-            if (selectedAssignmentId && a.id !== selectedAssignmentId) {
-                return [];
-            }
+        let flattened: ProcessedAssignmentItem[] = [];
 
-            const relevantModules = a.assignedModules
-                .filter(m => m.checkedTest === isFilteringTest);
+        if (activeTab === 'quiz') {
+            // Xử lý quiz items
+            flattened = assignments.flatMap(a => {
+                if (selectedAssignmentId && a.id !== selectedAssignmentId) {
+                    return [];
+                }
 
-            return relevantModules.map((m, mIndex) => {
-                return {
+                const quizzes = a.assignedQuizzes || [];
+                return quizzes.map((q, qIndex) => ({
+                    key: `${a.id}-quiz-${q.quizId}-${qIndex}`,
+                    assignmentId: a.id,
+                    assignmentTitle: q.quizTitle || a.title,
+                    startDate: q.startDate,
+                    endDate: q.endDate,
+                    type: 'QUIZ' as AssignmentType,
+                    assignmentClassDetailId: q.assignmentClassDetailId,
+                    testSetName: q.testSetName,
+                    collectionName: q.collectionName,
+                    totalQuestions: q.totalQuestions,
+                    createdDate: a.createdDate
+                } as ProcessedAssignmentItem));
+            });
+        } else {
+            // Xử lý assignment và test items
+            const isFilteringTest = activeTab === 'test';
+            flattened = assignments.flatMap(a => {
+                if (selectedAssignmentId && a.id !== selectedAssignmentId) {
+                    return [];
+                }
+
+                const relevantModules = a.assignedModules
+                    .filter(m => m.checkedTest === isFilteringTest);
+
+                return relevantModules.map((m, mIndex) => ({
                     key: `${a.id}-${m.moduleId}-${mIndex}`,
                     assignmentId: a.id,
                     assignmentTitle: a.title,
@@ -239,31 +313,31 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     startDate: m.startDate,
                     endDate: m.endDate,
                     type: a.type,
-                    assignmentClassDetailId: m.assignmentClassDetailId, // 🔥 CẬP NHẬT: Lấy ID chi tiết
+                    assignmentClassDetailId: m.assignmentClassDetailId,
                     moduleName: m.moduleName,
                     typeUmls: m.typeUmls,
                     isModuleTest: m.checkedTest,
                     createdDate: a.createdDate
-                } as ProcessedAssignmentItem;
+                } as ProcessedAssignmentItem));
             });
-        });
+        }
 
+        // Lọc theo module và UML type (chỉ áp dụng cho assignment/test)
+        if (activeTab !== 'quiz') {
+            flattened = flattened.filter(item => {
+                const matchesModule = selectedModule === null || selectedModule === '' ||
+                    item.moduleName === selectedModule;
 
-        // 2. LỌC THEO TIÊU CHÍ (Filter Module & UML Type)
-        let filtered = flattened.filter(item => {
-            const matchesModule = selectedModule === null || selectedModule === '' ||
-                item.moduleName === selectedModule;
+                const matchesUmlType = selectedUmlType === null || selectedUmlType === '' ||
+                    (item.typeUmls && item.typeUmls.includes(selectedUmlType));
 
-            const matchesUmlType = selectedUmlType === null || selectedUmlType === '' ||
-                item.typeUmls.includes(selectedUmlType);
+                return matchesModule && matchesUmlType;
+            });
+        }
 
-            return matchesModule && matchesUmlType;
-        });
-
-
-        // 3. SẮP XẾP (Sort)
+        // Sắp xếp
         if (sortBy) {
-            filtered.sort((a, b) => {
+            flattened.sort((a, b) => {
                 let aVal: any;
                 let bVal: any;
                 let compareResult = 0;
@@ -288,20 +362,19 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             });
         }
 
-        setTotal(filtered.length);
+        setTotal(flattened.length);
 
         const startIndex = (page - 1) * size;
         const endIndex = startIndex + size;
 
-        if (startIndex >= filtered.length && filtered.length > 0) {
+        if (startIndex >= flattened.length && flattened.length > 0) {
             setPage(1);
-            return filtered.slice(0, size);
+            return flattened.slice(0, size);
         }
 
-        return filtered.slice(startIndex, endIndex);
+        return flattened.slice(startIndex, endIndex);
 
     }, [assignments, activeTab, page, size, sortBy, sortOrder, selectedAssignmentId, selectedModule, selectedUmlType]);
-
 
     const menuItems: MenuProps["items"] = [
         {
@@ -316,7 +389,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         },
         {
             key: "assignQuiz",
-            label: t("classDetail.assignment.assignQuiz"),
+            label: t("classDetail.assignment.assignQuiz") || "Giao bài trắc nghiệm",
             onClick: () => showQuizAssignmentModal()
         }
     ];
@@ -328,8 +401,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             setPage(1);
         }
     };
-
-    // Đã loại bỏ onToggleView vì nó không được sử dụng trong giao diện mới
 
     const onSortChange = (value: string) => {
         const [field, order] = value.split("_");
@@ -369,7 +440,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         return Array.from(moduleSet).sort();
     }, [selectedAssignmentId, assignments, uniqueModules]);
 
-
     const availableUmlTypes = useMemo(() => {
         if (!selectedAssignmentId) {
             return uniqueUmlTypes;
@@ -386,26 +456,61 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         return Array.from(umlSet).sort();
     }, [selectedAssignmentId, assignments, uniqueUmlTypes]);
 
-    const handleUnassign = async (assignmentClassDetailId: number) => {
+    const handleUnassign = async (assignmentClassDetailId: number, isQuiz: boolean = false) => {
         try {
             message.loading({ content: t('common.unassigning') || 'Đang hủy giao...', key: 'unassign' });
-            await unassignAssignment(assignmentClassDetailId);
+
+            if (isQuiz) {
+                // Tìm quiz assignment để lấy testSetId
+                const quizAssignment = assignments.find(a =>
+                    a.assignedQuizzes?.some(q => q.assignmentClassDetailId === assignmentClassDetailId)
+                );
+
+                if (quizAssignment && quizAssignment.assignedQuizzes) {
+                    const quiz = quizAssignment.assignedQuizzes.find(q =>
+                        q.assignmentClassDetailId === assignmentClassDetailId
+                    );
+
+                    if (quiz) {
+                        await removeTestSetFromClass(classId, quiz.testSetId);
+                    }
+                }
+            } else {
+                await unassignAssignment(assignmentClassDetailId);
+            }
+
             message.success({ content: t('common.unassignSuccess') || 'Hủy giao bài tập thành công!', key: 'unassign', duration: 2 });
             await new Promise(resolve => setTimeout(resolve, 1000));
             fetchData();
         } catch (error) {
             console.error("Unassign failed:", error);
-            message.error({ content: t('common.unassignFailed') || "Xoá thất bại!", key: 'unassign', duration: 3 });
+            const errorMessage = error instanceof Error ? error.message : 'Xoá thất bại!';
+            message.error({ content: errorMessage, key: 'unassign', duration: 3 });
         }
     };
 
-
     const renderAssignmentItem = (item: ProcessedAssignmentItem) => {
+        const isQuiz = item.type === 'QUIZ';
         const isTest = item.isModuleTest;
-        const primaryColor = isTest ? '#fa541c' : '#52c41a'; // Cam cho Test, Xanh lá cho Luyện tập
-        const secondaryColor = isTest ? '#fff1f0' : '#f6ffed';
-        const icon = isTest ? <IoTimeOutline /> : <MdAssignmentTurnedIn />;
-        const typeText = isTest ? (t("classDetail.type.test") || "KIỂM TRA") : (t("classDetail.type.assignment") || "LUYỆN TẬP");
+
+        let primaryColor, secondaryColor, icon, typeText;
+
+        if (isQuiz) {
+            primaryColor = '#9254de'; // Tím cho Quiz
+            secondaryColor = '#f9f0ff';
+            icon = <MdOutlineAssignment />;
+            typeText = "TRẮC NGHIỆM";
+        } else if (isTest) {
+            primaryColor = '#fa541c'; // Cam cho Test
+            secondaryColor = '#fff1f0';
+            icon = <IoTimeOutline />;
+            typeText = t("classDetail.type.test") || "KIỂM TRA";
+        } else {
+            primaryColor = '#52c41a'; // Xanh lá cho Assignment
+            secondaryColor = '#f6ffed';
+            icon = <MdAssignmentTurnedIn />;
+            typeText = t("classDetail.type.assignment") || "LUYỆN TẬP";
+        }
 
         const keyPrefix = item.key;
 
@@ -416,7 +521,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     style={{
                         borderRadius: 12,
                         marginBottom: 16,
-                        borderLeft: `5px solid ${primaryColor}`, // Thanh màu bên trái
+                        borderLeft: `5px solid ${primaryColor}`,
                         boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                         transition: 'all 0.3s ease',
                     }}
@@ -445,22 +550,40 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                     {item.assignmentTitle}
                                 </Title>
 
-                                {/* Module & Type UML */}
                                 <Space size={[8, 4]} wrap style={{ marginBottom: 8 }}>
+                                    {isQuiz ? (
+                                        <>
+                                            {item.collectionName && (
+                                                <Tag key={`${keyPrefix}-collection`} color="geekblue" style={{ fontWeight: 500 }}>
+                                                    {item.collectionName}
+                                                </Tag>
+                                            )}
 
-                                    {/* Tag Module Name */}
-                                    <Tag key={`${keyPrefix}-module-main`} color="blue" style={{ fontWeight: 500 }}>
-                                        {t("classDetail.module") || "Module"}: {item.moduleName}
-                                    </Tag>
+                                            {item.totalQuestions && (
+                                                <Tag key={`${keyPrefix}-questions`} color="cyan" style={{ fontWeight: 500 }}>
+                                                    {item.totalQuestions} câu hỏi
+                                                </Tag>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Tag key={`${keyPrefix}-module-main`} color="blue" style={{ fontWeight: 500 }}>
+                                                Module: {item.moduleName}
+                                            </Tag>
 
-                                    {/* Tag Type UMLs */}
-                                    {item.typeUmls.map((name, index) => (
-                                        <Tag key={`${keyPrefix}-uml-${name}-${index}`} color="geekblue" style={{ fontWeight: 500 }}>
-                                            {name}
-                                        </Tag>
-                                    ))}
-
+                                            {item.typeUmls?.map((name, index) => (
+                                                <Tag
+                                                    key={`${keyPrefix}-uml-${name}-${index}`}
+                                                    color="geekblue"
+                                                    style={{ fontWeight: 500 }}
+                                                >
+                                                    {name}
+                                                </Tag>
+                                            ))}
+                                        </>
+                                    )}
                                 </Space>
+
 
                                 <Space size={16}>
                                     <Text style={{ fontWeight: 600, color: primaryColor, fontSize: '12px' }}>
@@ -489,21 +612,22 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 paddingTop: '8px'
                             }}
                         >
+                            {!isQuiz && (
+                                <Tooltip title={t("classDetail.view.assignmentInfo") || "Xem thông tin bài tập"}>
+                                    <Button
+                                        icon={<MdOutlineAssignment />}
+                                        type="text"
+                                        shape="circle"
+                                        style={{ color: '#1890ff', fontSize: '18px' }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleViewAssignmentDetails(item);
+                                        }}
+                                    />
+                                </Tooltip>
+                            )}
 
-                            <Tooltip title={t("classDetail.view.assignmentInfo") || "Xem thông tin bài tập"}>
-                                <Button
-                                    icon={<MdOutlineAssignment />}
-                                    type="text"
-                                    shape="circle"
-                                    style={{ color: '#1890ff', fontSize: '18px' }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleViewAssignmentDetails(item);
-                                    }}
-                                />
-                            </Tooltip>
-
-                            {item.isModuleTest && (
+                            {(isTest || isQuiz) && (
                                 <Tooltip title={t("classDetail.view.submissionDetails") || "Xem chi tiết bài nộp"}>
                                     <Button
                                         icon={<IoFileTrayFull />}
@@ -519,7 +643,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             )}
                             <Popconfirm
                                 title={t('common.confirm') || "Bạn có chắc chắn muốn hủy giao bài tập này?"}
-                                onConfirm={() => handleUnassign(item.assignmentClassDetailId)}
+                                onConfirm={() => handleUnassign(item.assignmentClassDetailId, isQuiz)}
                                 okText={t('common.yes') || "Có"}
                                 cancelText={t('common.no') || "Không"}
                                 placement="topRight"
@@ -542,20 +666,32 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     };
 
-    const countAssignments = (isTest: boolean) => {
+    const countAssignments = (type: 'test' | 'assignment' | 'quiz') => {
         const assignmentsToCount = selectedAssignmentId
             ? assignments.filter(a => a.id === selectedAssignmentId)
             : assignments;
 
+        if (type === 'quiz') {
+            return assignmentsToCount.reduce((count, a) =>
+                count + (a.assignedQuizzes?.length || 0), 0
+            );
+        }
+
+        const isTest = type === 'test';
         return assignmentsToCount.flatMap(a =>
             a.assignedModules.filter(m => m.checkedTest === isTest)
         ).length;
     };
 
-    const renderEmptyContent = (isTest: boolean) => {
-        const descriptionText = isTest
-            ? t("common.noData") || "Chưa có bài tập kiểm tra nào được giao."
-            : t("common.noData") || "Chưa có bài tập luyện tập nào được giao.";
+    const renderEmptyContent = (type: 'test' | 'assignment' | 'quiz') => {
+        let descriptionText;
+        if (type === 'quiz') {
+            descriptionText = "Chưa có bài trắc nghiệm nào được giao.";
+        } else if (type === 'test') {
+            descriptionText = t("common.noData") || "Chưa có bài tập kiểm tra nào được giao.";
+        } else {
+            descriptionText = t("common.noData") || "Chưa có bài tập luyện tập nào được giao.";
+        }
 
         return (
             <Empty
@@ -572,28 +708,40 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const tabItems: TabsProps['items'] = [
         {
             key: 'test',
-            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${countAssignments(true)})`,
+            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${countAssignments('test')})`,
             children: (
                 <List
                     itemLayout="vertical"
                     dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
-                    locale={{ emptyText: renderEmptyContent(true) }}
+                    locale={{ emptyText: renderEmptyContent('test') }}
                 />
             ),
         },
         {
             key: 'assignment',
-            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${countAssignments(false)})`,
+            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${countAssignments('assignment')})`,
             children: (
                 <List
                     itemLayout="vertical"
                     dataSource={processedAssignments}
                     renderItem={renderAssignmentItem}
-                    locale={{ emptyText: renderEmptyContent(false) }}
+                    locale={{ emptyText: renderEmptyContent('assignment') }}
                 />
             ),
         },
+        {
+            key: 'quiz',
+            label: `Bài Trắc Nghiệm (${countAssignments('quiz')})`,
+            children: (
+                <List
+                    itemLayout="vertical"
+                    dataSource={processedAssignments}
+                    renderItem={renderAssignmentItem}
+                    locale={{ emptyText: renderEmptyContent('quiz') }}
+                />
+            ),
+        }
     ];
 
     if (loading) {
@@ -624,7 +772,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     return (
         <div style={{ padding: "2rem" }}>
             <main style={{ flex: 1 }}>
-
                 <Row justify="space-between" align="middle" gutter={[16, 16]} style={{ marginBottom: 24 }}>
                     <Col xs={24} sm={24} md={4} lg={3}>
                         <Title level={3} style={{ margin: 0 }}>
@@ -632,15 +779,13 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         </Title>
                     </Col>
 
-                    {/* Cột Điều khiển: Chứa các Select và Nút Gán */}
                     <Col xs={24} sm={24} md={20} lg={21}>
                         <Space size={12} wrap style={{ width: '100%', justifyContent: 'flex-end' }}>
-
                             <Select
                                 placeholder={t("classDetail.filter.assignmentTitle") || "Lọc theo Tên Bài tập"}
                                 allowClear
                                 showSearch
-                                style={{ width: 280 }} // Thu nhỏ
+                                style={{ width: 280 }}
                                 value={selectedAssignmentId}
                                 onChange={handleAssignmentFilterChange}
                                 filterOption={(input, option) =>
@@ -657,7 +802,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             <Select
                                 placeholder={t("classDetail.filter.module") || "Module"}
                                 allowClear
-                                style={{ width: 280 }} // Thu nhỏ
+                                style={{ width: 280 }}
                                 value={selectedModule}
                                 onChange={handleModuleFilterChange}
                                 disabled={!availableModules.length && !!selectedAssignmentId}
@@ -672,7 +817,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             <Select
                                 placeholder={t("classDetail.filter.umlType") || "Loại UML"}
                                 allowClear
-                                style={{ width: 150 }} // Thu nhỏ
+                                style={{ width: 150 }}
                                 value={selectedUmlType}
                                 onChange={handleUmlTypeFilterChange}
                                 disabled={!availableUmlTypes.length && !!selectedAssignmentId}
@@ -683,7 +828,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                     </Option>
                                 ))}
                             </Select>
-
 
                             <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={["click"]}>
                                 <Button type="primary">
@@ -731,6 +875,12 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 />
                 <AssignAssignmentModalTest
                     visible={isAssignmentModalVisibleTest}
+                    onClose={hideAssignmentModal}
+                    classIds={[classId]}
+                    onAssigned={fetchData}
+                />
+                <AssignQuizModal
+                    visible={isQuizModalVisible}
                     onClose={hideAssignmentModal}
                     classIds={[classId]}
                     onAssigned={fetchData}

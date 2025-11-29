@@ -159,7 +159,7 @@ const CourseLvManagement: React.FC = () => {
         },
         {
             key: 'color',
-            label: 'Màu sắc',
+            label: 'Màu sắc chủ đạo',
             sortable: false,
             render: (value: string) => {
                 if (!value) return '-';
@@ -168,23 +168,47 @@ const CourseLvManagement: React.FC = () => {
                 const isValidHex = hexColorRegex.test(value);
 
                 return (
-                    <div className="flex items-center gap-2">
+                    <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '6px 12px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(0, 0, 0, 0.06)'
+                    }}>
                         <div
-                            className="rounded border border-gray-300"
                             style={{
                                 backgroundColor: isValidHex ? value : '#cccccc',
-                                width: '24px !important',
-                                height: '24px !important',
-                                minWidth: '24px',
-                                minHeight: '24px',
+                                width: '32px',
+                                height: '32px',
+                                minWidth: '32px',
+                                minHeight: '32px',
+                                borderRadius: '6px',
                                 flexShrink: 0,
-                                display: 'block'
+                                display: 'block',
+                                border: '2px solid rgba(255, 255, 255, 0.9)',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(0, 0, 0, 0.1)',
+                                transition: 'transform 0.2s ease',
+                                cursor: 'pointer'
                             }}
                             title={isValidHex ? value : 'Màu không hợp lệ'}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.15)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                            }}
                         />
-                        <span className="text-sm font-mono text-gray-600">
-                    {isValidHex ? value : 'N/A'}
-                </span>
+                        <span style={{
+                            fontSize: '13px',
+                            fontFamily: 'Monaco, Consolas, monospace',
+                            color: '#4b5563',
+                            fontWeight: '500',
+                            letterSpacing: '0.3px'
+                        }}>
+                            {isValidHex ? value.toUpperCase() : 'N/A'}
+                        </span>
                     </div>
                 );
             }
@@ -275,10 +299,6 @@ const CourseLvManagement: React.FC = () => {
     const handleCreateNew = useCallback(() => {
         navigate("/admin/course/create");
     }, [navigate]);
-
-    // const handleViewCourseDetails = useCallback((rowData: ICourse) => {
-    //     navigate(`/admin/course/view/${rowData.id}`);
-    // }, [navigate]);
 
     const handleEditCourse = useCallback((rowData: ICourse) => {
         navigate(`/admin/course/update/${rowData.id}`);
@@ -375,13 +395,6 @@ const CourseLvManagement: React.FC = () => {
             tooltip: (rowData: ICourse) => rowData.status ? 'Ngưng hoạt động' : 'Kích hoạt',
             color: '#63782b'
         },
-        // {
-        //     icon: <FaEye />,
-        //     onClick: handleViewCourseDetails,
-        //     className: 'text-gray-600 hover:text-gray-900 ml-2',
-        //     tooltip: 'Xem chi tiết',
-        //     color: '#6c757d'
-        // },
         {
             icon: <FaEdit />,
             onClick: handleEditCourse,
