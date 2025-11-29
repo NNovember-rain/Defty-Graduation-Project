@@ -16,9 +16,11 @@ public interface UserMapper {
     @Mapping(source = "isActive", target = "isActive")
     @Mapping(source = "id", target = "id")
     @Mapping(source = "createdDate", target = "createdDate")
+    @Mapping(target = "apiKey", ignore = true)
     UserResponse toUserResponse(User user);
 
     @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "apiKey", ignore = true)
     void updateUser(@MappingTarget User user, UserUpdateRequest request);
 }
 
