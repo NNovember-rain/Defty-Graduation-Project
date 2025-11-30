@@ -57,7 +57,7 @@ interface ProcessedAssignmentItem {
     displayTypeUmls: string[];
 }
 
-const DEFAULT_PAGE_SIZE = 9;
+const DEFAULT_PAGE_SIZE = 5;
 
 const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
     const { t } = useTranslation();
@@ -89,7 +89,6 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
             queryParams += `&assignmentClassId=${rowData.assignmentClassDetailId}`;
 
             navigate(url + queryParams);
-            // console.log(url + queryParams);
         },
         [navigate, classId]
     );
@@ -497,7 +496,7 @@ const AssignmentTabUser: React.FC<AssignmentTabProps> = ({ classId }) => {
                             pageSize={size}
                             total={total}
                             showSizeChanger
-                            pageSizeOptions={["6", "9", "12", "18"]}
+                            pageSizeOptions={["5", "10", "15", "20"]}
                             onChange={onChangePage}
                             onShowSizeChange={onChangePage}
                             showTotal={(total) =>
