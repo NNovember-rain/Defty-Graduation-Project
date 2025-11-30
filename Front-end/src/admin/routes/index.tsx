@@ -26,7 +26,6 @@ import ClassDetailPage from "../pages/ClassManagement/ClassDetailPage.tsx";
 import AssignmentDetail from "../pages/ClassManagement/tab/Assignment/AssignmentDetail.tsx";
 import AssignmentForm from "../pages/Assignment/assignmentForm.tsx";
 import SubmissionDetail from "../pages/Submission/SubmissionDetail.tsx";
-import StudentAssignmentManagerAntD from "../pages/ClassManagement/tab/Assignment/StudentAssignmentManagerAntD.tsx";
 import CourseForm from "../pages/ClassManagement/courseForm.tsx";
 import CourseLvManagement from "../pages/ClassManagement/courseIndex.tsx";
 import AutoFeedbackJob from "../pages/AutoFeedbackJob";
@@ -39,9 +38,8 @@ import UploadProcessManagement from "../pages/QuestionBank/TestSets/uploadProces
 import UploadTestForm from "../pages/QuestionBank/TestSets/uploadTestForm.tsx";
 import QuestionGroupManagement from "../pages/QuestionBank/QuestionGroups";
 import QuestionTagForm from "../pages/QuestionBank/Tags/questionTagForm.tsx";
-import DirectionSetManagement from "../pages/QuestionBank/Direction";
-import DirectionSetForm from "../pages/QuestionBank/Direction/directionForm.tsx";
 import QuestionTagManagement from "../pages/QuestionBank/Tags";
+import StudentAssignment from "../pages/ClassManagement/tab/Assignment/StudentAssignment.tsx";
 
 
 interface AppRoute {
@@ -168,7 +166,7 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     },
     {
         path: 'class/:classId/assignment/:assignmentId/detail',
-        component: StudentAssignmentManagerAntD,
+        component: StudentAssignment,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {

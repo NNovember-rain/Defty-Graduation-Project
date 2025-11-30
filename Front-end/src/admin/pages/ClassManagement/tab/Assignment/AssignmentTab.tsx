@@ -9,42 +9,28 @@ import {
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
 import { getAllTestSetsByClassId, removeTestSetFromClass } from "../../../../../shared/services/classTestSetService.ts";
+
 import {
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    Empty,
-    List,
-    type MenuProps,
     message,
     Pagination,
     Popconfirm,
-    Row,
-    Select,
-    Space,
-    Tabs,
-    type TabsProps,
-    Tag,
-    Tooltip,
-    Typography
 } from "antd";
-import {IoCalendarOutline, IoCloseCircleOutline, IoFileTrayFull, IoTimeOutline} from "react-icons/io5";
+
+import {IoCalendarOutline, IoCloseCircleOutline, IoFileTrayFull, IoTimeOutline, IoSearch} from "react-icons/io5";
 import {MdAssignmentTurnedIn, MdOutlineAssignment} from "react-icons/md";
-import {DownOutlined} from "@ant-design/icons";
-import {useNavigate} from "react-router-dom";
+import {DownOutlined, UpOutlined} from "@ant-design/icons";
+import {useNavigate, useSearchParams} from "react-router-dom";
+
 import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
 import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
 import AssignQuizModal from "./AssignQuizModal.tsx";
 
-const { Title, Text } = Typography;
-const { Option } = Select;
-
+// --- Giao diện giữ nguyên ---
 interface AssignmentTabProps {
     classId: number;
 }
-
 type AssignmentType = "ASSIGNMENT" | "TEST" | "QUIZ";
+// ... (các interface khác giữ nguyên)
 
 interface AssignedModule {
     moduleId: number;
@@ -92,18 +78,22 @@ interface ProcessedAssignmentItem {
     moduleName?: string;
     typeUmls?: string[];
     isModuleTest?: boolean;
-    // Quiz specific fields
     testSetName?: string;
     collectionName?: string;
     totalQuestions?: number;
     createdDate: string;
 }
+// ------------------------------
 
-const DEFAULT_PAGE_SIZE = 9;
+const DEFAULT_PAGE_SIZE = 5;
+const ASSIGNMENT_TAB_PARAM = 'classworkTab';
 
 const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // ... (Giữ nguyên các state)
     const [assignments, setAssignments] = useState<IAssignmentExtended[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -117,7 +107,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [isAssignmentModalVisibleTest, setIsAssignmentModalVisibleTest] = useState(false);
     const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<string>('test');
+    const initialTab = searchParams.get(ASSIGNMENT_TAB_PARAM);
+    const validTabs = ['test', 'assignment', 'quiz'];
+    const defaultActiveTab = validTabs.includes(initialTab || '') ? initialTab! : 'test';
+    const [activeTab, setActiveTab] = useState<string>(defaultActiveTab);
 
     const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
     const [selectedModule, setSelectedModule] = useState<string | null>(null);
@@ -127,6 +120,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [uniqueUmlTypes, setUniqueUmlTypes] = useState<string[]>([]);
     const [uniqueAssignments, setUniqueAssignments] = useState<{ id: string; title: string }[]>([]);
 
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+
+    // --- Giữ nguyên các hàm logic ---
     const goToAssignmentDetails = (assignmentId: string, assignmentClassDetailId: number) => {
         const originalId = assignmentId.split('-')[0];
         navigate(`/admin/class/${classId}/assignment/${originalId}/detail?assignmentClassDetailId=${assignmentClassDetailId}`);
@@ -147,14 +144,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     const showAssignmentModal = useCallback(() => {
         setIsAssignmentModalVisible(true);
+        setIsDropdownOpen(false);
     }, []);
 
     const showTestAssignmentModal = useCallback(() => {
         setIsAssignmentModalVisibleTest(true);
+        setIsDropdownOpen(false);
     }, []);
 
     const showQuizAssignmentModal = useCallback(() => {
         setIsQuizModalVisible(true);
+        setIsDropdownOpen(false);
     }, []);
 
     const hideAssignmentModal = () => {
@@ -167,19 +167,13 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setLoading(true);
         setError(null);
         try {
-            // Existing assignment fetch logic...
-            const options: GetAssignmentsOptions = {
-                limit: 1000,
-            };
-
+            const options: GetAssignmentsOptions = { limit: 1000 };
             const response = await getAssignmentsByClassId(classId, options);
             const data = response.assignments || [];
 
-            // Fetch quiz assignments
             const quizResponse = await getAllTestSetsByClassId(classId);
             const quizData = quizResponse.data || [];
 
-            // Map quiz data vào format phù hợp
             const quizAssignments = quizData.map((quiz) => ({
                 id: `quiz-${quiz.id}`,
                 type: 'QUIZ' as AssignmentType,
@@ -200,16 +194,16 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     totalQuestions: quiz.totalQuestions,
                     startDate: quiz.startDate,
                     endDate: quiz.endDate,
-                    assignmentClassDetailId: quiz.id, // Sử dụng assignment id
+                    assignmentClassDetailId: quiz.id,
                 }],
                 assignedUmlType: null,
                 createdDate: quiz.createdDate || dayjs().toISOString(),
             } as IAssignmentExtended));
 
-            // Merge assignments và quiz assignments
             const mappedAssignments: IAssignmentExtended[] = data.map((a: any, index: number) => {
-                // Existing mapping logic...
                 const assignmentType: AssignmentType = (a.assignmentClassDetailResponseList || []).some((m: any) => m.checkedTest === true) ? "TEST" : "ASSIGNMENT";
+
+                const assignedQuizzes = a.assignedQuizzes || [];
 
                 return {
                     id: String(a.assignmentId ?? index),
@@ -225,12 +219,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         ...m,
                         assignmentClassDetailId: m.assignmentClassDetailId,
                     })) as AssignedModule[],
+                    assignedQuizzes: assignedQuizzes.map((q: any) => ({
+                        ...q,
+                        assignmentClassDetailId: q.assignmentClassDetailId,
+                    })) as AssignedQuiz[],
                     assignedUmlType: null,
                     createdDate: a.createdDate || dayjs().toISOString(),
                 } as unknown as IAssignmentExtended;
             });
 
-            // Combine both arrays
             const allAssignments = [...mappedAssignments, ...quizAssignments];
 
             setAssignments(allAssignments);
@@ -269,11 +266,26 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         fetchData();
     }, [fetchData]);
 
+    const handleTabChange = (key: string) => {
+        setActiveTab(key);
+        setPage(1);
+        setSelectedAssignmentId(null);
+        setSelectedModule(null);
+        setSelectedUmlType(null);
+
+        const newSearchParams = new URLSearchParams(searchParams);
+        if (key !== 'test') {
+            newSearchParams.set(ASSIGNMENT_TAB_PARAM, key);
+        } else {
+            newSearchParams.delete(ASSIGNMENT_TAB_PARAM);
+        }
+        setSearchParams(newSearchParams, { replace: true });
+    };
+
     const processedAssignments = useMemo(() => {
         let flattened: ProcessedAssignmentItem[] = [];
 
         if (activeTab === 'quiz') {
-            // Xử lý quiz items
             flattened = assignments.flatMap(a => {
                 if (selectedAssignmentId && a.id !== selectedAssignmentId) {
                     return [];
@@ -295,7 +307,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 } as ProcessedAssignmentItem));
             });
         } else {
-            // Xử lý assignment và test items
             const isFilteringTest = activeTab === 'test';
             flattened = assignments.flatMap(a => {
                 if (selectedAssignmentId && a.id !== selectedAssignmentId) {
@@ -322,7 +333,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             });
         }
 
-        // Lọc theo module và UML type (chỉ áp dụng cho assignment/test)
         if (activeTab !== 'quiz') {
             flattened = flattened.filter(item => {
                 const matchesModule = selectedModule === null || selectedModule === '' ||
@@ -333,9 +343,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
                 return matchesModule && matchesUmlType;
             });
+        } else {
+            flattened = flattened.filter(item => selectedAssignmentId === null || item.assignmentId === selectedAssignmentId);
         }
 
-        // Sắp xếp
         if (sortBy) {
             flattened.sort((a, b) => {
                 let aVal: any;
@@ -374,25 +385,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
         return flattened.slice(startIndex, endIndex);
 
-    }, [assignments, activeTab, page, size, sortBy, sortOrder, selectedAssignmentId, selectedModule, selectedUmlType]);
-
-    const menuItems: MenuProps["items"] = [
-        {
-            key: "assign",
-            label: t("classDetail.assignment.assignAssignment"),
-            onClick: () => showAssignmentModal()
-        },
-        {
-            key: "assignTest",
-            label: t("classDetail.assignment.assignTest"),
-            onClick: () => showTestAssignmentModal()
-        },
-        {
-            key: "assignQuiz",
-            label: t("classDetail.assignment.assignQuiz") || "Giao bài trắc nghiệm",
-            onClick: () => showQuizAssignmentModal()
-        }
-    ];
+    }, [assignments, activeTab, page, size, sortBy, sortOrder, selectedAssignmentId, selectedModule, selectedUmlType, searchParams]);
 
     const onChangePage = (p: number, pageSize?: number) => {
         setPage(p);
@@ -402,66 +395,71 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
     };
 
-    const onSortChange = (value: string) => {
-        const [field, order] = value.split("_");
-        setSortBy(field);
-        setSortOrder(order as "asc" | "desc");
-        setPage(1);
-    };
-
-    const handleAssignmentFilterChange = (value: string | null) => {
+    const handleAssignmentFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value === "" ? null : event.target.value;
         setSelectedAssignmentId(value);
-        setSelectedModule(null);
-        setSelectedUmlType(null);
+        if (activeTab === 'quiz') {
+            setSelectedModule(null);
+            setSelectedUmlType(null);
+        }
         setPage(1);
     };
 
-    const handleModuleFilterChange = (value: string | null) => {
+    const handleModuleFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value === "" ? null : event.target.value;
         setSelectedModule(value);
         setPage(1);
     };
 
-    const handleUmlTypeFilterChange = (value: string | null) => {
+    const handleUmlTypeFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value === "" ? null : event.target.value;
         setSelectedUmlType(value);
         setPage(1);
     };
 
     const availableModules = useMemo(() => {
-        if (!selectedAssignmentId) {
+        if (activeTab === 'quiz' || !selectedAssignmentId) {
+            if (activeTab === 'quiz') return uniqueModules;
             return uniqueModules;
         }
 
         const selectedAsg = assignments.find(a => a.id === selectedAssignmentId);
         if (!selectedAsg) return [];
 
+        const isFilteringTest = activeTab === 'test';
         const moduleSet = new Set<string>();
-        selectedAsg.assignedModules.forEach(m => moduleSet.add(m.moduleName));
+        selectedAsg.assignedModules
+            .filter(m => m.checkedTest === isFilteringTest)
+            .forEach(m => moduleSet.add(m.moduleName));
 
         return Array.from(moduleSet).sort();
-    }, [selectedAssignmentId, assignments, uniqueModules]);
+    }, [selectedAssignmentId, assignments, uniqueModules, activeTab]);
 
     const availableUmlTypes = useMemo(() => {
-        if (!selectedAssignmentId) {
+        if (activeTab === 'quiz' || !selectedAssignmentId) {
+            if (activeTab === 'quiz') return uniqueUmlTypes;
             return uniqueUmlTypes;
         }
 
         const selectedAsg = assignments.find(a => a.id === selectedAssignmentId);
         if (!selectedAsg) return [];
 
+        const isFilteringTest = activeTab === 'test';
         const umlSet = new Set<string>();
-        selectedAsg.assignedModules.forEach(m => {
-            m.typeUmls.forEach(uml => umlSet.add(uml));
-        });
+        selectedAsg.assignedModules
+            .filter(m => m.checkedTest === isFilteringTest)
+            .forEach(m => {
+                m.typeUmls.forEach(uml => umlSet.add(uml));
+            });
 
         return Array.from(umlSet).sort();
-    }, [selectedAssignmentId, assignments, uniqueUmlTypes]);
+    }, [selectedAssignmentId, assignments, uniqueUmlTypes, activeTab]);
 
     const handleUnassign = async (assignmentClassDetailId: number, isQuiz: boolean = false) => {
         try {
             message.loading({ content: t('common.unassigning') || 'Đang hủy giao...', key: 'unassign' });
 
             if (isQuiz) {
-                // Tìm quiz assignment để lấy testSetId
                 const quizAssignment = assignments.find(a =>
                     a.assignedQuizzes?.some(q => q.assignmentClassDetailId === assignmentClassDetailId)
                 );
@@ -479,7 +477,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 await unassignAssignment(assignmentClassDetailId);
             }
 
-            message.success({ content: t('common.unassignSuccess') || 'Hủy giao bài tập thành công!', key: 'unassign', duration: 2 });
+            message.success({ content: t('common.unassignSuccess') || 'Hủy giao thành công!', key: 'unassign', duration: 2 });
             await new Promise(resolve => setTimeout(resolve, 1000));
             fetchData();
         } catch (error) {
@@ -489,6 +487,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
     };
 
+
     const renderAssignmentItem = (item: ProcessedAssignmentItem) => {
         const isQuiz = item.type === 'QUIZ';
         const isTest = item.isModuleTest;
@@ -496,173 +495,133 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         let primaryColor, secondaryColor, icon, typeText;
 
         if (isQuiz) {
-            primaryColor = '#9254de'; // Tím cho Quiz
+            primaryColor = '#9254de';
             secondaryColor = '#f9f0ff';
-            icon = <MdOutlineAssignment />;
+            icon = <MdOutlineAssignment className="text-lg"/>;
             typeText = "TRẮC NGHIỆM";
         } else if (isTest) {
-            primaryColor = '#fa541c'; // Cam cho Test
+            primaryColor = '#fa541c';
             secondaryColor = '#fff1f0';
-            icon = <IoTimeOutline />;
+            icon = <IoTimeOutline className="text-lg"/>;
             typeText = t("classDetail.type.test") || "KIỂM TRA";
         } else {
-            primaryColor = '#52c41a'; // Xanh lá cho Assignment
+            primaryColor = '#52c41a';
             secondaryColor = '#f6ffed';
-            icon = <MdAssignmentTurnedIn />;
+            icon = <MdAssignmentTurnedIn className="text-lg"/>;
             typeText = t("classDetail.type.assignment") || "LUYỆN TẬP";
         }
 
         const keyPrefix = item.key;
 
         return (
-            <List.Item key={item.key} style={{ padding: 0 }}>
-                <Card
-                    hoverable
-                    style={{
-                        borderRadius: 12,
-                        marginBottom: 16,
-                        borderLeft: `5px solid ${primaryColor}`,
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-                        transition: 'all 0.3s ease',
-                    }}
-                    bodyStyle={{ padding: '16px' }}
+            <li key={item.key} className="p-0 mb-3 list-none">
+                <div
+                    className="relative p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out"
+                    style={{ borderLeft: `4px solid ${primaryColor}` }}
                 >
-                    <Row gutter={[16, 16]} align="top">
-                        <Col xs={24} sm={24} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                            <div style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: '50%',
-                                background: secondaryColor,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: primaryColor,
-                                fontSize: 20,
-                                flexShrink: 0,
-                                marginTop: 4
-                            }}>
+                    <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 flex gap-3 items-start min-w-0">
+                            <div
+                                className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-base"
+                                style={{ backgroundColor: secondaryColor, color: primaryColor, marginTop: '2px' }}
+                            >
                                 {icon}
                             </div>
 
-                            <div style={{ flex: 1 }}>
-                                <Title level={5} style={{ margin: '0 0 4px 0', lineHeight: 1.2, fontSize: '16px', color: '#262626' }}>
+                            <div className="flex-1 min-w-0">
+                                <h5 className="text-sm font-semibold text-gray-800 m-0 mb-0.5 leading-snug truncate">
                                     {item.assignmentTitle}
-                                </Title>
+                                </h5>
 
-                                <Space size={[8, 4]} wrap style={{ marginBottom: 8 }}>
+                                <div className="flex flex-wrap gap-1.5 mb-1.5 text-xs">
+                                    <span className="font-semibold text-xs" style={{ color: primaryColor }}>
+                                        [{typeText}]
+                                    </span>
+
+                                    {!isQuiz && (
+                                        <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                                            {item.moduleName}
+                                        </span>
+                                    )}
+
                                     {isQuiz ? (
                                         <>
                                             {item.collectionName && (
-                                                <Tag key={`${keyPrefix}-collection`} color="geekblue" style={{ fontWeight: 500 }}>
+                                                <span className="px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#e6f7ff', color: '#1890ff' }}>
                                                     {item.collectionName}
-                                                </Tag>
-                                            )}
-
-                                            {item.totalQuestions && (
-                                                <Tag key={`${keyPrefix}-questions`} color="cyan" style={{ fontWeight: 500 }}>
-                                                    {item.totalQuestions} câu hỏi
-                                                </Tag>
+                                                </span>
                                             )}
                                         </>
                                     ) : (
-                                        <>
-                                            <Tag key={`${keyPrefix}-module-main`} color="blue" style={{ fontWeight: 500 }}>
-                                                Module: {item.moduleName}
-                                            </Tag>
-
-                                            {item.typeUmls?.map((name, index) => (
-                                                <Tag
-                                                    key={`${keyPrefix}-uml-${name}-${index}`}
-                                                    color="geekblue"
-                                                    style={{ fontWeight: 500 }}
-                                                >
-                                                    {name}
-                                                </Tag>
-                                            ))}
-                                        </>
+                                        item.typeUmls?.map((name, index) => (
+                                            <span
+                                                key={`${keyPrefix}-uml-${name}-${index}`}
+                                                className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium"
+                                            >
+                                                {name}
+                                            </span>
+                                        ))
                                     )}
-                                </Space>
+                                </div>
 
-
-                                <Space size={16}>
-                                    <Text style={{ fontWeight: 600, color: primaryColor, fontSize: '12px' }}>
-                                        [{typeText}]
-                                    </Text>
-
-                                    <Text type="secondary" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: '12px', color: '#595959' }}>
-                                        <IoCalendarOutline />
-                                        {item.startDate && item.endDate
-                                            ? `${dayjs(item.startDate).format("DD/MM/YYYY")} → ${dayjs(item.endDate).format("DD/MM/YYYY")}`
-                                            : t("classDetail.assignment.noDeadline") || "No Deadline"}
-                                    </Text>
-                                </Space>
+                                {/* Deadline (Giảm kích thước font) */}
+                                <span className="flex items-center gap-1 text-xs text-gray-500">
+                                    <IoCalendarOutline className="text-sm" />
+                                    {item.startDate && item.endDate
+                                        ? `${dayjs(item.startDate).format("DD/MM")} → ${dayjs(item.endDate).format("DD/MM/YYYY")}`
+                                        : t("classDetail.assignment.noDeadline") || "No Deadline"}
+                                </span>
                             </div>
-                        </Col>
+                        </div>
 
-                        <Col
-                            xs={24}
-                            style={{
-                                textAlign: "right",
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                alignItems: "center",
-                                gap: 12,
-                                borderTop: '1px solid #f0f0f0',
-                                paddingTop: '8px'
-                            }}
-                        >
+                        {/* RIGHT: Actions */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
                             {!isQuiz && (
-                                <Tooltip title={t("classDetail.view.assignmentInfo") || "Xem thông tin bài tập"}>
-                                    <Button
-                                        icon={<MdOutlineAssignment />}
-                                        type="text"
-                                        shape="circle"
-                                        style={{ color: '#1890ff', fontSize: '18px' }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleViewAssignmentDetails(item);
-                                        }}
-                                    />
-                                </Tooltip>
+                                <button
+                                    title={t("classDetail.view.assignmentInfo") || "Xem thông tin"}
+                                    className="p-1 rounded-full text-blue-500 hover:bg-blue-50 transition-colors duration-200"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewAssignmentDetails(item);
+                                    }}
+                                >
+                                    <MdOutlineAssignment className="text-base" />
+                                </button>
                             )}
 
                             {(isTest || isQuiz) && (
-                                <Tooltip title={t("classDetail.view.submissionDetails") || "Xem chi tiết bài nộp"}>
-                                    <Button
-                                        icon={<IoFileTrayFull />}
-                                        type="text"
-                                        shape="circle"
-                                        style={{ color: primaryColor, fontSize: '18px' }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            goToAssignmentDetails(item.assignmentId, item.assignmentClassDetailId);
-                                        }}
-                                    />
-                                </Tooltip>
+                                <button
+                                    title={t("classDetail.view.submissionDetails") || "Xem chi tiết nộp bài"}
+                                    className="p-1 rounded-full hover:opacity-80 transition-opacity duration-200"
+                                    style={{ color: primaryColor }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        goToAssignmentDetails(item.assignmentId, item.assignmentClassDetailId);
+                                    }}
+                                >
+                                    <IoFileTrayFull className="text-base" />
+                                </button>
                             )}
+
                             <Popconfirm
-                                title={t('common.confirm') || "Bạn có chắc chắn muốn hủy giao bài tập này?"}
+                                title={"Bạn có chắc chắn muốn hủy giao mục này?"}
                                 onConfirm={() => handleUnassign(item.assignmentClassDetailId, isQuiz)}
                                 okText={t('common.yes') || "Có"}
                                 cancelText={t('common.no') || "Không"}
                                 placement="topRight"
                             >
-                                <Tooltip title={t("classDetail.unassign") || "Hủy giao bài tập"}>
-                                    <Button
-                                        icon={<IoCloseCircleOutline />}
-                                        type="text"
-                                        shape="circle"
-                                        danger
-                                        style={{ fontSize: '18px' }}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </Tooltip>
+                                <button
+                                    title={t("classDetail.unassign") || "Hủy giao"}
+                                    className="p-1 rounded-full text-red-500 hover:bg-red-50 transition-colors duration-200"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <IoCloseCircleOutline className="text-base" />
+                                </button>
                             </Popconfirm>
-                        </Col>
-                    </Row>
-                </Card>
-            </List.Item>
+                        </div>
+                    </div>
+                </div>
+            </li>
         );
     };
 
@@ -686,178 +645,212 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const renderEmptyContent = (type: 'test' | 'assignment' | 'quiz') => {
         let descriptionText;
         if (type === 'quiz') {
-            descriptionText = "Chưa có bài trắc nghiệm nào được giao.";
+            descriptionText = "Chưa có trắc nghiệm nào được giao.";
         } else if (type === 'test') {
-            descriptionText = t("common.noData") || "Chưa có bài tập kiểm tra nào được giao.";
+            descriptionText = t("common.noData") || "Chưa có kiểm tra nào được giao.";
         } else {
-            descriptionText = t("common.noData") || "Chưa có bài tập luyện tập nào được giao.";
+            descriptionText = t("common.noData") || "Chưa có luyện tập nào được giao.";
         }
 
         return (
-            <Empty
-                description={
-                    <Text type="secondary" style={{ color: '#8c8c8c' }}>
-                        {descriptionText}
-                    </Text>
-                }
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
+            <div className="flex flex-col items-center justify-center p-10 bg-gray-50 rounded-lg border border-gray-200">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-gray-400 mb-4"
+                >
+                    <path d="M12 2v6h6" />
+                    <path d="M18 22H6c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h8l4 4v14c0 1.1-.9 2-2 2z" />
+                    <line x1="8" y1="18" x2="16" y2="18" />
+                    <line x1="8" y1="14" x2="16" y2="14" />
+                    <line x1="8" y1="10" x2="12" y2="10" />
+                </svg>
+                <p className="text-gray-500 text-base">
+                    {descriptionText}
+                </p>
+            </div>
         );
     };
 
-    const tabItems: TabsProps['items'] = [
-        {
-            key: 'test',
-            label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${countAssignments('test')})`,
-            children: (
-                <List
-                    itemLayout="vertical"
-                    dataSource={processedAssignments}
-                    renderItem={renderAssignmentItem}
-                    locale={{ emptyText: renderEmptyContent('test') }}
-                />
-            ),
-        },
-        {
-            key: 'assignment',
-            label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${countAssignments('assignment')})`,
-            children: (
-                <List
-                    itemLayout="vertical"
-                    dataSource={processedAssignments}
-                    renderItem={renderAssignmentItem}
-                    locale={{ emptyText: renderEmptyContent('assignment') }}
-                />
-            ),
-        },
-        {
-            key: 'quiz',
-            label: `Bài Trắc Nghiệm (${countAssignments('quiz')})`,
-            children: (
-                <List
-                    itemLayout="vertical"
-                    dataSource={processedAssignments}
-                    renderItem={renderAssignmentItem}
-                    locale={{ emptyText: renderEmptyContent('quiz') }}
-                />
-            ),
+    const renderTabContent = (type: 'test' | 'assignment' | 'quiz') => {
+        const data = processedAssignments;
+        if (data.length === 0) {
+            return renderEmptyContent(type);
         }
-    ];
+
+        return (
+            <ul className="grid grid-cols-1 gap-3">
+                {data.map(item => renderAssignmentItem(item))}
+            </ul>
+        );
+    };
 
     if (loading) {
         return (
-            <div style={{ padding: "2rem", display: "flex", justifyContent: "center", alignItems: "center", gap: '8px' }}>
+            <div className="p-8 flex justify-center items-center gap-2">
                 <Spinner animation="border" />
-                <Text>{t('common.loading') || 'Đang tải...'}</Text>
+                <span className="text-gray-700">{t('common.loading') || 'Đang tải...'}</span>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div
-                style={{
-                    padding: "1rem",
-                    color: "#dc3545",
-                    backgroundColor: "#f8d7da",
-                    border: "1px solid #f5c6cb",
-                    margin: "2rem"
-                }}
-            >
+            <div className="p-4 mx-8 bg-red-100 border border-red-400 text-red-700" role="alert">
                 {error}
             </div>
         );
     }
 
+    const tabLabels = [
+        { key: 'test', label: t("classDetail.tabs.test"), content: renderTabContent('test') },
+        { key: 'assignment', label: t("classDetail.tabs.assignment"), content: renderTabContent('assignment') },
+        { key: 'quiz', label: `Trắc Nghiệm (${countAssignments('quiz')})`, content: renderTabContent('quiz') },
+    ];
+
     return (
-        <div style={{ padding: "2rem" }}>
-            <main style={{ flex: 1 }}>
-                <Row justify="space-between" align="middle" gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                    <Col xs={24} sm={24} md={4} lg={3}>
-                        <Title level={3} style={{ margin: 0 }}>
-                            {t("classDetail.tabs.classwork") || "Classwork"}
-                        </Title>
-                    </Col>
-
-                    <Col xs={24} sm={24} md={20} lg={21}>
-                        <Space size={12} wrap style={{ width: '100%', justifyContent: 'flex-end' }}>
-                            <Select
-                                placeholder={t("classDetail.filter.assignmentTitle") || "Lọc theo Tên Bài tập"}
-                                allowClear
-                                showSearch
-                                style={{ width: 280 }}
-                                value={selectedAssignmentId}
-                                onChange={handleAssignmentFilterChange}
-                                filterOption={(input, option) =>
-                                    (option?.children as string)?.toLowerCase().includes(input.toLowerCase())
-                                }
-                            >
-                                {uniqueAssignments.map(assignment => (
-                                    <Option key={assignment.id} value={assignment.id}>
-                                        {assignment.title}
-                                    </Option>
+        <div className="p-6">
+            <main className="flex-1">
+                <div className="mb-4">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-end">
+                        <div className="border-b border-gray-200 flex-1 min-w-0 mb-4 md:mb-0 order-2 md:order-1">
+                            <nav className="flex space-x-4" aria-label="Tabs">
+                                {tabLabels.map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => handleTabChange(tab.key)}
+                                        className={`
+                                            py-2 px-1 text-sm font-medium transition-colors duration-200 ease-in-out whitespace-nowrap
+                                            ${activeTab === tab.key
+                                            ? 'border-b-2 border-blue-600 text-blue-600'
+                                            : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                                        }
+                                        `}
+                                    >
+                                        {tab.label}
+                                    </button>
                                 ))}
-                            </Select>
+                            </nav>
+                        </div>
 
-                            <Select
-                                placeholder={t("classDetail.filter.module") || "Module"}
-                                allowClear
-                                style={{ width: 280 }}
-                                value={selectedModule}
-                                onChange={handleModuleFilterChange}
-                                disabled={!availableModules.length && !!selectedAssignmentId}
+                        <div className="flex items-center gap-3 order-1 md:order-2 flex-shrink-0">
+                            <button
+                                className={`flex items-center gap-1 font-semibold py-2 px-3 rounded-md transition duration-150 text-sm border ${isFilterDropdownOpen ? 'bg-gray-100 text-blue-600 border-blue-300' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
+                                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
                             >
-                                {availableModules.map(moduleName => (
-                                    <Option key={moduleName} value={moduleName}>
-                                        {moduleName}
-                                    </Option>
-                                ))}
-                            </Select>
+                                <IoSearch className="text-base" />
+                                {isFilterDropdownOpen}
+                            </button>
 
-                            <Select
-                                placeholder={t("classDetail.filter.umlType") || "Loại UML"}
-                                allowClear
-                                style={{ width: 150 }}
-                                value={selectedUmlType}
-                                onChange={handleUmlTypeFilterChange}
-                                disabled={!availableUmlTypes.length && !!selectedAssignmentId}
-                            >
-                                {availableUmlTypes.map(typeName => (
-                                    <Option key={typeName} value={typeName}>
-                                        {typeName}
-                                    </Option>
-                                ))}
-                            </Select>
+                            <div className="relative">
+                                <button
+                                    className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition duration-150 flex items-center gap-2 text-sm"
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                >
+                                    {t("classDetail.assignment.assign") || "Create/Assign"} <DownOutlined className="text-xs" />
+                                </button>
 
-                            <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={["click"]}>
-                                <Button type="primary">
-                                    {t("classDetail.assignment.assign") || "Create/Assign"} <DownOutlined />
-                                </Button>
-                            </Dropdown>
-                        </Space>
-                    </Col>
-                </Row>
-
-                <div style={{justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                    <Tabs
-                        defaultActiveKey="assignment"
-                        activeKey={activeTab}
-                        items={tabItems}
-                        onChange={(key) => {
-                            setActiveTab(key);
-                            setPage(1);
-                        }}
-                    />
+                                {isDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                        <div className="py-1">
+                                            <button
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onClick={showAssignmentModal}
+                                            >
+                                                {t("classDetail.assignment.assignAssignment")}
+                                            </button>
+                                            <button
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onClick={showTestAssignmentModal}
+                                            >
+                                                {t("classDetail.assignment.assignTest")}
+                                            </button>
+                                            <button
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onClick={showQuizAssignmentModal}
+                                            >
+                                                {t("classDetail.assignment.assignQuiz") || "Giao trắc nghiệm"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+                <div
+                    className={`transition-all duration-300 ease-in-out overflow-hidden mb-4 ${isFilterDropdownOpen ? 'max-h-96 opacity-100 pt-4' : 'max-h-0 opacity-0'}`}
+                >
+                    <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <select
+                            className="w-full md:w-64 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            value={selectedAssignmentId || ""}
+                            onChange={handleAssignmentFilterChange}
+                        >
+                            <option value="">{t("classDetail.filter.assignmentTitle") || "Lọc theo Tên Assignment"}</option>
+                            {uniqueAssignments.map(assignment => (
+                                <option key={assignment.id} value={assignment.id}>
+                                    {assignment.title}
+                                </option>
+                            ))}
+                        </select>
+
+                        {(activeTab === 'test' || activeTab === 'assignment') && (
+                            <>
+                                <select
+                                    className="w-full md:w-64 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
+                                    value={selectedModule || ""}
+                                    onChange={handleModuleFilterChange}
+                                    disabled={!availableModules.length && !!selectedAssignmentId}
+                                >
+                                    <option value="">{t("classDetail.filter.module") || "Lọc theo Module"}</option>
+                                    {availableModules.map(moduleName => (
+                                        <option key={moduleName} value={moduleName}>
+                                            {moduleName}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {/* Select UML Type */}
+                                <select
+                                    className="w-full md:w-36 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
+                                    value={selectedUmlType || ""}
+                                    onChange={handleUmlTypeFilterChange}
+                                    disabled={!availableUmlTypes.length && !!selectedAssignmentId}
+                                >
+                                    <option value="">{t("classDetail.filter.umlType") || "Loại UML"}</option>
+                                    {availableUmlTypes.map(typeName => (
+                                        <option key={typeName} value={typeName}>
+                                            {typeName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </>
+                        )}
+
+                    </div>
+                </div>
+
+                <div className="mt-4">
+                    {tabLabels.find(t => t.key === activeTab)?.content}
+                </div>
+
+                <div className="mt-4 flex justify-end">
                     {total > 0 && (
                         <Pagination
                             current={page}
                             pageSize={size}
                             total={total}
                             showSizeChanger
-                            pageSizeOptions={["6", "9", "12", "18"]}
+                            pageSizeOptions={["5", "10", "15", "20"]}
                             onChange={onChangePage}
                             onShowSizeChange={onChangePage}
                             showTotal={(total) =>
