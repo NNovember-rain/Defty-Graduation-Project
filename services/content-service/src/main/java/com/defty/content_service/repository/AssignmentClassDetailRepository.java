@@ -28,5 +28,6 @@ public interface AssignmentClassDetailRepository extends JpaRepository<Assignmen
 
     List<AssignmentClassDetail> findAllByAssignmentClassIdAndChecked(Long assignmentClassId, boolean checked);
     List<AssignmentClassDetail> findAllByAssignmentClassIdInAndChecked(Collection<Long> assignmentClassIds, boolean checked);
+    List<AssignmentClassDetail> findByIdIn(List<Long> ids);
 
 }
