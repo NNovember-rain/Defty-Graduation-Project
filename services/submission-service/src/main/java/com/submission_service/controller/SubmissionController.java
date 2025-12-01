@@ -3,10 +3,7 @@ package com.submission_service.controller;
 import com.example.common_library.response.ApiResponse;
 import com.submission_service.enums.SubmissionStatus;
 import com.submission_service.model.dto.request.SubmissionRequest;
-import com.submission_service.model.dto.response.AssignmentClassDetailResponse;
-import com.submission_service.model.dto.response.LastSubmissionResonse;
-import com.submission_service.model.dto.response.SubmissionDetailResponse;
-import com.submission_service.model.dto.response.SubmissionResponse;
+import com.submission_service.model.dto.response.*;
 import com.submission_service.service.SubmissionService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -102,8 +99,7 @@ public class SubmissionController {
     }
 
     @GetMapping("/class/{classId}/assignment/{assignmentId}/student/{studentId}")
-    public ApiResponse<Page<SubmissionResponse>> getSubmissionsExerciseMode(@PathVariable Long classId,
-                                                                          @PathVariable Long assignmentId,
+    public ApiResponse<Page<SubmissionHistoryResponse>> getSubmissionsExerciseMode(
                                                                           @PathVariable Long studentId,
                                                                           @RequestParam(required = false) Long moduleId,
                                                                           @RequestParam(value = "examMode") Boolean examMode,
@@ -112,8 +108,8 @@ public class SubmissionController {
                                                                           @RequestParam(value = "sortBy", defaultValue = "createdDate") String sortBy,
                                                                           @RequestParam(value = "sortOrder", defaultValue = "desc") String sortOrder){
 
-        Page<SubmissionResponse>submissionResponses =submissionService.getSubmissionsHistoryExerciseMode(page, size, sortBy, sortOrder, classId,assignmentId, studentId, moduleId, examMode);
-        return ApiResponse.<Page<SubmissionResponse>>builder()
+        Page<SubmissionHistoryResponse>submissionResponses =submissionService.getSubmissionsHistoryExerciseMode(page, size, sortBy, sortOrder, studentId, moduleId, examMode);
+        return ApiResponse.<Page<SubmissionHistoryResponse>>builder()
                 .result(submissionResponses)
                 .build();
     }

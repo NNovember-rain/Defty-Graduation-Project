@@ -38,7 +38,7 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
     const [submissions, setSubmissions] = useState<ISubmission[]>([]);
     const [total, setTotal] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(6);
+    const [pageSize, setPageSize] = useState(5);
     const [error, setError] = useState<string | null>(null);
 
     // View mode and feedback states
@@ -152,18 +152,29 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
             >
                 <List.Item.Meta
                     avatar={<HistoryOutlined />}
-                    title={
-                        <div className="submission-history-item__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                <Text strong>Bài nộp #{total - (currentPage - 1) * pageSize - index}</Text>
-                            </div>
-                        </div>
-                    }
                     description={
                         <div className="submission-history-item__meta">
-                            <Text type="secondary">
-                                Thời gian nộp: {dayjs(item.createdDate).format("DD/MM/YYYY HH:mm:ss")}
-                            </Text>
+                            {item.moduleName && (
+                                <div style={{ marginBottom: 4 }}>
+                                    <Text type="secondary">Module: </Text>
+                                    <Text strong style={{ color: '#1890ff', fontSize: '16px' }}>{item.moduleName}</Text>
+                                </div>
+                            )}
+                            {item.typeUml && (
+                                <div style={{ marginBottom: 4 }}>
+                                    <Text type="secondary">Loại UML: </Text>
+                                    <Text strong style={{ color: '#52c41a' }}>
+                                        {item.typeUml === 'CLASS_DIAGRAM' ? 'Class Diagram' : 
+                                         item.typeUml === 'USE_CASE_DIAGRAM' ? 'Use Case Diagram' : 
+                                         item.typeUml}
+                                    </Text>
+                                </div>
+                            )}
+                            <div>
+                                <Text type="secondary">
+                                    Thời gian nộp: {dayjs(item.createdDate).format("DD/MM/YYYY HH:mm:ss")}
+                                </Text>
+                            </div>
                         </div>
                     }
                 />
@@ -182,14 +193,36 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
             open={visible}
             onCancel={onClose}
             footer={[
-                <Button key="close" onClick={onClose}>
-                    Đóng
-                </Button>
+                <div key="footer" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', position: 'relative' }}>
+                    {viewMode === 'list' && total > 0 && (
+                        <Pagination
+                            current={currentPage}
+                            total={Math.max(total, 1)}
+                            pageSize={pageSize}
+                            onChange={handlePageChange}
+                            onShowSizeChange={handlePageSizeChange}
+                            showSizeChanger={true}
+                            showQuickJumper={false}
+                            showTotal={(total, range) =>
+                                total > 0
+                                    ? `Hiển thị ${range[0]}-${range[1]} trong tổng số ${total} bài nộp`
+                                    : `Không có bài nộp nào`
+                            }
+                            pageSizeOptions={['5', '10', '20']}
+                            size="default"
+                            disabled={loading}
+                        />
+                    )}
+                    <Button onClick={onClose} style={{ position: 'absolute', right: '0' }}>
+                        Đóng
+                    </Button>
+                </div>
             ]}
             width="75vw"
             className="submission-history-modal"
             destroyOnClose={true}
-            style={{ top: 80, height: '82vh' }}
+            style={{ top: 50 }}
+            bodyStyle={{ height: '70vh', overflow: 'hidden', padding: '16px' }}
             closeIcon={<CloseOutlined style={{ color: '#ffffff', fontSize: '16px' }} />}
         >
             <div className="submission-history__content">
@@ -209,21 +242,21 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
                 ) : (
                     <>
                         {viewMode === 'list' ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <div className="submission-history__list-container" style={{ flex: 1, minHeight: 0 }}>
-                                    {loading ? (
-                                        <div className="submission-history__loading">
-                                            <Spin size="large" />
-                                            <Text>Đang tải lịch sử...</Text>
-                                        </div>
-                                    ) : submissions.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', height: '65vh', position: 'relative' }}>
+                                {loading && (
+                                    <div className="submission-history__loading">
+                                        <Spin size="large" />
+                                        <Text>Đang tải lịch sử...</Text>
+                                    </div>
+                                )}
+                                <div className="submission-history__list-container" style={{ flex: '1', overflow: 'hidden' }}>
+                                    {submissions.length > 0 ? (
                                         <List
                                             itemLayout="horizontal"
                                             dataSource={submissions}
                                             renderItem={renderSubmissionItem}
-                                            style={{ height: '100%', overflow: 'hidden' }}
                                         />
-                                    ) : (
+                                    ) : !loading && (
                                         <div className="submission-history__empty">
                                             <HistoryOutlined />
                                             <Title level={4}>
@@ -234,27 +267,6 @@ const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
                                             </Text>
                                         </div>
                                     )}
-                                </div>
-
-                                {/* Always show pagination */}
-                                <div className="submission-history__pagination" style={{ flexShrink: 0 }}>
-                                    <Pagination
-                                        current={currentPage}
-                                        total={Math.max(total, 1)} // Ensure minimum 1 for pagination display
-                                        pageSize={pageSize}
-                                        onChange={handlePageChange}
-                                        onShowSizeChange={handlePageSizeChange}
-                                        showSizeChanger={false}
-                                        showQuickJumper={true}
-                                        showTotal={(total, range) =>
-                                            total > 0
-                                                ? `Hiển thị ${range[0]}-${range[1]} trong tổng số ${total} bài nộp`
-                                                : `Không có bài nộp nào`
-                                        }
-                                        pageSizeOptions={['10', '20', '50']}
-                                        size="default"
-                                        disabled={loading || submissions.length === 0}
-                                    />
                                 </div>
                             </div>
                         ) : (

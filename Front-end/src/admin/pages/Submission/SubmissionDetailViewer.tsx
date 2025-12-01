@@ -192,9 +192,16 @@ const SubmissionDetailViewer: React.FC<SubmissionDetailViewerProps> = memo(({ se
     return (
         <div className="submission-detail-inline">
             <div style={{ marginBottom: 24, borderBottom: '1px solid #e8e8e8', paddingBottom: 16 }}>
-                <Title level={4} style={{ margin: '0 0 4px 0', color: '#1f1f1f' }}>
-                    {submission.assignmentTitle}
-                </Title>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Title level={4} style={{ margin: 0, color: '#1f1f1f' }}>
+                        {submission.assignmentTitle}
+                    </Title>
+                    {submission.moduleName && (
+                        <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                            Module: {submission.moduleName}
+                        </Tag>
+                    )}
+                </div>
             </div>
 
             <Row gutter={24}>
@@ -249,7 +256,24 @@ const SubmissionDetailViewer: React.FC<SubmissionDetailViewerProps> = memo(({ se
                                         </span>
                                     ),
                                     children: (
-                                        <PlantUMLViewer code={submission.solutionCode} />
+                                        <div 
+                                            style={{ 
+                                                width: '100%', 
+                                                overflowX: 'hidden'
+                                            }}
+                                        >
+                                            <style dangerouslySetInnerHTML={{
+                                                __html: `
+                                                    .ant-collapse-content pre {
+                                                        overflow-x: hidden !important;
+                                                        white-space: pre-wrap !important;
+                                                        word-wrap: break-word !important;
+                                                        max-width: 100% !important;
+                                                    }
+                                                `
+                                            }} />
+                                            <PlantUMLViewer code={submission.solutionCode} />
+                                        </div>
                                     )
                                 }
                             ]}

@@ -47,6 +47,8 @@ export interface ISubmission {
     studentPlantUMLCode: string
     score?: number
     createdDate: string
+    moduleName?: string
+    typeUml?: TypeUml
 }
 
 export type TypeUml = "CLASS_DIAGRAM" | "USE_CASE_DIAGRAM";

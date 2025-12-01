@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Map;
 
 @Data
 @Builder
@@ -26,5 +27,6 @@ public class SubmissionDetailResponse {
     String studentPlantUMLCode;
     String solutionCode;
     Double score;
+    Map<String, Object> feedbackLLM;
     LocalDateTime createdDate;
 }

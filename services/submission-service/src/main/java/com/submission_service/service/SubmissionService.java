@@ -1,10 +1,7 @@
 package com.submission_service.service;
 
 import com.submission_service.model.dto.request.SubmissionRequest;
-import com.submission_service.model.dto.response.AssignmentClassDetailResponse;
-import com.submission_service.model.dto.response.LastSubmissionResonse;
-import com.submission_service.model.dto.response.SubmissionDetailResponse;
-import com.submission_service.model.dto.response.SubmissionResponse;
+import com.submission_service.model.dto.response.*;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
@@ -16,5 +13,5 @@ public interface SubmissionService {
     String addScoreSubmission(Long id, Double point);
     LastSubmissionResonse getLastSubmissionsExamMode(Long classId, Long assignmentClassDetailId);
     Page<SubmissionResponse> getLastSubmissionsExamModes(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentClassDetailId);
-    Page<SubmissionResponse> getSubmissionsHistoryExerciseMode(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId, Long studentId, Long moduleId, Boolean examMode);
+    Page<SubmissionHistoryResponse> getSubmissionsHistoryExerciseMode(int page, int size, String sortBy, String sortOrder, Long studentId, Long moduleId, Boolean examMode);
 }

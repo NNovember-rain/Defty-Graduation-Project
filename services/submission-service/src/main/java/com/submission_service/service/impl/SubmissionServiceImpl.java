@@ -14,6 +14,7 @@ import com.submission_service.client.ContentServiceClient;
 import com.submission_service.mapper.SubmissionMapper;
 import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.*;
+import com.submission_service.model.entity.FeedbackLLM;
 import com.submission_service.model.entity.Submission;
 import com.submission_service.model.event.SubmissionEvent;
 import com.submission_service.repository.ISubmissionRepository;
@@ -103,26 +104,23 @@ public class SubmissionServiceImpl implements SubmissionService {
         submissionRepository.save(submission);
         log.info("Submission saved");
 
-
-
-        //TODO: call sang assignment service để lấy thông tin assignment class detail
-//        String accessToken = GetTokenUtil.getToken();
-//        SubmissionEvent submissionEvent = SubmissionEvent.builder()
-//                .id(submission.getId())
-//                .accessToken(accessToken)
-//                .contentAssignment(assignmentClassDetailResponse.getAssignmentDescription() + assignmentClassDetailResponse.getModuleDescription())
-//                .solutionPlantUmlCode(assignmentClassDetailResponse.getSolutionCode())
-//                .typeUmlName(submissionRequest.getTypeUml())
-//                .studentPlantUmlCode(submissionRequest.getStudentPlantUmlCode())
-//                .build();
+        String accessToken = GetTokenUtil.getToken();
+        SubmissionEvent submissionEvent = SubmissionEvent.builder()
+                .id(submission.getId())
+                .accessToken(accessToken)
+                .contentAssignment(assignmentClassDetailResponse.getAssignmentDescription() + assignmentClassDetailResponse.getModuleDescription())
+                .solutionPlantUmlCode(assignmentClassDetailResponse.getSolutionCode())
+                .typeUmlName(submissionRequest.getTypeUml())
+                .studentPlantUmlCode(submissionRequest.getStudentPlantUmlCode())
+                .build();
 
         try {
-//            String message = objectMapper.writeValueAsString(submissionEvent);
-//            kafkaTemplate.send("umlDiagram.submission", message);
-//            log.info("Submission event sent to Kafka for submission ID: {}", submission.getId());
-//                actionScheduler.checkSubmissionStatus(submission.getId());
-//        } catch (JsonProcessingException e) {
-//            log.error("Error serializing submission event: {}", e.getMessage());
+            String message = objectMapper.writeValueAsString(submissionEvent);
+            kafkaTemplate.send("umlDiagram.submission", message);
+            log.info("Submission event sent to Kafka for submission ID: {}", submission.getId());
+                actionScheduler.checkSubmissionStatus(submission.getId());
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing submission event: {}", e.getMessage());
         } catch (KafkaException e) {
             log.error("Error sending submission event to Kafka: {}", e.getMessage());
         }
@@ -198,14 +196,13 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new NotFoundException("Submission not found with ID: " + id);
         }
         Submission submission = submissionOptional.get();
-        AssignmentResponse assignmentResponse;
         UserResponse userResponse;
-        ClassResponse classResponse;
+        AssignmentClassDetailResponse assignmentClassDetailResponse;
         try {
-            assignmentResponse = contentServiceClient.getAssignment(submission.getAssignmentId()).getResult();
-            log.info("Fetched assignment with ID: {}", submission.getAssignmentId());
+            assignmentClassDetailResponse = contentServiceClient.getAssignmentClassDetail(submission.getAssignmentClassDetailId(), submission.getTypeUml().name(), submission.getModuleId()).getResult();
+            log.info("Fetched assignment class detail by id with ID: {}", submission.getAssignmentClassDetailId());
         }catch (FeignException e){
-            throw new FeignClientException("Failed to fetch assignment with ID: " + submission.getAssignmentId());
+            throw new FeignClientException("Failed to fetch assignment");
         }
         try {
             userResponse = authServiceClient.getUser(submission.getStudentId()).getResult();
@@ -213,19 +210,16 @@ public class SubmissionServiceImpl implements SubmissionService {
         }catch (FeignClientException e){
             throw new FeignClientException("Failed to fetch user with ID: " + submission.getStudentId());
         }
-        try {
-            classResponse = classManagementServiceClient.getClassById(submission.getClassId()).getResult();
-            log.info("Fetched class with ID: {}", submission.getClassId());
-        }catch (FeignClientException e){
-            throw new FeignClientException("Failed to fetch class with ID: " + submission.getClassId());
-        }
 
-        //TODO: call sang assignment service để lấy thông tin assignment class detail
-        SubmissionDetailResponse submissionResponse=submissionMapper.toSubmissionDetailResponse(submission, userResponse, assignmentResponse, classResponse);
-//        submissionResponse.setModuleName(moduleResponse.getModuleName());
-//        submissionResponse.setSolutionCode(moduleResponse.getSolutionCode());
-//        submissionResponse.setTypeUml("use case");
-//        submissionResponse.setDescriptionModule(moduleResponse.getModuleDescription());
+        SubmissionDetailResponse submissionResponse=submissionMapper.toSubmissionDetailResponse(submission, userResponse);
+        if(submission.getFeedbackLLM() != null) submissionResponse.setFeedbackLLM(submission.getFeedbackLLM().getFeedback());
+        submissionResponse.setModuleName(assignmentClassDetailResponse.getModuleName());
+        submissionResponse.setSolutionCode(assignmentClassDetailResponse.getSolutionCode());
+        submissionResponse.setTypeUml(submission.getTypeUml().name());
+        submissionResponse.setDescriptionModule(assignmentClassDetailResponse.getModuleDescription());
+        submissionResponse.setAssignmentTitle(assignmentClassDetailResponse.getTitleAssignment());
+        submissionResponse.setDescriptionAssignment(assignmentClassDetailResponse.getAssignmentDescriptionHtml());
+        submissionResponse.setStudentCode(userResponse.getUserCode());
         return submissionResponse;
     }
 
@@ -339,11 +333,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
-    public Page<SubmissionResponse> getSubmissionsHistoryExerciseMode(int page, int size, String sortBy, String sortOrder, Long classId, Long assignmentId, Long studentId, Long moduleId, Boolean examMode){
-
-        if (classId == null || assignmentId == null || studentId == null) {
-            throw new FieldRequiredException("ClassId, AssignmentId and StudentId are required");
-        }
+    public Page<SubmissionHistoryResponse> getSubmissionsHistoryExerciseMode(int page, int size, String sortBy, String sortOrder, Long studentId, Long moduleId, Boolean examMode){
 
         Sort.Direction direction = sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Sort sort = Sort.by(direction, "createdDate");
@@ -353,32 +343,24 @@ public class SubmissionServiceImpl implements SubmissionService {
         if(currentUser.roles().contains("ROLE_student") && !Objects.equals(currentUser.userId(), studentId)){
             throw new NotFoundException("You are not authorized to view other student's submission history");
         }
-        Specification<Submission> spec = Specification
-                .where(SubmissionSpecification.hasClassId(classId))
-                .and(SubmissionSpecification.hasAssignmentId(assignmentId))
-                .and(SubmissionSpecification.hasStudentId(studentId))
+            Specification<Submission> spec = Specification
+                .where(SubmissionSpecification.hasStudentId(currentUser.userId()))
                 .and(SubmissionSpecification.hasModuleId(moduleId))
                 .and(SubmissionSpecification.hasExamMode(examMode));
 
         Page<Submission> result = submissionRepository.findAll(spec, pageable);
         log.info("Get all submissions history for student");
         Set<Long> studentIds = new HashSet<>();
-        Set<Long> assignmentIds = new HashSet<>();
-        Set<Long> classIds = new HashSet<>();
-        Set<Long> moduleIds = new HashSet<>();
+        Set<Long> assinmentClassDetailId = new HashSet<>();
         result.forEach(submission -> {
             studentIds.add(submission.getStudentId());
-            assignmentIds.add(submission.getAssignmentId());
-            classIds.add(submission.getClassId());
-//            moduleIds.add(submission.get)
+            assinmentClassDetailId.add(submission.getModuleId());
         });
         Map<Long, UserResponse> userMap;
-        Map<Long, AssignmentResponse> assignmentMap;
-        Map<Long, ClassResponse> classMap;
-        result.forEach(comment -> {
-            studentIds.add(comment.getStudentId());
-            assignmentIds.add(comment.getAssignmentId());
-            classIds.add(comment.getClassId());
+        Map<Long, ModuleResponse> moduleMap;
+        result.forEach(submisison -> {
+            studentIds.add(submisison.getStudentId());
+            assinmentClassDetailId.add(submisison.getModuleId());
         });
 
         try{
@@ -386,29 +368,24 @@ public class SubmissionServiceImpl implements SubmissionService {
         }catch (FeignClientException e){
             throw new FeignClientException("Failed to fetch user map from Auth Service");
         }
-        try{
-            assignmentMap = contentServiceClient.getExerciseMap(new ArrayList<>(assignmentIds)).getResult();
-        }catch (FeignClientException e){
-            throw new FeignClientException("Failed to fetch assignment map from Content Service");
-        }
-        try{
-            classMap = classManagementServiceClient.getClassesByIds(new ArrayList<>(classIds)).getResult();
-        }catch (FeignClientException e){
-            throw new FeignClientException("Failed to fetch class map from Class Management Service");
-        }
+
+//        try{
+//            moduleMap = contentServiceClient.getModuleMap(new ArrayList<>(assinmentClassDetailId)).getResult();
+//        }catch (FeignClientException e){
+//            throw new FeignClientException("Failed to fetch module map from Content Service");
+//        }
+
         return result.map(submission -> {
             UserResponse user = null;
-            AssignmentResponse assignment = null;
-            ClassResponse classResponse = null;
             if (userMap != null)
                 user = userMap.get(submission.getStudentId());
-
-            if (assignmentMap != null)
-                assignment = assignmentMap.get(submission.getAssignmentId());
-
-            if (classMap != null)
-                classResponse = classMap.get(submission.getClassId());
-            return submissionMapper.toSubmissionResponse(submission, user, assignment, classResponse);
+            return SubmissionHistoryResponse.builder()
+                    .id(submission.getId())
+                    .studentId(submission.getStudentId())
+                    .typeUml(submission.getTypeUml())
+                    .moduleName("Name module here")
+                    .createdDate(submission.getCreatedDate())
+                    .build();
         });
     }
 }

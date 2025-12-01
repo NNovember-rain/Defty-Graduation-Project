@@ -10,7 +10,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface SubmissionMapper {
 
-//    @Mapping(target = "classCode", expression = "java(getClassCode(classResponse))")
     @Mapping(target = "studentCode", expression = "java(getStudentCode(user))")
     @Mapping(target = "studentName", expression = "java(getStudentName(user))")
     @Mapping(target = "assignmentTitle", expression = "java(getAssignmentTitle(assignment))")
@@ -22,13 +21,10 @@ public interface SubmissionMapper {
     );
 
     @Mapping(target = "studentName", expression = "java(getStudentName(user))")
-    @Mapping(target = "assignmentTitle", expression = "java(getAssignmentTitle(assignment))")
-    @Mapping(target = "descriptionAssignment", expression = "java(getCommonDescription(assignment))")
+    @Mapping(target = "feedbackLLM", ignore = true)
     SubmissionDetailResponse toSubmissionDetailResponse(
             Submission submission,
-            @Context UserResponse user,
-            @Context AssignmentResponse assignment,
-            @Context ClassResponse classResponse
+            @Context UserResponse user
     );
 
     @Mapping(target = "studentId", source = "userId")
@@ -44,10 +40,6 @@ public interface SubmissionMapper {
 
     default String getStudentName(UserResponse user) {
         return user != null ? user.getFullName() : null;
-    }
-
-    default String getClassCode(ClassResponse classResponse) {
-        return classResponse != null ? classResponse.getInviteCode() : null;
     }
 
     default String getAssignmentTitle(AssignmentResponse assignment) {
