@@ -298,12 +298,6 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({ studentId, classI
 
     const AssignmentsTab = () => (
         <div style={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                <BookOpen style={{ width: '18px', height: '18px', color: '#64748b' }} />
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>
-                    Lịch sử bài tập
-                </h3>
-            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {studentData.assignmentHistory.map((assignment) => {
                     const statusBadge = getStatusBadge(assignment.status, assignment.isLate);
@@ -386,8 +380,8 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({ studentId, classI
     );
 
     return (
-        <div style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '2rem' }}>
-            <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ backgroundColor: '#f9fafb', minHeight: '100vh'}}>
+            <div style={{margin: '0 auto' }}>
                 {/* Header */}
                 <div style={{ marginBottom: '1.5rem' }}>
                     <button

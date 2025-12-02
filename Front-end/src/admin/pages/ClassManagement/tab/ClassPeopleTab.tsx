@@ -774,7 +774,7 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                                                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                                                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                                                     >
-                                                                        👁️ Xem chi tiết
+                                                                        Xem chi tiết
                                                                     </button>
 
                                                                 </div>
