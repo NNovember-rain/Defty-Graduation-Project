@@ -559,11 +559,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                                 </Tag>
                                             )}
 
-                                            {item.totalQuestions && (
-                                                <Tag key={`${keyPrefix}-questions`} color="cyan" style={{ fontWeight: 500 }}>
-                                                    {item.totalQuestions} câu hỏi
-                                                </Tag>
-                                            )}
+                                            {/*{item.totalQuestions && (*/}
+                                            {/*    <Tag key={`${keyPrefix}-questions`} color="cyan" style={{ fontWeight: 500 }}>*/}
+                                            {/*        {item.totalQuestions} câu hỏi*/}
+                                            {/*    </Tag>*/}
+                                            {/*)}*/}
                                         </>
                                     ) : (
                                         <>
