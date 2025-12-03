@@ -198,7 +198,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
 
                 if (!assignmentConfig || Object.keys(assignmentConfig).length === 0) {
                     failedValidation = true;
-                    validationMessage = t('validation.selectModuleRequired') || `Vui lòng chọn ít nhất một Module cho bài tập "${assignment.title}".`;
+                    validationMessage = t('assignmentForm.validation.selectModule') || `Vui lòng chọn ít nhất một Module cho bài tập "${assignment.title}".`;
                     break;
                 }
 
@@ -211,7 +211,7 @@ const AssignAssignmentModal: React.FC<AssignAssignmentModalProps> = ({
 
                     if (typeUmls.length === 0) {
                         failedValidation = true;
-                        validationMessage = t('validation.selectTypeUmlRequired') || `Module "${moduleName}" của bài tập "${assignment.title}" phải có ít nhất một Type UML được chọn.`;
+                        validationMessage = t('assignmentForm.validation.selectTypeUml') || `Module "${moduleName}" của bài tập "${assignment.title}" phải có ít nhất một Type UML được chọn.`;
                         break;
                     }
 

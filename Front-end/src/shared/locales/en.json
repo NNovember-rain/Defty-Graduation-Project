@@ -304,7 +304,18 @@
     "solutionCodeRequired": "Solution code is required",
     "moduleNameRequired": "Module name is required",
     "listAssignment": "Assignment List",
-    "mode": "Mode"
+    "mode": "Mode",
+    "validation": {
+        "titleRequired": "Title is required.",
+        "descriptionRequired": "Description is required.",
+        "typeUmlRequired": "UML Type is required.",
+        "atLeastOneModule": "At least one module is required.",
+        "moduleNameRequired": "Module name is required.",
+        "moduleDescriptionRequired": "Module description is required.",
+        "solutionCodeRequired": "Solution code is required.",
+        "selectModule": "Please select a module.",
+        "selectTypeUml": "Please select a UML type."
+    }
   },
 
   "userPage": {
