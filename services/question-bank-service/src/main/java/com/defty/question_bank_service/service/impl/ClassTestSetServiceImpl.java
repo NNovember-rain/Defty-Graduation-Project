@@ -147,11 +147,12 @@ public class ClassTestSetServiceImpl implements IClassTestSetService {
                 .orElseThrow(() -> new NotFoundException(
                         "Không tìm thấy assignment cho class " + classId + " và test set " + testSetId));
 
-        entity.setIsActive(false);
-        classTestSetRepository.save(entity);
+        // Hard delete
+        classTestSetRepository.delete(entity);
 
-        log.info("Soft deleted assignment: class={}, testSet={}", classId, testSetId);
+        log.info("Deleted assignment: class={}, testSet={}", classId, testSetId);
     }
+
 
     @Override
     @Transactional

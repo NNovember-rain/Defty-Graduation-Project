@@ -1,4 +1,4 @@
-import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Select, Spin, Table, Tag} from "antd";
+import {Button, Col, DatePicker, Form, Input, message, Modal, Row, Select, Spin, Table, Tag, Tooltip} from "antd";
 import type {Key} from "react";
 import React, {useCallback, useEffect, useState} from "react";
 import type {ColumnsType} from "antd/es/table";
@@ -7,7 +7,8 @@ import {useParams} from "react-router-dom";
 import moment from "moment";
 import {getTestSets, type ITestSet} from "../../../../../shared/services/questionBankService/testSetService.ts";
 import {getAllActiveTestCollections} from "../../../../../shared/services/questionBankService/testCollectionService.ts";
-import { assignTestSetsToClasses } from "../../../../../shared/services/classTestSetService.ts";
+import {assignTestSetsToClasses, getAllTestSetsByClassId} from "../../../../../shared/services/classTestSetService.ts";
+import {InfoCircleOutlined} from "@ant-design/icons";
 
 const {RangePicker} = DatePicker;
 
@@ -48,6 +49,7 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(5);
     const [selectedTestSetIds, setSelectedTestSetIds] = useState<string[]>([]);
+    const [assignedTestSetIds, setAssignedTestSetIds] = useState<string[]>([]); // Lưu danh sách đã giao
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCollectionId, setSelectedCollectionId] = useState<number | undefined>(undefined);
     const [collections, setCollections] = useState<any[]>([]);
@@ -74,6 +76,24 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
         fetchCollections();
     }, []);
 
+    // Fetch danh sách bài trắc nghiệm đã được giao
+    const fetchAssignedTestSets = useCallback(async () => {
+        if (isNaN(classId) || classId <= 0) return;
+
+        try {
+            const result = await getAllTestSetsByClassId(classId);
+            if (result.data) {
+                // Lấy danh sách testSetId đã được giao
+                const assignedIds = result.data.map((item: any) => String(item.testSetId));
+                setAssignedTestSetIds(assignedIds);
+                // Tự động chọn các bài đã giao
+                setSelectedTestSetIds(assignedIds);
+            }
+        } catch (error) {
+            console.error("Failed to fetch assigned test sets:", error);
+        }
+    }, [classId]);
+
     const fetchTestSetsForModal = useCallback(async (page: number, limit: number) => {
         if (isNaN(classId) || classId <= 0) {
             console.error("Class ID is invalid or missing.");
@@ -85,9 +105,9 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
             const options = {
                 page,
                 limit,
-                status: 1, // Chỉ lấy test set đang hoạt động
+                status: 1,
                 testName: searchTerm || undefined,
-                collectionId: selectedCollectionId || undefined, // Thêm filter collection
+                collectionId: selectedCollectionId || undefined,
             };
 
             const result = await getTestSets(options);
@@ -106,17 +126,32 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
 
     useEffect(() => {
         if (visible) {
+            fetchAssignedTestSets(); // Lấy danh sách đã giao trước
             fetchTestSetsForModal(currentPage, pageSize);
-            setSelectedTestSetIds([]);
             form.resetFields();
         }
-    }, [visible, currentPage, pageSize, fetchTestSetsForModal, form]);
+    }, [visible, currentPage, pageSize, fetchTestSetsForModal, fetchAssignedTestSets, form]);
 
     const columns: ColumnsType<ITestSet> = [
         {
             title: "Tên bài thi",
             dataIndex: "testName",
             key: "testName",
+            render: (text: string, record: ITestSet) => {
+                const isAssigned = assignedTestSetIds.includes(String(record.id));
+                return (
+                    <span>
+                        {text}
+                        {isAssigned && (
+                            <Tooltip title="Bài này đã được giao cho lớp">
+                                <Tag color="blue" style={{ marginLeft: 8 }}>
+                                    Đã giao
+                                </Tag>
+                            </Tooltip>
+                        )}
+                    </span>
+                );
+            },
         },
         {
             title: "Bộ sưu tập",
@@ -142,13 +177,15 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
         },
     ];
 
-
     const handleAssign = async () => {
         try {
             const values = await form.validateFields();
 
-            if (selectedTestSetIds.length === 0) {
-                return messageApi.error(t('validation.selectTestSetRequired') || 'Vui lòng chọn ít nhất một đề thi.');
+            // Chỉ giao các bài mới (chưa được giao)
+            const newTestSetIds = selectedTestSetIds.filter(id => !assignedTestSetIds.includes(id));
+
+            if (newTestSetIds.length === 0) {
+                return messageApi.warning('Không có bài trắc nghiệm mới nào được chọn để giao.');
             }
 
             const dateRange = values.dateRange || [];
@@ -157,7 +194,7 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
 
             setAssignLoading(true);
 
-            const testSetsPayload = selectedTestSetIds.map(testSetId => ({
+            const testSetsPayload = newTestSetIds.map(testSetId => ({
                 testSetId,
                 startDate,
                 endDate,
@@ -170,7 +207,6 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
 
             console.log("Sending quiz assign payload:", payload);
 
-            // Gọi API thực tế
             const teacherId = 1; // TODO: Lấy từ auth context hoặc props
             await assignTestSetsToClasses(payload, teacherId);
 
@@ -198,14 +234,18 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
         setCurrentPage(1);
     };
 
-    // FIX: id là UUID string, không cần convert
     const rowSelection = {
         type: 'checkbox' as const,
         selectedRowKeys: selectedTestSetIds,
         onChange: (selectedKeys: Key[]) => {
             const newTestSetIds: string[] = selectedKeys.map(key => String(key));
             setSelectedTestSetIds(newTestSetIds);
-            console.log('Selected IDs:', newTestSetIds); // Debug
+        },
+        getCheckboxProps: (record: ITestSet) => {
+            const isAssigned = assignedTestSetIds.includes(String(record.id));
+            return {
+                disabled: isAssigned, // Vô hiệu hóa checkbox cho bài đã giao
+            };
         },
     };
 
@@ -214,13 +254,23 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
         setPageSize(pagination.pageSize);
     };
 
-    const isAssignButtonDisabled = selectedTestSetIds.length === 0;
+    const newSelectionCount = selectedTestSetIds.filter(id => !assignedTestSetIds.includes(id)).length;
+    const isAssignButtonDisabled = newSelectionCount === 0;
 
     return (
         <>
             {contextHolder}
             <Modal
-                title="Giao bài trắc nghiệm"
+                title={
+                    <span>
+                        Giao bài trắc nghiệm
+                        {assignedTestSetIds.length > 0 && (
+                            <Tooltip title="Các bài đã giao sẽ được đánh dấu và không thể bỏ chọn">
+                                <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
+                            </Tooltip>
+                        )}
+                    </span>
+                }
                 open={visible}
                 onCancel={onClose}
                 footer={[
@@ -234,16 +284,28 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
                         disabled={isAssignButtonDisabled}
                         loading={assignLoading}
                     >
-                        Giao bài {selectedTestSetIds.length > 0 && `(${selectedTestSetIds.length})`}
+                        Giao bài {newSelectionCount > 0 && `(${newSelectionCount} mới)`}
                     </Button>
                 ]}
                 width={900}
             >
                 <Spin spinning={assignLoading} tip="Đang giao bài...">
-                    <Form
-                        form={form}
-                        layout="vertical"
-                    >
+                    {assignedTestSetIds.length > 0 && (
+                        <div style={{
+                            padding: '12px',
+                            background: '#e6f7ff',
+                            border: '1px solid #91d5ff',
+                            borderRadius: '4px',
+                            marginBottom: '16px'
+                        }}>
+                            <InfoCircleOutlined style={{ color: '#1890ff', marginRight: 8 }} />
+                            <span style={{ color: '#1890ff' }}>
+                                Lớp này đã có {assignedTestSetIds.length} bài trắc nghiệm được giao (được đánh dấu và không thể bỏ chọn)
+                            </span>
+                        </div>
+                    )}
+
+                    <Form form={form} layout="vertical">
                         <Row gutter={12} style={{marginBottom: 16}}>
                             <Col span={8}>
                                 <Input.Search
@@ -270,12 +332,9 @@ const AssignQuizModal: React.FC<AssignQuizModalProps> = ({
                                     rules={[
                                         () => ({
                                             validator(_, value) {
-                                                // Nếu không chọn → hợp lệ
                                                 if (!value || value.length < 2) return Promise.resolve();
-
                                                 const [start, end] = value as moment.Moment[];
                                                 if (end.isSameOrAfter(start, 'day')) return Promise.resolve();
-
                                                 return Promise.reject(new Error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu!'));
                                             }
                                         })
