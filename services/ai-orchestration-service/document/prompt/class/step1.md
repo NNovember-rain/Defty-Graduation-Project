@@ -3,186 +3,183 @@ You are an expert in software analysis and domain modeling. Your task is to anal
 ASSIGNMENT DESCRIPTION:
 {{contentAssignment}}
 
-ANALYSIS PHASE CHARACTERISTICS:
+CLASS DIAGRAM ANALYSIS PHASE CHARACTERISTICS:
 - Focus on business concepts and entities (NOT implementation details)
-- Attributes are simple (NO data types, NO visibility modifiers)
-- Methods/Operations are OPTIONAL and simple
-- Relationships represent business logic
-- NO technical implementation concerns
+- Attributes are simple names only (NO data types, NO visibility modifiers)
+- Methods/Operations are OPTIONAL and simple (NO parameters, NO return types)
+- Relationships represent business logic and domain constraints
+- Emphasis on "what" the system models, not "how" it implements
 
 Extract the following information and return as JSON:
 
 {
 "keywords": [
-// List of important domain-specific keywords (nouns, entities)
-// Examples: "Customer", "Order", "Product", "Invoice", "Payment"
+// List of important domain-specific keywords related to entities and attributes
+// Focus on: business entities, attributes, relationships, domain terms
+// Examples: "customer", "order", "product", "invoice", "payment", "address"
 ],
 
 "businessConcepts": [
 // List of key business concepts and rules in natural language
+// Describe relationships and interactions between entities
 // Examples: "A customer can place multiple orders"
 // Examples: "Each order must belong to exactly one customer"
+// Examples: "Products are organized into categories"
 ],
 
 "mandatoryEntities": [
 // List of entities that MUST exist in the diagram
-// These are core business entities mentioned in the assignment
+// These are core business entities explicitly mentioned in the assignment
+// Format: Clear entity names
 // Examples: "Customer", "Order", "Product"
 ],
 
 "domainRules": [
-// List of business rules and constraints
+// List of business rules and constraints stated in the assignment
+// Focus on cardinality, ownership, and lifecycle rules
 // Examples: "Customer must have unique identification"
 // Examples: "Order contains one or more products"
-// Examples: "Payment is associated with an order"
+// Examples: "Order items are deleted when order is deleted"
 ],
 
 "analysisPhaseConstraints": [
 // Specific constraints for analysis phase modeling
+// What to focus on and what to ignore
 // Examples: "Focus on 'what' not 'how'"
 // Examples: "Identify essential attributes only"
 // Examples: "Represent business relationships clearly"
 ]
 }
 
+EXTRACTION GUIDELINES:
+
+1. KEYWORDS:
+    - Extract nouns representing entities (Customer, Order, Product, Employee, etc.)
+    - Extract nouns representing attributes (name, address, price, quantity, etc.)
+    - Extract relationship terms (contains, belongs to, manages, etc.)
+    - Keep keywords in their original language if assignment is not in English
+    - Include both explicit and strongly implied keywords
+
+2. BUSINESS CONCEPTS:
+    - Describe how entities relate to each other
+    - Capture the business logic in natural language
+    - Focus on "what" the system does, not "how"
+    - Examples: "Customers place orders", "Orders contain products"
+
+3. MANDATORY ENTITIES:
+    - Focus on core business entities explicitly mentioned
+    - Identify entities that are central to the domain
+    - Capture entities required by the assignment requirements
+    - Do not include implementation classes (Controller, Manager, Helper, etc.)
+
+4. DOMAIN RULES:
+    - Extract explicit business rules and constraints
+    - Identify relationship requirements (one-to-many, many-to-many, etc.)
+    - Capture ownership and containment rules (composition vs aggregation)
+    - Note lifecycle dependencies if mentioned (e.g., "order items deleted with order")
+
+5. ANALYSIS PHASE CONSTRAINTS:
+    - Define what is appropriate for analysis phase
+    - Specify what should be ignored (implementation details)
+    - Guide the evaluation focus
+
+EXAMPLES:
+
+Example 1 - E-commerce System:
+Input: "Design a class diagram for an online shopping system. The system manages customers who can place orders. Each order contains multiple order items, and each item refers to a product. Products have name, price, and stock quantity. Customers have name, email, and shipping address."
+
+Output:
+{
+"keywords": ["customer", "order", "order item", "product", "name", "email", "address", "price", "quantity", "stock", "shipping"],
+"businessConcepts": [
+"Customer can place multiple orders",
+"Each order belongs to one customer",
+"Order contains multiple order items",
+"Each order item refers to one product",
+"Products are managed in the system catalog"
+],
+"mandatoryEntities": ["Customer", "Order", "OrderItem", "Product"],
+"domainRules": [
+"Customer has name, email, and shipping address",
+"Product has name, price, and stock quantity",
+"Order contains one or more order items",
+"Each order item is associated with exactly one product"
+],
+"analysisPhaseConstraints": [
+"Focus on business entities and their relationships",
+"Attributes are names only, no data types required",
+"Accept reasonable decomposition of address into street, city, etc.",
+"Payment and shipping details are out of scope unless specified"
+]
+}
+
+Example 2 - Library Management:
+Input: "Create a class diagram for a library system. Members can borrow books. Each book has title, author, and ISBN. A member can borrow multiple books but each book can only be borrowed by one member at a time. Track borrowing date and due date for each loan."
+
+Output:
+{
+"keywords": ["member", "book", "loan", "borrow", "title", "author", "ISBN", "borrowing date", "due date"],
+"businessConcepts": [
+"Members borrow books from the library",
+"Loans track the borrowing relationship",
+"Each loan has dates for tracking",
+"Books have bibliographic information"
+],
+"mandatoryEntities": ["Member", "Book", "Loan"],
+"domainRules": [
+"Member can borrow multiple books",
+"Each book can only be borrowed by one member at a time",
+"Book has title, author, and ISBN",
+"Loan tracks borrowing date and due date"
+],
+"analysisPhaseConstraints": [
+"Focus on core borrowing functionality",
+"Loan is an association class between Member and Book",
+"Fines and reservations are out of scope unless specified",
+"Librarian management is not required"
+]
+}
+
+Example 3 - University System:
+Input: "Model a university registration system. Students enroll in courses. Each course is taught by one professor. A student can enroll in multiple courses, and a course can have multiple students. Track enrollment date and grade for each enrollment."
+
+Output:
+{
+"keywords": ["student", "course", "professor", "enrollment", "enroll", "grade", "enrollment date", "teach"],
+"businessConcepts": [
+"Students enroll in courses",
+"Professors teach courses",
+"Enrollment captures the many-to-many relationship",
+"Grades are recorded per enrollment"
+],
+"mandatoryEntities": ["Student", "Course", "Professor", "Enrollment"],
+"domainRules": [
+"Student can enroll in multiple courses",
+"Course can have multiple students",
+"Each course is taught by one professor",
+"Enrollment tracks enrollment date and grade"
+],
+"analysisPhaseConstraints": [
+"Focus on registration relationships",
+"Enrollment is an association class",
+"Department hierarchy is out of scope",
+"Prerequisites and scheduling not required"
+]
+}
+
 IMPORTANT RULES:
-1. Extract ONLY information explicitly stated or strongly implied in the assignment
-2. Focus on BUSINESS DOMAIN concepts, not technical implementation
-3. Identify mandatory entities based on assignment requirements
-4. Keep it concise and relevant to Class Diagram modeling
-5. Return ONLY valid JSON, no additional text
+1. Extract ONLY information stated or clearly implied in the assignment
+2. Do not invent entities or rules not mentioned in the description
+3. Keep mandatory entities specific to core business domain
+4. Keywords should be single words or short phrases (1-3 words max)
+5. Business concepts should be clear, natural language statements
+6. If assignment is in another language, keep keywords in that language but ensure JSON structure is valid
+7. Return ONLY valid JSON, no markdown, no code blocks, no additional text
+
+EDGE CASES TO HANDLE:
+- If no explicit attributes mentioned: focus on entities and relationships
+- If relationships are vague: extract what is explicitly stated
+- If multiplicity not specified: do not assume, only extract explicit constraints
+- If assignment mentions technical details: ignore implementation specifics, focus on business domain
 
 RETURN ONLY THE JSON OBJECT.
-```
-
----
-
-## 🔧 **PROMPT 2: PlantUML Extractor**
-
-**Type:** `class-plantuml-extractor`
-
-**Purpose:** Extract Class Diagram elements from PlantUML code to structured JSON
-
-**Template:**
-```
-You are an expert in PlantUML and UML Class Diagram notation. Your task is to extract structured information from TWO PlantUML Class Diagrams (solution and student) and convert them to JSON format suitable for ANALYSIS PHASE evaluation.
-
-DOMAIN CONTEXT:
-{{domainContext}}
-
-SOLUTION PLANTUML CODE:
-{{solutionPlantUmlCode}}
-
-STUDENT PLANTUML CODE:
-{{studentPlantUmlCode}}
-
-ANALYSIS PHASE EXTRACTION RULES:
-1. Extract class names (ignore stereotypes like <<entity>> if present)
-2. Extract attributes - NAMES ONLY (ignore types, visibility, static modifiers)
-3. Extract operations/methods - NAMES ONLY if present (OPTIONAL in analysis phase)
-4. Extract all relationships with multiplicity
-5. Normalize different PlantUML syntaxes to standard format
-
-RELATIONSHIP TYPES TO EXTRACT:
-- Association: --> or -- (with multiplicity)
-- Aggregation: o-- or --o (hollow diamond, "has-a" relationship, part can exist independently)
-- Composition: *-- or --* (filled diamond, "contains", part cannot exist without whole)
-- Generalization/Inheritance: --|> or <|-- (parent-child, "is-a" relationship)
-
-MULTIPLICITY NOTATION:
-- "1" = exactly one
-- "0..1" = zero or one
-- "1..*" or "1..n" = one or many
-- "0..*" or "*" = zero or many
-
-Return the following JSON structure:
-
-{
-"solution": {
-"classes": [
-{
-"id": "unique_identifier",  // Use class name as ID
-"name": "ClassName",
-"stereotype": "entity" | "boundary" | "control" | null,  // Optional
-"attributes": [
-{
-"name": "attributeName"
-// NO type, NO visibility in analysis phase
-}
-],
-"operations": [  // OPTIONAL - may be empty array
-{
-"name": "operationName"
-// NO parameters, NO return type in analysis phase
-}
-]
-}
-],
-"relationships": {
-"associations": [
-{
-"from": "ClassA_id",
-"to": "ClassB_id",
-"fromLabel": "role1",  // Optional
-"toLabel": "role2",    // Optional
-"fromMultiplicity": {
-"min": "1",
-"max": "1"
-},
-"toMultiplicity": {
-"min": "0",
-"max": "*"
-}
-}
-],
-"aggregations": [
-{
-"whole": "ContainerClass_id",  // Class with hollow diamond
-"part": "PartClass_id",
-"wholeMultiplicity": {
-"min": "1",
-"max": "1"
-},
-"partMultiplicity": {
-"min": "0",
-"max": "*"
-}
-}
-],
-"compositions": [
-{
-"composite": "WholeClass_id",  // Class with filled diamond
-"component": "PartClass_id",
-"compositeMultiplicity": {
-"min": "1",
-"max": "1"
-},
-"componentMultiplicity": {
-"min": "1",
-"max": "*"
-}
-}
-],
-"generalizations": [
-{
-"parent": "ParentClass_id",
-"child": "ChildClass_id"
-}
-]
-}
-},
-"student": {
-// Same structure as solution
-}
-}
-
-CRITICAL RULES:
-1. Use class names as IDs (consistent naming)
-2. Handle different PlantUML syntax variations correctly
-3. Extract multiplicity accurately (default is "1" if not specified)
-4. Distinguish between aggregation (o--) and composition (*--)
-5. For analysis phase: IGNORE implementation details (private/public, data types, method signatures)
-6. If a class has no attributes or operations, use empty arrays
-7. Preserve relationship labels/roles if present
-
-RETURN ONLY THE JSON OBJECT, NO ADDITIONAL TEXT.

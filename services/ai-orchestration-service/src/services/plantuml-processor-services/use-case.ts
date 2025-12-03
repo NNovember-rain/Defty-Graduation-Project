@@ -771,7 +771,7 @@ const step3_semanticNormalization = async (
 /**
  * Chi tiết về một relationship bị ngược chiều
  */
-interface ReversedRelationship {
+export interface ReversedRelationship {
     type: 'generalization' | 'include' | 'extend';
     solutionDirection: {
         fromId: string;

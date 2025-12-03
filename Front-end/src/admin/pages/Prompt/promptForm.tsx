@@ -75,6 +75,11 @@ const PromptForm: React.FC = () => {
                     description: 'Normalize class and attribute names to canonical forms'
                 },
                 {
+                    value: 'class-analysis-attribute-pattern-detector',
+                    label: '[Class Analysis] Attribute Pattern Detector',
+                    description: 'Attribute Pattern Detector'
+                },
+                {
                     value: 'class-analysis-error-classifier-scorer',
                     label: '[Class Analysis] Error Classifier & Scorer',
                     description: 'Detect, classify errors and calculate score for Class diagrams'

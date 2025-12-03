@@ -66,7 +66,7 @@ interface Generalization {
     child: string;
 }
 
-interface Relationship {
+interface Relationships {
     associations: Association[];
     aggregations: Aggregation[];
     compositions: Composition[];
@@ -75,7 +75,7 @@ interface Relationship {
 
 interface DiagramJSON {
     classes: Class[];
-    relationships: Relationship;
+    relationships: Relationships;
 }
 
 interface NormalizedElement {
@@ -84,70 +84,136 @@ interface NormalizedElement {
     similarityScore: number;
 }
 
+interface NormalizedAttribute extends Attribute {
+    normalized: NormalizedElement;
+}
+
 interface NormalizedClass extends Class {
     normalized: NormalizedElement;
-    attributesNormalized: Array<Attribute & { normalized: NormalizedElement }>;
+    attributesNormalized: NormalizedAttribute[];
 }
 
 interface NormalizedDiagram {
     classes: NormalizedClass[];
-    relationships: Relationship;
+    relationships: Relationships;
 }
+
+// ============================================================================
+// ATTRIBUTE PATTERN TYPES (Step 4.3)
+// ============================================================================
+
+interface AttributeDecomposition {
+    type: 'DECOMPOSITION';
+    sourceAttribute: string;
+    sourceClass: string;
+    decomposedInto: string[];
+    targetClass: string;
+    confidence: number;
+    isValid: boolean;
+}
+
+interface AttributeConsolidation {
+    type: 'CONSOLIDATION';
+    sourceAttributes: string[];
+    sourceClass: string;
+    consolidatedInto: string;
+    targetClass: string;
+    confidence: number;
+    isValid: boolean;
+}
+
+type AttributePattern = AttributeDecomposition | AttributeConsolidation;
+
+// ============================================================================
+// COMPARISON RESULT TYPES
+// ============================================================================
 
 interface AttributeComparison {
     matched: Array<{
         className: string;
-        solutionAttr: Attribute & { normalized: NormalizedElement };
-        studentAttr: Attribute & { normalized: NormalizedElement };
+        solutionAttr: NormalizedAttribute;
+        studentAttr: NormalizedAttribute;
+        similarity: number;
     }>;
     missing: Array<{
         className: string;
-        attribute: Attribute & { normalized: NormalizedElement };
+        attribute: NormalizedAttribute;
     }>;
     extra: Array<{
         className: string;
-        attribute: Attribute & { normalized: NormalizedElement };
+        attribute: NormalizedAttribute;
     }>;
     misplaced: Array<{
         attrName: string;
+        attrCanonical: string;
         inClass: string;
+        inClassCanonical: string;
         shouldBeIn: string;
+        shouldBeInCanonical: string;
         reasoning: string;
+    }>;
+    patterns: AttributePattern[];
+}
+
+interface RelationshipComparisonDetail {
+    matched: number;
+    missing: number;
+    extra: number;
+    details: {
+        matchedPairs: Array<{ solution: string; student: string }>;
+        missingKeys: string[];
+        extraKeys: string[];
+    };
+}
+
+interface AggregationComparisonDetail extends RelationshipComparisonDetail {
+    confusedWithComposition: Array<{
+        whole: string;
+        part: string;
+        wholeCanonical: string;
+        partCanonical: string;
+    }>;
+}
+
+interface CompositionComparisonDetail extends RelationshipComparisonDetail {
+    confusedWithAggregation: Array<{
+        composite: string;
+        component: string;
+        compositeCanonical: string;
+        componentCanonical: string;
+    }>;
+}
+
+interface GeneralizationComparisonDetail extends RelationshipComparisonDetail {
+    reversed: Array<{
+        solutionParent: string;
+        solutionChild: string;
+        studentParent: string;
+        studentChild: string;
     }>;
 }
 
 interface RelationshipComparison {
-    associations: {
-        matched: number;
-        missing: number;
-        extra: number;
+    associations: RelationshipComparisonDetail & {
         wrongMultiplicity: Array<{
             from: string;
             to: string;
-            expected: string;
-            actual: string;
+            expected: { from: Multiplicity; to: Multiplicity };
+            actual: { from: Multiplicity; to: Multiplicity };
         }>;
     };
-    aggregations: {
-        matched: number;
-        missing: number;
-        confusedWithComposition: number;
-    };
-    compositions: {
-        matched: number;
-        missing: number;
-        confusedWithAggregation: number;
-    };
-    generalizations: {
-        matched: number;
-        missing: number;
-        extra: number;
-    };
+    aggregations: AggregationComparisonDetail;
+    compositions: CompositionComparisonDetail;
+    generalizations: GeneralizationComparisonDetail;
 }
 
 interface ComparisonResult {
     classes: {
-        matched: Array<{ solution: NormalizedClass; student: NormalizedClass; similarity: number }>;
+        matched: Array<{
+            solution: NormalizedClass;
+            student: NormalizedClass;
+            similarity: number;
+        }>;
         missing: NormalizedClass[];
         extra: NormalizedClass[];
     };
@@ -159,42 +225,56 @@ interface ComparisonResult {
     relationships: RelationshipComparison;
 }
 
-// Graph Analysis Types
+
+
+// ============================================================================
+// PART 2: GRAPH ANALYSIS, ERROR CLASSIFICATION, SCORING & FEEDBACK
+// ============================================================================
+
+
 interface GraphNode {
     id: string;
     name: string;
     canonical?: string;
-    attributes: Attribute[];
+    type: 'class';
+    attributeCount: number;
+    operationCount: number;
 }
 
 interface GraphEdge {
     from: string;
     to: string;
     type: 'association' | 'aggregation' | 'composition' | 'generalization';
+    fromCanonical: string;
+    toCanonical: string;
 }
 
 interface GraphMetrics {
     classCount: number;
+    edgeCount: number;
     avgDegree: number;
     maxDepth: number;
     degreeCentrality: Map<string, number>;
     betweennessCentrality: Map<string, number>;
     compositionChainDepth: number;
-    attributeCohesion: number;
+    avgAttributeCohesion: number;
 }
 
 interface CompositionChain {
     chain: string[];
+    chainNames: string[];
     depth: number;
-    cascadeDelete: boolean;
+    isCascadeDelete: boolean;
 }
 
 interface LifecycleViolation {
     type: 'COMPOSITION_TO_AGGREGATION' | 'AGGREGATION_TO_COMPOSITION' | 'BROKEN_CASCADE';
     from: string;
     to: string;
-    expected: string;
-    actual: string;
+    fromCanonical: string;
+    toCanonical: string;
+    expected: 'composition' | 'aggregation';
+    actual: 'composition' | 'aggregation';
     businessImpact: string;
 }
 
@@ -202,22 +282,27 @@ interface GraphPattern {
     type: 'CLASS_DECOMPOSITION'
         | 'CLASS_CONSOLIDATION'
         | 'MISSING_CENTRAL_CLASS'
+        | 'MISSING_ABSTRACT_PARENT'
         | 'COMPOSITION_LIFECYCLE_VIOLATION'
-        | 'ATTRIBUTE_MISPLACEMENT_WITH_RELATIONSHIP'
-        | 'GENERALIZATION_CONSOLIDATION'
+        | 'ATTRIBUTE_MIGRATION_WITH_RELATIONSHIP'
+        | 'GENERALIZATION_PRESERVED'
         | 'OVER_NORMALIZATION'
-        | 'BIDIRECTIONAL_RELATIONSHIP_MISSING'
-        | 'DESIGN_PATTERN_APPLIED';
+        | 'UNDER_NORMALIZATION'
+        | 'STRUCTURAL_ISOMORPHISM'
+        | 'ISOLATED_CLASS';
     severity: 'POSITIVE' | 'NEUTRAL' | 'MINOR' | 'MAJOR' | 'CRITICAL';
     confidence: number;
     elements: {
         sourceClass?: string;
+        targetClasses?: string[];
         decomposedInto?: string[];
+        consolidatedFrom?: string[];
+        missingClass?: string;
         attributeMigration?: Array<{ attr: string; from: string; to: string }>;
         compositionChain?: string[];
-        missingClass?: string;
-        isolatedClasses?: string[];
-        [key: string]: any;
+        violationDetails?: LifecycleViolation;
+        metrics?: Record<string, number | string>;
+        [key: string]: unknown;
     };
     structuralEquivalence: boolean;
     designQuality?: {
@@ -228,17 +313,20 @@ interface GraphPattern {
 }
 
 interface GraphEquivalence {
-    type: 'structural_decomposition' | 'structural_consolidation' | 'isomorphic' | 'refactored';
+    type: 'structural_decomposition' | 'structural_consolidation' | 'isomorphic' | 'refactored' | 'hierarchy_preserved';
     confidence: number;
     explanation: string;
+    affectedClasses: string[];
 }
 
 interface GraphRecommendation {
     code: 'IGNORE_EXTRA_CLASSES' | 'IGNORE_MISSING_CLASS' | 'REDUCE_PENALTY'
-        | 'INCREASE_PENALTY' | 'ADD_BONUS' | 'REQUIRE_HUMAN_REVIEW';
+        | 'INCREASE_PENALTY' | 'ADD_BONUS' | 'REQUIRE_HUMAN_REVIEW' | 'IGNORE_ATTRIBUTE_DIFF';
     reason: string;
     affectedElements: string[];
-    penaltyAdjustment?: number;
+    penaltyAdjustment: number;
+    requiresHumanReview?: boolean;
+    reviewContext?: string;
 }
 
 interface GraphAnalysisResult {
@@ -254,6 +342,10 @@ interface GraphAnalysisResult {
     detectedEquivalences: GraphEquivalence[];
     recommendations: GraphRecommendation[];
 }
+
+// ============================================================================
+// ERROR & SCORING TYPES
+// ============================================================================
 
 interface DetectedError {
     code: string;
@@ -271,6 +363,7 @@ interface ScoreBreakdown {
     attributes: { score: number; max: number; details: string };
     relationships: { score: number; max: number; details: string };
     businessLogic: { score: number; max: number; details: string };
+    [key: string]: { score: number; max: number; details: string };
 }
 
 interface GraphAdjustment {
@@ -289,6 +382,499 @@ interface ReferenceScore {
 }
 
 // ============================================================================
+// HELPER FUNCTIONS FOR CANONICAL-BASED COMPARISON
+// ============================================================================
+
+/**
+ * Build a map from canonical name to array of elements (handles duplicates)
+ */
+const buildCanonicalMap = <T extends { normalized: NormalizedElement }>(
+    elements: T[]
+): Map<string, T[]> => {
+    const map = new Map<string, T[]>();
+    for (const element of elements) {
+        const canonical = element.normalized.canonical.toLowerCase();
+        if (!map.has(canonical)) {
+            map.set(canonical, []);
+        }
+        map.get(canonical)!.push(element);
+    }
+    return map;
+};
+
+/**
+ * Build a map from canonical name to single element (first occurrence)
+ */
+const buildCanonicalMapSingle = <T extends { normalized: NormalizedElement }>(
+    elements: T[]
+): Map<string, T> => {
+    const map = new Map<string, T>();
+    for (const element of elements) {
+        const canonical = element.normalized.canonical.toLowerCase();
+        if (!map.has(canonical)) {
+            map.set(canonical, element);
+        }
+    }
+    return map;
+};
+
+/**
+ * Find element by ID in an array
+ */
+const findById = <T extends { id: string }>(
+    elements: T[],
+    id: string
+): T | undefined => {
+    return elements.find(e => e.id === id);
+};
+
+/**
+ * Find element by name in an array
+ */
+const findByName = <T extends { name: string }>(
+    elements: T[],
+    name: string
+): T | undefined => {
+    return elements.find(e => e.name === name);
+};
+
+/**
+ * Get canonical name for a class by ID or name
+ */
+const getClassCanonical = (
+    classIdOrName: string,
+    diagram: NormalizedDiagram
+): string | null => {
+    const cls = diagram.classes.find(
+        c => c.id === classIdOrName || c.name === classIdOrName
+    );
+    return cls?.normalized.canonical.toLowerCase() || null;
+};
+
+/**
+ * Find class by canonical name
+ */
+const findClassByCanonical = (
+    canonical: string,
+    diagram: NormalizedDiagram
+): NormalizedClass | undefined => {
+    return diagram.classes.find(
+        c => c.normalized.canonical.toLowerCase() === canonical.toLowerCase()
+    );
+};
+
+// ============================================================================
+// RELATIONSHIP COMPARISON HELPERS
+// ============================================================================
+
+/**
+ * Compare Associations using canonical names
+ * Associations are bidirectional, so A-B equals B-A
+ */
+const compareAssociations = (
+    solutionRels: Association[],
+    studentRels: Association[],
+    solution: NormalizedDiagram,
+    student: NormalizedDiagram
+): RelationshipComparison['associations'] => {
+    // Build canonical keys for solution (bidirectional - sort alphabetically)
+    const solutionKeys = new Map<string, Association>();
+    for (const rel of solutionRels) {
+        const fromCanonical = getClassCanonical(rel.from, solution);
+        const toCanonical = getClassCanonical(rel.to, solution);
+
+        if (fromCanonical && toCanonical) {
+            // Sort to make bidirectional comparison work
+            const sortedKey = [fromCanonical, toCanonical].sort().join('::assoc::');
+            solutionKeys.set(sortedKey, rel);
+        }
+    }
+
+    // Build canonical keys for student (with array for duplicates)
+    const studentKeysMap = new Map<string, Array<{ rel: Association; key: string }>>();
+    for (const rel of studentRels) {
+        const fromCanonical = getClassCanonical(rel.from, student);
+        const toCanonical = getClassCanonical(rel.to, student);
+
+        if (fromCanonical && toCanonical) {
+            const sortedKey = [fromCanonical, toCanonical].sort().join('::assoc::');
+
+            if (!studentKeysMap.has(sortedKey)) {
+                studentKeysMap.set(sortedKey, []);
+            }
+            studentKeysMap.get(sortedKey)!.push({ rel, key: sortedKey });
+        }
+    }
+
+    // Match relationships
+    const matchedPairs: Array<{ solution: string; student: string }> = [];
+    const matchedSolutionKeys = new Set<string>();
+    const wrongMultiplicity: RelationshipComparison['associations']['wrongMultiplicity'] = [];
+
+    for (const [key, solRel] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            const stuData = stuRels.shift()!;
+            matchedSolutionKeys.add(key);
+            matchedPairs.push({ solution: key, student: stuData.key });
+
+            // Check multiplicity
+            const stuRel = stuData.rel;
+            const solFromCanonical = getClassCanonical(solRel.from, solution);
+            const solToCanonical = getClassCanonical(solRel.to, solution);
+            const stuFromCanonical = getClassCanonical(stuRel.from, student);
+            const stuToCanonical = getClassCanonical(stuRel.to, student);
+
+            // Normalize direction for comparison
+            let expectedFrom = solRel.fromMultiplicity;
+            let expectedTo = solRel.toMultiplicity;
+            let actualFrom = stuRel.fromMultiplicity;
+            let actualTo = stuRel.toMultiplicity;
+
+            // If student has reversed direction, swap multiplicities
+            if (solFromCanonical === stuToCanonical && solToCanonical === stuFromCanonical) {
+                actualFrom = stuRel.toMultiplicity;
+                actualTo = stuRel.fromMultiplicity;
+            }
+
+            // Compare multiplicities
+            const fromMatch = expectedFrom.min === actualFrom.min && expectedFrom.max === actualFrom.max;
+            const toMatch = expectedTo.min === actualTo.min && expectedTo.max === actualTo.max;
+
+            if (!fromMatch || !toMatch) {
+                wrongMultiplicity.push({
+                    from: solRel.from,
+                    to: solRel.to,
+                    expected: { from: expectedFrom, to: expectedTo },
+                    actual: { from: actualFrom, to: actualTo }
+                });
+            }
+
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        }
+    }
+
+    // Count remaining
+    const missingKeys = Array.from(solutionKeys.keys()).filter(k => !matchedSolutionKeys.has(k));
+    const extraKeys: string[] = [];
+    for (const stuRels of studentKeysMap.values()) {
+        for (const stuData of stuRels) {
+            extraKeys.push(stuData.key);
+        }
+    }
+
+    return {
+        matched: matchedPairs.length,
+        missing: missingKeys.length,
+        extra: extraKeys.length,
+        details: { matchedPairs, missingKeys, extraKeys },
+        wrongMultiplicity
+    };
+};
+
+/**
+ * Compare Aggregations using canonical names
+ * Also detect confusion with Compositions
+ */
+const compareAggregations = (
+    solutionRels: Aggregation[],
+    studentRels: Aggregation[],
+    studentCompositions: Composition[],
+    solution: NormalizedDiagram,
+    student: NormalizedDiagram
+): AggregationComparisonDetail => {
+    // Build canonical keys for solution: "whole::agg::part"
+    const solutionKeys = new Map<string, Aggregation>();
+    for (const rel of solutionRels) {
+        const wholeCanonical = getClassCanonical(rel.whole, solution);
+        const partCanonical = getClassCanonical(rel.part, solution);
+
+        if (wholeCanonical && partCanonical) {
+            const key = `${wholeCanonical}::agg::${partCanonical}`;
+            solutionKeys.set(key, rel);
+        }
+    }
+
+    // Build canonical keys for student aggregations
+    const studentKeysMap = new Map<string, Array<{ rel: Aggregation; key: string }>>();
+    for (const rel of studentRels) {
+        const wholeCanonical = getClassCanonical(rel.whole, student);
+        const partCanonical = getClassCanonical(rel.part, student);
+
+        if (wholeCanonical && partCanonical) {
+            const key = `${wholeCanonical}::agg::${partCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push({ rel, key });
+        }
+    }
+
+    // Build canonical keys for student compositions (to detect confusion)
+    const studentCompKeys = new Set<string>();
+    for (const rel of studentCompositions) {
+        const compositeCanonical = getClassCanonical(rel.composite, student);
+        const componentCanonical = getClassCanonical(rel.component, student);
+
+        if (compositeCanonical && componentCanonical) {
+            // Key format matching aggregation: "whole::part"
+            studentCompKeys.add(`${compositeCanonical}::${componentCanonical}`);
+        }
+    }
+
+    // Match and detect confusion
+    const matchedPairs: Array<{ solution: string; student: string }> = [];
+    const matchedSolutionKeys = new Set<string>();
+    const confusedWithComposition: AggregationComparisonDetail['confusedWithComposition'] = [];
+
+    for (const [key, solRel] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            const stuData = stuRels.shift()!;
+            matchedSolutionKeys.add(key);
+            matchedPairs.push({ solution: key, student: stuData.key });
+
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        } else {
+            // Check if student used composition instead
+            const wholeCanonical = getClassCanonical(solRel.whole, solution)!;
+            const partCanonical = getClassCanonical(solRel.part, solution)!;
+            const compKey = `${wholeCanonical}::${partCanonical}`;
+
+            if (studentCompKeys.has(compKey)) {
+                confusedWithComposition.push({
+                    whole: solRel.whole,
+                    part: solRel.part,
+                    wholeCanonical,
+                    partCanonical
+                });
+                matchedSolutionKeys.add(key); // Count as "handled" (not pure missing)
+            }
+        }
+    }
+
+    const missingKeys = Array.from(solutionKeys.keys()).filter(k => !matchedSolutionKeys.has(k));
+    const extraKeys: string[] = [];
+    for (const stuRels of studentKeysMap.values()) {
+        for (const stuData of stuRels) {
+            extraKeys.push(stuData.key);
+        }
+    }
+
+    return {
+        matched: matchedPairs.length,
+        missing: missingKeys.length,
+        extra: extraKeys.length,
+        details: { matchedPairs, missingKeys, extraKeys },
+        confusedWithComposition
+    };
+};
+
+/**
+ * Compare Compositions using canonical names
+ * Also detect confusion with Aggregations
+ */
+const compareCompositions = (
+    solutionRels: Composition[],
+    studentRels: Composition[],
+    studentAggregations: Aggregation[],
+    solution: NormalizedDiagram,
+    student: NormalizedDiagram
+): CompositionComparisonDetail => {
+    // Build canonical keys for solution: "composite::comp::component"
+    const solutionKeys = new Map<string, Composition>();
+    for (const rel of solutionRels) {
+        const compositeCanonical = getClassCanonical(rel.composite, solution);
+        const componentCanonical = getClassCanonical(rel.component, solution);
+
+        if (compositeCanonical && componentCanonical) {
+            const key = `${compositeCanonical}::comp::${componentCanonical}`;
+            solutionKeys.set(key, rel);
+        }
+    }
+
+    // Build canonical keys for student compositions
+    const studentKeysMap = new Map<string, Array<{ rel: Composition; key: string }>>();
+    for (const rel of studentRels) {
+        const compositeCanonical = getClassCanonical(rel.composite, student);
+        const componentCanonical = getClassCanonical(rel.component, student);
+
+        if (compositeCanonical && componentCanonical) {
+            const key = `${compositeCanonical}::comp::${componentCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push({ rel, key });
+        }
+    }
+
+    // Build canonical keys for student aggregations (to detect confusion)
+    const studentAggKeys = new Set<string>();
+    for (const rel of studentAggregations) {
+        const wholeCanonical = getClassCanonical(rel.whole, student);
+        const partCanonical = getClassCanonical(rel.part, student);
+
+        if (wholeCanonical && partCanonical) {
+            studentAggKeys.add(`${wholeCanonical}::${partCanonical}`);
+        }
+    }
+
+    // Match and detect confusion
+    const matchedPairs: Array<{ solution: string; student: string }> = [];
+    const matchedSolutionKeys = new Set<string>();
+    const confusedWithAggregation: CompositionComparisonDetail['confusedWithAggregation'] = [];
+
+    for (const [key, solRel] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            const stuData = stuRels.shift()!;
+            matchedSolutionKeys.add(key);
+            matchedPairs.push({ solution: key, student: stuData.key });
+
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        } else {
+            // Check if student used aggregation instead
+            const compositeCanonical = getClassCanonical(solRel.composite, solution)!;
+            const componentCanonical = getClassCanonical(solRel.component, solution)!;
+            const aggKey = `${compositeCanonical}::${componentCanonical}`;
+
+            if (studentAggKeys.has(aggKey)) {
+                confusedWithAggregation.push({
+                    composite: solRel.composite,
+                    component: solRel.component,
+                    compositeCanonical,
+                    componentCanonical
+                });
+                matchedSolutionKeys.add(key);
+            }
+        }
+    }
+
+    const missingKeys = Array.from(solutionKeys.keys()).filter(k => !matchedSolutionKeys.has(k));
+    const extraKeys: string[] = [];
+    for (const stuRels of studentKeysMap.values()) {
+        for (const stuData of stuRels) {
+            extraKeys.push(stuData.key);
+        }
+    }
+
+    return {
+        matched: matchedPairs.length,
+        missing: missingKeys.length,
+        extra: extraKeys.length,
+        details: { matchedPairs, missingKeys, extraKeys },
+        confusedWithAggregation
+    };
+};
+
+/**
+ * Compare Generalizations using canonical names
+ * Also detect reversed relationships (parent-child swapped)
+ */
+const compareGeneralizations = (
+    solutionRels: Generalization[],
+    studentRels: Generalization[],
+    solution: NormalizedDiagram,
+    student: NormalizedDiagram
+): GeneralizationComparisonDetail => {
+    // Build canonical keys for solution: "parent::gen::child"
+    const solutionKeys = new Map<string, { rel: Generalization; parentCanonical: string; childCanonical: string }>();
+    for (const rel of solutionRels) {
+        const parentCanonical = getClassCanonical(rel.parent, solution);
+        const childCanonical = getClassCanonical(rel.child, solution);
+
+        if (parentCanonical && childCanonical) {
+            const key = `${parentCanonical}::gen::${childCanonical}`;
+            solutionKeys.set(key, { rel, parentCanonical, childCanonical });
+        }
+    }
+
+    // Build canonical keys for student
+    const studentKeysMap = new Map<string, Array<{
+        rel: Generalization;
+        key: string;
+        parentCanonical: string;
+        childCanonical: string;
+    }>>();
+    for (const rel of studentRels) {
+        const parentCanonical = getClassCanonical(rel.parent, student);
+        const childCanonical = getClassCanonical(rel.child, student);
+
+        if (parentCanonical && childCanonical) {
+            const key = `${parentCanonical}::gen::${childCanonical}`;
+
+            if (!studentKeysMap.has(key)) {
+                studentKeysMap.set(key, []);
+            }
+            studentKeysMap.get(key)!.push({ rel, key, parentCanonical, childCanonical });
+        }
+    }
+
+    // Match and detect reversed
+    const matchedPairs: Array<{ solution: string; student: string }> = [];
+    const matchedSolutionKeys = new Set<string>();
+    const reversed: GeneralizationComparisonDetail['reversed'] = [];
+
+    for (const [key, solData] of solutionKeys) {
+        const stuRels = studentKeysMap.get(key) || [];
+        if (stuRels.length > 0) {
+            const stuData = stuRels.shift()!;
+            matchedSolutionKeys.add(key);
+            matchedPairs.push({ solution: key, student: stuData.key });
+
+            if (stuRels.length === 0) {
+                studentKeysMap.delete(key);
+            }
+        } else {
+            // Check for reversed relationship
+            const reversedKey = `${solData.childCanonical}::gen::${solData.parentCanonical}`;
+            const stuReversed = studentKeysMap.get(reversedKey);
+
+            if (stuReversed && stuReversed.length > 0) {
+                const stuData = stuReversed.shift()!;
+
+                reversed.push({
+                    solutionParent: solData.rel.parent,
+                    solutionChild: solData.rel.child,
+                    studentParent: stuData.rel.parent,
+                    studentChild: stuData.rel.child
+                });
+
+                matchedSolutionKeys.add(key); // Count as handled
+
+                if (stuReversed.length === 0) {
+                    studentKeysMap.delete(reversedKey);
+                }
+            }
+        }
+    }
+
+    const missingKeys = Array.from(solutionKeys.keys()).filter(k => !matchedSolutionKeys.has(k));
+    const extraKeys: string[] = [];
+    for (const stuRels of studentKeysMap.values()) {
+        for (const stuData of stuRels) {
+            extraKeys.push(stuData.key);
+        }
+    }
+
+    return {
+        matched: matchedPairs.length,
+        missing: missingKeys.length,
+        extra: extraKeys.length,
+        details: { matchedPairs, missingKeys, extraKeys },
+        reversed
+    };
+};
+
+// ============================================================================
 // STEP 1: VALIDATION & DOMAIN ANALYSIS
 // ============================================================================
 
@@ -299,16 +885,18 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
         id: input.id
     });
 
+    // Validate required fields
     if (!input.typeUmlName || !input.contentAssignment ||
         !input.solutionPlantUmlCode || !input.studentPlantUmlCode) {
         throw new UmlProcessingError('Thiếu trường bắt buộc trong input');
     }
 
+    // Validate PlantUML format
     const validatePlantUml = (code: string, label: string) => {
         if (!code.includes('@startuml') || !code.includes('@enduml')) {
-            throw new UmlProcessingError(`${label}: Thiếu PlantUML tags`);
+            throw new UmlProcessingError(`${label}: Thiếu PlantUML tags (@startuml/@enduml)`);
         }
-        if (!code.includes('class')) {
+        if (!code.includes('class ')) {
             throw new UmlProcessingError(`${label}: Không tìm thấy class definitions`);
         }
     };
@@ -316,6 +904,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
     validatePlantUml(input.solutionPlantUmlCode, 'Solution');
     validatePlantUml(input.studentPlantUmlCode, 'Student');
 
+    // Get domain analysis prompt
     const prompt = await promptService.getPrompts({
         type: 'class-analysis-domain-extractor',
         isActive: true,
@@ -323,7 +912,7 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('Không tìm thấy prompt class domain extractor');
+        throw new Error('Không tìm thấy prompt class-analysis-domain-extractor');
     }
 
     const promptContent = prompt.prompts[0].templateString
@@ -332,12 +921,24 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
     const aiResponse = await callAIApi(promptContent, input.id, 'step1-domain');
     const domainContext = parseJsonResponse<DomainContext>(aiResponse, input.id, 'step1');
 
+    // Validate domain context structure
+    if (!domainContext.keywords || !Array.isArray(domainContext.keywords)) {
+        domainContext.keywords = [];
+    }
+    if (!domainContext.mandatoryEntities || !Array.isArray(domainContext.mandatoryEntities)) {
+        domainContext.mandatoryEntities = [];
+    }
+    if (!domainContext.domainRules || !Array.isArray(domainContext.domainRules)) {
+        domainContext.domainRules = [];
+    }
+
     logger.info({
         message: 'BƯỚC 1: Hoàn thành',
         event_type: 'step1_complete',
         id: input.id,
         keywordsCount: domainContext.keywords.length,
-        mandatoryEntitiesCount: domainContext.mandatoryEntities.length
+        mandatoryEntitiesCount: domainContext.mandatoryEntities.length,
+        domainRulesCount: domainContext.domainRules.length
     });
 
     return domainContext;
@@ -364,7 +965,7 @@ const step2_extractToJson = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('Không tìm thấy prompt class PlantUML extractor');
+        throw new Error('Không tìm thấy prompt class-analysis-plantuml-extractor');
     }
 
     const promptContent = prompt.prompts[0].templateString
@@ -378,12 +979,63 @@ const step2_extractToJson = async (
         student: DiagramJSON;
     }>(aiResponse, input.id, 'step2');
 
+    // Validate and normalize result structure
+    const validateDiagram = (diagram: DiagramJSON, label: string): DiagramJSON => {
+        if (!diagram.classes || !Array.isArray(diagram.classes)) {
+            diagram.classes = [];
+        }
+        if (!diagram.relationships) {
+            diagram.relationships = {
+                associations: [],
+                aggregations: [],
+                compositions: [],
+                generalizations: []
+            };
+        }
+        if (!Array.isArray(diagram.relationships.associations)) {
+            diagram.relationships.associations = [];
+        }
+        if (!Array.isArray(diagram.relationships.aggregations)) {
+            diagram.relationships.aggregations = [];
+        }
+        if (!Array.isArray(diagram.relationships.compositions)) {
+            diagram.relationships.compositions = [];
+        }
+        if (!Array.isArray(diagram.relationships.generalizations)) {
+            diagram.relationships.generalizations = [];
+        }
+
+        // Ensure each class has required fields
+        for (const cls of diagram.classes) {
+            if (!cls.id) cls.id = cls.name;
+            if (!cls.attributes) cls.attributes = [];
+            if (!cls.operations) cls.operations = [];
+        }
+
+        return diagram;
+    };
+
+    result.solution = validateDiagram(result.solution, 'Solution');
+    result.student = validateDiagram(result.student, 'Student');
+
     logger.info({
         message: 'BƯỚC 2: Hoàn thành',
         event_type: 'step2_complete',
         id: input.id,
-        solution: { classes: result.solution.classes.length },
-        student: { classes: result.student.classes.length }
+        solution: {
+            classesCount: result.solution.classes.length,
+            associationsCount: result.solution.relationships.associations.length,
+            aggregationsCount: result.solution.relationships.aggregations.length,
+            compositionsCount: result.solution.relationships.compositions.length,
+            generalizationsCount: result.solution.relationships.generalizations.length
+        },
+        student: {
+            classesCount: result.student.classes.length,
+            associationsCount: result.student.relationships.associations.length,
+            aggregationsCount: result.student.relationships.aggregations.length,
+            compositionsCount: result.student.relationships.compositions.length,
+            generalizationsCount: result.student.relationships.generalizations.length
+        }
     });
 
     return result;
@@ -395,7 +1047,8 @@ const step2_extractToJson = async (
 
 const step3_semanticNormalization = async (
     input: UmlInput,
-    diagrams: { solution: DiagramJSON; student: DiagramJSON }
+    diagrams: { solution: DiagramJSON; student: DiagramJSON },
+    domainContext: DomainContext
 ): Promise<{ solution: NormalizedDiagram; student: NormalizedDiagram }> => {
     logger.info({
         message: 'BƯỚC 3: Bắt đầu chuẩn hóa semantic',
@@ -410,9 +1063,10 @@ const step3_semanticNormalization = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('Không tìm thấy prompt class semantic normalizer');
+        throw new Error('Không tìm thấy prompt class-analysis-semantic-normalizer');
     }
 
+    // Prepare elements for normalization
     const elementsToNormalize = {
         solution: {
             classes: diagrams.solution.classes.map(c => ({
@@ -427,11 +1081,15 @@ const step3_semanticNormalization = async (
                 name: c.name,
                 attributes: c.attributes.map(a => a.name)
             }))
+        },
+        domainContext: {
+            keywords: domainContext.keywords,
+            mandatoryEntities: domainContext.mandatoryEntities
         }
     };
 
     const promptContent = prompt.prompts[0].templateString
-        .replace(/\{\{elements\}\}/g, JSON.stringify(elementsToNormalize));
+        .replace(/\{\{elements\}\}/g, JSON.stringify(elementsToNormalize, null, 2));
 
     const aiResponse = await callAIApi(promptContent, input.id, 'step3-normalize');
     const normalized = parseJsonResponse<{
@@ -453,6 +1111,7 @@ const step3_semanticNormalization = async (
         };
     }>(aiResponse, input.id, 'step3');
 
+    // Merge normalized data with original diagrams
     const mergeNormalized = (
         classes: Class[],
         normalizedClasses: typeof normalized.solution.classes
@@ -460,13 +1119,14 @@ const step3_semanticNormalization = async (
         return classes.map(cls => {
             const norm = normalizedClasses.find(n => n.id === cls.id);
 
-            const attributesNormalized = cls.attributes.map(attr => {
+            // Normalize attributes
+            const attributesNormalized: NormalizedAttribute[] = cls.attributes.map(attr => {
                 const attrNorm = norm?.attributes.find(a => a.name === attr.name);
                 return {
                     ...attr,
                     normalized: {
                         original: attr.name,
-                        canonical: attrNorm?.canonical || attr.name,
+                        canonical: attrNorm?.canonical || attr.name.toLowerCase(),
                         similarityScore: attrNorm?.similarityScore || 1.0
                     }
                 };
@@ -477,7 +1137,7 @@ const step3_semanticNormalization = async (
                 attributesNormalized,
                 normalized: {
                     original: cls.name,
-                    canonical: norm?.canonical || cls.name,
+                    canonical: norm?.canonical || cls.name.toLowerCase(),
                     similarityScore: norm?.similarityScore || 1.0
                 }
             };
@@ -498,54 +1158,73 @@ const step3_semanticNormalization = async (
     logger.info({
         message: 'BƯỚC 3: Hoàn thành',
         event_type: 'step3_complete',
-        id: input.id
+        id: input.id,
+        solutionClassesNormalized: result.solution.classes.length,
+        studentClassesNormalized: result.student.classes.length
     });
 
     return result;
 };
 
 // ============================================================================
-// STEP 4: STRUCTURE COMPARISON
+// STEP 4: STRUCTURE COMPARISON (WITH AI FOR ATTRIBUTE PATTERNS)
 // ============================================================================
 
-const step4_structureComparison = (
+const step4_structureComparison = async (
+    input: UmlInput,
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram }
-): ComparisonResult => {
+): Promise<ComparisonResult> => {
     logger.info({
         message: 'BƯỚC 4: Bắt đầu so sánh cấu trúc',
-        event_type: 'step4_start'
+        event_type: 'step4_start',
+        id: input.id
     });
 
     const { solution, student } = normalized;
 
-    // Compare Classes
+    // ========================================================================
+    // 4.1: Compare Classes using canonical names
+    // ========================================================================
+
     const matchedClasses: ComparisonResult['classes']['matched'] = [];
     const missingClasses: NormalizedClass[] = [];
     const extraClasses: NormalizedClass[] = [];
 
-    const studentClassMap = new Map(
-        student.classes.map(c => [c.normalized.canonical.toLowerCase(), c])
-    );
+    const studentClassMap = buildCanonicalMap(student.classes);
 
     for (const solClass of solution.classes) {
         const canonical = solClass.normalized.canonical.toLowerCase();
-        const stuClass = studentClassMap.get(canonical);
+        const stuClasses = studentClassMap.get(canonical);
 
-        if (stuClass) {
+        if (stuClasses && stuClasses.length > 0) {
+            const stuClass = stuClasses.shift()!;
+            const similarity = Math.min(
+                solClass.normalized.similarityScore,
+                stuClass.normalized.similarityScore
+            );
+
             matchedClasses.push({
                 solution: solClass,
                 student: stuClass,
-                similarity: Math.max(solClass.normalized.similarityScore, stuClass.normalized.similarityScore)
+                similarity
             });
-            studentClassMap.delete(canonical);
+
+            if (stuClasses.length === 0) {
+                studentClassMap.delete(canonical);
+            }
         } else {
             missingClasses.push(solClass);
         }
     }
 
-    extraClasses.push(...Array.from(studentClassMap.values()));
+    for (const stuClasses of studentClassMap.values()) {
+        extraClasses.push(...stuClasses);
+    }
 
-    // Compare Attributes
+    // ========================================================================
+    // 4.2: Compare Attributes within matched classes
+    // ========================================================================
+
     const matchedAttributes: AttributeComparison['matched'] = [];
     const missingAttributes: AttributeComparison['missing'] = [];
     const extraAttributes: AttributeComparison['extra'] = [];
@@ -555,21 +1234,27 @@ const step4_structureComparison = (
         const solClass = match.solution;
         const stuClass = match.student;
 
-        const stuAttrMap = new Map(
-            stuClass.attributesNormalized.map(a => [a.normalized.canonical.toLowerCase(), a])
-        );
+        const stuAttrMap = buildCanonicalMap(stuClass.attributesNormalized);
 
         for (const solAttr of solClass.attributesNormalized) {
             const canonical = solAttr.normalized.canonical.toLowerCase();
-            const stuAttr = stuAttrMap.get(canonical);
+            const stuAttrs = stuAttrMap.get(canonical);
 
-            if (stuAttr) {
+            if (stuAttrs && stuAttrs.length > 0) {
+                const stuAttr = stuAttrs.shift()!;
                 matchedAttributes.push({
                     className: solClass.name,
                     solutionAttr: solAttr,
-                    studentAttr: stuAttr
+                    studentAttr: stuAttr,
+                    similarity: Math.min(
+                        solAttr.normalized.similarityScore,
+                        stuAttr.normalized.similarityScore
+                    )
                 });
-                stuAttrMap.delete(canonical);
+
+                if (stuAttrs.length === 0) {
+                    stuAttrMap.delete(canonical);
+                }
             } else {
                 missingAttributes.push({
                     className: solClass.name,
@@ -578,10 +1263,21 @@ const step4_structureComparison = (
             }
         }
 
-        for (const stuAttr of stuAttrMap.values()) {
+        for (const stuAttrs of stuAttrMap.values()) {
+            for (const stuAttr of stuAttrs) {
+                extraAttributes.push({
+                    className: stuClass.name,
+                    attribute: stuAttr
+                });
+            }
+        }
+    }
+
+    for (const extraClass of extraClasses) {
+        for (const attr of extraClass.attributesNormalized) {
             extraAttributes.push({
-                className: stuClass.name,
-                attribute: stuAttr
+                className: extraClass.name,
+                attribute: attr
             });
         }
     }
@@ -591,6 +1287,15 @@ const step4_structureComparison = (
         const attrCanonical = missing.attribute.normalized.canonical.toLowerCase();
 
         for (const stuClass of student.classes) {
+            const stuClassCanonical = stuClass.normalized.canonical.toLowerCase();
+            const shouldBeInClass = matchedClasses.find(
+                m => m.solution.name === missing.className
+            );
+            if (shouldBeInClass &&
+                shouldBeInClass.student.normalized.canonical.toLowerCase() === stuClassCanonical) {
+                continue;
+            }
+
             const foundAttr = stuClass.attributesNormalized.find(
                 a => a.normalized.canonical.toLowerCase() === attrCanonical
             );
@@ -598,8 +1303,13 @@ const step4_structureComparison = (
             if (foundAttr) {
                 misplacedAttributes.push({
                     attrName: missing.attribute.name,
+                    attrCanonical: attrCanonical,
                     inClass: stuClass.name,
+                    inClassCanonical: stuClassCanonical,
                     shouldBeIn: missing.className,
+                    shouldBeInCanonical: solution.classes.find(
+                        c => c.name === missing.className
+                    )?.normalized.canonical.toLowerCase() || missing.className.toLowerCase(),
                     reasoning: `Attribute "${missing.attribute.name}" found in "${stuClass.name}" but should be in "${missing.className}"`
                 });
                 break;
@@ -607,7 +1317,159 @@ const step4_structureComparison = (
         }
     }
 
-    // Compare Operations
+    // ========================================================================
+    // 4.3: Detect Attribute Patterns with AI
+    // ========================================================================
+
+    let attributePatterns: AttributePattern[] = [];
+
+    // Prepare input for AI: matched classes with full attribute comparison
+    const matchedClassesWithAttributes = matchedClasses.map(match => {
+        const solClass = match.solution;
+        const stuClass = match.student;
+
+        // Get matched, missing, extra attributes for this class
+        const classMatchedAttrs = matchedAttributes
+            .filter(m => m.className === solClass.name)
+            .map(m => m.solutionAttr.name);
+
+        const classMissingAttrs = missingAttributes
+            .filter(m => m.className === solClass.name)
+            .map(m => m.attribute.name);
+
+        const classExtraAttrs = extraAttributes
+            .filter(e => e.className === stuClass.name)
+            .map(e => e.attribute.name);
+
+        return {
+            solutionClass: {
+                name: solClass.name,
+                canonical: solClass.normalized.canonical,
+                attributes: solClass.attributesNormalized.map(a => ({
+                    name: a.name,
+                    canonical: a.normalized.canonical
+                }))
+            },
+            studentClass: {
+                name: stuClass.name,
+                canonical: stuClass.normalized.canonical,
+                attributes: stuClass.attributesNormalized.map(a => ({
+                    name: a.name,
+                    canonical: a.normalized.canonical
+                }))
+            },
+            attributeComparison: {
+                matched: classMatchedAttrs,
+                missing: classMissingAttrs,
+                extra: classExtraAttrs
+            }
+        };
+    });
+
+    // Check if there are potential patterns (missing or extra attributes exist)
+    const hasPotentialPatterns = matchedClassesWithAttributes.some(
+        cls => cls.attributeComparison.missing.length > 0 ||
+            cls.attributeComparison.extra.length > 0
+    );
+
+    if (hasPotentialPatterns) {
+        try {
+            // Get prompt for attribute pattern detection
+            const patternPrompt = await promptService.getPrompts({
+                type: 'class-analysis-attribute-pattern-detector',
+                isActive: true,
+                limit: 1
+            });
+
+            if (patternPrompt.prompts && patternPrompt.prompts.length > 0) {
+                const promptContent = patternPrompt.prompts[0].templateString
+                    .replace(/\{\{matchedClassesWithAttributes\}\}/g,
+                        JSON.stringify({ matchedClasses: matchedClassesWithAttributes }, null, 2));
+
+                const aiResponse = await callAIApi(promptContent, input.id, 'step4.3-patterns');
+                const patternResult = parseJsonResponse<{
+                    patterns: Array<{
+                        type: 'DECOMPOSITION' | 'CONSOLIDATION';
+                        className: string;
+                        sourceAttribute?: string;
+                        sourceAttributes?: string[];
+                        targetAttribute?: string;
+                        targetAttributes?: string[];
+                        confidence: number;
+                        isValid: boolean;
+                        reasoning: string;
+                    }>;
+                    unrelatedExtras: Array<{
+                        className: string;
+                        attribute: string;
+                        reasoning: string;
+                    }>;
+                }>(aiResponse, input.id, 'step4.3');
+
+                // Convert AI response to AttributePattern format
+                attributePatterns = patternResult.patterns.map(p => {
+                    if (p.type === 'DECOMPOSITION') {
+                        return {
+                            type: 'DECOMPOSITION',
+                            sourceAttribute: p.sourceAttribute!,
+                            sourceClass: p.className,
+                            decomposedInto: p.targetAttributes || [],
+                            targetClass: p.className,
+                            confidence: p.confidence,
+                            isValid: p.isValid,
+                            reasoning: p.reasoning
+                        } as AttributeDecomposition;
+                    } else {
+                        return {
+                            type: 'CONSOLIDATION',
+                            sourceAttributes: p.sourceAttributes || [],
+                            sourceClass: p.className,
+                            consolidatedInto: p.targetAttribute!,
+                            targetClass: p.className,
+                            confidence: p.confidence,
+                            isValid: p.isValid,
+                            reasoning: p.reasoning
+                        } as AttributeConsolidation;
+                    }
+                });
+
+                logger.info({
+                    message: 'BƯỚC 4.3: Hoàn thành phát hiện Attribute Patterns với AI',
+                    event_type: 'step4_3_complete',
+                    id: input.id,
+                    patternsDetected: attributePatterns.length,
+                    decompositions: attributePatterns.filter(p => p.type === 'DECOMPOSITION').length,
+                    consolidations: attributePatterns.filter(p => p.type === 'CONSOLIDATION').length,
+                    unrelatedExtras: patternResult.unrelatedExtras.length
+                });
+            } else {
+                logger.warn({
+                    message: 'BƯỚC 4.3: Không tìm thấy prompt attribute-pattern-detector',
+                    event_type: 'step4_3_prompt_not_found',
+                    id: input.id
+                });
+            }
+        } catch (error) {
+            logger.error({
+                message: 'BƯỚC 4.3: Lỗi khi phát hiện patterns, tiếp tục mà không có patterns',
+                event_type: 'step4_3_error',
+                id: input.id,
+                error: getErrorMessage(error)
+            });
+            // Continue without patterns on error
+        }
+    } else {
+        logger.info({
+            message: 'BƯỚC 4.3: Không có potential patterns, bỏ qua AI call',
+            event_type: 'step4_3_skip',
+            id: input.id
+        });
+    }
+
+    // ========================================================================
+    // 4.4: Compare Operations (simplified)
+    // ========================================================================
+
     let matchedOperations = 0;
     let missingOperations = 0;
 
@@ -619,95 +1481,65 @@ const step4_structureComparison = (
         missingOperations += Math.max(0, solOps.length - stuOps.length);
     }
 
-    // Compare Relationships
-    const getCanonical = (className: string, diagram: NormalizedDiagram): string => {
-        const cls = diagram.classes.find(c => c.id === className || c.name === className);
-        return cls?.normalized.canonical.toLowerCase() || className.toLowerCase();
-    };
+    // ========================================================================
+    // 4.5: Compare Relationships
+    // ========================================================================
 
-    const compareRelArray = <T extends any>(
-        solRels: T[],
-        stuRels: T[],
-        getKey: (rel: T) => string
-    ) => {
-        const solSet = new Set(solRels.map(getKey));
-        const stuSet = new Set(stuRels.map(getKey));
-
-        let matched = 0;
-        for (const key of solSet) {
-            if (stuSet.has(key)) matched++;
-        }
-
-        return { matched, missing: solSet.size - matched, extra: stuSet.size - matched };
-    };
-
-    // Associations
-    const associationsResult = compareRelArray(
+    const associationsResult = compareAssociations(
         solution.relationships.associations,
         student.relationships.associations,
-        r => `${getCanonical(r.from, solution)}-${getCanonical(r.to, solution)}`
+        solution,
+        student
     );
 
-    const wrongMultiplicity: RelationshipComparison['associations']['wrongMultiplicity'] = [];
-    // (Implementation similar to original)
-
-    // Aggregations
-    const aggregationsBasic = compareRelArray(
+    const aggregationsResult = compareAggregations(
         solution.relationships.aggregations,
         student.relationships.aggregations,
-        r => `${getCanonical(r.whole, solution)}-${getCanonical(r.part, solution)}`
+        student.relationships.compositions,
+        solution,
+        student
     );
 
-    let confusedAggWithComp = 0;
-    for (const solAgg of solution.relationships.aggregations) {
-        const wholeCanonical = getCanonical(solAgg.whole, solution);
-        const partCanonical = getCanonical(solAgg.part, solution);
-
-        const foundInComp = student.relationships.compositions.some(c => {
-            const compCanonical = getCanonical(c.composite, student);
-            const componentCanonical = getCanonical(c.component, student);
-            return compCanonical === wholeCanonical && componentCanonical === partCanonical;
-        });
-
-        if (foundInComp) confusedAggWithComp++;
-    }
-
-    // Compositions
-    const compositionsBasic = compareRelArray(
+    const compositionsResult = compareCompositions(
         solution.relationships.compositions,
         student.relationships.compositions,
-        r => `${getCanonical(r.composite, solution)}-${getCanonical(r.component, solution)}`
+        student.relationships.aggregations,
+        solution,
+        student
     );
 
-    let confusedCompWithAgg = 0;
-    for (const solComp of solution.relationships.compositions) {
-        const compositeCanonical = getCanonical(solComp.composite, solution);
-        const componentCanonical = getCanonical(solComp.component, solution);
-
-        const foundInAgg = student.relationships.aggregations.some(a => {
-            const wholeCanonical = getCanonical(a.whole, student);
-            const partCanonical = getCanonical(a.part, student);
-            return wholeCanonical === compositeCanonical && partCanonical === componentCanonical;
-        });
-
-        if (foundInAgg) confusedCompWithAgg++;
-    }
-
-    // Generalizations
-    const generalizationsResult = compareRelArray(
+    const generalizationsResult = compareGeneralizations(
         solution.relationships.generalizations,
         student.relationships.generalizations,
-        r => `${getCanonical(r.parent, solution)}-${getCanonical(r.child, solution)}`
+        solution,
+        student
     );
 
+    // ========================================================================
+    // Build final comparison result
+    // ========================================================================
+
     const result: ComparisonResult = {
-        classes: { matched: matchedClasses, missing: missingClasses, extra: extraClasses },
-        attributes: { matched: matchedAttributes, missing: missingAttributes, extra: extraAttributes, misplaced: misplacedAttributes },
-        operations: { matched: matchedOperations, missing: missingOperations },
+        classes: {
+            matched: matchedClasses,
+            missing: missingClasses,
+            extra: extraClasses
+        },
+        attributes: {
+            matched: matchedAttributes,
+            missing: missingAttributes,
+            extra: extraAttributes,
+            misplaced: misplacedAttributes,
+            patterns: attributePatterns
+        },
+        operations: {
+            matched: matchedOperations,
+            missing: missingOperations
+        },
         relationships: {
-            associations: { ...associationsResult, wrongMultiplicity },
-            aggregations: { ...aggregationsBasic, confusedWithComposition: confusedAggWithComp },
-            compositions: { ...compositionsBasic, confusedWithAggregation: confusedCompWithAgg },
+            associations: associationsResult,
+            aggregations: aggregationsResult,
+            compositions: compositionsResult,
             generalizations: generalizationsResult
         }
     };
@@ -715,71 +1547,127 @@ const step4_structureComparison = (
     logger.info({
         message: 'BƯỚC 4: Hoàn thành',
         event_type: 'step4_complete',
-        classes: { matched: matchedClasses.length, missing: missingClasses.length, extra: extraClasses.length }
+        id: input.id,
+        classes: {
+            matched: matchedClasses.length,
+            missing: missingClasses.length,
+            extra: extraClasses.length
+        },
+        attributes: {
+            matched: matchedAttributes.length,
+            missing: missingAttributes.length,
+            extra: extraAttributes.length,
+            misplaced: misplacedAttributes.length,
+            patterns: attributePatterns.length
+        },
+        relationships: {
+            associations: {
+                matched: associationsResult.matched,
+                missing: associationsResult.missing,
+                wrongMultiplicity: associationsResult.wrongMultiplicity.length
+            },
+            aggregations: {
+                matched: aggregationsResult.matched,
+                confusedWithComposition: aggregationsResult.confusedWithComposition.length
+            },
+            compositions: {
+                matched: compositionsResult.matched,
+                confusedWithAggregation: compositionsResult.confusedWithAggregation.length
+            },
+            generalizations: {
+                matched: generalizationsResult.matched,
+                reversed: generalizationsResult.reversed.length
+            }
+        }
     });
 
     return result;
 };
 
 // ============================================================================
-// STEP 5: GRAPH ANALYSIS
+// CLASS GRAPH ANALYZER
 // ============================================================================
 
 class ClassGraphAnalyzer {
     private nodes: Map<string, GraphNode> = new Map();
     private edges: GraphEdge[] = [];
     private adjacencyList: Map<string, Set<string>> = new Map();
+    private reverseAdjacencyList: Map<string, Set<string>> = new Map();
+    private readonly diagram: NormalizedDiagram;
 
     constructor(diagram: NormalizedDiagram) {
-        this.buildGraph(diagram);
+        this.diagram = diagram;
+        this.buildGraph();
     }
 
-    private buildGraph(diagram: NormalizedDiagram) {
+    private buildGraph(): void {
         // Add class nodes
-        for (const cls of diagram.classes) {
+        for (const cls of this.diagram.classes) {
             this.nodes.set(cls.id, {
                 id: cls.id,
                 name: cls.name,
-                canonical: cls.normalized.canonical,
-                attributes: cls.attributes
+                canonical: cls.normalized.canonical.toLowerCase(),
+                type: 'class',
+                attributeCount: cls.attributes.length,
+                operationCount: cls.operations?.length || 0
             });
             this.adjacencyList.set(cls.id, new Set());
+            this.reverseAdjacencyList.set(cls.id, new Set());
         }
 
-        // Add edges
-        for (const assoc of diagram.relationships.associations) {
-            this.addEdge(assoc.from, assoc.to, 'association');
+        // Add association edges (bidirectional)
+        for (const assoc of this.diagram.relationships.associations) {
+            const fromCanonical = getClassCanonical(assoc.from, this.diagram);
+            const toCanonical = getClassCanonical(assoc.to, this.diagram);
+            if (fromCanonical && toCanonical) {
+                this.addEdge(assoc.from, assoc.to, 'association', fromCanonical, toCanonical);
+                // Bidirectional
+                this.adjacencyList.get(assoc.to)?.add(assoc.from);
+                this.reverseAdjacencyList.get(assoc.from)?.add(assoc.to);
+            }
         }
 
-        for (const agg of diagram.relationships.aggregations) {
-            this.addEdge(agg.whole, agg.part, 'aggregation');
+        // Add aggregation edges
+        for (const agg of this.diagram.relationships.aggregations) {
+            const wholeCanonical = getClassCanonical(agg.whole, this.diagram);
+            const partCanonical = getClassCanonical(agg.part, this.diagram);
+            if (wholeCanonical && partCanonical) {
+                this.addEdge(agg.whole, agg.part, 'aggregation', wholeCanonical, partCanonical);
+            }
         }
 
-        for (const comp of diagram.relationships.compositions) {
-            this.addEdge(comp.composite, comp.component, 'composition');
+        // Add composition edges
+        for (const comp of this.diagram.relationships.compositions) {
+            const compositeCanonical = getClassCanonical(comp.composite, this.diagram);
+            const componentCanonical = getClassCanonical(comp.component, this.diagram);
+            if (compositeCanonical && componentCanonical) {
+                this.addEdge(comp.composite, comp.component, 'composition', compositeCanonical, componentCanonical);
+            }
         }
 
-        for (const gen of diagram.relationships.generalizations) {
-            this.addEdge(gen.parent, gen.child, 'generalization');
+        // Add generalization edges
+        for (const gen of this.diagram.relationships.generalizations) {
+            const parentCanonical = getClassCanonical(gen.parent, this.diagram);
+            const childCanonical = getClassCanonical(gen.child, this.diagram);
+            if (parentCanonical && childCanonical) {
+                this.addEdge(gen.parent, gen.child, 'generalization', parentCanonical, childCanonical);
+            }
         }
     }
 
-    private addEdge(from: string, to: string, type: GraphEdge['type']) {
-        this.edges.push({ from, to, type });
+    private addEdge(from: string, to: string, type: GraphEdge['type'], fromCanonical: string, toCanonical: string): void {
+        this.edges.push({ from, to, type, fromCanonical, toCanonical });
         this.adjacencyList.get(from)?.add(to);
-        // Bidirectional for some types
-        if (type === 'association') {
-            this.adjacencyList.get(to)?.add(from);
-        }
+        this.reverseAdjacencyList.get(to)?.add(from);
     }
 
     public getDegreeCentrality(): Map<string, number> {
         const centrality = new Map<string, number>();
 
-        for (const [nodeId, neighbors] of this.adjacencyList) {
-            const inDegree = this.edges.filter(e => e.to === nodeId).length;
-            const outDegree = neighbors.size;
-            centrality.set(nodeId, inDegree + outDegree);
+        for (const nodeId of this.nodes.keys()) {
+            const outDegree = this.adjacencyList.get(nodeId)?.size || 0;
+            const inDegree = this.reverseAdjacencyList.get(nodeId)?.size || 0;
+            centrality.set(nodeId, outDegree + inDegree);
         }
 
         return centrality;
@@ -793,15 +1681,16 @@ class ClassGraphAnalyzer {
             centrality.set(nodeId, 0);
         }
 
-        // Simplified betweenness calculation
+        // Simplified betweenness: count how many shortest paths pass through each node
         for (const source of nodeIds) {
             for (const target of nodeIds) {
                 if (source === target) continue;
 
-                const paths = this.findAllPaths(source, target);
+                const paths = this.findAllPaths(source, target, 5);
                 if (paths.length === 0) continue;
 
                 for (const path of paths) {
+                    // Intermediate nodes (not source or target)
                     for (let i = 1; i < path.length - 1; i++) {
                         const current = centrality.get(path[i]) || 0;
                         centrality.set(path[i], current + 1 / paths.length);
@@ -813,7 +1702,7 @@ class ClassGraphAnalyzer {
         return centrality;
     }
 
-    private findAllPaths(from: string, to: string, maxDepth: number = 5): string[][] {
+    private findAllPaths(from: string, to: string, maxDepth: number): string[][] {
         const paths: string[][] = [];
         const visited = new Set<string>();
 
@@ -843,14 +1732,25 @@ class ClassGraphAnalyzer {
     public getCompositionChains(): CompositionChain[] {
         const chains: CompositionChain[] = [];
         const compositionEdges = this.edges.filter(e => e.type === 'composition');
+        const visited = new Set<string>();
 
-        for (const edge of compositionEdges) {
-            const chain = this.buildCompositionChain(edge.from, [edge.from]);
+        // Find root composites (not component of any other)
+        const components = new Set(compositionEdges.map(e => e.to));
+        const roots = compositionEdges
+            .map(e => e.from)
+            .filter(from => !components.has(from));
+
+        for (const root of roots) {
+            if (visited.has(root)) continue;
+
+            const chain = this.buildCompositionChain(root, [], visited);
             if (chain.length > 1) {
+                const chainNames = chain.map(id => this.nodes.get(id)?.name || id);
                 chains.push({
                     chain,
+                    chainNames,
                     depth: chain.length - 1,
-                    cascadeDelete: true
+                    isCascadeDelete: true
                 });
             }
         }
@@ -858,20 +1758,27 @@ class ClassGraphAnalyzer {
         return chains;
     }
 
-    private buildCompositionChain(nodeId: string, visited: string[]): string[] {
-        const compositionChildren = this.edges
-            .filter(e => e.type === 'composition' && e.from === nodeId && !visited.includes(e.to))
+    private buildCompositionChain(nodeId: string, currentChain: string[], visited: Set<string>): string[] {
+        if (visited.has(nodeId)) return currentChain;
+        visited.add(nodeId);
+
+        const newChain = [...currentChain, nodeId];
+
+        // Find composition children
+        const children = this.edges
+            .filter(e => e.type === 'composition' && e.from === nodeId)
             .map(e => e.to);
 
-        if (compositionChildren.length === 0) {
-            return visited;
+        if (children.length === 0) {
+            return newChain;
         }
 
-        let longestChain = visited;
-        for (const child of compositionChildren) {
-            const chain = this.buildCompositionChain(child, [...visited, child]);
-            if (chain.length > longestChain.length) {
-                longestChain = chain;
+        // Follow longest chain
+        let longestChain = newChain;
+        for (const child of children) {
+            const childChain = this.buildCompositionChain(child, newChain, visited);
+            if (childChain.length > longestChain.length) {
+                longestChain = childChain;
             }
         }
 
@@ -880,14 +1787,14 @@ class ClassGraphAnalyzer {
 
     public calculateAttributeCohesion(classId: string): number {
         const node = this.nodes.get(classId);
-        if (!node || node.attributes.length === 0) return 0;
+        if (!node || node.attributeCount === 0) return 1.0;
 
-        // Simplified cohesion: attributes count vs max expected
-        const attrCount = node.attributes.length;
-        const idealCount = 5; // Threshold
-
-        if (attrCount <= idealCount) return 1.0;
-        return idealCount / attrCount;
+        // Simple heuristic: ideal class has 3-7 attributes
+        const attrCount = node.attributeCount;
+        if (attrCount >= 3 && attrCount <= 7) return 1.0;
+        if (attrCount < 3) return 0.8; // Too few - might be under-modeled
+        if (attrCount <= 10) return 0.7; // Slightly high
+        return Math.max(0.3, 7 / attrCount); // Decreasing for bloated classes
     }
 
     public getMetrics(): GraphMetrics {
@@ -903,16 +1810,17 @@ class ClassGraphAnalyzer {
         for (const nodeId of this.nodes.keys()) {
             totalCohesion += this.calculateAttributeCohesion(nodeId);
         }
-        const avgCohesion = this.nodes.size > 0 ? totalCohesion / this.nodes.size : 0;
+        const avgCohesion = this.nodes.size > 0 ? totalCohesion / this.nodes.size : 1.0;
 
         return {
             classCount: this.nodes.size,
+            edgeCount: this.edges.length,
             avgDegree: degrees.length > 0 ? degrees.reduce((a, b) => a + b, 0) / degrees.length : 0,
             maxDepth: maxChainDepth,
             degreeCentrality,
             betweennessCentrality,
             compositionChainDepth: maxChainDepth,
-            attributeCohesion: avgCohesion
+            avgAttributeCohesion: avgCohesion
         };
     }
 
@@ -920,15 +1828,67 @@ class ClassGraphAnalyzer {
         return this.nodes.get(id);
     }
 
+    public getNodeByCanonical(canonical: string): GraphNode | undefined {
+        for (const node of this.nodes.values()) {
+            if (node.canonical === canonical.toLowerCase()) {
+                return node;
+            }
+        }
+        return undefined;
+    }
+
     public hasEdge(from: string, to: string): boolean {
         return this.edges.some(e => e.from === from && e.to === to);
+    }
+
+    public hasEdgeByCanonical(fromCanonical: string, toCanonical: string): boolean {
+        return this.edges.some(
+            e => e.fromCanonical === fromCanonical.toLowerCase() &&
+                e.toCanonical === toCanonical.toLowerCase()
+        );
     }
 
     public getEdgeType(from: string, to: string): GraphEdge['type'] | null {
         const edge = this.edges.find(e => e.from === from && e.to === to);
         return edge?.type || null;
     }
+
+    public getEdgeTypeByCanonical(fromCanonical: string, toCanonical: string): GraphEdge['type'] | null {
+        const edge = this.edges.find(
+            e => e.fromCanonical === fromCanonical.toLowerCase() &&
+                e.toCanonical === toCanonical.toLowerCase()
+        );
+        return edge?.type || null;
+    }
+
+    public isIsolated(nodeId: string): boolean {
+        const degree = this.getDegreeCentrality().get(nodeId) || 0;
+        return degree === 0;
+    }
+
+    public getGeneralizationChildren(parentId: string): string[] {
+        return this.edges
+            .filter(e => e.type === 'generalization' && e.from === parentId)
+            .map(e => e.to);
+    }
+
+    public getGeneralizationParent(childId: string): string | null {
+        const edge = this.edges.find(e => e.type === 'generalization' && e.to === childId);
+        return edge?.from || null;
+    }
+
+    public getEdges(): GraphEdge[] {
+        return this.edges;
+    }
+
+    public getAllNodes(): GraphNode[] {
+        return Array.from(this.nodes.values());
+    }
 }
+
+// ============================================================================
+// STEP 5: GRAPH ANALYSIS
+// ============================================================================
 
 const step5_graphAnalysis = (
     normalized: { solution: NormalizedDiagram; student: NormalizedDiagram },
@@ -947,85 +1907,180 @@ const step5_graphAnalysis = (
     const recommendations: GraphRecommendation[] = [];
     const violations: LifecycleViolation[] = [];
 
-    // PATTERN 1: CLASS_DECOMPOSITION
-    if (comparison.classes.extra.length > 0) {
-        // Detect if extra classes are result of decomposition
-        for (const extraClass of comparison.classes.extra) {
-            const compositionParents = normalized.student.relationships.compositions
-                .filter(c => c.component === extraClass.id);
+    const solutionMetrics = solutionGraph.getMetrics();
+    const studentMetrics = studentGraph.getMetrics();
 
-            if (compositionParents.length > 0) {
-                // Check if attributes migrated
-                const migrations: Array<{ attr: string; from: string; to: string }> = [];
+    // ========================================================================
+    // PATTERN 1: CLASS_DECOMPOSITION (1 → N)
+    // Student splits one class into multiple related classes
+    // ========================================================================
 
-                for (const missing of comparison.attributes.missing) {
-                    const found = extraClass.attributesNormalized.find(
-                        a => a.normalized.canonical.toLowerCase() ===
-                            missing.attribute.normalized.canonical.toLowerCase()
-                    );
+    for (const extraClass of comparison.classes.extra) {
+        // Check if this extra class is connected via composition to a matched class
+        const compositionParents = normalized.student.relationships.compositions
+            .filter(c => c.component === extraClass.id);
 
-                    if (found) {
-                        migrations.push({
-                            attr: found.name,
-                            from: missing.className,
-                            to: extraClass.name
-                        });
-                    }
-                }
+        if (compositionParents.length > 0) {
+            // Check if attributes from solution migrated to this class
+            const migrations: Array<{ attr: string; from: string; to: string }> = [];
 
-                if (migrations.length > 0) {
-                    const cohesion = studentGraph.calculateAttributeCohesion(extraClass.id);
+            for (const missing of comparison.attributes.missing) {
+                const foundAttr = extraClass.attributesNormalized.find(
+                    a => a.normalized.canonical.toLowerCase() ===
+                        missing.attribute.normalized.canonical.toLowerCase()
+                );
 
-                    patterns.push({
-                        type: 'CLASS_DECOMPOSITION',
-                        severity: cohesion > 0.7 ? 'POSITIVE' : 'NEUTRAL',
-                        confidence: 0.9,
-                        elements: {
-                            decomposedInto: [extraClass.name],
-                            attributeMigration: migrations
-                        },
-                        structuralEquivalence: true,
-                        designQuality: {
-                            rating: cohesion > 0.8 ? 'EXCELLENT' : 'GOOD',
-                            reasoning: `Áp dụng SRP, tách ${migrations.length} attributes`,
-                            cohesionImprovement: `improved to ${cohesion.toFixed(2)}`
-                        }
+                if (foundAttr) {
+                    migrations.push({
+                        attr: foundAttr.name,
+                        from: missing.className,
+                        to: extraClass.name
                     });
+                }
+            }
 
+            if (migrations.length > 0) {
+                const cohesion = studentGraph.calculateAttributeCohesion(extraClass.id);
+                const isGoodDecomposition = cohesion >= 0.7 && migrations.length >= 2;
+
+                patterns.push({
+                    type: 'CLASS_DECOMPOSITION',
+                    severity: isGoodDecomposition ? 'POSITIVE' : 'NEUTRAL',
+                    confidence: 0.9,
+                    elements: {
+                        sourceClass: migrations[0].from,
+                        decomposedInto: [extraClass.name],
+                        attributeMigration: migrations,
+                        metrics: {
+                            cohesion: cohesion.toFixed(2),
+                            migratedAttributes: migrations.length
+                        }
+                    },
+                    structuralEquivalence: true,
+                    designQuality: {
+                        rating: isGoodDecomposition ? 'EXCELLENT' : 'GOOD',
+                        reasoning: `Áp dụng SRP, tách ${migrations.length} attributes vào class mới`,
+                        cohesionImprovement: `cohesion = ${cohesion.toFixed(2)}`
+                    }
+                });
+
+                recommendations.push({
+                    code: 'IGNORE_EXTRA_CLASSES',
+                    reason: `Class "${extraClass.name}" là decomposition hợp lý với ${migrations.length} attributes migrated`,
+                    affectedElements: [extraClass.name],
+                    penaltyAdjustment: isGoodDecomposition ? 2 : 0 // Bonus for good design
+                });
+
+                // Also ignore the "missing" attributes that were migrated
+                for (const migration of migrations) {
                     recommendations.push({
-                        code: 'IGNORE_EXTRA_CLASSES',
-                        reason: 'Class decomposition hợp lý với cohesion tốt',
-                        affectedElements: [extraClass.name],
+                        code: 'IGNORE_ATTRIBUTE_DIFF',
+                        reason: `Attribute "${migration.attr}" được migrate từ "${migration.from}" sang "${migration.to}" - valid decomposition`,
+                        affectedElements: [migration.attr],
                         penaltyAdjustment: 0
                     });
-
-                    equivalences.push({
-                        type: 'structural_decomposition',
-                        confidence: 0.9,
-                        explanation: `${extraClass.name} là decomposition với ${migrations.length} attributes migrated`
-                    });
                 }
+
+                equivalences.push({
+                    type: 'structural_decomposition',
+                    confidence: 0.9,
+                    explanation: `${extraClass.name} là decomposition của ${migrations[0].from} với ${migrations.length} attributes migrated`,
+                    affectedClasses: [extraClass.name, migrations[0].from]
+                });
             }
         }
     }
 
-    // PATTERN 2: MISSING_CENTRAL_CLASS
-    const solutionMetrics = solutionGraph.getMetrics();
-    const studentMetrics = studentGraph.getMetrics();
+    // ========================================================================
+    // PATTERN 2: CLASS_CONSOLIDATION (N → 1)
+    // Student merges multiple classes into one
+    // ========================================================================
+
+    if (comparison.classes.missing.length >= 2 && comparison.classes.extra.length >= 1) {
+        for (const extraClass of comparison.classes.extra) {
+            // Check if this class has attributes from multiple missing classes
+            const attributeSources = new Map<string, string[]>();
+
+            for (const extraAttr of extraClass.attributesNormalized) {
+                for (const missingClass of comparison.classes.missing) {
+                    const foundInMissing = missingClass.attributesNormalized.find(
+                        a => a.normalized.canonical.toLowerCase() ===
+                            extraAttr.normalized.canonical.toLowerCase()
+                    );
+
+                    if (foundInMissing) {
+                        if (!attributeSources.has(missingClass.name)) {
+                            attributeSources.set(missingClass.name, []);
+                        }
+                        attributeSources.get(missingClass.name)!.push(extraAttr.name);
+                    }
+                }
+            }
+
+            // If attributes come from 2+ missing classes → consolidation
+            if (attributeSources.size >= 2) {
+                const consolidatedFrom = Array.from(attributeSources.keys());
+                const totalAttrs = Array.from(attributeSources.values()).flat();
+
+                patterns.push({
+                    type: 'CLASS_CONSOLIDATION',
+                    severity: 'MINOR', // Generally not ideal for analysis phase
+                    confidence: 0.85,
+                    elements: {
+                        targetClasses: [extraClass.name],
+                        consolidatedFrom,
+                        attributeMigration: totalAttrs.map(attr => ({
+                            attr,
+                            from: 'multiple',
+                            to: extraClass.name
+                        }))
+                    },
+                    structuralEquivalence: false,
+                    designQuality: {
+                        rating: 'ACCEPTABLE',
+                        reasoning: `Consolidated ${consolidatedFrom.length} classes into 1 - may violate SRP`
+                    }
+                });
+
+                equivalences.push({
+                    type: 'structural_consolidation',
+                    confidence: 0.85,
+                    explanation: `${extraClass.name} consolidates ${consolidatedFrom.join(', ')}`,
+                    affectedClasses: [extraClass.name, ...consolidatedFrom]
+                });
+
+                // Reduce penalty for missing classes if consolidation detected
+                recommendations.push({
+                    code: 'REDUCE_PENALTY',
+                    reason: `Classes ${consolidatedFrom.join(', ')} were consolidated into ${extraClass.name}`,
+                    affectedElements: consolidatedFrom,
+                    penaltyAdjustment: Math.min(consolidatedFrom.length * 2, 6) // Cap at 6
+                });
+            }
+        }
+    }
+
+    // ========================================================================
+    // PATTERN 3: MISSING_CENTRAL_CLASS
+    // Missing class that has high centrality in solution
+    // ========================================================================
 
     for (const missingClass of comparison.classes.missing) {
         const betweenness = solutionMetrics.betweennessCentrality.get(missingClass.id) || 0;
         const degree = solutionMetrics.degreeCentrality.get(missingClass.id) || 0;
 
-        if (betweenness > 0.5 || degree >= 3) {
+        // High centrality = important class
+        if (betweenness > 0.3 || degree >= 3) {
             patterns.push({
                 type: 'MISSING_CENTRAL_CLASS',
                 severity: 'CRITICAL',
                 confidence: 0.95,
                 elements: {
                     missingClass: missingClass.name,
-                    degree: degree,
-                    betweenness: betweenness
+                    metrics: {
+                        degree,
+                        betweenness: betweenness.toFixed(2)
+                    }
                 },
                 structuralEquivalence: false,
                 designQuality: {
@@ -1036,50 +2091,117 @@ const step5_graphAnalysis = (
 
             recommendations.push({
                 code: 'INCREASE_PENALTY',
-                reason: 'Missing central/hub class - core entity',
+                reason: `Missing central class "${missingClass.name}" - core entity in domain`,
                 affectedElements: [missingClass.name],
-                penaltyAdjustment: -5
+                penaltyAdjustment: -5 // Additional penalty
             });
         }
     }
 
-    // PATTERN 3: COMPOSITION_LIFECYCLE_VIOLATION
+    // ========================================================================
+    // PATTERN 4: MISSING_ABSTRACT_PARENT
+    // Missing parent class but all children are present
+    // ========================================================================
+
+    for (const missingClass of comparison.classes.missing) {
+        const childrenIds = solutionGraph.getGeneralizationChildren(missingClass.id);
+
+        if (childrenIds.length >= 2) {
+            // Check if all children exist in student
+            let allChildrenPresent = true;
+            const presentChildren: string[] = [];
+
+            for (const childId of childrenIds) {
+                const childClass = normalized.solution.classes.find(c => c.id === childId);
+                if (childClass) {
+                    const childCanonical = childClass.normalized.canonical.toLowerCase();
+                    const inStudent = normalized.student.classes.some(
+                        sc => sc.normalized.canonical.toLowerCase() === childCanonical
+                    );
+
+                    if (inStudent) {
+                        presentChildren.push(childClass.name);
+                    } else {
+                        allChildrenPresent = false;
+                    }
+                }
+            }
+
+            if (allChildrenPresent && presentChildren.length === childrenIds.length) {
+                patterns.push({
+                    type: 'MISSING_ABSTRACT_PARENT',
+                    severity: 'MINOR',
+                    confidence: 0.9,
+                    elements: {
+                        missingClass: missingClass.name,
+                        targetClasses: presentChildren
+                    },
+                    structuralEquivalence: true,
+                    designQuality: {
+                        rating: 'ACCEPTABLE',
+                        reasoning: `Thiếu abstract parent "${missingClass.name}" nhưng tất cả ${presentChildren.length} children đều có`
+                    }
+                });
+
+                recommendations.push({
+                    code: 'REDUCE_PENALTY',
+                    reason: `Abstract parent "${missingClass.name}" missing but all children present - logic preserved`,
+                    affectedElements: [missingClass.name],
+                    penaltyAdjustment: 4 // Reduce penalty significantly
+                });
+
+                equivalences.push({
+                    type: 'hierarchy_preserved',
+                    confidence: 0.9,
+                    explanation: `Hierarchy logic preserved: ${presentChildren.join(', ')} without parent ${missingClass.name}`,
+                    affectedClasses: [missingClass.name, ...presentChildren]
+                });
+            }
+        }
+    }
+
+    // ========================================================================
+    // PATTERN 5: COMPOSITION_LIFECYCLE_VIOLATION
+    // Student uses aggregation where composition is expected (or vice versa)
+    // ========================================================================
+
     for (const solComp of normalized.solution.relationships.compositions) {
-        const compositeCanonical = solutionGraph.getNode(solComp.composite)?.canonical?.toLowerCase();
-        const componentCanonical = solutionGraph.getNode(solComp.component)?.canonical?.toLowerCase();
+        const compositeCanonical = getClassCanonical(solComp.composite, normalized.solution);
+        const componentCanonical = getClassCanonical(solComp.component, normalized.solution);
 
         if (!compositeCanonical || !componentCanonical) continue;
 
-        // Find in student
-        const stuComposite = normalized.student.classes.find(
-            c => c.normalized.canonical.toLowerCase() === compositeCanonical
-        );
-        const stuComponent = normalized.student.classes.find(
-            c => c.normalized.canonical.toLowerCase() === componentCanonical
-        );
+        // Find corresponding classes in student
+        const stuComposite = findClassByCanonical(compositeCanonical, normalized.student);
+        const stuComponent = findClassByCanonical(componentCanonical, normalized.student);
 
         if (!stuComposite || !stuComponent) continue;
 
-        // Check if relationship exists and type
-        const edgeType = studentGraph.getEdgeType(stuComposite.id, stuComponent.id);
+        // Check relationship type in student
+        const stuEdgeType = studentGraph.getEdgeTypeByCanonical(compositeCanonical, componentCanonical);
 
-        if (edgeType === 'aggregation') {
-            violations.push({
+        if (stuEdgeType === 'aggregation') {
+            const violation: LifecycleViolation = {
                 type: 'COMPOSITION_TO_AGGREGATION',
                 from: stuComposite.name,
                 to: stuComponent.name,
+                fromCanonical: compositeCanonical,
+                toCanonical: componentCanonical,
                 expected: 'composition',
                 actual: 'aggregation',
-                businessImpact: `${stuComponent.name} không nên tồn tại độc lập khi ${stuComposite.name} bị xóa`
-            });
+                businessImpact: `"${stuComponent.name}" không nên tồn tại độc lập khi "${stuComposite.name}" bị xóa`
+            };
+
+            violations.push(violation);
 
             patterns.push({
                 type: 'COMPOSITION_LIFECYCLE_VIOLATION',
                 severity: 'MAJOR',
                 confidence: 1.0,
                 elements: {
-                    from: stuComposite.name,
-                    to: stuComponent.name
+                    sourceClass: stuComposite.name,
+                    targetClasses: [stuComponent.name],
+                    violationDetails: violation
                 },
                 structuralEquivalence: false,
                 designQuality: {
@@ -1090,78 +2212,213 @@ const step5_graphAnalysis = (
 
             recommendations.push({
                 code: 'INCREASE_PENALTY',
-                reason: 'Composition downgraded to Aggregation - lifecycle violation',
+                reason: `Composition downgraded to Aggregation: ${stuComposite.name} → ${stuComponent.name}`,
                 affectedElements: [stuComposite.name, stuComponent.name],
-                penaltyAdjustment: -8
+                penaltyAdjustment: -5
             });
         }
     }
 
-    // PATTERN 4: ATTRIBUTE_MISPLACEMENT_WITH_RELATIONSHIP
+    // Check reverse: aggregation should not be composition
+    for (const solAgg of normalized.solution.relationships.aggregations) {
+        const wholeCanonical = getClassCanonical(solAgg.whole, normalized.solution);
+        const partCanonical = getClassCanonical(solAgg.part, normalized.solution);
+
+        if (!wholeCanonical || !partCanonical) continue;
+
+        const stuWhole = findClassByCanonical(wholeCanonical, normalized.student);
+        const stuPart = findClassByCanonical(partCanonical, normalized.student);
+
+        if (!stuWhole || !stuPart) continue;
+
+        const stuEdgeType = studentGraph.getEdgeTypeByCanonical(wholeCanonical, partCanonical);
+
+        if (stuEdgeType === 'composition') {
+            const violation: LifecycleViolation = {
+                type: 'AGGREGATION_TO_COMPOSITION',
+                from: stuWhole.name,
+                to: stuPart.name,
+                fromCanonical: wholeCanonical,
+                toCanonical: partCanonical,
+                expected: 'aggregation',
+                actual: 'composition',
+                businessImpact: `"${stuPart.name}" có thể tồn tại độc lập, không nên bị xóa cùng "${stuWhole.name}"`
+            };
+
+            violations.push(violation);
+
+            patterns.push({
+                type: 'COMPOSITION_LIFECYCLE_VIOLATION',
+                severity: 'MINOR', // Less severe than the reverse
+                confidence: 1.0,
+                elements: {
+                    sourceClass: stuWhole.name,
+                    targetClasses: [stuPart.name],
+                    violationDetails: violation
+                },
+                structuralEquivalence: false,
+                designQuality: {
+                    rating: 'ACCEPTABLE',
+                    reasoning: 'Aggregation upgraded to Composition - over-constraining lifecycle'
+                }
+            });
+        }
+    }
+
+    // ========================================================================
+    // PATTERN 6: ATTRIBUTE_MIGRATION_WITH_RELATIONSHIP
+    // Misplaced attribute but classes have relationship
+    // ========================================================================
+
     for (const misplaced of comparison.attributes.misplaced) {
-        // Find classes
-        const shouldBeInClass = normalized.solution.classes.find(c => c.name === misplaced.shouldBeIn);
-        const inClass = normalized.student.classes.find(c => c.name === misplaced.inClass);
+        const shouldBeInClass = findClassByCanonical(misplaced.shouldBeInCanonical, normalized.student);
+        const inClass = findClassByCanonical(misplaced.inClassCanonical, normalized.student);
 
         if (shouldBeInClass && inClass) {
-            // Check if they have relationship
-            const hasRelationship = studentGraph.hasEdge(shouldBeInClass.id, inClass.id) ||
-                studentGraph.hasEdge(inClass.id, shouldBeInClass.id);
+            const hasRelationship =
+                studentGraph.hasEdgeByCanonical(misplaced.shouldBeInCanonical, misplaced.inClassCanonical) ||
+                studentGraph.hasEdgeByCanonical(misplaced.inClassCanonical, misplaced.shouldBeInCanonical);
 
             if (hasRelationship) {
                 patterns.push({
-                    type: 'ATTRIBUTE_MISPLACEMENT_WITH_RELATIONSHIP',
+                    type: 'ATTRIBUTE_MIGRATION_WITH_RELATIONSHIP',
                     severity: 'MINOR',
                     confidence: 0.85,
                     elements: {
-                        attribute: misplaced.attrName,
-                        from: misplaced.shouldBeIn,
-                        to: misplaced.inClass
+                        attributeMigration: [{
+                            attr: misplaced.attrName,
+                            from: misplaced.shouldBeIn,
+                            to: misplaced.inClass
+                        }]
                     },
                     structuralEquivalence: false,
                     designQuality: {
                         rating: 'ACCEPTABLE',
-                        reasoning: 'Attribute misplaced nhưng vẫn trong context có relationship'
+                        reasoning: `Attribute "${misplaced.attrName}" misplaced but classes have relationship`
                     }
                 });
 
                 recommendations.push({
                     code: 'REDUCE_PENALTY',
-                    reason: 'Misplaced attribute có relationship - không phải random error',
+                    reason: `Misplaced attribute "${misplaced.attrName}" - classes are related, not random error`,
                     affectedElements: [misplaced.attrName],
-                    penaltyAdjustment: 3 // Giảm penalty từ -8 xuống -5
+                    penaltyAdjustment: 2
                 });
             }
         }
     }
 
-    // PATTERN 5: OVER_NORMALIZATION
+    // ========================================================================
+    // PATTERN 7: ISOLATED_CLASS
+    // Extra class with no relationships
+    // ========================================================================
+
+    for (const extraClass of comparison.classes.extra) {
+        if (studentGraph.isIsolated(extraClass.id)) {
+            patterns.push({
+                type: 'ISOLATED_CLASS',
+                severity: 'MAJOR',
+                confidence: 1.0,
+                elements: {
+                    sourceClass: extraClass.name
+                },
+                structuralEquivalence: false,
+                designQuality: {
+                    rating: 'POOR',
+                    reasoning: `Class "${extraClass.name}" has no relationships - isolated/orphan class`
+                }
+            });
+
+            recommendations.push({
+                code: 'INCREASE_PENALTY',
+                reason: `Isolated class "${extraClass.name}" - not connected to any other class`,
+                affectedElements: [extraClass.name],
+                penaltyAdjustment: -3
+            });
+        }
+    }
+
+    // ========================================================================
+    // PATTERN 8: OVER_NORMALIZATION / UNDER_NORMALIZATION
+    // ========================================================================
+
     const complexityRatio = studentMetrics.classCount / Math.max(solutionMetrics.classCount, 1);
 
-    if (complexityRatio > 2.5 && studentMetrics.avgDegree < 1.5) {
+    if (complexityRatio > 2.0 && studentMetrics.avgDegree < 1.5) {
         patterns.push({
             type: 'OVER_NORMALIZATION',
             severity: 'MINOR',
             confidence: 0.8,
             elements: {
-                complexityRatio: complexityRatio.toFixed(2),
-                studentClasses: studentMetrics.classCount,
-                solutionClasses: solutionMetrics.classCount
+                metrics: {
+                    complexityRatio: complexityRatio.toFixed(2),
+                    studentClasses: studentMetrics.classCount,
+                    solutionClasses: solutionMetrics.classCount,
+                    avgDegree: studentMetrics.avgDegree.toFixed(2)
+                }
             },
             structuralEquivalence: false,
             designQuality: {
                 rating: 'POOR',
-                reasoning: `Over-engineering: ${complexityRatio.toFixed(1)}x classes, low connectivity`
+                reasoning: `Over-engineering: ${complexityRatio.toFixed(1)}x classes với low connectivity`
             }
         });
+    }
 
-        recommendations.push({
-            code: 'REDUCE_PENALTY',
-            reason: 'Over-normalization detected - complexity without benefit',
-            affectedElements: [],
-            penaltyAdjustment: -3
+    if (complexityRatio < 0.5 && solutionMetrics.classCount >= 4) {
+        patterns.push({
+            type: 'UNDER_NORMALIZATION',
+            severity: 'MAJOR',
+            confidence: 0.8,
+            elements: {
+                metrics: {
+                    complexityRatio: complexityRatio.toFixed(2),
+                    studentClasses: studentMetrics.classCount,
+                    solutionClasses: solutionMetrics.classCount
+                }
+            },
+            structuralEquivalence: false,
+            designQuality: {
+                rating: 'POOR',
+                reasoning: `Under-modeling: only ${studentMetrics.classCount} classes vs ${solutionMetrics.classCount} expected`
+            }
         });
     }
+
+    // ========================================================================
+    // PATTERN 9: Handle Attribute Patterns from Step 4
+    // ========================================================================
+
+    for (const attrPattern of comparison.attributes.patterns) {
+        if (attrPattern.type === 'DECOMPOSITION' && attrPattern.isValid) {
+            recommendations.push({
+                code: 'IGNORE_ATTRIBUTE_DIFF',
+                reason: `Attribute decomposition: "${attrPattern.sourceAttribute}" → ${attrPattern.decomposedInto.join(', ')}`,
+                affectedElements: [attrPattern.sourceAttribute, ...attrPattern.decomposedInto],
+                penaltyAdjustment: 2 // Bonus for good design
+            });
+
+            equivalences.push({
+                type: 'structural_decomposition',
+                confidence: attrPattern.confidence,
+                explanation: `Attribute "${attrPattern.sourceAttribute}" decomposed into ${attrPattern.decomposedInto.length} granular attributes`,
+                affectedClasses: [attrPattern.sourceClass, attrPattern.targetClass]
+            });
+        }
+
+        if (attrPattern.type === 'CONSOLIDATION' && !attrPattern.isValid) {
+            recommendations.push({
+                code: 'INCREASE_PENALTY',
+                reason: `Attribute consolidation loses detail: ${attrPattern.sourceAttributes.join(', ')} → "${attrPattern.consolidatedInto}"`,
+                affectedElements: [attrPattern.consolidatedInto],
+                penaltyAdjustment: -2
+            });
+        }
+    }
+
+    // ========================================================================
+    // Build result
+    // ========================================================================
 
     const result: GraphAnalysisResult = {
         patterns,
@@ -1181,15 +2438,22 @@ const step5_graphAnalysis = (
         message: 'BƯỚC 5: Hoàn thành',
         event_type: 'step5_complete',
         patternsDetected: patterns.length,
-        violations: violations.length,
-        recommendationsCount: recommendations.length
+        equivalencesDetected: equivalences.length,
+        recommendationsCount: recommendations.length,
+        violationsCount: violations.length,
+        metrics: {
+            solutionClasses: solutionMetrics.classCount,
+            studentClasses: studentMetrics.classCount,
+            solutionEdges: solutionMetrics.edgeCount,
+            studentEdges: studentMetrics.edgeCount
+        }
     });
 
     return result;
 };
 
 // ============================================================================
-// STEP 6: ERROR CLASSIFICATION & SCORING (WITH GRAPH)
+// STEP 6: ERROR CLASSIFICATION & SCORING
 // ============================================================================
 
 const step6_classifyErrorsAndScore = async (
@@ -1200,7 +2464,7 @@ const step6_classifyErrorsAndScore = async (
     graphAnalysis: GraphAnalysisResult
 ): Promise<{ errors: DetectedError[]; score: ReferenceScore }> => {
     logger.info({
-        message: 'BƯỚC 6: Bắt đầu phân loại lỗi và chấm điểm (có Graph)',
+        message: 'BƯỚC 6: Bắt đầu phân loại lỗi và chấm điểm',
         event_type: 'step6_start',
         id: input.id
     });
@@ -1212,38 +2476,90 @@ const step6_classifyErrorsAndScore = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('Không tìm thấy prompt class error classifier-scorer');
+        throw new Error('Không tìm thấy prompt class-analysis-error-classifier-scorer');
     }
 
+    // Prepare classification input
     const classificationInput = {
-        domainContext,
+        domainContext: {
+            keywords: domainContext.keywords,
+            mandatoryEntities: domainContext.mandatoryEntities,
+            domainRules: domainContext.domainRules
+        },
         comparison: {
             classes: {
                 matched: comparison.classes.matched.length,
+                matchedNames: comparison.classes.matched.map(m => ({
+                    solution: m.solution.name,
+                    student: m.student.name,
+                    similarity: m.similarity
+                })),
                 missing: comparison.classes.missing.map(c => c.name),
                 extra: comparison.classes.extra.map(c => c.name)
             },
             attributes: {
                 matched: comparison.attributes.matched.length,
-                missing: comparison.attributes.missing,
-                extra: comparison.attributes.extra,
-                misplaced: comparison.attributes.misplaced
+                missing: comparison.attributes.missing.map(m => ({
+                    className: m.className,
+                    attrName: m.attribute.name
+                })),
+                extra: comparison.attributes.extra.map(e => ({
+                    className: e.className,
+                    attrName: e.attribute.name
+                })),
+                misplaced: comparison.attributes.misplaced,
+                patterns: comparison.attributes.patterns
             },
             operations: comparison.operations,
-            relationships: comparison.relationships
+            relationships: {
+                associations: {
+                    matched: comparison.relationships.associations.matched,
+                    missing: comparison.relationships.associations.missing,
+                    extra: comparison.relationships.associations.extra,
+                    wrongMultiplicity: comparison.relationships.associations.wrongMultiplicity.length
+                },
+                aggregations: {
+                    matched: comparison.relationships.aggregations.matched,
+                    missing: comparison.relationships.aggregations.missing,
+                    confusedWithComposition: comparison.relationships.aggregations.confusedWithComposition.length
+                },
+                compositions: {
+                    matched: comparison.relationships.compositions.matched,
+                    missing: comparison.relationships.compositions.missing,
+                    confusedWithAggregation: comparison.relationships.compositions.confusedWithAggregation.length
+                },
+                generalizations: {
+                    matched: comparison.relationships.generalizations.matched,
+                    missing: comparison.relationships.generalizations.missing,
+                    extra: comparison.relationships.generalizations.extra,
+                    reversed: comparison.relationships.generalizations.reversed.length
+                }
+            }
         },
         graphAnalysis: {
-            patterns: graphAnalysis.patterns,
+            patterns: graphAnalysis.patterns.map(p => ({
+                type: p.type,
+                severity: p.severity,
+                confidence: p.confidence,
+                elements: p.elements,
+                designQuality: p.designQuality
+            })),
             recommendations: graphAnalysis.recommendations,
             equivalences: graphAnalysis.detectedEquivalences,
-            metrics: graphAnalysis.structuralMetrics,
-            lifecycleViolations: graphAnalysis.lifecycleAnalysis.violations
+            lifecycleViolations: graphAnalysis.lifecycleAnalysis.violations.map(v => ({
+                type: v.type,
+                from: v.from,
+                to: v.to,
+                expected: v.expected,
+                actual: v.actual,
+                businessImpact: v.businessImpact
+            }))
         },
         scoringCriteria: {
             entities: { max: 25, description: "Business entity identification" },
             attributes: { max: 20, description: "Key attributes correctness" },
-            relationships: { max: 40, description: "Relationships accuracy" },
-            businessLogic: { max: 15, description: "Business logic coverage" }
+            relationships: { max: 40, description: "Relationships accuracy (type + multiplicity)" },
+            businessLogic: { max: 15, description: "Business logic and domain coverage" }
         }
     };
 
@@ -1261,19 +2577,14 @@ const step6_classifyErrorsAndScore = async (
         };
     }>(aiResponse, input.id, 'step6');
 
-    const lowSimilarityCount = [
-        ...comparison.classes.matched.filter(m => m.similarity < 0.85),
-        ...comparison.attributes.matched.filter(m => {
-            const solAttr = m.solutionAttr as any;
-            const stuAttr = m.studentAttr as any;
-            return (solAttr.normalized?.similarityScore || 1) < 0.85 ||
-                (stuAttr.normalized?.similarityScore || 1) < 0.85;
-        })
-    ].length;
+    // Calculate confidence based on similarity scores
+    const lowSimilarityMatches = comparison.classes.matched.filter(m => m.similarity < 0.85);
+    const lowSimilarityAttrs = comparison.attributes.matched.filter(m => m.similarity < 0.85);
+    const totalLowSimilarity = lowSimilarityMatches.length + lowSimilarityAttrs.length;
 
     const confidence: 'HIGH' | 'MEDIUM' | 'LOW' =
-        lowSimilarityCount === 0 ? 'HIGH' :
-            lowSimilarityCount <= 3 ? 'MEDIUM' : 'LOW';
+        totalLowSimilarity === 0 ? 'HIGH' :
+            totalLowSimilarity <= 3 ? 'MEDIUM' : 'LOW';
 
     const range = confidence === 'HIGH' ? 2 : confidence === 'MEDIUM' ? 4 : 6;
     const suggestedRange = `${Math.max(0, Math.floor(result.score.total - range))}-${Math.min(100, Math.ceil(result.score.total + range))}`;
@@ -1292,6 +2603,7 @@ const step6_classifyErrorsAndScore = async (
         id: input.id,
         errorsDetected: result.errors.length,
         score: finalScore.total,
+        confidence,
         graphAdjustmentsCount: result.score.graphAdjustments?.length || 0
     });
 
@@ -1322,29 +2634,46 @@ const step7_generateFeedback = async (
     });
 
     if (!prompt.prompts || prompt.prompts.length === 0) {
-        throw new Error('Không tìm thấy prompt class feedback generator');
+        throw new Error('Không tìm thấy prompt class-analysis-feedback-generator');
     }
 
     const feedbackInput = {
         score: referenceScore,
-        errors: errors,
+        errors: errors.map(e => ({
+            code: e.code,
+            category: e.category,
+            severity: e.severity,
+            penalty: e.penalty,
+            explanation: e.explanation,
+            elements: e.elements,
+            suggestion: e.suggestion
+        })),
         comparison: {
             classes: {
                 matched: comparison.classes.matched.length,
-                missing: comparison.classes.missing.length,
-                extra: comparison.classes.extra.length
+                missing: comparison.classes.missing.map(c => c.name),
+                extra: comparison.classes.extra.map(c => c.name)
             },
             attributes: {
                 matched: comparison.attributes.matched.length,
                 missing: comparison.attributes.missing.length,
-                misplaced: comparison.attributes.misplaced.length
+                misplaced: comparison.attributes.misplaced.length,
+                patterns: comparison.attributes.patterns.length
             },
-            relationships: comparison.relationships
+            relationships: {
+                associations: comparison.relationships.associations,
+                compositions: comparison.relationships.compositions,
+                aggregations: comparison.relationships.aggregations,
+                generalizations: comparison.relationships.generalizations
+            }
         },
         graphAnalysis: {
-            patterns: graphAnalysis.patterns,
             positivePatterns: graphAnalysis.patterns.filter(p => p.severity === 'POSITIVE'),
-            detectedEquivalences: graphAnalysis.detectedEquivalences
+            negativePatterns: graphAnalysis.patterns.filter(p =>
+                p.severity === 'MAJOR' || p.severity === 'CRITICAL'
+            ),
+            equivalences: graphAnalysis.detectedEquivalences,
+            lifecycleViolations: graphAnalysis.lifecycleAnalysis.violations.length
         },
         assignmentContext: input.contentAssignment.substring(0, 500)
     };
@@ -1365,6 +2694,26 @@ const step7_generateFeedback = async (
 };
 
 // ============================================================================
+// HELPER: Serialize GraphMetrics for output
+// ============================================================================
+
+const serializeGraphMetrics = (metrics: GraphMetrics): Record<string, unknown> => {
+    return {
+        classCount: metrics.classCount,
+        edgeCount: metrics.edgeCount,
+        avgDegree: Math.round(metrics.avgDegree * 100) / 100,
+        maxDepth: metrics.maxDepth,
+        compositionChainDepth: metrics.compositionChainDepth,
+        avgAttributeCohesion: Math.round(metrics.avgAttributeCohesion * 100) / 100,
+        degreeCentrality: Object.fromEntries(metrics.degreeCentrality),
+        betweennessCentrality: Object.fromEntries(
+            Array.from(metrics.betweennessCentrality.entries())
+                .map(([k, v]) => [k, Math.round(v * 100) / 100])
+        )
+    };
+};
+
+// ============================================================================
 // MAIN ORCHESTRATOR
 // ============================================================================
 
@@ -1375,45 +2724,70 @@ export const processClassDiagramAnalysisPhaseWithAI = async (
 
     try {
         logger.info({
-            message: 'Bắt đầu pipeline 7 bước Class Diagram (có Graph Analysis)',
+            message: 'Bắt đầu pipeline 7 bước Class Diagram Analysis Phase',
             event_type: 'pipeline_start',
-            id: input.id
+            id: input.id,
+            typeUmlName: input.typeUmlName
         });
 
+        // STEP 1: Validation & Domain Analysis
         const domainContext = await step1_validateAndPreprocess(input);
+
+        // STEP 2: Extract PlantUML to JSON
         const diagrams = await step2_extractToJson(input, domainContext);
-        const normalized = await step3_semanticNormalization(input, diagrams);
-        const comparison = step4_structureComparison(normalized);
+
+        // STEP 3: Semantic Normalization
+        const normalized = await step3_semanticNormalization(input, diagrams, domainContext);
+
+        // STEP 4: Structure Comparison (NOW WITH AI FOR ATTRIBUTE PATTERNS)
+        const comparison = await step4_structureComparison(input, normalized);
+
+        // STEP 5: Graph Analysis (Rule-based)
         const graphAnalysis = step5_graphAnalysis(normalized, comparison);
-        const { errors, score: referenceScore } = await step6_classifyErrorsAndScore(
+
+        // STEP 6: Error Classification & Scoring (AI)
+        const { errors, score } = await step6_classifyErrorsAndScore(
             input, comparison, normalized, domainContext, graphAnalysis
         );
+
+        // STEP 7: Generate Feedback (AI)
         const feedback = await step7_generateFeedback(
-            input, referenceScore, errors, comparison, graphAnalysis
+            input, score, errors, comparison, graphAnalysis
         );
 
         const duration = Date.now() - startTime;
 
+        // Collect items for human review
         const humanReviewItems: string[] = [];
 
+        // Low similarity class matches
         comparison.classes.matched
             .filter(m => m.similarity < 0.85)
             .forEach(m => humanReviewItems.push(
                 `Class similarity thấp: "${m.student.name}" vs "${m.solution.name}" (${(m.similarity * 100).toFixed(0)}%)`
             ));
 
+        // Low similarity attribute matches
+        comparison.attributes.matched
+            .filter(m => m.similarity < 0.85)
+            .forEach(m => humanReviewItems.push(
+                `Attribute similarity thấp: "${m.studentAttr.name}" vs "${m.solutionAttr.name}" in ${m.className}`
+            ));
+
+        // Graph analysis requiring review
         graphAnalysis.recommendations
-            .filter(r => r.code === 'REQUIRE_HUMAN_REVIEW')
+            .filter(r => r.requiresHumanReview)
             .forEach(r => humanReviewItems.push(
                 `Graph Analysis: ${r.reason} - ${r.affectedElements.join(', ')}`
             ));
 
+        // Build result
         const result: UmlProcessedResult = {
             referenceScore: {
-                total: referenceScore.total,
-                breakdown: referenceScore.breakdown,
-                confidence: referenceScore.confidence,
-                suggestedRange: referenceScore.suggestedRange
+                total: score.total,
+                breakdown: score.breakdown,
+                confidence: score.confidence,
+                suggestedRange: score.suggestedRange
             },
             errors: errors,
             comparison: {
@@ -1426,52 +2800,69 @@ export const processClassDiagramAnalysisPhaseWithAI = async (
                     matched: comparison.attributes.matched.length,
                     missing: comparison.attributes.missing.length,
                     extra: comparison.attributes.extra.length,
-                    misplaced: comparison.attributes.misplaced.length
+                    misplaced: comparison.attributes.misplaced.length,
+                    patterns: comparison.attributes.patterns.length
                 },
                 relationships: {
                     associations: {
                         matched: comparison.relationships.associations.matched,
                         missing: comparison.relationships.associations.missing,
-                        extra: comparison.relationships.associations.extra
+                        extra: comparison.relationships.associations.extra,
+                        wrongMultiplicity: comparison.relationships.associations.wrongMultiplicity.length
                     },
                     compositions: {
                         matched: comparison.relationships.compositions.matched,
-                        missing: comparison.relationships.compositions.missing
+                        missing: comparison.relationships.compositions.missing,
+                        confusedWithAggregation: comparison.relationships.compositions.confusedWithAggregation.length
                     },
                     aggregations: {
                         matched: comparison.relationships.aggregations.matched,
-                        missing: comparison.relationships.aggregations.missing
+                        missing: comparison.relationships.aggregations.missing,
+                        confusedWithComposition: comparison.relationships.aggregations.confusedWithComposition.length
                     },
-                    generalizations: {
+                    generalization: {
                         matched: comparison.relationships.generalizations.matched,
                         missing: comparison.relationships.generalizations.missing,
-                        extra: comparison.relationships.generalizations.extra
+                        extra: comparison.relationships.generalizations.extra,
+                        reversed: comparison.relationships.generalizations.reversed.length
                     }
                 }
             },
             graphAnalysis: {
                 patterns: graphAnalysis.patterns,
-                structuralMetrics: graphAnalysis.structuralMetrics,
-                lifecycleAnalysis: graphAnalysis.lifecycleAnalysis,
-                detectedEquivalences: graphAnalysis.detectedEquivalences
+                structuralMetrics: {
+                    solution: serializeGraphMetrics(graphAnalysis.structuralMetrics.solution),
+                    student: serializeGraphMetrics(graphAnalysis.structuralMetrics.student)
+                },
+                lifecycleAnalysis: {
+                    compositionChains: graphAnalysis.lifecycleAnalysis.compositionChains,
+                    violationsCount: graphAnalysis.lifecycleAnalysis.violations.length
+                },
+                detectedEquivalences: graphAnalysis.detectedEquivalences,
+                recommendationsCount: graphAnalysis.recommendations.length
             },
             feedback: feedback,
             humanReviewItems: humanReviewItems,
             metadata: {
                 processingTime: `${(duration / 1000).toFixed(1)}s`,
-                aiCallsCount: 5,
-                pipelineVersion: '2.0.0-class-with-graph',
+                aiCallsCount: 6,
+                pipelineVersion: '2.2.0-class-analysis-with-pattern-ai',
                 timestamp: new Date().toISOString()
             }
         };
 
         logger.info({
-            message: '✅ Pipeline Class Diagram hoàn thành thành công',
+            message: '✅ Pipeline Class Diagram Analysis Phase hoàn thành thành công',
             event_type: 'pipeline_complete',
             id: input.id,
             durationMs: duration,
-            score: referenceScore.total,
-            patternsDetected: graphAnalysis.patterns.length
+            durationSeconds: (duration / 1000).toFixed(2),
+            score: score.total,
+            confidence: score.confidence,
+            errorsCount: errors.length,
+            patternsDetected: graphAnalysis.patterns.length,
+            equivalencesDetected: graphAnalysis.detectedEquivalences.length,
+            humanReviewItemsCount: humanReviewItems.length
         });
 
         return result;
@@ -1480,17 +2871,22 @@ export const processClassDiagramAnalysisPhaseWithAI = async (
         const duration = Date.now() - startTime;
 
         logger.error({
-            message: '❌ Pipeline Class Diagram thất bại',
+            message: '❌ Pipeline Class Diagram Analysis Phase thất bại',
             event_type: 'pipeline_error',
             id: input.id,
+            typeUmlName: input.typeUmlName,
+            error_name: (error as Error).name,
             error_message: getErrorMessage(error),
-            durationMs: duration
+            durationMs: duration,
+            stack: (error as Error).stack
         });
 
-        if (error instanceof AIValidationError || error instanceof UmlProcessingError) {
+        if (error instanceof AIValidationError) {
+            throw error;
+        } else if (error instanceof UmlProcessingError) {
             throw error;
         } else {
-            throw new UmlProcessingError(`Class Diagram pipeline failed: ${getErrorMessage(error)}`);
+            throw new UmlProcessingError(`Class Diagram Analysis Phase pipeline failed: ${getErrorMessage(error)}`);
         }
     }
 };
