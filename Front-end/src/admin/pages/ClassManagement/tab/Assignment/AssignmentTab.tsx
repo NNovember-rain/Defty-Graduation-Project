@@ -9,28 +9,26 @@ import {
 } from "../../../../../shared/services/assignmentService.ts";
 import dayjs from "dayjs";
 import { getAllTestSetsByClassId, removeTestSetFromClass } from "../../../../../shared/services/classTestSetService.ts";
-
 import {
     message,
     Pagination,
     Popconfirm,
-} from "antd";
-
+} from "antd"; // Giữ lại message, Pagination, Popconfirm từ antd
 import {IoCalendarOutline, IoCloseCircleOutline, IoFileTrayFull, IoTimeOutline, IoSearch} from "react-icons/io5";
 import {MdAssignmentTurnedIn, MdOutlineAssignment} from "react-icons/md";
-import {DownOutlined, UpOutlined} from "@ant-design/icons";
+import {DownOutlined} from "@ant-design/icons";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 import AssignAssignmentModal from "./AssignAssignmentModal.tsx";
 import AssignAssignmentModalTest from "./AssignAssignmentModalTest.tsx";
 import AssignQuizModal from "./AssignQuizModal.tsx";
 
-// --- Giao diện giữ nguyên ---
 interface AssignmentTabProps {
     classId: number;
 }
-type AssignmentType = "ASSIGNMENT" | "TEST" | "QUIZ";
-// ... (các interface khác giữ nguyên)
+
+type AssignmentType = "ASSIGNMENT" |
+    "TEST" | "QUIZ";
 
 interface AssignedModule {
     moduleId: number;
@@ -83,9 +81,8 @@ interface ProcessedAssignmentItem {
     totalQuestions?: number;
     createdDate: string;
 }
-// ------------------------------
 
-const DEFAULT_PAGE_SIZE = 5;
+const DEFAULT_PAGE_SIZE = 5; // Sử dụng DEFAULT_PAGE_SIZE từ tmp2.txt [cite: 228] (tmp1 là 9 [cite: 15])
 const ASSIGNMENT_TAB_PARAM = 'classworkTab';
 
 const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
@@ -93,7 +90,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // ... (Giữ nguyên các state)
+    // State definitions
     const [assignments, setAssignments] = useState<IAssignmentExtended[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -107,6 +104,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [isAssignmentModalVisibleTest, setIsAssignmentModalVisibleTest] = useState(false);
     const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
 
+    // Tab logic from tmp2.txt
     const initialTab = searchParams.get(ASSIGNMENT_TAB_PARAM);
     const validTabs = ['test', 'assignment', 'quiz'];
     const defaultActiveTab = validTabs.includes(initialTab || '') ? initialTab! : 'test';
@@ -120,10 +118,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const [uniqueUmlTypes, setUniqueUmlTypes] = useState<string[]>([]);
     const [uniqueAssignments, setUniqueAssignments] = useState<{ id: string; title: string }[]>([]);
 
+    // Dropdown/Filter state from tmp2.txt
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
-    // --- Giữ nguyên các hàm logic ---
+    // --- Navigation and Modals ---
     const goToAssignmentDetails = (assignmentId: string, assignmentClassDetailId: number) => {
         const originalId = assignmentId.split('-')[0];
         navigate(`/admin/class/${classId}/assignment/${originalId}/detail?assignmentClassDetailId=${assignmentClassDetailId}`);
@@ -144,17 +143,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
 
     const showAssignmentModal = useCallback(() => {
         setIsAssignmentModalVisible(true);
-        setIsDropdownOpen(false);
+        setIsDropdownOpen(false); // Thêm đóng dropdown từ tmp2.txt
     }, []);
-
     const showTestAssignmentModal = useCallback(() => {
         setIsAssignmentModalVisibleTest(true);
-        setIsDropdownOpen(false);
+        setIsDropdownOpen(false); // Thêm đóng dropdown từ tmp2.txt
     }, []);
-
     const showQuizAssignmentModal = useCallback(() => {
         setIsQuizModalVisible(true);
-        setIsDropdownOpen(false);
+        setIsDropdownOpen(false); // Thêm đóng dropdown từ tmp2.txt
     }, []);
 
     const hideAssignmentModal = () => {
@@ -163,6 +160,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setIsQuizModalVisible(false);
     };
 
+    // --- Data Fetching and Mapping ---
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -200,10 +198,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 createdDate: quiz.createdDate || dayjs().toISOString(),
             } as IAssignmentExtended));
 
+            // Logic mapping assignments từ tmp2.txt (có thêm assignedQuizzes vào IAssignmentExtended)
             const mappedAssignments: IAssignmentExtended[] = data.map((a: any, index: number) => {
                 const assignmentType: AssignmentType = (a.assignmentClassDetailResponseList || []).some((m: any) => m.checkedTest === true) ? "TEST" : "ASSIGNMENT";
-
-                const assignedQuizzes = a.assignedQuizzes || [];
+                const assignedQuizzes = a.assignedQuizzes || []; // Lấy assignedQuizzes từ tmp2.txt
 
                 return {
                     id: String(a.assignmentId ?? index),
@@ -219,7 +217,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                         ...m,
                         assignmentClassDetailId: m.assignmentClassDetailId,
                     })) as AssignedModule[],
-                    assignedQuizzes: assignedQuizzes.map((q: any) => ({
+                    assignedQuizzes: assignedQuizzes.map((q: any) => ({ // Map assignedQuizzes
                         ...q,
                         assignmentClassDetailId: q.assignmentClassDetailId,
                     })) as AssignedQuiz[],
@@ -245,7 +243,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         const moduleSet = new Set<string>();
         const umlTypeSet = new Set<string>();
         const assignmentMap = new Map<string, string>();
-
         data.forEach(a => {
             assignmentMap.set(a.id, a.title);
             a.assignedModules.forEach(m => {
@@ -253,7 +250,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 m.typeUmls.forEach(uml => umlTypeSet.add(uml));
             });
         });
-
         setUniqueModules(Array.from(moduleSet).sort());
         setUniqueUmlTypes(Array.from(umlTypeSet).sort());
         setUniqueAssignments(Array.from(assignmentMap.entries())
@@ -266,15 +262,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         fetchData();
     }, [fetchData]);
 
+    // --- Tab Change Logic from tmp2.txt (có cập nhật URL) ---
     const handleTabChange = (key: string) => {
         setActiveTab(key);
         setPage(1);
         setSelectedAssignmentId(null);
         setSelectedModule(null);
         setSelectedUmlType(null);
-
         const newSearchParams = new URLSearchParams(searchParams);
-        if (key !== 'test') {
+        if (key !== 'test') { // 'test' là tab mặc định, không cần lưu vào URL
             newSearchParams.set(ASSIGNMENT_TAB_PARAM, key);
         } else {
             newSearchParams.delete(ASSIGNMENT_TAB_PARAM);
@@ -282,10 +278,12 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setSearchParams(newSearchParams, { replace: true });
     };
 
+    // --- Assignment Processing ---
     const processedAssignments = useMemo(() => {
         let flattened: ProcessedAssignmentItem[] = [];
 
         if (activeTab === 'quiz') {
+            // Xử lý quiz items
             flattened = assignments.flatMap(a => {
                 if (selectedAssignmentId && a.id !== selectedAssignmentId) {
                     return [];
@@ -307,6 +305,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 } as ProcessedAssignmentItem));
             });
         } else {
+            // Xử lý assignment và test items
             const isFilteringTest = activeTab === 'test';
             flattened = assignments.flatMap(a => {
                 if (selectedAssignmentId && a.id !== selectedAssignmentId) {
@@ -333,6 +332,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             });
         }
 
+        // Lọc theo module và UML type (chỉ áp dụng cho assignment/test)
         if (activeTab !== 'quiz') {
             flattened = flattened.filter(item => {
                 const matchesModule = selectedModule === null || selectedModule === '' ||
@@ -344,9 +344,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                 return matchesModule && matchesUmlType;
             });
         } else {
+            // Lọc theo assignment/quiz name cho tab Quiz
             flattened = flattened.filter(item => selectedAssignmentId === null || item.assignmentId === selectedAssignmentId);
         }
 
+        // Sắp xếp
         if (sortBy) {
             flattened.sort((a, b) => {
                 let aVal: any;
@@ -384,8 +386,9 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
 
         return flattened.slice(startIndex, endIndex);
-
     }, [assignments, activeTab, page, size, sortBy, sortOrder, selectedAssignmentId, selectedModule, selectedUmlType, searchParams]);
+
+    // --- Pagination and Filter Handlers ---
 
     const onChangePage = (p: number, pageSize?: number) => {
         setPage(p);
@@ -395,10 +398,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
     };
 
+    // Chuyển đổi event handler của select từ antd sang HTML <select> của Tailwind (tmp2.txt)
     const handleAssignmentFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const value = event.target.value === "" ? null : event.target.value;
         setSelectedAssignmentId(value);
-        if (activeTab === 'quiz') {
+        if (activeTab === 'quiz') { // Thêm logic reset module/uml cho tab quiz từ tmp2.txt
             setSelectedModule(null);
             setSelectedUmlType(null);
         }
@@ -417,9 +421,9 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         setPage(1);
     };
 
+    // --- Available Filters Memo ---
     const availableModules = useMemo(() => {
-        if (activeTab === 'quiz' || !selectedAssignmentId) {
-            if (activeTab === 'quiz') return uniqueModules;
+        if (activeTab === 'quiz' || !selectedAssignmentId) { // Logic filter cho module từ tmp2.txt
             return uniqueModules;
         }
 
@@ -436,8 +440,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     }, [selectedAssignmentId, assignments, uniqueModules, activeTab]);
 
     const availableUmlTypes = useMemo(() => {
-        if (activeTab === 'quiz' || !selectedAssignmentId) {
-            if (activeTab === 'quiz') return uniqueUmlTypes;
+        if (activeTab === 'quiz' || !selectedAssignmentId) { // Logic filter cho uml từ tmp2.txt
             return uniqueUmlTypes;
         }
 
@@ -455,20 +458,19 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         return Array.from(umlSet).sort();
     }, [selectedAssignmentId, assignments, uniqueUmlTypes, activeTab]);
 
+    // --- Unassign Logic ---
     const handleUnassign = async (assignmentClassDetailId: number, isQuiz: boolean = false) => {
         try {
             message.loading({ content: t('common.unassigning') || 'Đang hủy giao...', key: 'unassign' });
-
             if (isQuiz) {
+                // Tìm quiz assignment để lấy testSetId
                 const quizAssignment = assignments.find(a =>
                     a.assignedQuizzes?.some(q => q.assignmentClassDetailId === assignmentClassDetailId)
                 );
-
                 if (quizAssignment && quizAssignment.assignedQuizzes) {
                     const quiz = quizAssignment.assignedQuizzes.find(q =>
                         q.assignmentClassDetailId === assignmentClassDetailId
                     );
-
                     if (quiz) {
                         await removeTestSetFromClass(classId, quiz.testSetId);
                     }
@@ -487,7 +489,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
     };
 
-
+    // --- Render Item (Sử dụng Tailwind CSS từ tmp2.txt) ---
     const renderAssignmentItem = (item: ProcessedAssignmentItem) => {
         const isQuiz = item.type === 'QUIZ';
         const isTest = item.isModuleTest;
@@ -512,7 +514,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         }
 
         const keyPrefix = item.key;
-
         return (
             <li key={item.key} className="p-0 mb-3 list-none">
                 <div
@@ -544,27 +545,28 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                         </span>
                                     )}
 
-                                    {isQuiz ? (
-                                        <>
-                                            {item.collectionName && (
-                                                <span className="px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#e6f7ff', color: '#1890ff' }}>
-                                                    {item.collectionName}
+                                    {isQuiz ?
+                                        (
+                                            <>
+                                                {item.collectionName && (
+                                                    <span className="px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#e6f7ff', color: '#1890ff' }}>
+                                                        {item.collectionName}
+                                                    </span>
+                                                )}
+                                            </>
+                                        ) : (
+                                            item.typeUmls?.map((name, index) => (
+                                                <span
+                                                    key={`${keyPrefix}-uml-${name}-${index}`}
+                                                    className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium"
+                                                >
+                                                    {name}
                                                 </span>
-                                            )}
-                                        </>
-                                    ) : (
-                                        item.typeUmls?.map((name, index) => (
-                                            <span
-                                                key={`${keyPrefix}-uml-${name}-${index}`}
-                                                className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium"
-                                            >
-                                                {name}
-                                            </span>
-                                        ))
-                                    )}
+                                            ))
+                                        )}
                                 </div>
 
-                                {/* Deadline (Giảm kích thước font) */}
+                                {/* Deadline */}
                                 <span className="flex items-center gap-1 text-xs text-gray-500">
                                     <IoCalendarOutline className="text-sm" />
                                     {item.startDate && item.endDate
@@ -604,7 +606,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             )}
 
                             <Popconfirm
-                                title={"Bạn có chắc chắn muốn hủy giao mục này?"}
+                                title={t('common.confirm') || "Bạn có chắc chắn muốn hủy giao mục này?"}
                                 onConfirm={() => handleUnassign(item.assignmentClassDetailId, isQuiz)}
                                 okText={t('common.yes') || "Có"}
                                 cancelText={t('common.no') || "Không"}
@@ -625,11 +627,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     };
 
+    // --- Helper Functions ---
     const countAssignments = (type: 'test' | 'assignment' | 'quiz') => {
         const assignmentsToCount = selectedAssignmentId
             ? assignments.filter(a => a.id === selectedAssignmentId)
             : assignments;
-
         if (type === 'quiz') {
             return assignmentsToCount.reduce((count, a) =>
                 count + (a.assignedQuizzes?.length || 0), 0
@@ -645,13 +647,14 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
     const renderEmptyContent = (type: 'test' | 'assignment' | 'quiz') => {
         let descriptionText;
         if (type === 'quiz') {
-            descriptionText = "Chưa có trắc nghiệm nào được giao.";
+            descriptionText = t("common.noData") || "Chưa có trắc nghiệm nào được giao.";
         } else if (type === 'test') {
             descriptionText = t("common.noData") || "Chưa có kiểm tra nào được giao.";
         } else {
             descriptionText = t("common.noData") || "Chưa có luyện tập nào được giao.";
         }
 
+        // Sử dụng giao diện Empty của tmp2.txt (dựa trên Tailwind CSS)
         return (
             <div className="flex flex-col items-center justify-center p-10 bg-gray-50 rounded-lg border border-gray-200">
                 <svg
@@ -692,6 +695,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     };
 
+
+    // --- Loading and Error States ---
     if (loading) {
         return (
             <div className="p-8 flex justify-center items-center gap-2">
@@ -709,10 +714,12 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
         );
     }
 
+    // --- Main Component Render (Sử dụng cấu trúc Tailwind CSS từ tmp2.txt) ---
+
     const tabLabels = [
-        { key: 'test', label: t("classDetail.tabs.test"), content: renderTabContent('test') },
-        { key: 'assignment', label: t("classDetail.tabs.assignment"), content: renderTabContent('assignment') },
-        { key: 'quiz', label: `Trắc Nghiệm (${countAssignments('quiz')})`, content: renderTabContent('quiz') },
+        { key: 'test', label: t("classDetail.tabs.test") || `Bài Tập Kiểm Tra (${countAssignments('test')})`, content: renderTabContent('test') },
+        { key: 'assignment', label: t("classDetail.tabs.assignment") || `Bài Tập Luyện Tập (${countAssignments('assignment')})`, content: renderTabContent('assignment') },
+        { key: 'quiz', label: `Bài Trắc Nghiệm (${countAssignments('quiz')})`, content: renderTabContent('quiz') },
     ];
 
     return (
@@ -720,6 +727,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
             <main className="flex-1">
                 <div className="mb-4">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-end">
+                        {/* Tabs Navigation (Tailwind) */}
                         <div className="border-b border-gray-200 flex-1 min-w-0 mb-4 md:mb-0 order-2 md:order-1">
                             <nav className="flex space-x-4" aria-label="Tabs">
                                 {tabLabels.map(tab => (
@@ -740,15 +748,19 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             </nav>
                         </div>
 
+                        {/* Filter and Create/Assign Buttons (Tailwind) */}
                         <div className="flex items-center gap-3 order-1 md:order-2 flex-shrink-0">
+                            {/* Filter Button */}
                             <button
                                 className={`flex items-center gap-1 font-semibold py-2 px-3 rounded-md transition duration-150 text-sm border ${isFilterDropdownOpen ? 'bg-gray-100 text-blue-600 border-blue-300' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
                                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                                title={"Bộ lọc"}
                             >
                                 <IoSearch className="text-base" />
-                                {isFilterDropdownOpen}
+                                {"Bộ lọc"}
                             </button>
 
+                            {/* Create/Assign Dropdown */}
                             <div className="relative">
                                 <button
                                     className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition duration-150 flex items-center gap-2 text-sm"
@@ -786,10 +798,12 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     </div>
                 </div>
 
+                {/* Filter Dropdown Content (Tailwind) */}
                 <div
                     className={`transition-all duration-300 ease-in-out overflow-hidden mb-4 ${isFilterDropdownOpen ? 'max-h-96 opacity-100 pt-4' : 'max-h-0 opacity-0'}`}
                 >
                     <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        {/* Select Assignment Title */}
                         <select
                             className="w-full md:w-64 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                             value={selectedAssignmentId || ""}
@@ -803,8 +817,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             ))}
                         </select>
 
+                        {/* Module and UML Type Filters (Only for Assignment/Test tabs) */}
                         {(activeTab === 'test' || activeTab === 'assignment') && (
                             <>
+                                {/* Select Module */}
                                 <select
                                     className="w-full md:w-64 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
                                     value={selectedModule || ""}
@@ -835,14 +851,15 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                                 </select>
                             </>
                         )}
-
                     </div>
                 </div>
 
+                {/* Tab Content */}
                 <div className="mt-4">
                     {tabLabels.find(t => t.key === activeTab)?.content}
                 </div>
 
+                {/* Pagination */}
                 <div className="mt-4 flex justify-end">
                     {total > 0 && (
                         <Pagination
@@ -850,7 +867,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             pageSize={size}
                             total={total}
                             showSizeChanger
-                            pageSizeOptions={["5", "10", "15", "20"]}
+                            pageSizeOptions={["5", "10", "15", "20"]} // Thay đổi pageSizeOptions theo tmp2.txt
                             onChange={onChangePage}
                             onShowSizeChange={onChangePage}
                             showTotal={(total) =>
@@ -860,6 +877,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                     )}
                 </div>
 
+                {/* Modals */}
                 <AssignAssignmentModal
                     visible={isAssignmentModalVisible}
                     onClose={hideAssignmentModal}
