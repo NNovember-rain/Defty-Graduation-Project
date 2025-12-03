@@ -754,10 +754,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({ classId }) => {
                             <button
                                 className={`flex items-center gap-1 font-semibold py-2 px-3 rounded-md transition duration-150 text-sm border ${isFilterDropdownOpen ? 'bg-gray-100 text-blue-600 border-blue-300' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
                                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                                title={t("classDetail.filter.title") || "Bộ lọc"}
+                                title={"Bộ lọc"}
                             >
                                 <IoSearch className="text-base" />
-                                {t("classDetail.filter.title") || "Bộ lọc"}
+                                {"Bộ lọc"}
                             </button>
 
                             {/* Create/Assign Dropdown */}
