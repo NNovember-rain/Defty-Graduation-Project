@@ -26,11 +26,20 @@ import ClassDetailPage from "../pages/ClassManagement/ClassDetailPage.tsx";
 import AssignmentDetail from "../pages/ClassManagement/tab/Assignment/AssignmentDetail.tsx";
 import AssignmentForm from "../pages/Assignment/assignmentForm.tsx";
 import SubmissionDetail from "../pages/Submission/SubmissionDetail.tsx";
-import StudentAssignmentManagerAntD from "../pages/ClassManagement/tab/Assignment/StudentAssignmentManagerAntD.tsx";
 import CourseForm from "../pages/ClassManagement/courseForm.tsx";
 import CourseLvManagement from "../pages/ClassManagement/courseIndex.tsx";
 import AutoFeedbackJob from "../pages/AutoFeedbackJob";
 import ModuleDetailViewer from "../pages/Assignment/ModuleDetailViewer.tsx";
+import TestCollectionManagement from "../pages/QuestionBank/TestCollections";
+import TestCollectionForm from "../pages/QuestionBank/TestCollections/testCollectionForm.tsx";
+import TestSetManagement from "../pages/QuestionBank/TestSets";
+import TestSetForm from "../pages/QuestionBank/TestSets/testSetForm.tsx";
+import UploadProcessManagement from "../pages/QuestionBank/TestSets/uploadProcessManagement.tsx";
+import UploadTestForm from "../pages/QuestionBank/TestSets/uploadTestForm.tsx";
+import QuestionGroupManagement from "../pages/QuestionBank/QuestionGroups";
+import QuestionTagForm from "../pages/QuestionBank/Tags/questionTagForm.tsx";
+import QuestionTagManagement from "../pages/QuestionBank/Tags";
+import StudentAssignment from "../pages/ClassManagement/tab/Assignment/StudentAssignment.tsx";
 
 
 interface AppRoute {
@@ -157,7 +166,7 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
     },
     {
         path: 'class/:classId/assignment/:assignmentId/detail',
-        component: StudentAssignmentManagerAntD,
+        component: StudentAssignment,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
     {
@@ -190,6 +199,71 @@ const ProtectedAdminRoutesConfig: AppRoute[] = [
         component: TypeUml,
         requiredAnyOfRoles: ['admin', 'teacher'],
     },
+    {
+        path: 'content/question-bank/collections',
+        component: TestCollectionManagement,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+    {
+        path: 'content/question-bank/collections/create',
+        component: TestCollectionForm,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+    {
+        path: 'content/question-bank/collections/update/:id',
+        component: TestCollectionForm,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+
+    {
+        path: 'content/question-bank/test-sets',
+        component: TestSetManagement,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+    {
+        path: 'content/question-bank/test-sets/create',
+        component: TestSetForm,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+    {
+        path: 'content/question-bank/test-sets/update/:id',
+        component: TestSetForm,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+
+    {
+        path: "content/question-bank/testset-processes",
+        component: UploadProcessManagement,
+        requiredAnyOfRoles: ["system-admin", "admin"],
+    },
+    {
+        path: "content/question-bank/testset-processes/upload",
+        component: UploadTestForm,
+        requiredAnyOfRoles: ["system-admin", "admin"],
+    },
+
+    {
+        path: 'content/question-bank/question-groups',
+        component: QuestionGroupManagement,
+        requiredAnyOfRoles: ["system-admin", "admin"],
+    },
+
+    {
+        path: 'content/question-bank/tags',
+        component: QuestionTagManagement,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+    {
+        path: 'content/question-bank/tags/create',
+        component: QuestionTagForm,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+    {
+        path: 'content/question-bank/tags/update/:id',
+        component: QuestionTagForm,
+        requiredAnyOfRoles: ['system-admin', 'admin'],
+    },
+
     {
         path: 'class/view/:id',
         component: ClassDetailPage,

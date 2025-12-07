@@ -13,3 +13,31 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+defty:
+  #  security:
+  #    enabled: true
+  #    publicEndpoints: "/**/accessible/**"
+  #    jwt:
+  #      expiration: 3600
+  #      expirationRefreshToken: 86400
+  #      secretKey: 5d52QxETMTxUyZ2VjgrTMLymN7fLp/++mWpSdfzPrdrPTussUSzOtsotKyl8wEoo
+  #    cache:
+  #      maxSize: 1000
+  #      ttlMinutes: 15
+  #    redis:
+  #      host: localhost
+  #      port: 6379
+  #      password:
+  #
+  #  server-host-info:
+  #    enabled: ${SERVER_HOST_INFO_ENABLED:true}
+  #    hostname: ${SERVER_HOSTNAME:103.221.222.128}
+  #    port-nginx-media: ${SERVER_PORT_NGINX_FILE:81}
+
+  file:
+    enabled: true
+    cloudinary:
+      cloud-name: dc9nyxru6
+      api-key: 431649663815195
+      api-secret: l0OPyaBmY9BtQ9j_lrVWrWwHAQ4

@@ -1,19 +1,44 @@
 import React from 'react';
-import {useNavigate} from "react-router-dom";
+import {Users, ClipboardList, BarChart3, ChevronRight, HistoryIcon} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-// Mock data cho giáo viên
-const mockTeacherData = {
-    stats: {
+// Mock data cho thống kê lớp học UML/CNPM
+const mockClassStats = {
+    overview: {
         totalStudents: 45,
         totalAssignments: 12,
         pendingGrading: 23,
-        averageSubmissionRate: 87
+        averageScore: 7.8,
+        onTimeRate: 82,
+        activeStudents: 38
     },
+    submissionStats: {
+        onTime: 37,
+        late: 8,
+        notSubmitted: 3,
+        resubmissions: 12
+    },
+    recentSubmissions: [
+        { id: 1, student: 'Nguyễn Văn A', assignment: 'Use Case - Hệ thống quản lý thư viện', time: '10 phút trước', status: 'pending' },
+        { id: 2, student: 'Trần Thị B', assignment: 'Class Diagram - Quản lý sinh viên', time: '25 phút trước', status: 'pending' },
+        { id: 3, student: 'Lê Văn C', assignment: 'Sequence Diagram - Đặt hàng online', time: '1 giờ trước', status: 'graded', score: 8.5 },
+        { id: 4, student: 'Phạm Thị D', assignment: 'Activity Diagram - Quy trình thanh toán', time: '2 giờ trước', status: 'graded', score: 7.0 },
+        { id: 5, student: 'Hoàng Văn E', assignment: 'Use Case - Hệ thống đặt vé', time: '3 giờ trước', status: 'graded', score: 9.0 }
+    ],
+    weeklyActivity: [
+        { week: 'T2', submissions: 8 },
+        { week: 'T3', submissions: 12 },
+        { week: 'T4', submissions: 15 },
+        { week: 'T5', submissions: 10 },
+        { week: 'T6', submissions: 18 },
+        { week: 'T7', submissions: 5 },
+        { week: 'CN', submissions: 2 }
+    ],
     upcomingDeadlines: [
         {
             id: 1,
-            title: 'Assignment 1: Introduction to React',
-            dueDate: '2025-11-20',
+            title: 'Use Case Diagram - Hệ thống quản lý bán hàng',
+            dueDate: '2024-12-05',
             dueTime: '23:59',
             submitted: 38,
             total: 45,
@@ -21,58 +46,23 @@ const mockTeacherData = {
         },
         {
             id: 2,
-            title: 'Lab 2: State Management',
-            dueDate: '2025-11-18',
+            title: 'Class Diagram - Hệ thống quản lý khách sạn',
+            dueDate: '2024-12-08',
             dueTime: '18:00',
             submitted: 42,
             total: 45,
             ungraded: 8
         },
-    ],
-    recentActivities: [
-        { id: 1, type: 'submission', studentName: 'Nguyễn Văn A', action: 'đã nộp bài', item: 'Assignment 1', time: '2 giờ trước' },
-        { id: 2, type: 'join', studentName: 'Trần Thị B', action: 'đã tham gia lớp', item: '', time: '5 giờ trước' },
-        { id: 3, type: 'comment', studentName: 'Lê Văn C', action: 'đã comment', item: 'Lab 2', time: '1 ngày trước' },
-        { id: 4, type: 'submission', studentName: 'Phạm Thị D', action: 'đã nộp bài', item: 'Project Proposal', time: '1 ngày trước' },
     ]
 };
 
+
 const TeacherStreamTab = ({ classData }) => {
-    const { stats, upcomingDeadlines, recentActivities } = mockTeacherData;
+    const navigate = useNavigate();
 
-    const getActivityIcon = (type) => {
-        const iconStyle = { width: '18px', height: '18px' };
-        switch (type) {
-            case 'submission':
-                return (
-                    <svg style={iconStyle} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                );
-            case 'join':
-                return (
-                    <svg style={iconStyle} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                );
-            case 'comment':
-                return (
-                    <svg style={iconStyle} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                );
-            default:
-                return null;
-        }
-    };
-
-    const getActivityColor = (type) => {
-        switch (type) {
-            case 'submission': return '#3b82f6';
-            case 'join': return '#10b981';
-            case 'comment': return '#f59e0b';
-            default: return '#64748b';
-        }
+    const handleCreateAssignment = () => {
+        const url = `/admin/content/assignments/create?classId=${classData}`;
+        navigate(url);
     };
 
     const formatDate = (dateString, timeString) => {
@@ -89,74 +79,52 @@ const TeacherStreamTab = ({ classData }) => {
         if (diffDays === 1) return `Ngày mai lúc ${timeString}`;
         return `Còn ${diffDays} ngày - ${timeString}`;
     };
+    const StatCard = ({ icon, label, value }) => {
+        return (
+            <div className="flex flex-col items-center justify-center p-5 bg-white rounded-xl shadow-sm border hover:shadow-md transition">
+                {/* Icon nhỏ lại cho cân */}
+                <div className="mb-2 text-gray-700">
+                    {React.cloneElement(icon, { className: "w-6 h-6" })}
+                </div>
 
-    const navigate = useNavigate();
+                {/* Số to hơn để thu hút */}
+                <div className="text-2xl font-semibold">
+                    {value}
+                </div>
 
-    // 💡 Hàm xử lý click
-    const handleCreateAssignment = () => {
-        const url = `/admin/content/assignments/create?classId=${classData}`;
-        navigate(url);
+                {/* Label rõ ràng nhưng nhỏ hơn giá trị */}
+                <div className="text-sm text-gray-500 mt-1">
+                    {label}
+                </div>
+            </div>
+        );
     };
+
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1.5rem' }}>
             {/* Main Content */}
             <div>
-                {/* Stats Overview */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                    {/** Card Học sinh */}
-                    <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ padding: '0.5rem', backgroundColor: '#dbeafe', borderRadius: '8px', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                        </div>
-                        <div style={{ marginLeft: '0.75rem', textAlign: 'right' }}>
-                            <span style={{ fontSize: '1rem', color: '#64748b' }}>Học sinh</span>
-                            <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>{stats.totalStudents}</p>
-                        </div>
-                    </div>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                    <StatCard
+                        icon={<Users className="w-8 h-8 text-gray-700" />}
+                        label="Học sinh"
+                        value={45}
+                    />
 
-                    {/** Card Bài tập */}
-                    <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ padding: '0.5rem', backgroundColor: '#f0fdf4', borderRadius: '8px', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        </div>
-                        <div style={{ marginLeft: '0.75rem', textAlign: 'right' }}>
-                            <span style={{ fontSize: '1rem', color: '#64748b' }}>Bài tập</span>
-                            <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>{stats.totalAssignments}</p>
-                        </div>
-                    </div>
+                    <StatCard
+                        icon={<ClipboardList className="w-8 h-8 text-gray-700" />}
+                        label="Bài tập"
+                        value={12}
+                    />
 
-                    {/** Card Chờ chấm */}
-                    <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ padding: '0.5rem', backgroundColor: '#fef3c7', borderRadius: '8px', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div style={{ marginLeft: '0.75rem', textAlign: 'right' }}>
-                            <span style={{ fontSize: '1rem', color: '#64748b' }}>Chờ chấm</span>
-                            <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>{stats.pendingGrading}</p>
-                        </div>
-                    </div>
-
-                    {/** Card Tỷ lệ nộp */}
-                    <div style={{ padding: '1rem', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ padding: '0.5rem', backgroundColor: '#ede9fe', borderRadius: '8px', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                        </div>
-                        <div style={{ marginLeft: '0.75rem', textAlign: 'right' }}>
-                            <span style={{ fontSize: '1rem', color: '#64748b' }}>Tỷ lệ nộp</span>
-                            <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>{stats.averageSubmissionRate}%</p>
-                        </div>
-                    </div>
+                    <StatCard
+                        icon={<BarChart3 className="w-8 h-8 text-gray-700" />}
+                        label="Điểm TB"
+                        value="7.8/10"
+                    />
                 </div>
-
 
                 {/* Upcoming Deadlines */}
                 <div style={{ marginBottom: '1.5rem' }}>
@@ -184,7 +152,7 @@ const TeacherStreamTab = ({ classData }) => {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {upcomingDeadlines.map(assignment => {
+                        {mockClassStats.upcomingDeadlines.map(assignment => {
                             const submissionRate = Math.round((assignment.submitted / assignment.total) * 100);
                             return (
                                 <div
@@ -260,54 +228,110 @@ const TeacherStreamTab = ({ classData }) => {
                     </div>
                 </div>
 
-                {/* Recent Activities */}
-                <div>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem' }}>
-                        Hoạt động gần đây
-                    </h3>
+                {/* Recent Submissions */}
+                <div style={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '1.25rem'
+                }}>
+
+                    {/* Header: icon + title + xem thêm */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '1rem'
+                    }}>
+
+                        {/* Icon + Title */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <HistoryIcon style={{ width: 20, height: 20 }} />
+                            <h3 style={{
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                color: '#1e293b',
+                                margin: 0
+                            }}>
+                                Bài nộp gần đây
+                            </h3>
+                        </div>
+
+                        {/* Xem thêm */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            cursor: 'pointer',
+                            color: '#3b82f6',
+                            fontSize: '0.875rem',
+                            fontWeight: '500'
+                        }}>
+                            <span>Xem thêm</span>
+                            <ChevronRight style={{ width: 16, height: 16 }} />
+                        </div>
+                    </div>
+
+                    {/* List items */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {recentActivities.map(activity => (
-                            <div
-                                key={activity.id}
-                                style={{
-                                    padding: '1rem',
-                                    backgroundColor: '#fff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.75rem',
-                                    transition: 'all 0.2s',
-                                    cursor: 'pointer'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
-                            >
-                                <div style={{
-                                    padding: '0.5rem',
-                                    backgroundColor: `${getActivityColor(activity.type)}15`,
-                                    color: getActivityColor(activity.type),
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    {getActivityIcon(activity.type)}
-                                </div>
+                        {mockClassStats.recentSubmissions.map(submission => (
+                            <div key={submission.id} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '0.75rem',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '8px',
+                                border: '1px solid #e2e8f0'
+                            }}>
+
                                 <div style={{ flex: 1 }}>
-                                    <p style={{ fontSize: '0.875rem', color: '#1e293b', margin: 0 }}>
-                                        <strong>{activity.studentName}</strong> {activity.action}
-                                        {activity.item && <span style={{ color: '#3b82f6' }}> {activity.item}</span>}
+                                    <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1e293b', margin: 0 }}>
+                                        {submission.student}
                                     </p>
-                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>{activity.time}</p>
+                                    <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
+                                        {submission.assignment}
+                                    </p>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+            {submission.time}
+          </span>
+
+                                    {/* Status / Score */}
+                                    {submission.status === 'pending' ? (
+                                        <span style={{
+                                            padding: '0.25rem 0.75rem',
+                                            backgroundColor: '#fef3c7',
+                                            color: '#f59e0b',
+                                            borderRadius: '6px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '600'
+                                        }}>
+              Chờ chấm
+            </span>
+                                    ) : (
+                                        <span style={{
+                                            padding: '0.25rem 0.75rem',
+                                            backgroundColor: '#d1fae5',
+                                            color: '#059669',
+                                            borderRadius: '6px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '600'
+                                        }}>
+              {submission.score} điểm
+            </span>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
+
             </div>
 
-            {/* Sidebar - Quick Actions */}
+            {/* Sidebar - GIỮ NGUYÊN */}
             <div>
                 <div style={{ position: 'sticky', top: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {/* Class Code */}
@@ -347,8 +371,8 @@ const TeacherStreamTab = ({ classData }) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <span style={{ fontSize: '0.875rem', color: '#475569' }}>
-                                    Tạo: {new Date(classData?.createdDate || '').toLocaleDateString('vi-VN')}
-                                </span>
+                  Tạo: {new Date(classData?.createdDate || '').toLocaleDateString('vi-VN')}
+                </span>
                             </div>
                         </div>
                     </div>
@@ -384,5 +408,29 @@ const TeacherStreamTab = ({ classData }) => {
         </div>
     );
 };
+
+// Utility Components
+const StatCard = ({ icon, label, value, suffix = '', color = '#1e293b' }) => (
+    <div style={{
+        padding: '1rem',
+        backgroundColor: '#fff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
+        textAlign: 'center'
+    }}>
+        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{icon}</div>
+        <p style={{ fontSize: '1.5rem', fontWeight: '700', color, margin: '0 0 0.25rem 0' }}>
+            {value}{suffix}
+        </p>
+        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>{label}</p>
+    </div>
+);
+
+const MetricBox = ({ label, value, color }) => (
+    <div style={{ textAlign: 'center' }}>
+        <p style={{ fontSize: '1.75rem', fontWeight: '700', color, margin: 0 }}>{value}</p>
+        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>{label}</p>
+    </div>
+);
 
 export default TeacherStreamTab;

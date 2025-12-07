@@ -1,5 +1,5 @@
 // admin-dashboard/components/ManagementTemplate.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FilterOption, {type SearchField, type SortField} from './FilterOption';
 import DataTable from './DataTable';
 import Breadcrumb from './Breadcrumb'; // Import Breadcrumb component
@@ -27,11 +27,12 @@ interface BreadcrumbItem {
 
 // NEW: Define ActionButton interface (same as in DataTable)
 export interface ActionButton {
-    icon: ReactNode; // ReactNode to allow any React element (like an icon component)
+    icon: ReactNode | ((rowData: DataRow) => ReactNode); // ReactNode to allow any React element (like an icon component)
     onClick: (rowData: DataRow) => void;
-    className?: string;
-    tooltip?: string; // Optional tooltip for the button,
-    color: string
+    className?: string | ((rowData: DataRow) => string);
+    tooltip?: string | ((rowData: DataRow) => string); // Optional tooltip for the button,
+    color?: string | ((rowData: DataRow) => string);
+    hidden?: boolean | ((rowData: DataRow) => boolean); // Optional property to hide button
 }
 
 interface ManagementTemplateProps {
@@ -57,7 +58,7 @@ interface ManagementTemplateProps {
     entriesPerPage: number;
     currentPage: number;
     onPageChange: (page: number) => void;
-    onSort: (columnKey: string, sortOrder: 'asc' | 'desc') => void;
+    onSort?: (columnKey: string, sortOrder: 'asc' | 'desc') => void;
     currentSortColumn: string | null;
     currentSortOrder: 'asc' | 'desc' | null;
     onCreateNew?: () => void; // Optional prop for the "Create New" button
@@ -69,6 +70,12 @@ interface ManagementTemplateProps {
 
     // NEW: Add customActions prop
     customActions?: ReactNode; // Optional custom actions to render
+
+    showPagination?: boolean;
+    enableRowSelection?: boolean;
+    onSelectedChange?: (selectedIds: string[]) => void;
+    selectedRows?: string[];
+    disableSequence?: boolean;
 }
 
 const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
@@ -96,28 +103,62 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                                                                    actions, // NEW: Destructure actions prop
                                                                    onBulkDelete,
                                                                    customActions, // NEW: Destructure customActions prop
+                                                                   showPagination = true,
+                                                                   enableRowSelection = false,
+                                                                   onSelectedChange,
+                                                                   selectedRows: externalSelectedRows,
+                                                                   disableSequence = false
                                                                }) => {
     const [isFilterVisible, setIsFilterVisible] = useState(true);
-    const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    const [internalSelectedRows, setInternalSelectedRows] = useState<string[]>([]);
+    const selectedRows = externalSelectedRows !== undefined ? externalSelectedRows : internalSelectedRows;
     const { t } = useTranslation(); // Initialize useTranslation
+
+    // NEW: Reset selectedRows when data changes (after delete/update operations)
+    useEffect(() => {
+        if (externalSelectedRows === undefined) {
+            setInternalSelectedRows(prev => {
+                if (prev.length === 0) return prev;
+                const currentDataIds = data.map(row => row.id ? row.id : row._id);
+                const stillExistingSelectedRows = prev.filter(id => currentDataIds.includes(id));
+                if (stillExistingSelectedRows.length !== prev.length) {
+                    return stillExistingSelectedRows;
+                }
+                return prev;
+            });
+        }
+    }, [data, externalSelectedRows]);
+
+    useEffect(() => {
+        onSelectedChange?.(selectedRows);
+    }, [selectedRows, onSelectedChange]);
 
     const toggleFilterVisibility = () => {
         setIsFilterVisible(!isFilterVisible);
     };
 
     const handleSelectRow = (id: string, isSelected: boolean) => {
-        setSelectedRows(prev =>
-            isSelected ? [...prev, id] : prev.filter(rowId => rowId !== id)
-        );
+        const newSelectedRows = isSelected
+            ? [...selectedRows, id]
+            : selectedRows.filter(rowId => rowId !== id);
+
+        if (externalSelectedRows === undefined) {
+            setInternalSelectedRows(newSelectedRows);
+        }
+
+        onSelectedChange?.(newSelectedRows);
     };
 
     const handleSelectAllRows = (isSelected: boolean) => {
-        if (isSelected) {
-            const allIds = data.map(row => row.id ? row.id : row._id);
-            setSelectedRows(allIds);
-        } else {
-            setSelectedRows([]);
+        const newSelectedRows = isSelected
+            ? data.map(row => row.id ? row.id : row._id)
+            : [];
+
+        if (externalSelectedRows === undefined) {
+            setInternalSelectedRows(newSelectedRows);
         }
+
+        onSelectedChange?.(newSelectedRows);
     };
 
 
@@ -184,9 +225,12 @@ const ManagementTemplate: React.FC<ManagementTemplateProps> = ({
                 onEntriesPerPageChange={onEntriesPerPageChange} // NEW: Truyền prop này
                 actions={actions}
                 onBulkDelete={onBulkDelete}
+                showPagination={showPagination}
                 selectedRows={selectedRows}
                 onSelectRow={handleSelectRow}
                 onSelectAll={handleSelectAllRows}
+                enableRowSelection={enableRowSelection}
+                disableSequence={disableSequence}
             />
         </div>
     );

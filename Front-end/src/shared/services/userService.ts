@@ -25,6 +25,7 @@ export interface GetUsersResult {
 export interface IUser {
     id: number;
     username: string;
+    avatarUrl: string;
     fullName: string | null;
     lastName: string | null;
     dob: string | null;
@@ -32,6 +33,7 @@ export interface IUser {
     isActive: boolean;
     userCode: string;
     createdDate: string;
+    apiKey: string;
     roles: IRole[];
 }
 
@@ -66,6 +68,13 @@ export const getUserById = async (id: string | number): Promise<IUser> => {
     const data = await response.json();
     return data.result as IUser;
 };
+
+export const getUserDetail = async (): Promise<IUser> => {
+    const response = await handleRequest(get(`${PREFIX_IDENTITY}/${PREFIX_USER}/detail`));
+    const data = await response.json();
+    return data.result as IUser;
+};
+
 export const getUsersByIds = async (ids: (number | string)[]): Promise<IUser[]> => {
     const query = ids.map(id => `ids=${id}`).join("&");
     const response = await handleRequest(
@@ -77,6 +86,13 @@ export const getUsersByIds = async (ids: (number | string)[]): Promise<IUser[]> 
 
 export const updateUser = async (id: string | number, data: Partial<Omit<IUser, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IUser> => {
     const response = await handleRequest(patchJsonData(`${PREFIX_IDENTITY}/${PREFIX_USER}/${id}`, data));
+    const updatedData = await response.json();
+    return updatedData.data as IUser;
+};
+
+
+export const updateUserDetail = async (data: Partial<Omit<IUser, '_id' | 'createdAt' | 'updatedAt'>>): Promise<IUser> => {
+    const response = await handleRequest(patchJsonData(`${PREFIX_IDENTITY}/${PREFIX_USER}/detail`, data));
     const updatedData = await response.json();
     return updatedData.data as IUser;
 };

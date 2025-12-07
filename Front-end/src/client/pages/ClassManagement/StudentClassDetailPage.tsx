@@ -1,32 +1,12 @@
 import ClassPeopleTab from './tab/ClassPeopleTab.tsx';
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from 'react-bootstrap';
 import { getClassById, IClass } from '../../../shared/services/classManagementService.ts';
 import AssignmentTab from "./tab/Assignment/AssignmentTab.tsx";
 
-const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
-    return (
-        <nav aria-label="breadcrumb">
-            <ol className="breadcrumb">
-                {items.map((item, index) => (
-                    <li key={index} className="breadcrumb__item">
-                        {item.path ? (
-                            <Link to={item.path} className="breadcrumb__item--link">
-                                {item.label}
-                            </Link>
-                        ) : (
-                            <span style={{ color: '#94a3b8' }}>{item.label}</span>
-                        )}
-                    </li>
-                ))}
-            </ol>
-        </nav>
-    );
-};
-
-// Mock data cho deadline assignments
+// Mock data cho deadline assignments (Giữ nguyên)
 interface IDeadlineAssignment {
     id: number;
     title: string;
@@ -46,10 +26,34 @@ const StudentClassDetailPage: React.FC = () => {
     const { t } = useTranslation();
     const { classId } = useParams<{ classId: string }>();
 
+    // *** THAY ĐỔI: Lấy searchParams và setSearchParams ***
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // *** THAY ĐỔI: Đọc activeTab từ URL, mặc định là 'stream' ***
+    const defaultTab = searchParams.get('tab') || 'stream';
+    const [copied, setCopied] = useState(false);
     const [classData, setClassData] = useState<IClass | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<string>('stream');
+    const [activeTab, setActiveTab] = useState<string>(defaultTab); // Khởi tạo bằng giá trị từ URL
+
+    // *** THÊM useEffect để đồng bộ activeTab với URL ***
+    useEffect(() => {
+        // Cập nhật activeTab khi param 'tab' trong URL thay đổi
+        const urlTab = searchParams.get('tab');
+        if (urlTab && urlTab !== activeTab) {
+            setActiveTab(urlTab);
+        } else if (!urlTab && activeTab !== 'stream') {
+            // Nếu không có param, đặt lại về stream và cập nhật URL
+            setActiveTab('stream');
+            setSearchParams({ tab: 'stream' }, { replace: true });
+        } else if (urlTab === null) {
+            // Đảm bảo URL luôn có param 'tab' khi component load xong
+            setSearchParams({ tab: activeTab }, { replace: true });
+        }
+    }, [searchParams]); // Phụ thuộc vào thay đổi URL
+    // *******************************************************
+
 
     useEffect(() => {
         const fetchClassDetails = async () => {
@@ -75,7 +79,7 @@ const StudentClassDetailPage: React.FC = () => {
         fetchClassDetails();
     }, [classId, t]);
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: string) => { /* ... (Giữ nguyên) ... */
         switch (status) {
             case 'overdue': return { bg: '#7f1d1d', border: '#991b1b', text: '#fca5a5' };
             case 'urgent': return { bg: '#78350f', border: '#92400e', text: '#fcd34d' };
@@ -84,7 +88,7 @@ const StudentClassDetailPage: React.FC = () => {
         }
     };
 
-    const getStatusIcon = (status: string) => {
+    const getStatusIcon = (status: string) => { /* ... (Giữ nguyên) ... */
         const iconStyle = { width: '18px', height: '18px' };
         switch (status) {
             case 'overdue':
@@ -119,7 +123,7 @@ const StudentClassDetailPage: React.FC = () => {
         }
     };
 
-    const formatDate = (dateString: string, timeString: string) => {
+    const formatDate = (dateString: string, timeString: string) => { /* ... (Giữ nguyên) ... */
         const date = new Date(dateString);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -134,7 +138,14 @@ const StudentClassDetailPage: React.FC = () => {
         return `${diffDays} ngày nữa - ${timeString}`;
     };
 
-    const renderStreamTab = () => {
+    const handleTabChange = (tab: string) => {
+        // Cập nhật URL bằng search params
+        setSearchParams({ tab: tab });
+        // State activeTab sẽ được cập nhật thông qua useEffect lắng nghe searchParams
+    };
+
+
+    const renderStreamTab = () => { /* ... (Giữ nguyên) ... */
         const urgentCount = mockDeadlines.filter(d => d.status === 'urgent').length;
         const overdueCount = mockDeadlines.filter(d => d.status === 'overdue').length;
 
@@ -285,11 +296,43 @@ const StudentClassDetailPage: React.FC = () => {
                                 backgroundColor: '#1e1e1e',
                                 borderRadius: '8px',
                                 border: '2px dashed #475569',
-                                textAlign: 'center'
+                                textAlign: 'center',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '0.5rem'
                             }}>
-                                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#60a5fa', margin: 0, letterSpacing: '0.1em' }}>
+                                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#60a5fa', margin: 0, letterSpacing: '0.1em', flex: 1 }}>
                                     {classData?.inviteCode || 'N/A'}
                                 </p>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(classData?.inviteCode || '');
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 2000);
+                                    }}
+                                    style={{
+                                        padding: '0.5rem',
+                                        backgroundColor: copied ? '#166534' : '#334155',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    title={copied ? "Đã sao chép!" : "Sao chép mã lớp"}
+                                >
+                                    {copied ? (
+                                        <svg style={{ width: '18px', height: '18px', color: '#86efac' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    )}
+                                </button>
                             </div>
                         </div>
 
@@ -300,12 +343,12 @@ const StudentClassDetailPage: React.FC = () => {
                             </h5>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                 {/*{classData?.section && (*/}
-                                {/*    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>*/}
-                                {/*        <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">*/}
-                                {/*            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />*/}
-                                {/*        </svg>*/}
-                                {/*        <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Phòng: {classData.section}</span>*/}
-                                {/*    </div>*/}
+                                {/* <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>*/}
+                                {/* <svg style={{ width: '18px', height: '18px', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">*/}
+                                {/* <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />*/}
+                                {/* </svg>*/}
+                                {/* <span style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Phòng: {classData.section}</span>*/}
+                                {/* </div>*/}
                                 {/*)}*/}
                                 {classData?.className && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -373,13 +416,15 @@ const StudentClassDetailPage: React.FC = () => {
         );
     };
 
-    const renderContent = () => {
+    const renderContent = () => { /* ... (Giữ nguyên) ... */
         switch (activeTab) {
             case 'stream':
                 return renderStreamTab();
             case 'classwork':
+                // @ts-ignore
                 return <AssignmentTab classId={classData.id} />;
             case 'people':
+                // @ts-ignore
                 return <ClassPeopleTab classId={classData.id} />;
             default:
                 return null;
@@ -387,10 +432,10 @@ const StudentClassDetailPage: React.FC = () => {
     };
 
     // Hiển thị loading, lỗi, hoặc nội dung
-    if (loading) {
+    if (loading) { /* ... (Giữ nguyên) ... */
         return <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center', backgroundColor: '#1e1e1e', minHeight: '100vh' }}><Spinner animation="border" style={{ color: '#60a5fa' }} /></div>;
     }
-    if (error) {
+    if (error) { /* ... (Giữ nguyên) ... */
         return <div style={{
             padding: '1.5rem',
             color: '#fca5a5',
@@ -400,7 +445,7 @@ const StudentClassDetailPage: React.FC = () => {
             margin: '1rem'
         }}>{error}</div>;
     }
-    if (!classData) {
+    if (!classData) { /* ... (Giữ nguyên) ... */
         return <div style={{
             padding: '1.5rem',
             color: '#fcd34d',
@@ -445,7 +490,7 @@ const StudentClassDetailPage: React.FC = () => {
                                 fontWeight: activeTab === tab ? '600' : '500',
                                 transition: 'all 0.2s'
                             }}
-                            onClick={() => setActiveTab(tab)}
+                            onClick={() => handleTabChange(tab)} // *** THAY ĐỔI: Dùng hàm handleTabChange ***
                             onMouseEnter={(e) => {
                                 if (activeTab !== tab) {
                                     e.currentTarget.style.backgroundColor = '#334155';

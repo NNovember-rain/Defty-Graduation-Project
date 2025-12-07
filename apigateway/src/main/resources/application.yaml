@@ -22,6 +22,8 @@ springdoc:
         url: /api/v1/content/v3/api-docs
       - name: Class Management Service
         url: /api/v1/class-management-service/v3/api-docs
+      - name: Question Bank Service
+        url: /api/v1/question-bank-service/v3/api-docs
       - name: Submission Service
         url: /api/v1/v3/api-docs
 
@@ -55,6 +57,13 @@ spring:
           uri: http://localhost:8084
           predicates:
             - Path=${app.api-prefix}/class-management-service/**
+          filters:
+            - StripPrefix=2
+
+        - id: question-bank-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=${app.api-prefix}/question-bank-service/**
           filters:
             - StripPrefix=2
 

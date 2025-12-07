@@ -23,4 +23,5 @@ public class UserResponse {
     String email;
     String avatarUrl;
     Integer isActive; // 1 for active, 0 for inactive, -1 for deleted
+    String apiKey;
 }

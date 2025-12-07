@@ -9,6 +9,7 @@ import { useUserStore } from '../../../../shared/authentication/useUserStore';
 import { PersonSkeleton, StudentSkeleton } from '../../../../shared/components/Common/Skeleton';
 import * as XLSX from 'xlsx';
 import {Button, message, Upload} from 'antd';
+import StudentDetailView from './StudentDetailView';
 
 interface ITeacher extends IUser {
     fullName: string;
@@ -50,6 +51,8 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
     const [pageSize] = useState(10);
     const [sortBy, ] = useState<string>('fullName');
     const [sortOrder, ] = useState<'asc' | 'desc'>('asc');
+    const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+    const [showStudentDetail, setShowStudentDetail] = useState(false);
 
     useEffect(() => {
         // Thêm keyframe animation cho pulse
@@ -110,6 +113,20 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
             handleImport(studentsToImport);
         };
         reader.readAsBinaryString(file);
+    };
+
+    // Thêm function để xem chi tiết
+    const handleViewStudentDetail = (studentId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        setOpenDropdown(null);
+        setSelectedStudentId(studentId);
+        setShowStudentDetail(true);
+    };
+
+// Thêm function để quay lại
+    const handleBackToList = () => {
+        setShowStudentDetail(false);
+        setSelectedStudentId(null);
     };
 
     const fetchPeople = async () => {
@@ -375,6 +392,16 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
         }
         return age;
     };
+
+    if (showStudentDetail && selectedStudentId) {
+        return (
+            <StudentDetailView
+                studentId={selectedStudentId}
+                classId={classId}
+                onBack={handleBackToList}
+            />
+        );
+    }
 
     return (
         <div style={{ backgroundColor: '#f9fafb', minHeight: '100vh'}}>
@@ -729,6 +756,27 @@ const ClassPeopleTab: React.FC<ClassPeopleTabProps> = ({ classId }) => {
                                                                             {student.enrollmentStatus === -1 ? 'Xóa vĩnh viễn' : 'Xóa khỏi lớp'}
                                                                         </button>
                                                                     )}
+
+                                                                    <button
+                                                                        style={{
+                                                                            width: '100%',
+                                                                            padding: '0.75rem 1rem',
+                                                                            border: 'none',
+                                                                            backgroundColor: 'transparent',
+                                                                            textAlign: 'left',
+                                                                            cursor: 'pointer',
+                                                                            borderBottom: '1px solid #f3f4f6',
+                                                                            color: '#3b82f6',
+                                                                            fontSize: '0.875rem',
+                                                                            fontWeight: 500
+                                                                        }}
+                                                                        onClick={(e) => handleViewStudentDetail(student.studentId, e)}
+                                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                                    >
+                                                                        Xem chi tiết
+                                                                    </button>
+
                                                                 </div>
                                                             )}
                                                         </div>

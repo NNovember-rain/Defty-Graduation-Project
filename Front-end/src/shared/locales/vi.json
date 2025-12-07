@@ -299,7 +299,17 @@
     "assignmentLoading": "Đang tải bài tập...",
     "solutionCodeRequired": "Mã giải pháp là bắt buộc",
     "moduleNameRequired": "Tên module là bắt buộc",
-    "listAssignment": "Danh sách bài tập"
+    "listAssignment": "Danh sách bài tập",
+    "validation": {
+      "titleRequired": "Tiêu đề là bắt buộc.",
+      "descriptionRequired": "Mô tả là bắt buộc.",
+      "solutionCodeRequired": "Mã giải pháp là bắt buộc.",
+      "typeUmlRequired": "Loại UML là bắt buộc.",
+      "moduleNameRequired": "Tên module là bắt buộc.",
+      "moduleDescriptionRequired": "Mô tả module là bắt buộc.",
+      "selectModule": "Vui lòng chọn ít nhất một module.",
+      "selectTypeUml": "Vui lòng chọn loại UML."
+    }
   },
 
   "userPage": {
@@ -519,6 +529,7 @@
       "assign": "Giao",
       "assignAssignment": "Giao bài luyện tập",
       "modulesAssigned": "Module đã được giao",
+      "assignQuiz": "Giao bài trắc nghiệm",
       "assignTest": "Giao bài kiểm tra",
       "noDeadline": "Không có hạn chót"
     },

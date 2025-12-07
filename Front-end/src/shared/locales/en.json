@@ -304,7 +304,18 @@
     "solutionCodeRequired": "Solution code is required",
     "moduleNameRequired": "Module name is required",
     "listAssignment": "Assignment List",
-    "mode": "Mode"
+    "mode": "Mode",
+    "validation": {
+        "titleRequired": "Title is required.",
+        "descriptionRequired": "Description is required.",
+        "typeUmlRequired": "UML Type is required.",
+        "atLeastOneModule": "At least one module is required.",
+        "moduleNameRequired": "Module name is required.",
+        "moduleDescriptionRequired": "Module description is required.",
+        "solutionCodeRequired": "Solution code is required.",
+        "selectModule": "Please select a module.",
+        "selectTypeUml": "Please select a UML type."
+    }
   },
 
   "userPage": {
@@ -461,8 +472,8 @@
       "classworkContent": "This is the Classwork page.",
       "peopleContent": "This is the People page.",
       "marksContent": "This is the Marks page.",
-      "assignment": "Luyện tập",
-      "test": "Bài kiểm tra"
+      "assignment": "Assignment",
+      "test": "Test"
     },
     "filter": {
       "assignmentTitle": "Assignment",
@@ -523,6 +534,7 @@
       "createNew": "Create new assignment",
       "assigned": "Assign",
       "assignAssignment": "Assign Assignment",
+      "assignQuiz": "Assign Quiz",
       "modulesAssigned": "Modules Assigned",
       "assignTest": "Assign Test",
       "noDeadline": "No deadline"

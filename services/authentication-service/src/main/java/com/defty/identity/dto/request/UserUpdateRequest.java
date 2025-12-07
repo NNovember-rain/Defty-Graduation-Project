@@ -20,5 +20,6 @@ public class UserUpdateRequest {
     List<Role> roles;
     Integer isActive; // 1 for active, 0 for inactive
     String userCode;
+    String apiKey;
 }
 
