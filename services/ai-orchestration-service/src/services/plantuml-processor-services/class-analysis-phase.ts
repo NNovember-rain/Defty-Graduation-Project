@@ -280,16 +280,16 @@ interface LifecycleViolation {
 
 interface GraphPattern {
     type: 'CLASS_DECOMPOSITION'
-        | 'CLASS_CONSOLIDATION'
-        | 'MISSING_CENTRAL_CLASS'
-        | 'MISSING_ABSTRACT_PARENT'
-        | 'COMPOSITION_LIFECYCLE_VIOLATION'
-        | 'ATTRIBUTE_MIGRATION_WITH_RELATIONSHIP'
-        | 'GENERALIZATION_PRESERVED'
-        | 'OVER_NORMALIZATION'
-        | 'UNDER_NORMALIZATION'
-        | 'STRUCTURAL_ISOMORPHISM'
-        | 'ISOLATED_CLASS';
+    | 'CLASS_CONSOLIDATION'
+    | 'MISSING_CENTRAL_CLASS'
+    | 'MISSING_ABSTRACT_PARENT'
+    | 'COMPOSITION_LIFECYCLE_VIOLATION'
+    | 'ATTRIBUTE_MIGRATION_WITH_RELATIONSHIP'
+    | 'GENERALIZATION_PRESERVED'
+    | 'OVER_NORMALIZATION'
+    | 'UNDER_NORMALIZATION'
+    | 'STRUCTURAL_ISOMORPHISM'
+    | 'ISOLATED_CLASS';
     severity: 'POSITIVE' | 'NEUTRAL' | 'MINOR' | 'MAJOR' | 'CRITICAL';
     confidence: number;
     elements: {
@@ -321,7 +321,7 @@ interface GraphEquivalence {
 
 interface GraphRecommendation {
     code: 'IGNORE_EXTRA_CLASSES' | 'IGNORE_MISSING_CLASS' | 'REDUCE_PENALTY'
-        | 'INCREASE_PENALTY' | 'ADD_BONUS' | 'REQUIRE_HUMAN_REVIEW' | 'IGNORE_ATTRIBUTE_DIFF';
+    | 'INCREASE_PENALTY' | 'ADD_BONUS' | 'REQUIRE_HUMAN_REVIEW' | 'IGNORE_ATTRIBUTE_DIFF';
     reason: string;
     affectedElements: string[];
     penaltyAdjustment: number;
@@ -896,8 +896,9 @@ const step1_validateAndPreprocess = async (input: UmlInput): Promise<DomainConte
         if (!code.includes('@startuml') || !code.includes('@enduml')) {
             throw new UmlProcessingError(`${label}: Thiếu PlantUML tags (@startuml/@enduml)`);
         }
-        if (!code.includes('class ')) {
-            throw new UmlProcessingError(`${label}: Không tìm thấy class definitions`);
+        // Accept both 'class' and 'entity' keywords
+        if (!code.includes('class ') && !code.includes('entity ')) {
+            throw new UmlProcessingError(`${label}: Không tìm thấy class definitions (class hoặc entity)`);
         }
     };
 

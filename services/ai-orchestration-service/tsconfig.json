@@ -1,19 +1,19 @@
 // tsconfig.json
 {
   "compilerOptions": {
-    "target": "es6",                          /* Phiên bản JavaScript mục tiêu. */
-    "module": "commonjs",                     /* Hệ thống module cho mã đã biên dịch. */
-    "outDir": "./dist",                       /* Thư mục đầu ra cho mã đã biên dịch. */
-    "rootDir": "./src",                       /* Thư mục gốc chứa các file TypeScript. */
-    "strict": true,                           /* Bật tất cả các tùy chọn kiểm tra kiểu nghiêm ngặt. */
-    "esModuleInterop": true,                  /* Cho phép tương tác giữa các module CommonJS và ES. */
-    "skipLibCheck": true,                     /* Bỏ qua kiểm tra kiểu của tất cả các file khai báo .d.ts. */
-    "forceConsistentCasingInFileNames": true  /* Đảm bảo tên file nhất quán. */
+    "target": "es6", /* Phiên bản JavaScript mục tiêu. */
+    "module": "commonjs", /* Hệ thống module cho mã đã biên dịch. */
+    "outDir": "./dist", /* Thư mục đầu ra cho mã đã biên dịch. */
+    "rootDir": "./src", /* Thư mục gốc chứa các file TypeScript. */
+    "strict": true, /* Bật tất cả các tùy chọn kiểm tra kiểu nghiêm ngặt. */
+    "esModuleInterop": true, /* Cho phép tương tác giữa các module CommonJS và ES. */
+    "skipLibCheck": true, /* Bỏ qua kiểm tra kiểu của tất cả các file khai báo .d.ts. */
+    "forceConsistentCasingInFileNames": true /* Đảm bảo tên file nhất quán. */
   },
   "include": [
-    "src/**/*.ts"                             /* Bao gồm tất cả các file .ts trong thư mục src. */
+    "src/**/*.ts" /* Bao gồm tất cả các file .ts trong thư mục src. */
   ],
   "exclude": [
-    "node_modules"                            /* Loại trừ thư mục node_modules. */
+    "node_modules" /* Loại trừ thư mục node_modules. */
   ]
 }

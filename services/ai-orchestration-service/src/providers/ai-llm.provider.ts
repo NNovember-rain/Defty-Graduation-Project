@@ -242,7 +242,8 @@ const saveResponseToFile = (text: string, umlId: number, step: string): void => 
         }
 
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `response-${step}-${umlId}-${timestamp}.log`;
+        const fileExtension = step.includes('step7') ? '.md' : '.log';
+        const filename = `${umlId}-response-${step}-${timestamp}${fileExtension}`;
         const filePath = path.join(logDir, filename);
 
         fsSync.writeFileSync(filePath, text, 'utf-8');
@@ -297,7 +298,7 @@ export const callAIApi = async (
             });
 
             // ✅ Save the prompt to file before calling API
-            savePromptToFile(promptContent, umlId, step);
+            // savePromptToFile(promptContent, umlId, step);
 
             const startTime = Date.now();
 
@@ -324,7 +325,10 @@ export const callAIApi = async (
             });
 
             // Save response
-            saveResponseToFile(text, umlId, step);
+            // saveResponseToFile(text, umlId, step);
+            if (step.includes('step7')) {
+                saveResponseToFile(text, umlId, step);
+            }
             return text;
 
         } catch (error: any) {
