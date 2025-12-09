@@ -27,6 +27,44 @@
     margin: 0;
   }
 
+  &__header-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .score-number {
+      font-size: 14px;
+      font-weight: 600;
+      color: #02b128;
+    }
+
+    .score-divider {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .score-total {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .status-spacer {
+      font-size: 12px;
+      color: #888;
+      margin: 0 4px;
+    }
+
+    .status-text {
+      font-size: 12px;
+      margin-left: 8px;
+      color: #e0e0e0;
+    }
+  }
+
+  &__submission-status {
+    padding: 8px 0;
+  }
+
   &__content {
     padding: 16px;
     overflow-y: auto;
@@ -133,25 +171,78 @@
     word-break: break-word;
   }
 
-  /* Scrollbar styling */
-  &__content::-webkit-scrollbar,
-  &__comments::-webkit-scrollbar {
+  &__student-comments {
+    background-color: #1e1e1e;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 8px;
+    max-height: 450px;
+    overflow-y: auto;
+  }
+
+  &__student-comment-item {
+    background-color: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__student-comment-text {
+    color: #e0e0e0;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__comment-input {
+    background-color: #2a2a2a !important;
+    border-color: #404040 !important;
+    color: #e0e0e0 !important;
+
+    &::placeholder {
+      color: #888 !important;
+    }
+
+    &:hover {
+      border-color: #555 !important;
+    }
+
+    &:focus {
+      border-color: #02b128 !important;
+      box-shadow: 0 0 0 2px rgba(2, 177, 40, 0.2) !important;
+    }
+  }
+
+  &__student-comments::-webkit-scrollbar {
     width: 6px;
   }
 
-  &__content::-webkit-scrollbar-track,
-  &__comments::-webkit-scrollbar-track {
+  &__student-comments::-webkit-scrollbar-track {
     background: #1e1e1e;
     border-radius: 3px;
   }
 
-  &__content::-webkit-scrollbar-thumb,
-  &__comments::-webkit-scrollbar-thumb {
+  &__student-comments::-webkit-scrollbar-thumb {
     background: #404040;
     border-radius: 3px;
 
     &:hover {
       background: #555;
     }
+  }
+
+  &__comment-input-container {
+    margin-top: 12px;
+    background-color: #1e1e1e;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    padding: 12px;
   }
 }

@@ -7,6 +7,7 @@ import com.submission_service.model.dto.response.FeedbackLLMResponse;
 import com.submission_service.model.dto.response.SubmissionFeedbackResponse;
 import com.submission_service.service.IFeedBackLLMService;
 import com.submission_service.service.IFeedBackSubmissionService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +43,7 @@ public class SubmissionFeedBackController {
     }
 
     @PostMapping("/teacher")
-    public ApiResponse<Long> addFeedbackSubmission(@RequestBody FeedbackSubmissionRequest feedbackSubmissionRequest) {
+    public ApiResponse<Long> addFeedbackSubmission(@RequestBody @Valid FeedbackSubmissionRequest feedbackSubmissionRequest) {
         Long id= feedBackSubmissionService.addFeedbackSubmission(feedbackSubmissionRequest);
         return ApiResponse.<Long>builder()
                 .result(id)

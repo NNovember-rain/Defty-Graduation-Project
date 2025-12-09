@@ -1,5 +1,6 @@
 package com.submission_service.model.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,8 +10,6 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeedbackSubmissionRequest {
-    private Long userId;
     private Long submissionId;
-    private Double grade;
     private String content;
 }

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Spin } from 'antd';
+import { Typography, Spin, Button, Input, message } from 'antd';
 import { 
   type FeedbackTeacherResponse,
   getLastSubmissionExamMode,
-  type LastSubmissionResponse
+  type LastSubmissionResponse,
+  type FeedbackTeacherRequest,
+  addFeedbackTeacher,
+  getFeedbackTeacher
 } from '../../../shared/services/submissionService';
 import './FeedbackPanel.scss';
 
@@ -28,6 +31,11 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
   const [lastSubmission, setLastSubmission] = useState<LastSubmissionResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+
+  // Student comment states
+  const [studentComments, setStudentComments] = useState<FeedbackTeacherResponse[]>([]);
+  const [commentContent, setCommentContent] = useState<string>('');
+  const [savingComment, setSavingComment] = useState<boolean>(false);
 
   const currentScore = lastSubmission?.score !== undefined && lastSubmission?.score !== null 
     ? lastSubmission.score 
@@ -68,14 +76,66 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
     }
   }, [classId, assignmentId, submissionData]);
 
+  const loadStudentComments = useCallback(async () => {
+    if (!lastSubmission?.id) return;
+    try {
+      const response = await getFeedbackTeacher(lastSubmission.id);
+      setStudentComments(response);
+    } catch (error) {
+      console.error('Failed to load student comments:', error);
+    }
+  }, [lastSubmission?.id]);
+
+  const saveStudentComment = useCallback(async () => {
+    if (!lastSubmission?.id || !commentContent.trim()) return;
+    
+    setSavingComment(true);
+    try {
+      const request: FeedbackTeacherRequest = {
+        content: commentContent,
+        submissionId: lastSubmission.id
+      };
+      await addFeedbackTeacher(request);
+      message.success('Comment saved successfully');
+      setCommentContent('');
+      await loadStudentComments();
+    } catch (error) {
+      console.error('Failed to save comment:', error);
+      message.error('Failed to save comment');
+    } finally {
+      setSavingComment(false);
+    }
+  }, [lastSubmission?.id, commentContent, loadStudentComments]);
+
   useEffect(() => {
     loadFeedbackData();
   }, [loadFeedbackData, refreshTrigger]);
 
+  useEffect(() => {
+    if (lastSubmission?.id) {
+      loadStudentComments();
+    }
+  }, [lastSubmission?.id, loadStudentComments]);
+
   return (
     <div className="feedback-panel">
       <div className="feedback-panel__header">
-        <h3 className="feedback-panel__title">Đánh giá</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 className="feedback-panel__title">Trạng thái:</h3>
+          <div className="feedback-panel__header-content">
+            {currentScore !== undefined ? (
+              <>
+                <span className="score-number">{currentScore}</span>
+                <span className="score-divider">/</span>
+                <span className="score-total">10</span>
+                <span className="status-spacer">•</span>
+              </>
+            ) : null}
+            <span className="status-text">
+              {lastSubmission ? '✅ Đã nộp' : '⏳ Chưa nộp'}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="feedback-panel__content">
@@ -92,69 +152,95 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
           </div>
         ) : (
           <>
-            {/* Submission Status */}
-            <div className="feedback-panel__section">
-              <div className="feedback-panel__section-title">
-                Trạng thái nộp bài
-              </div>
-              <div className="feedback-panel__status">
-                {lastSubmission ? (
-                  <>
-                    <Text style={{ color: '#52c41a', fontSize: '14px' }}>
-                      ✅ Đã nộp bài
-                    </Text>
-                    <Text style={{ 
-                      display: 'block', 
-                      fontSize: '12px', 
-                      color: '#888', 
-                      marginTop: 4 
-                    }}>
-                      {new Date(lastSubmission.createdDate).toLocaleString('vi-VN')}
-                    </Text>
-                  </>
-                ) : (
-                  <Text style={{ color: '#faad14', fontSize: '14px' }}>
-                    ⏳ Chưa nộp bài
-                  </Text>
-                )}
-              </div>
-            </div>
-
             {/* Score Section */}
             <div className="feedback-panel__section">
               <div className="feedback-panel__section-title">
-                Điểm số
+                Điểm số:
               </div>
-              <div className="feedback-panel__score-display">
-                <div className="feedback-panel__score-value">
-                  {currentScore !== undefined ? (
-                    <>
-                      <span className="score-number">{currentScore}</span>
-                      <span className="score-divider">/</span>
-                      <span className="score-total">10</span>
-                    </>
-                  ) : (
-                    <span className="score-empty">--</span>
-                  )}
+              <div className="feedback-panel__status">
+                <div className="feedback-panel__score-display">
+                  <div className="feedback-panel__score-value">
+                    {currentScore !== undefined ? (
+                      <>
+                        <span className="score-number">{currentScore}</span>
+                        <span className="score-divider">/</span>
+                        <span className="score-total">10</span>
+                      </>
+                    ) : (
+                      <span className="score-empty">--</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Comments Section */}
-            <div className="feedback-panel__section feedback-panel__section--comments">
+            {/* Student Comments Section */}
+            <div className="feedback-panel__section feedback-panel__section--student-comments">
               <div className="feedback-panel__section-title">
-                Nhận xét của giáo viên
+                Nhận xét của bạn
               </div>
-              <div className={`feedback-panel__comments ${feedback.length === 0 ? 'feedback-panel__comments--empty' : ''}`}>
-                {feedback.length > 0 ? (
-                  <Text className="feedback-panel__comment-text">
-                    {feedback[0].content}
-                  </Text>
-                ) : (
-                  <Text style={{ color: '#888', fontStyle: 'italic' }}>
-                    Chưa có nhận xét
-                  </Text>
+              <div className="feedback-panel__student-comments">
+                {/* Display existing student comments */}
+                {studentComments.length > 0 && (
+                  <div className="feedback-panel__existing-comments">
+                    {studentComments.map((comment, index) => (
+                      <div key={comment.id || index} className="feedback-panel__student-comment-item">
+                        <Text className="feedback-panel__student-comment-text">
+                          {comment.content}
+                        </Text>
+                        <Text style={{ 
+                          display: 'block', 
+                          fontSize: '11px', 
+                          color: '#888', 
+                          marginTop: 4 
+                        }}>
+                          {comment.createdDate ? new Date(comment.createdDate).toLocaleString('vi-VN') : ''}
+                        </Text>
+                      </div>
+                    ))}
+                  </div>
                 )}
+              </div>
+
+              {/* Input for new comment - outside the comments container */}
+              <div className="feedback-panel__comment-input-container">
+                <Input.TextArea
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  placeholder="Nhập nhận xét của bạn về bài làm này..."
+                  rows={2}
+                  maxLength={500}
+                  className="feedback-panel__comment-input"
+                  style={{
+                    resize: 'none',
+                    borderRadius: '8px',
+                    border: '1px solid #d9d9d9'
+                  }}
+                />
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginTop: '8px' 
+                }}>
+                  <Text style={{ fontSize: '12px', color: '#888' }}>
+                    {commentContent.length}/500 ký tự
+                  </Text>
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={saveStudentComment}
+                    loading={savingComment}
+                    disabled={!commentContent.trim() || savingComment}
+                    style={{
+                      backgroundColor: '#02b128',
+                      borderColor: '#02b128',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    {savingComment ? 'Đang lưu...' : 'Gửi nhận xét'}
+                  </Button>
+                </div>
               </div>
             </div>
           </>
