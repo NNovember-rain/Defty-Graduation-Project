@@ -64,28 +64,6 @@ services:
     networks:
       - app-network
 
-  bge-m3:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.2
-    container_name: bge-m3
-    ports:
-      - "8001:80"
-    volumes:
-      - bge_data:/data
-    restart: unless-stopped
-    command:
-      - --model-id
-      - BAAI/bge-m3
-      - --port
-      - "80"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:80/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
-    networks:
-      - app-network
-
 volumes:
   redis_cache:
   bge_data:

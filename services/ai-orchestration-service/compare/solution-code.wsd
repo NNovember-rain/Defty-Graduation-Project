@@ -1,0 +1,97 @@
+@startuml x
+
+class User {
+    - username
+    - password
+    - fullName
+    - position
+}
+
+class Bill {
+    - paymentDate
+    - paymentType
+    - note : String
+    - paymentAmount : float
+}
+
+class BillClient {
+    - contract
+    - remainingPrincipalAfterPayment
+    - lateFeePaid
+}
+
+class BillPartner {
+    - contractDetail
+}
+
+class Contract {
+    - item
+    - client
+    - note
+    - signDate
+    - totalPrice
+    - partner
+    - loanDuration
+    - interestRate
+    - totalLoanAmount
+    - totalAmountDue
+}
+
+class ContractDetails {
+    - partnerItemPrice
+    - item
+    - contract
+}
+
+class Item {
+    - description
+    - itemname
+    - price
+    - stock
+    - unit
+    - createdDate
+}
+
+class PartnerItemPrice {
+    ' Attributes are not shown in the diagram'
+    + List price
+}
+
+class Client {
+    - fullName
+    - birthday
+    - address
+    - note
+    - idCardNumber
+    - idCard type
+    - phoneNumber
+}
+
+class Partner {
+    - fullName
+    - address
+    - createdDate
+    - phoneNumber
+    - taxCode
+}
+
+' Relationships'
+
+User --> Bill
+
+Bill <--o BillClient
+Bill <--o BillPartner
+
+BillClient -- Contract
+BillPartner -- ContractDetails
+
+Contract o-- Client
+Contract o-- Partner
+Contract o-- Item
+Contract o-- ContractDetails
+
+ContractDetails ..> PartnerItemPrice : <<use>>
+
+Item --o PartnerItemPrice
+
+@enduml

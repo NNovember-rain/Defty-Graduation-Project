@@ -38,7 +38,7 @@ umlProcessingQueue.process(
             //     data
             // });
 
-            await sendFeedBack(job.data.id, data, 'gemini');
+            // await sendFeedBack(job.data.id, data, 'gemini');
 
             logger.info({
                 message: 'Worker completed UML job',
