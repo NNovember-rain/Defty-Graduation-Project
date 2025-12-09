@@ -1,0 +1,78 @@
+@startuml StudentFieldRentalSystem
+class MiniField{
+    + name: String
+    + location: String
+}
+class RentalField{
+   + type: String
+   + pricePerSession: float
+   + combineFrom: List<MiniField>
+}
+class PaymentInvoice {
+  + paymentDate: Date
+  + rentalTotal: float
+  + serviceTotal: float
+  + grandTotal: float
+  + extraSessions: List<RentalDetail>
+}
+
+class RentalFieldDetail {
+  + rentalField: RentalField
+  + timeSlot: String
+  + scheduleType: String
+  + fixedDaysOfWeek: List<String>
+  + startDate: Date
+  + sendDate: Date
+}
+
+class ExtraService {
+  + name: String
+  + price: float
+  + description: String
+}
+
+class ServiceUsageDetail {
+  + item: ExtraServiceItem
+  + quantity: int
+  + unitPrice: float
+  + totalAmount: float
+}
+
+class ExtraServiceUsage {
+  + receipt: BookingReceipt
+  + usageDate: Date
+  + itemsUsed: List<ServiceUsageDetail>
+}
+class BookingReceipt{
+   + createdDate: Date
+   + totalEstimated: float
+   + depositAmount: float
+   + amountPaid: float
+}
+
+class ItemImportReceipt {
+  + importDate: Date
+  + totalAmount: float
+  + items: List<ImportReceiptDetail>
+}
+
+
+class ImportReceiptDetail {
+
+  + unitPrice: float
+  + quantity: int
+  + totalAmount: float
+}
+
+' Relationships
+PaymentInvoice "1" *-- "many" RentalFieldDetail : contains
+PaymentInvoice "1" --> "1" BookingReceipt : references
+ExtraServiceUsage "1" *-- "many" ServiceUsageDetail : contains
+ExtraServiceUsage "1" --> "1" BookingReceipt : references
+ServiceUsageDetail "1" --> "1" ExtraService : references
+ItemImportReceipt "1" *-- "many" ImportReceiptDetail : contains
+ImportReceiptDetail "1" --> "1" ExtraService : references
+RentalField "1" *-- "many" RentalFieldDetail : contains
+RentalField "many" *-- "many" MiniField : combines
+PaymentInvoice "1" *-- "many" ExtraServiceUsage : includes
+@enduml

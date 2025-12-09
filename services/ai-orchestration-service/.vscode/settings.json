@@ -1,0 +1,13 @@
+{
+    "material-icon-theme.files.associations": {
+        // "*.service.ts": "nodejs"
+        // TOP icons đẹp cho service (uncomment để thử):
+        // "*.service.ts": "fastify" // API service - màu xanh đẹp ⚡
+        // "*.service.ts": "meteor" // Layer/stack icon professional 🌟
+        // "*.service.ts": "serverless" // Cloud service icon ☁️
+        // "*.service.ts": "nest" // NestJS icon (nếu dùng Nest) 🦅
+        // "*.service.ts": "prisma" // Database service 💎
+        // "*.service.ts": "graphql" // GraphQL service 📊
+        // "*.service.ts": "docker" // Containerized service 🐳
+    }
+}
