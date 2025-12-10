@@ -167,9 +167,9 @@ public class AssignmentController {
     }
 
     @GetMapping("/list-module")
-    public ApiResponse<Map<Long, List<ModuleResponse>>> getModuleMap(@RequestParam List<Long> moduleIds) {
-        Map<Long, List<ModuleResponse>> result = assignmentService.getModulesByIds(moduleIds);
-        return ApiResponse.<Map<Long, List<ModuleResponse>>>builder()
+    public ApiResponse<Map<Long, ModuleResponse>> getModuleMap(@RequestParam List<Long> moduleIds) {
+        Map<Long, ModuleResponse> result = assignmentService.getModulesByIds(moduleIds);
+        return ApiResponse.<Map<Long, ModuleResponse>>builder()
                 .result(result)
                 .message("Fetched modules successfully")
                 .build();

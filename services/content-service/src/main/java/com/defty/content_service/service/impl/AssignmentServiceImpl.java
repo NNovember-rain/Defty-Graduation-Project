@@ -465,19 +465,20 @@ class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public Map<Long, List<ModuleResponse>> getModulesByIds(List<Long> moduleIds) {
+    public Map<Long, ModuleResponse> getModulesByIds(List<Long> moduleIds) {
         List<ModuleEntity> moduleEntities = moduleRepository.findAllById(moduleIds);
         return moduleEntities.stream()
                 .collect(Collectors.toMap(
                         ModuleEntity::getId,
-                        m -> Collections.singletonList(ModuleResponse.builder()
+                        m -> ModuleResponse.builder()
                                 .id(m.getId())
                                 .moduleName(m.getModuleName())
                                 .moduleDescription(m.getModuleDescription())
                                 .moduleDescriptionHtml(m.getModuleDescriptionHtml())
-                                .build())
+                                .build()
                 ));
     }
+
 
     @Override
     public AssignmentResponse createAssignment(AssignmentRequest request) {
