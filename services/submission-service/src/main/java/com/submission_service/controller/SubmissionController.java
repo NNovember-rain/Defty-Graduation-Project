@@ -54,6 +54,14 @@ public class SubmissionController {
                 .build();
     }
 
+    @GetMapping({"/detail/{id}"})
+    ApiResponse<SubmissionDetailResponse> getSubmissionStudentFeedback(@PathVariable Long id) { //ok
+        SubmissionDetailResponse submissionResponses =submissionService.getSubmissionStudentFeedback(id);
+        return ApiResponse.<SubmissionDetailResponse>builder()
+                .result(submissionResponses)
+                .build();
+    }
+
     @GetMapping
     public ApiResponse<Page<SubmissionResponse>> getSubmissions( //ok
             @RequestParam(required = false) Long studentId,

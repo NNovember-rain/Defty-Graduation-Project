@@ -3,6 +3,8 @@ package com.defty.content_service.service;
 import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
 import com.defty.content_service.dto.response.*;
+import com.defty.content_service.entity.ModuleSolution;
+import com.defty.content_service.enums.TypeUml;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -27,4 +29,5 @@ public interface AssignmentService {
     AssignmentResponseByClass getAssignmentAllModule(Long assignmentClassId);
     AssignmentClassDetailResponse getAssignmentClassDetail(Long assignmentClassDetailId, String typeUml, Long moduleId);
     Map<Long, ModuleResponse> getModulesByIds(List<Long> moduleIds);
+    ModuleSolutionDetailResponse getModuleSolution(Long id, String typeUml, Long assigmentId);
 }

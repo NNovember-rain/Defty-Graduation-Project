@@ -38,7 +38,7 @@ const StudentAssignment = () => {
         totalAssigned: 0,
         totalSubmitted: 0,
         totalGraded: 0,
-        maxScore: 100
+        maxScore: 10
     })
     const { classId, assignmentId } = useParams<{ classId: string, assignmentId: string }>();
     const [searchParams] = useSearchParams();
@@ -112,7 +112,7 @@ const StudentAssignment = () => {
                     totalAssigned: mergedStudents.length,
                     totalSubmitted: totalSubmitted,
                     totalGraded: totalGraded,
-                    maxScore: 100
+                    maxScore: 10
                 })
 
             } catch (error) {

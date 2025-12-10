@@ -479,6 +479,38 @@ class AssignmentServiceImpl implements AssignmentService {
                 ));
     }
 
+    @Override
+    public ModuleSolutionDetailResponse getModuleSolution(Long id, String typeUml, Long assigmentId) {
+        ModuleEntity module = moduleRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Module not found with id: " + id));
+        TypeUml type = null;
+        try {
+            type = TypeUml.valueOf(typeUml);
+        } catch (Exception e) {
+            throw new NotFoundException("Invalid TypeUml: " + typeUml);
+        }
+        ModuleSolution moduleSolution = moduleSolutionRepository.findByModuleAndTypeUml(module,type);
+        if (moduleSolution == null) {
+            throw new NotFoundException("ModuleSolution not found for module id: " + id + " and typeUml: " + typeUml);
+        }
+
+        Assignment assignment = assignmentRepository.findById(assigmentId)
+                .orElseThrow(() -> new NotFoundException("Assignment not found with id: " + assigmentId));
+        return ModuleSolutionDetailResponse.builder()
+                .solutionId(moduleSolution.getId())
+                .solutionCode(moduleSolution.getSolutionCode())
+                .typeUml(moduleSolution.getTypeUml())
+                .moduleId(module.getId())
+                .moduleName(moduleSolution.getModule().getModuleName())
+                .moduleDescriptionHtml(moduleSolution.getModule().getModuleDescription())
+                .moduleDescription(moduleSolution.getModule().getModuleDescriptionHtml())
+                .assignmentId(assignment.getId())
+                .assignmentName(assignment.getTitle())
+                .commonDescription(assignment.getDescription())
+                .commonDescriptionHtml(assignment.getDescriptionHtml())
+                .build();
+    }
+
 
     @Override
     public AssignmentResponse createAssignment(AssignmentRequest request) {

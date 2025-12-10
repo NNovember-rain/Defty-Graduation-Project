@@ -15,6 +15,7 @@ import com.submission_service.mapper.SubmissionMapper;
 import com.submission_service.model.dto.request.SubmissionRequest;
 import com.submission_service.model.dto.response.*;
 import com.submission_service.model.entity.Submission;
+import com.submission_service.model.entity.SubmissionFeedback;
 import com.submission_service.model.event.SubmissionEvent;
 import com.submission_service.repository.ISubmissionRepository;
 import com.submission_service.repository.specification.SubmissionSpecification;
@@ -193,40 +194,41 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     public SubmissionDetailResponse getSubmission(Long id) {
-        Optional<Submission> submissionOptional = submissionRepository.findByIdAndStatus(id, 1);
-        if (!submissionOptional.isPresent()) {
-            throw new NotFoundException("Submission not found with ID: " + id);
-        }
-        Submission submission = submissionOptional.get();
-        AssignmentResponse assignmentResponse;
-        UserResponse userResponse;
-        ClassResponse classResponse;
-        try {
-            assignmentResponse = contentServiceClient.getAssignment(submission.getAssignmentId()).getResult();
-            log.info("Fetched assignment with ID: {}", submission.getAssignmentId());
-        }catch (FeignException e){
-            throw new FeignClientException("Failed to fetch assignment with ID: " + submission.getAssignmentId());
-        }
-        try {
-            userResponse = authServiceClient.getUser(submission.getStudentId()).getResult();
-            log.info("Fetched user with ID: {}", submission.getStudentId());
-        }catch (FeignClientException e){
-            throw new FeignClientException("Failed to fetch user with ID: " + submission.getStudentId());
-        }
-        try {
-            classResponse = classManagementServiceClient.getClassById(submission.getClassId()).getResult();
-            log.info("Fetched class with ID: {}", submission.getClassId());
-        }catch (FeignClientException e){
-            throw new FeignClientException("Failed to fetch class with ID: " + submission.getClassId());
-        }
+//        Optional<Submission> submissionOptional = submissionRepository.findByIdAndStatus(id, 1);
+//        if (!submissionOptional.isPresent()) {
+//            throw new NotFoundException("Submission not found with ID: " + id);
+//        }
+//        Submission submission = submissionOptional.get();
+//        AssignmentResponse assignmentResponse;
+//        UserResponse userResponse;
+//        ClassResponse classResponse;
+//        try {
+//            assignmentResponse = contentServiceClient.getAssignment(submission.getAssignmentId()).getResult();
+//            log.info("Fetched assignment with ID: {}", submission.getAssignmentId());
+//        }catch (FeignException e){
+//            throw new FeignClientException("Failed to fetch assignment with ID: " + submission.getAssignmentId());
+//        }
+//        try {
+//            userResponse = authServiceClient.getUser(submission.getStudentId()).getResult();
+//            log.info("Fetched user with ID: {}", submission.getStudentId());
+//        }catch (FeignClientException e){
+//            throw new FeignClientException("Failed to fetch user with ID: " + submission.getStudentId());
+//        }
+//        try {
+//            classResponse = classManagementServiceClient.getClassById(submission.getClassId()).getResult();
+//            log.info("Fetched class with ID: {}", submission.getClassId());
+//        }catch (FeignClientException e){
+//            throw new FeignClientException("Failed to fetch class with ID: " + submission.getClassId());
+//        }
 
         //TODO: call sang assignment service để lấy thông tin assignment class detail
-        SubmissionDetailResponse submissionResponse=submissionMapper.toSubmissionDetailResponse(submission, userResponse, assignmentResponse, classResponse);
+//        SubmissionDetailResponse submissionResponse=submissionMapper.toSubmissionDetailResponse(submission, userResponse, assignmentResponse, classResponse);
 //        submissionResponse.setModuleName(moduleResponse.getModuleName());
 //        submissionResponse.setSolutionCode(moduleResponse.getSolutionCode());
 //        submissionResponse.setTypeUml("use case");
 //        submissionResponse.setDescriptionModule(moduleResponse.getModuleDescription());
-        return submissionResponse;
+//        return submissionResponse;
+        return null;
     }
 
     @Override
@@ -410,5 +412,59 @@ public class SubmissionServiceImpl implements SubmissionService {
                 classResponse = classMap.get(submission.getClassId());
             return submissionMapper.toSubmissionResponse(submission, user, assignment, classResponse);
         });
+    }
+
+    @Override
+    public SubmissionDetailResponse getSubmissionStudentFeedback(Long id) {
+        Optional<Submission> submissionOptional = submissionRepository.findByIdAndStatus(id, 1);
+        if (!submissionOptional.isPresent()) {
+            throw new NotFoundException("Submission not found with ID: " + id);
+        }
+        Submission submission = submissionOptional.get();
+        UserResponse userResponse;
+        ClassResponse classResponse;
+        ModuleSolutionDetailResponse moduleSolutionDetailResponse;
+        try {
+            userResponse = authServiceClient.getUser(submission.getStudentId()).getResult();
+            log.info("Fetched user with ID: {}", submission.getStudentId());
+        } catch (FeignClientException e) {
+            throw new FeignClientException("Failed to fetch user with ID: " + submission.getStudentId());
+        }
+        try {
+            classResponse = classManagementServiceClient.getClassById(submission.getClassId()).getResult();
+            log.info("Fetched class with ID: {}", submission.getClassId());
+        } catch (FeignClientException e) {
+            throw new FeignClientException("Failed to fetch class with ID: " + submission.getClassId());
+        }
+
+        try {
+            moduleSolutionDetailResponse = contentServiceClient.getModuleSolution(submission.getModuleId(), submission.getTypeUml().name(), submission.getAssignmentId()).getResult();
+            log.info("Fetched class with ID: {}", submission.getClassId());
+        } catch (FeignClientException e) {
+            throw new FeignClientException("Failed to fetch class with ID: " + submission.getClassId());
+        }
+
+        List<SubmissionFeedback> feedbacks = submission.getSubmissionFeedbacks();
+        List<SubmissionFeedbackResponse> feedbackResponses = new ArrayList<>();
+        feedbacks.forEach(feedbackTeacher -> {
+            SubmissionFeedbackResponse submissionFeedbackResponse = SubmissionFeedbackResponse.builder()
+                    .teacherId(feedbackTeacher.getUserId())
+                    .content(feedbackTeacher.getContent())
+                    .fullName(userResponse.getFullName())
+                    .createdDate(feedbackTeacher.getCreatedDate())
+                    .build();
+            feedbackResponses.add(submissionFeedbackResponse);
+        });
+
+        SubmissionDetailResponse submissionResponse = submissionMapper.toSubmissionDetailResponse(submission, userResponse, classResponse);
+        submissionResponse.setModuleName(moduleSolutionDetailResponse.getModuleName());
+        submissionResponse.setSolutionCode(moduleSolutionDetailResponse.getSolutionCode());
+        submissionResponse.setTypeUml(submission.getTypeUml().name());
+        submissionResponse.setDescriptionModule(moduleSolutionDetailResponse.getModuleDescription());
+        submissionResponse.setDescriptionAssignment(moduleSolutionDetailResponse.getCommonDescriptionHtml());
+        submissionResponse.setAssignmentTitle(moduleSolutionDetailResponse.getAssignmentName());
+
+        submissionResponse.setSubmissionFeedbackResponse(feedbackResponses);
+        return submissionResponse;
     }
 }

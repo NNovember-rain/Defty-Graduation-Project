@@ -1,5 +1,7 @@
 package com.submission_service.service.impl;
 
+import com.example.common_library.exceptions.FeignClientException;
+import com.example.common_library.exceptions.FieldRequiredException;
 import com.example.common_library.utils.UserUtils;
 import com.submission_service.client.AuthServiceClient;
 import com.submission_service.client.ClassManagementServiceClient;
@@ -21,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -39,23 +43,14 @@ public class FeedBackSubmissionServiceImpl implements IFeedBackSubmissionService
     @Override
     @Transactional
     public Long addFeedbackSubmission(FeedbackSubmissionRequest feedbackSubmissionRequest) {
-
         UserUtils.UserInfo currentUser = UserUtils.getCurrentUser();
+        Long userId = currentUser.userId();
         Submission submission = submissionRepository.findById(feedbackSubmissionRequest.getSubmissionId())
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
-//        try{
-//            ClassResponse classResponse = classManagementServiceClient.getClassById(submission.getClassId()).getResult();
-//            if(classResponse.ge){
-//                throw new RuntimeException("You are not authorized to give feedback for this submission");
-//            }
-//        } catch (Exception e){
-//            throw new RuntimeException(e.getMessage());
-//        }
-
         SubmissionFeedback submissionFeedback = new SubmissionFeedback();
         BeanUtils.copyProperties(feedbackSubmissionRequest, submissionFeedback);
-        submissionFeedback.setUserId(currentUser.userId());
+        submissionFeedback.setUserId(userId);
         submissionFeedback.setSubmission(submission);
         submissionFeedback =feedbackSubmissionRepository.save(submissionFeedback);
         submissionFeedback.setSubmission(submission);
@@ -76,16 +71,27 @@ public class FeedBackSubmissionServiceImpl implements IFeedBackSubmissionService
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
-        UserResponse userResponse= authServiceClient.getUser(UserUtils.getCurrentUser().userId()).getResult();
 
         List<SubmissionFeedback> submissionFeedback =submission.getSubmissionFeedbacks();
+        List<Long> userIds = submissionFeedback.stream()
+                .map(SubmissionFeedback::getUserId)
+                .distinct()
+                .toList();
+
+        Map<Long, UserResponse> userMap;
+        try{
+            userMap = authServiceClient.getExerciseMap(new ArrayList<>(userIds)).getResult();
+        }catch (FeignClientException e){
+            throw new FeignClientException("Failed to fetch user map from Auth Service");
+        }
+
         return submissionFeedback.stream().map(ft -> {
             SubmissionFeedbackResponse response = new SubmissionFeedbackResponse();
             response.setId(ft.getId());
             response.setTeacherId(ft.getUserId());
             response.setContent(ft.getContent());
             response.setCreatedDate(ft.getCreatedDate());
-            response.setFullName(userResponse.getFullName());
+            response.setFullName(userMap.get(ft.getUserId()).getFullName());
             return response;
         }).toList();
     }

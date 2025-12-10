@@ -12,7 +12,7 @@ public class SubmissionFeedback extends BaseEntity {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne

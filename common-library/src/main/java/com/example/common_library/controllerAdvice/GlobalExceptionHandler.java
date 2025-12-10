@@ -5,6 +5,7 @@ package com.example.common_library.controllerAdvice;
 import com.example.common_library.dto.response.ErrorResponse;
 import com.example.common_library.exceptions.*;
 import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.*;
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -153,7 +155,7 @@ public class GlobalExceptionHandler {
         errorResponse.setError(errorMessage);
         List<String> detailMessage = new ArrayList<>();
         errorResponse.setDetailMessage(detailMessage);
-
+        log.info(errorMessage);
         return errorResponse;
     }
 

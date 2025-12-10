@@ -27,9 +27,47 @@
     margin: 0;
   }
 
+  &__header-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .score-number {
+      font-size: 14px;
+      font-weight: 600;
+      color: #02b128;
+    }
+
+    .score-divider {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .score-total {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .status-spacer {
+      font-size: 12px;
+      color: #888;
+      margin: 0 4px;
+    }
+
+    .status-text {
+      font-size: 12px;
+      margin-left: 8px;
+      color: #e0e0e0;
+    }
+  }
+
+  &__submission-status {
+    padding: 8px 0;
+  }
+
   &__content {
     padding: 16px;
-    overflow-y: auto;
+    overflow-y: hidden;
     flex: 1;
   }
 
@@ -74,7 +112,7 @@
   }
 
   &__score-display {
-    padding: 16px;
+    padding: 8px;
     background-color: #1e1e1e;
     border: 1px solid #404040;
     border-radius: 6px;
@@ -84,7 +122,7 @@
   }
 
   &__score-value {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     color: #e0e0e0;
     display: flex;
@@ -97,12 +135,12 @@
 
     .score-divider {
       color: #666;
-      font-size: 24px;
+      font-size: 20px;
     }
 
     .score-total {
       color: #888;
-      font-size: 24px;
+      font-size: 20px;
     }
 
     .score-empty {
@@ -125,33 +163,126 @@
     }
   }
 
-  &__comment-text {
+  &__student-comment-text {
     color: #e0e0e0;
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
   }
 
-  /* Scrollbar styling */
-  &__content::-webkit-scrollbar,
-  &__comments::-webkit-scrollbar {
+  &__empty-comments {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 480px;
+    text-align: center;
+  }
+
+  &__student-comments {
+    background-color: #1e1e1e;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 8px;
+    min-height: 480px;
+    max-height: 480px;
+    overflow: hidden;
+  }
+
+  &__existing-comments {
+    max-height: 456px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+  }
+
+  &__student-comment-item {
+    background-color: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__comment-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  &__comment-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__comment-user-name {
+    color: #e0e0e0;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  &__comment-date {
+    color: #888;
+    font-size: 11px;
+  }
+
+  &__student-comment-text {
+    color: #e0e0e0;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__comment-input {
+    background-color: #2a2a2a !important;
+    border-color: #404040 !important;
+    color: #e0e0e0 !important;
+
+    &::placeholder {
+      color: #888 !important;
+    }
+
+    &:hover {
+      border-color: #555 !important;
+    }
+
+    &:focus {
+      border-color: #02b128 !important;
+      box-shadow: 0 0 0 2px rgba(2, 177, 40, 0.2) !important;
+    }
+  }
+
+  &__existing-comments::-webkit-scrollbar {
     width: 6px;
   }
 
-  &__content::-webkit-scrollbar-track,
-  &__comments::-webkit-scrollbar-track {
+  &__existing-comments::-webkit-scrollbar-track {
     background: #1e1e1e;
     border-radius: 3px;
   }
 
-  &__content::-webkit-scrollbar-thumb,
-  &__comments::-webkit-scrollbar-thumb {
+  &__existing-comments::-webkit-scrollbar-thumb {
     background: #404040;
     border-radius: 3px;
 
     &:hover {
       background: #555;
     }
+  }
+
+  &__comment-input-container {
+    margin-top: 12px;
+    background-color: #1e1e1e;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    padding: 12px;
   }
 }
