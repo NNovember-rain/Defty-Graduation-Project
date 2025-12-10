@@ -22,12 +22,9 @@ public interface SubmissionMapper {
     );
 
     @Mapping(target = "studentName", expression = "java(getStudentName(user))")
-    @Mapping(target = "assignmentTitle", expression = "java(getAssignmentTitle(assignment))")
-    @Mapping(target = "descriptionAssignment", expression = "java(getCommonDescription(assignment))")
     SubmissionDetailResponse toSubmissionDetailResponse(
             Submission submission,
             @Context UserResponse user,
-            @Context AssignmentResponse assignment,
             @Context ClassResponse classResponse
     );
 
@@ -54,8 +51,5 @@ public interface SubmissionMapper {
         return assignment != null ? assignment.getTitle() : null;
     }
 
-    default String getCommonDescription(AssignmentResponse assignment) {
-        return assignment != null ? assignment.getCommonDescription() : null;
-    }
 
 }

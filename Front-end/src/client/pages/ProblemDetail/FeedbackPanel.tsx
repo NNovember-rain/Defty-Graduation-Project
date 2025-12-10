@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Spin, Button, Input, message } from 'antd';
+import { Typography, Spin, Button, Input, message, Avatar } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import { 
   type FeedbackTeacherResponse,
   getLastSubmissionExamMode,
@@ -177,27 +178,41 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
             {/* Student Comments Section */}
             <div className="feedback-panel__section feedback-panel__section--student-comments">
               <div className="feedback-panel__section-title">
-                Nhận xét của bạn
+                Nhận xét:
               </div>
               <div className="feedback-panel__student-comments">
                 {/* Display existing student comments */}
-                {studentComments.length > 0 && (
+                {studentComments.length > 0 ? (
                   <div className="feedback-panel__existing-comments">
                     {studentComments.map((comment, index) => (
                       <div key={comment.id || index} className="feedback-panel__student-comment-item">
+                        <div className="feedback-panel__comment-header">
+                          <Avatar 
+                            size={32} 
+                            src={comment.imageUrl} 
+                            icon={!comment.imageUrl && <UserOutlined />}
+                            style={{ backgroundColor: '#02b128' }}
+                          />
+                          <div className="feedback-panel__comment-user-info">
+                            <Text className="feedback-panel__comment-user-name">
+                              {comment.fullName || 'Người dùng'}
+                            </Text>
+                            <Text className="feedback-panel__comment-date">
+                              {comment.createdDate ? new Date(comment.createdDate).toLocaleString('vi-VN') : ''}
+                            </Text>
+                          </div>
+                        </div>
                         <Text className="feedback-panel__student-comment-text">
                           {comment.content}
                         </Text>
-                        <Text style={{ 
-                          display: 'block', 
-                          fontSize: '11px', 
-                          color: '#888', 
-                          marginTop: 4 
-                        }}>
-                          {comment.createdDate ? new Date(comment.createdDate).toLocaleString('vi-VN') : ''}
-                        </Text>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="feedback-panel__empty-comments">
+                    <Text style={{ color: '#888', fontSize: '13px' }}>
+                      Chỉ bạn và giáo viên của bạn mới nhìn thấy các nhận xét riêng tư
+                    </Text>
                   </div>
                 )}
               </div>

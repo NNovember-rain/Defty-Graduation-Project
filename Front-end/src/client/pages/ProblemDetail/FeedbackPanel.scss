@@ -67,7 +67,7 @@
 
   &__content {
     padding: 16px;
-    overflow-y: auto;
+    overflow-y: hidden;
     flex: 1;
   }
 
@@ -112,7 +112,7 @@
   }
 
   &__score-display {
-    padding: 16px;
+    padding: 8px;
     background-color: #1e1e1e;
     border: 1px solid #404040;
     border-radius: 6px;
@@ -122,7 +122,7 @@
   }
 
   &__score-value {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     color: #e0e0e0;
     display: flex;
@@ -135,12 +135,12 @@
 
     .score-divider {
       color: #666;
-      font-size: 24px;
+      font-size: 20px;
     }
 
     .score-total {
       color: #888;
-      font-size: 24px;
+      font-size: 20px;
     }
 
     .score-empty {
@@ -163,12 +163,20 @@
     }
   }
 
-  &__comment-text {
+  &__student-comment-text {
     color: #e0e0e0;
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
+  }
+
+  &__empty-comments {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 480px;
+    text-align: center;
   }
 
   &__student-comments {
@@ -177,20 +185,52 @@
     border-radius: 6px;
     padding: 12px;
     margin-top: 8px;
-    max-height: 450px;
+    min-height: 480px;
+    max-height: 480px;
+    overflow: hidden;
+  }
+
+  &__existing-comments {
+    max-height: 456px;
     overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
   }
 
   &__student-comment-item {
     background-color: #2a2a2a;
     border: 1px solid #404040;
     border-radius: 4px;
-    padding: 8px 12px;
+    padding: 12px;
     margin-bottom: 8px;
 
     &:last-child {
       margin-bottom: 0;
     }
+  }
+
+  &__comment-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  &__comment-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__comment-user-name {
+    color: #e0e0e0;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  &__comment-date {
+    color: #888;
+    font-size: 11px;
   }
 
   &__student-comment-text {
@@ -220,16 +260,16 @@
     }
   }
 
-  &__student-comments::-webkit-scrollbar {
+  &__existing-comments::-webkit-scrollbar {
     width: 6px;
   }
 
-  &__student-comments::-webkit-scrollbar-track {
+  &__existing-comments::-webkit-scrollbar-track {
     background: #1e1e1e;
     border-radius: 3px;
   }
 
-  &__student-comments::-webkit-scrollbar-thumb {
+  &__existing-comments::-webkit-scrollbar-thumb {
     background: #404040;
     border-radius: 3px;
 

@@ -1,11 +1,10 @@
 import React, { useEffect, useState, memo } from "react";
 import { Button, Card, Row, Col, Typography, Tag, Input, message, Spin, Alert, Avatar, Collapse } from "antd";
-import { MessageOutlined, UserOutlined, InfoCircleOutlined, FileTextOutlined, CodeOutlined } from "@ant-design/icons";
+import { UserOutlined, InfoCircleOutlined, FileTextOutlined, CodeOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import PlantUMLViewer from "../../components/PlantUMLViewer";
 import {
     getSubmissionDetail,
-    getFeedbackTeacher,
     addFeedbackTeacher,
     addScore,
     type ISubmissionDetail,
@@ -13,7 +12,7 @@ import {
     type FeedbackTeacherRequest,
 } from "../../../shared/services/submissionService.ts";
 import { IoDocumentTextOutline } from 'react-icons/io5'
-import TextArea from "antd/es/input/TextArea";
+import "./SubmissionDetailViewer.scss";
 
 const { Title, Text } = Typography;
 
@@ -41,7 +40,6 @@ const SubmissionDetailViewer: React.FC<SubmissionDetailViewerProps> = memo(({ se
     const [loadingDetail, setLoadingDetail] = useState(true);
     const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
-    const [isEditingFeedback, setIsEditingFeedback] = useState(false);
     const [feedbackText, setFeedbackText] = useState("");
     const [scoreInput, setScoreInput] = useState<number | null>(null);
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
@@ -74,15 +72,9 @@ const SubmissionDetailViewer: React.FC<SubmissionDetailViewerProps> = memo(({ se
             console.log("Fetched submission detail:", submissionData);
             setSubmission(submissionData);
 
-            try {
-                const teacherFeedbackData = await getFeedbackTeacher(id);
-                setTeacherFeedbacks(teacherFeedbackData || []);
-                setIsEditingFeedback(!teacherFeedbackData || teacherFeedbackData.length === 0);
-            } catch (err) {
-                console.log("No teacher feedback available or error during fetch:", err);
-                setTeacherFeedbacks([]);
-                setIsEditingFeedback(true);
-            }
+            // Lấy feedback từ submission response
+            const feedbacks = submissionData.submissionFeedbackResponse || [];
+            setTeacherFeedbacks(feedbacks);
 
         } catch (err) {
             console.error("Error fetching detail data:", err);
@@ -114,10 +106,10 @@ const SubmissionDetailViewer: React.FC<SubmissionDetailViewerProps> = memo(({ se
                 content: feedbackText,
                 fullName: "Giáo viên hiện tại",
                 createdDate: new Date().toISOString(),
+                updatedDate: null
             };
             setTeacherFeedbacks(prev => [newFeedback, ...prev]);
 
-            setIsEditingFeedback(false);
             setFeedbackText("");
         } catch (err) {
             console.error("Error saving feedback:", err);
@@ -148,14 +140,6 @@ const SubmissionDetailViewer: React.FC<SubmissionDetailViewerProps> = memo(({ se
             setSubmittingScore(false);
         }
     };
-
-    const getScoreColor = (score: number | null | undefined) => {
-        if (score === null || score === undefined) return "#d9d9d9";
-        if (score >= maxScore * 0.8) return "#52c41a";
-        if (score >= maxScore * 0.5) return "#faad14";
-        return "#ff4d4f";
-    };
-
 
     if (!actualSubmissionId) {
         return (
@@ -277,114 +261,154 @@ const SubmissionDetailViewer: React.FC<SubmissionDetailViewerProps> = memo(({ se
                 </Col>
 
                 <Col span={6}>
-                    <Card
-                        title={<span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1890ff' }}><MessageOutlined /> Đánh giá Bài nộp</span>}
-                        style={{ backgroundColor: '#fafafa', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)' }}
-                        bodyStyle={{ padding: '16px' }}
-                    >
-                        <div style={{ marginBottom: 16, textAlign: 'center', borderBottom: '1px solid #f0f0f0', paddingBottom: 16 }}>
-                            <Tag
-                                color={submission.score !== null ? 'success' : (selectedStudent.submitted ? 'warning' : 'error')}
-                                style={{ fontSize: '14px', padding: '4px 12px', fontWeight: 'bold' }}
-                            >
-                                {submission.score !== null ? 'ĐÃ CHẤM' : (selectedStudent.submitted ? 'CHỜ CHẤM' : 'CHƯA NỘP')}
-                            </Tag>
-                        </div>
-
-                        <div style={{ marginBottom: 20, border: '1px solid #d9d9d9', padding: '12px', borderRadius: '6px', backgroundColor: '#fff' }}>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 600 }}>Điểm số</h4>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                                <span style={{ fontSize: '36px', fontWeight: 'bolder', color: getScoreColor(submission.score) }}>
-                                    {submission.score !== null ? submission.score : "--"}
-                                </span>
-                                <span style={{ fontSize: '20px', color: '#888' }}>/{maxScore}</span>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    max={maxScore}
-                                    step={0.1}
-                                    value={scoreInput !== null ? scoreInput : undefined}
-                                    onChange={(e) => setScoreInput(Number(e.target.value))}
-                                    placeholder={`Điểm`}
-                                    style={{ flex: 1, borderRadius: '4px' }}
-                                    onPressEnter={handleSaveScore}
-                                />
-                                <Button
-                                    type="primary"
-                                    onClick={handleSaveScore}
-                                    loading={submittingScore}
-                                    disabled={scoreInput === null || scoreInput < 0 || scoreInput > maxScore}
-                                >
-                                    Lưu
-                                </Button>
+                    <div className="evaluation-panel">
+                        {/* Header */}
+                        <div className="evaluation-panel__header">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <h3 className="evaluation-panel__title">Trạng thái:</h3>
+                                <div className="evaluation-panel__header-content">
+                                    {submission.score !== null ? (
+                                        <>
+                                            <span className="score-number">{submission.score}</span>
+                                            <span className="score-divider">/</span>
+                                            <span className="score-total">{maxScore}</span>
+                                            <span className="status-spacer">•</span>
+                                        </>
+                                    ) : null}
+                                    <span className="status-text">
+                                        {submission.score !== null ? '✅ Đã chấm' : (selectedStudent.submitted ? '⏳ Chờ chấm' : '❌ Chưa nộp')}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Feedback Section */}
-                        <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>Nhận xét</h4>
-                                {!isEditingFeedback && (
-                                    <Button size="small" type="dashed" onClick={() => setIsEditingFeedback(true)}>
-                                        Thêm
-                                    </Button>
-                                )}
-                            </div>
-
-                            {isEditingFeedback && (
-                                <div style={{ marginBottom: 15, border: '1px solid #bae0ff', padding: '10px', borderRadius: '6px', backgroundColor: '#e6f7ff' }}>
-                                    <TextArea
-                                        value={feedbackText}
-                                        onChange={(e) => setFeedbackText(e.target.value)}
-                                        placeholder="Nhập nhận xét chi tiết..."
-                                        rows={4}
-                                        style={{ marginBottom: '8px' }}
-                                    />
-                                    <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                        <Button
-                                            size="small"
-                                            onClick={() => { setIsEditingFeedback(false); setFeedbackText(""); }}
-                                        >
-                                            Hủy
-                                        </Button>
+                        <div className="evaluation-panel__content">
+                            {/* Score Section */}
+                            <div className="evaluation-panel__section">
+                                <div className="evaluation-panel__section-title">
+                                    Điểm số:
+                                </div>
+                                <div className="evaluation-panel__status">
+                                    <div className="evaluation-panel__score-display">
+                                        <div className="evaluation-panel__score-value">
+                                            {submission.score !== null ? (
+                                                <>
+                                                    <span className="score-number">{submission.score}</span>
+                                                    <span className="score-divider">/</span>
+                                                    <span className="score-total">{maxScore}</span>
+                                                </>
+                                            ) : (
+                                                <span className="score-empty">--</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="evaluation-panel__section evaluation-panel__section--score-input">
+                                    <div className="evaluation-panel__score-input">
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            max={maxScore}
+                                            step={0.1}
+                                            value={scoreInput !== null ? scoreInput : undefined}
+                                            onChange={(e) => setScoreInput(Number(e.target.value))}
+                                            placeholder="Nhập điểm"
+                                            onPressEnter={handleSaveScore}
+                                        />
                                         <Button
                                             type="primary"
-                                            size="small"
-                                            onClick={handleSaveFeedback}
-                                            loading={submittingFeedback}
+                                            onClick={handleSaveScore}
+                                            loading={submittingScore}
+                                            disabled={scoreInput === null || scoreInput < 0 || scoreInput > maxScore}
                                         >
                                             Lưu
                                         </Button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
-                            <div className="feedback-list" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
-                                {teacherFeedbacks.length > 0 ? (
-                                    teacherFeedbacks.map((feedback) => (
-                                        <div key={feedback.id} style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f0f0f0' }}>
-                                            <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                                <Avatar size={32} src={feedback.avatar} icon={<UserOutlined />} style={{ marginRight: '10px', flexShrink: 0 }} />
-                                                <div style={{ fontSize: '13px', lineHeight: 1.4, flexGrow: 1 }}>
-                                                    <span style={{ fontWeight: 'bold', color: '#1890ff' }}>{feedback.fullName || 'Giáo viên'}</span>
-                                                    <br/>
-                                                    <Text type="secondary" style={{ fontSize: '11px' }}>{dayjs(feedback.createdDate).format("DD/MM/YY HH:mm")}</Text>
+                            {/* Feedback Section */}
+                            <div className="evaluation-panel__section">
+                                <div className="evaluation-panel__section-title">
+                                    Nhận xét:
+                                </div>
+                                <div className="evaluation-panel__feedback-section">
+                                    {/* Display existing feedback */}
+                                    {teacherFeedbacks.length > 0 ? (
+                                        <div className="evaluation-panel__feedback-list">
+                                            {teacherFeedbacks.map((feedback) => (
+                                                <div key={feedback.id} className="evaluation-panel__feedback-item">
+                                                    <div className="evaluation-panel__comment-header">
+                                                        <Avatar 
+                                                            size={32} 
+                                                            src={feedback.imageUrl} 
+                                                            icon={!feedback.imageUrl && <UserOutlined />}
+                                                            style={{ backgroundColor: '#1890ff' }}
+                                                        />
+                                                        <div className="evaluation-panel__comment-user-info">
+                                                            <Text className="evaluation-panel__comment-user-name">
+                                                                {feedback.fullName || 'Giáo viên'}
+                                                            </Text>
+                                                            <Text className="evaluation-panel__comment-date">
+                                                                {feedback.createdDate ? new Date(feedback.createdDate).toLocaleString('vi-VN') : ''}
+                                                            </Text>
+                                                        </div>
+                                                    </div>
+                                                    <Text className="evaluation-panel__comment-content">
+                                                        {feedback.content}
+                                                    </Text>
                                                 </div>
-                                            </div>
-                                            <div style={{ fontSize: '14px', margin: 0, padding: '8px 10px', backgroundColor: '#f5f5f5', borderRadius: '4px', whiteSpace: 'pre-wrap' }}>
-                                                {feedback.content}
-                                            </div>
+                                            ))}
                                         </div>
-                                    ))
-                                ) : (
-                                    <p style={{ fontSize: '14px', color: '#999', textAlign: 'center', paddingTop: 10 }}>Chưa có nhận xét nào.</p>
-                                )}
+                                    ) : (
+                                        <div className="evaluation-panel__empty-feedback">
+                                            <Text style={{ color: '#8c8c8c', fontSize: '13px' }}>
+                                                Chưa có nhận xét nào. Hãy thêm nhận xét đầu tiên!
+                                            </Text>
+                                        </div>
+                                    )}
+
+                                    {/* Input for new feedback - outside the feedback list */}
+                                    <div className="evaluation-panel__feedback-input-container">
+                                        <Input.TextArea
+                                            value={feedbackText}
+                                            onChange={(e) => setFeedbackText(e.target.value)}
+                                            placeholder="Nhập nhận xét chi tiết cho học viên..."
+                                            rows={2}
+                                            maxLength={500}
+                                            style={{
+                                                resize: 'none',
+                                                borderRadius: '6px',
+                                                border: '1px solid #d9d9d9',
+                                                marginBottom: '8px'
+                                            }}
+                                        />
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between', 
+                                            alignItems: 'center' 
+                                        }}>
+                                            <Text style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                                                {feedbackText.length}/500 ký tự
+                                            </Text>
+                                            <Button
+                                                type="primary"
+                                                size="small"
+                                                onClick={handleSaveFeedback}
+                                                loading={submittingFeedback}
+                                                disabled={!feedbackText.trim() || submittingFeedback}
+                                                style={{
+                                                    borderRadius: '6px'
+                                                }}
+                                            >
+                                                {submittingFeedback ? 'Đang lưu...' : 'Gửi nhận xét'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </Card>
+                    </div>
                 </Col>
             </Row>
         </div>

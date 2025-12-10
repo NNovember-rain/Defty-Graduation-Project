@@ -3,6 +3,7 @@ package com.defty.content_service.controller;
 import com.defty.content_service.dto.request.AssignRequest;
 import com.defty.content_service.dto.request.AssignmentRequest;
 import com.defty.content_service.dto.response.*;
+import com.defty.content_service.enums.TypeUml;
 import com.defty.content_service.service.AssignmentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -183,5 +183,18 @@ public class AssignmentController {
                 .message("Fetched assignment successfully")
                 .build();
     }
+
+    @GetMapping("/module-solution/{id}")
+    public ApiResponse<ModuleSolutionDetailResponse> getModuleSolution(
+            @PathVariable Long id,
+            @RequestParam(value = "typeUml") String typeUml,
+            @RequestParam(value = "assigmentId", required = false) Long assigmentId) {
+        ModuleSolutionDetailResponse response = assignmentService.getModuleSolution(id,typeUml,assigmentId);
+        return ApiResponse.<ModuleSolutionDetailResponse>builder()
+                .result(response)
+                .message("Fetched assignment successfully")
+                .build();
+    }
+
 
 }

@@ -37,6 +37,7 @@ export interface ISubmissionDetail {
     solutionCode?: string 
     score?: number
     createdDate: string
+    submissionFeedbackResponse?: FeedbackTeacherResponse[]
 }
 
 export interface ISubmission {
@@ -161,7 +162,7 @@ export const getSubmissions = async (options: GetSubmissionsOptions = {}): Promi
 }
 
 export const getSubmissionDetail = async (id: string | number): Promise<ISubmissionDetail> => {
-    const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/${id}`))
+    const response = await handleRequest(get(`${PREFIX_SUBMISSIONS}/detail/${id}`))
     const data = await response.json()
     return data.result as ISubmissionDetail
 }

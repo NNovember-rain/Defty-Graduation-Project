@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -26,5 +27,6 @@ public class SubmissionDetailResponse {
     String studentPlantUMLCode;
     String solutionCode;
     Double score;
+    List<SubmissionFeedbackResponse> submissionFeedbackResponse;
     LocalDateTime createdDate;
 }

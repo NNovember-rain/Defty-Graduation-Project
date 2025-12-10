@@ -13,4 +13,5 @@ public interface ModuleSolutionRepository extends JpaRepository<ModuleSolution, 
     List<ModuleSolution> findByModuleId(Long moduleId);
     List<ModuleSolution> findByModuleIdIn(List<Long> moduleIds);
     ModuleSolution findByModuleAndTypeUml(ModuleEntity module, TypeUml typeUml);
+
 }

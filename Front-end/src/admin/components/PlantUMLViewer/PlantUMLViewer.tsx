@@ -97,7 +97,10 @@ const PlantUMLViewer: React.FC<PlantUMLViewerProps> = ({
                 border: '1px solid #e1e4e8',
                 overflow: 'auto',
                 maxHeight: '400px',
-                margin: 0
+                margin: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word'
             }}>
                 {code || "// Không có dữ liệu"}
             </pre>
